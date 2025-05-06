@@ -1,0 +1,43 @@
+## Interface: 11507
+## Title: EtherWatch
+## Title-deDE: EtherWatch
+## Author: Vaydan-Spineshatter
+## Version: 0.2
+## SavedVariables: ETHEREWATCH_MAIN_DB, ETHERWATCH_ICON_DB
+## IconTexture: Interface\AddOns\EtherWatch\Textures\Icons\Icon
+
+# > Localizations
+Localizations\Localization.en.lua
+Localizations\Localization.de.lua
+
+# > Libraries
+Libraries\Libs.xml
+
+# > Core
+Core.lua                   
+
+# > Constants
+Constants\Constants.lua
+Constants\GetTitle.lua
+
+# > Prototype
+Modules\Prototype\ModulePrototype.lua
+Modules\Prototype\EventPrototype.lua
+
+# > Core Modules
+Modules\Core\Events.lua
+Modules\Core\Tracking.lua
+
+# > UI Modules
+Modules\UI\UnitFrames.lua
+Modules\UI\Minimap.lua
+
+# > Config Modules
+Config\GeneralOpt.lua
+Config\MinimapOpt.lua
+Config\UnitFramesOpt.lua
+Config\TrackingOpt.lua
+Config\EventsOpt.lua
+
+# > Datatables
+Datatables\Store.lua

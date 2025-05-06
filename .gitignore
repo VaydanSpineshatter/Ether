@@ -1,0 +1,7 @@
+
+/.git
+/.github/
+/*.lock
+*.user
+*.vs
+.vscode/
