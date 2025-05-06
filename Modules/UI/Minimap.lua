@@ -25,7 +25,7 @@ function Minimap:Initialize()
 
     if db.profile.Minimap.Enabled == false then return false end
 
-    if not InitMinimapDB then return end
+    InitMinimapDB()
 
     local LDB = LibStub("LibDataBroker-1.1", true)
     local LibDBIcon = LibStub("LibDBIcon-1.0", true)

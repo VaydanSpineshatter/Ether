@@ -200,6 +200,6 @@ end
 
 local options
 function BuildOptions()
-    options = options or { name = C.COLORS.TITLE .. "EtherWatch|r", type = "group", childGroups = "tab", args = {} }
+    options = options or { name = "EtherWatch", type = "group", childGroups = "tab", args = {} }
     return options
 end

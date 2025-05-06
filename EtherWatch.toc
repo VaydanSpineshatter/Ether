@@ -13,12 +13,12 @@ Localizations\Localization.de.lua
 # > Libraries
 Libraries\Libs.xml
 
-# > Core
-Core.lua                   
-
 # > Constants
 Constants\Constants.lua
 Constants\GetTitle.lua
+
+# > Core
+Core.lua                   
 
 # > Prototype
 Modules\Prototype\ModulePrototype.lua
