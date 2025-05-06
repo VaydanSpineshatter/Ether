@@ -45,6 +45,7 @@ throttleFrame:SetScript("OnUpdate", function(_, elapsed)
     end
 end)
 
+
 function UnitFrames:Initialize()
     if self.initialized then return end
     if db.profile.UnitFrames.Enabled == false then return false end
@@ -196,6 +197,7 @@ function UnitFrames:UpdateDisplay()
     self.unitToFrame = self.unitToFrame or {}
     self.unitManaCache = self.unitManaCache or {}
 
+
     for i, frame in ipairs(self.iconFrames) do
         frame:Hide()
         frame.unit = nil
@@ -231,6 +233,7 @@ function UnitFrames:UpdateDisplay()
         if frame then
             frame.unit = data.unit
             frame:SetAttribute("unit", data.unit)
+
             if not frame.classBG then
                 frame.classBG = CreateFrame("StatusBar", nil, frame)
                 frame.classBG:SetFrameLevel(frame:GetFrameLevel() - 1)
@@ -239,16 +242,19 @@ function UnitFrames:UpdateDisplay()
                 frame.classBG:SetMinMaxValues(0, 100)
                 frame.classBG:SetAlpha(0.6)
             end
-            local color = addonTable.Store.ClassTools.GetColor(data.unit)
-            frame.classBG:SetStatusBarColor(color.r, color.g, color.b, 0.7)
+
+            local Color = addonTable.Store.ClassTools.GetColor(data.unit)
+            frame.classBG:SetStatusBarColor(Color.r, Color.g, Color.b, 0.7)
             frame.classBG:SetValue(100)
+
             local Drinking = GetDrinkingStatus(data.unit)
-            local manaText = addonTable.Store.FormatManaText(data.unit)
-            frame.nameText:SetText(data.name)
-            frame.nameText:SetTextColor(color.r, color.g, color.b)
-            frame.manaText:SetText(manaText)
             frame.icon:SetTexture(C.WATER)
             frame.icon:SetShown(Drinking ~= nil)
+
+            frame.nameText:SetText(data.name)
+            frame.nameText:SetTextColor(Color.r, Color.g, Color.b)
+            frame.manaText:SetText(addonTable.Store.FormatManaText(data.unit))
+
             frame:Show()
             self.unitToFrame[data.unit] = frame
             self.unitManaCache[data.unit] = UnitPower(data.unit, Enum.PowerType.Mana)

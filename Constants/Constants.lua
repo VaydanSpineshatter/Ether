@@ -6,9 +6,9 @@ C.COLORS = {
     CONFIGURE = "|cffcc66ff"
 };
 
-C.WATER = "Interface\\AddOns\\RaidManaEV\\Textures\\Icons\\Waterbottle.png"
-C.BAR = "Interface\\AddOns\\RaidManaEV\\Textures\\Progress\\Bar.png"
-C.VENITE_RG_RBA = "Interface\\AddOns\\RaidManaEV\\Fonts\\VeniteAdoremus-rgRBA.ttf"
+C.WATER = "Interface\\AddOns\\EtherWatch\\Textures\\Icons\\Waterbottle.png"
+C.BAR = "Interface\\AddOns\\EtherWatch\\Textures\\Progress\\Bar.png"
+C.VENITE_RG_RBA = "Interface\\AddOns\\EtherWatch\\Fonts\\VeniteAdoremus-rgRBA.ttf"
 
 addonTable.C = C
 
