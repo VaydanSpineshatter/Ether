@@ -280,6 +280,7 @@ local function OnHide(self)
     if (self.isUnitVolatile or self:IsShown()) then
         self.unitGUID = nil
     end
+    -- git test
 end
 
 local function OnEnter(self)
