@@ -1,0 +1,10 @@
+<Ui xmlns='http://www.blizzard.com/wow/ui/'>
+    <Script file='Library/LibStub.lua'/>
+    <Script file='Library/CallbackHandler-1.0.lua'/>
+    <Script file='Library/LibDataBroker-1.1.lua'/>
+    <Script file='Library/LibDBIcon-1.0.lua'/>
+    <Script file='Library/LibSpellRange-1.0.lua'/>
+    <Script file='Library/LibSharedMedia-3.0.lua'/>
+    <Script file='Library/LibCustomGlow-1.0.lua'/>
+    <Script file='Library/AceComm-3.0.lua'/>
+</Ui>

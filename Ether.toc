@@ -1,0 +1,36 @@
+## Interface: 11508
+## Title: |cffcc66ffEther|r
+## Author: Vaydan-Spineshatter
+## Version: 1117
+## SavedVariables: ETHERDATABASE_DXAA
+## IconTexture: Interface\AddOns\Ether\Media\Graphic\Icon
+## X-Curse-Project-ID: 1376190
+
+Library/Initialize.xml
+
+# Core
+Core.lua
+Module/Callback.lua
+
+# Localization and Library
+Locale/Initialize.xml
+
+# Component and Data
+Component/Ether_ButtonTemplate.xml
+Data/Data.lua
+
+# Module
+Module/Grid.lua
+Module/Setup.lua
+Module/Table.lua
+Module/Update.lua
+Module/Effects.lua
+Module/Store.lua
+Module/Units.lua
+Module/Smooth.lua
+Module/Console.lua
+Module/Broker.lua
+Module/Range.lua
+Module/Indicators.lua
+Module/Aura.lua
+Module/Castbar.lua
