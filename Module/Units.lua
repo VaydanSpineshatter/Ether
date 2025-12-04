@@ -256,7 +256,7 @@ OnAttributeChanged = function(self, name, unit)
     Update:UpdateRaidTarget(self)
     Update:UpdateOffline(self)
 
-
+-- role update
     self:RegisterUnitEvent("UNIT_HEALTH", self, "HealthBar")
     self:RegisterUnitEvent("UNIT_MAXHEALTH", self, "HealthBar")
     self:RegisterUnitEvent("UNIT_HEAL_PREDICTION", self, 'HealPrediction')
