@@ -1,0 +1,11 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/ https://raw.githubusercontent.com/Gethe/wow-ui-source/live/Interface/AddOns/Blizzard_SharedXML/UI.xsd">
+    <Script file="Library\LibStub\LibStub.lua"/>
+    <Script file="Library\EtherCallback.lua"/>
+    <Script file="Library\EtherPosition.lua"/>
+    <Script file="Library\CallbackHandler-1.0\CallbackHandler-1.0.lua"/>
+    <Script file="Library\LibDataBroker-1.1\LibDataBroker-1.1.lua"/>
+    <Script file="Library\LibDBIcon-1.0\LibDBIcon-1.0.lua"/>
+    <Script file="Library\LibSpellRange-1.0.lua"/>
+    <Include file="Library\AceComm-3.0\AceComm-3.0.xml"/>
+</Ui>

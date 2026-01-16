@@ -1,0 +1,35 @@
+## Interface: 20505
+## Title: |cffcc66ffEther|r
+## Notes: Ether Unit Frames
+## Author: Vaydan-Spineshatter
+## Version: 5111
+## SavedVariables: ETHER_DATABASE_DX_AA, ETHER_ICON
+## IconTexture: Interface\AddOns\Ether\Media\Graphic\Icon
+## OptionalDeps: LibStub, CallbackHandler-1.0, LibDBIcon-1.0, ChatThrottleLib
+## X-Flavor: TBC
+## X-Curse-Project-ID: 1376190
+## X-Curse-Project-Website: https://www.curseforge.com/wow/addons/ether
+
+Libs.xml
+EtherUnitTemplate.xml
+Locale.lua
+Core.lua
+Locale.xml
+Data/Data.lua
+Module/Setup.lua
+Module/Update/health.lua
+Module/Update/name.lua
+Module/Update/power.lua
+Module/Debug.lua
+Module/Aura.lua
+Module/Single/buttons.lua
+Settings/Frame.lua
+Module/Header/raid.lua
+Module/Header/party.lua
+Module/Header/raidpet.lua
+Module/Roster.lua
+Module/Indicators.lua
+Module/Tooltip.lua
+Module/Effects.lua
+Module/Range.lua
+Module/CastBar.lua
