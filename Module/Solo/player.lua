@@ -41,7 +41,6 @@ local function Show(self)
 end
 
 local function Update(self, event, unit)
-
     if not Ether.DB[901]["targettarget"] or self.unit ~= "targettarget" then
         return
     end
@@ -80,26 +79,19 @@ function Ether:CreateUnitButtons(unit)
         Ether.Setup.CreateHealthBar(button, "HORIZONTAL")
         Ether.Setup.CreatePowerBar(button)
         Ether.Setup.CreatePrediction(button)
-        Ether.Setup.CreateBorder(button)
+        Ether.AddBlackBorder(button)
         Ether.Setup.CreateNameText(button, 10, 0)
         Ether.GetClassColor(button)
         Ether.Setup.CreatePowerText(button)
         Ether.Setup.CreateHealthText(button)
-        --  button.Indicators.RaidTargetIcon = button.healthBar:CreateTexture(nil, "OVERLAY")
-        --  button.Indicators.RaidTargetIcon:SetPoint('BOTTOM', -2, 1)
-        --  button.Indicators.RaidTargetIcon:SetSize(11, 11)
-        --  button.Indicators.RaidTargetIcon:Hide()
         Mixin(button.healthBar, SmoothStatusBarMixin)
         Mixin(button.powerBar, SmoothStatusBarMixin)
-
         if button.unit ~= "player" then
             RegisterUnitWatch(button)
         end
-
         if button.unit == "targettarget" then
             button:SetScript("OnEvent", Update)
         end
-
         button:SetScript("OnAttributeChanged", AttributeChanged)
         button:SetScript("OnShow", Show)
         Ether.InitialHealth(button)
@@ -175,36 +167,22 @@ function Ether.stopUpdateFunc()
     end
 end
 
-local unitLink = "|cffffff00|Hunit:%s|h[%s]|h|r"
-
-
----https://warcraft.wiki.gg/wiki/API_UnitGUID
----https://warcraft.wiki.gg/wiki/API_UnitTokenFromGUID
-
 local function ParseGUID(unit)
-    local guid = UnitGUID(unit)
+    local guid = U_GUID(unit)
     local name = UnitName(unit)
-    local token = UnitTokenFromGUID(guid)
-    if guid and token then
-        local link = unitLink:format(guid, name) -- clickable link
-        local unit_type = strsplit("-", guid)
-        if unit_type == "Creature" or unit_type == "Vehicle" then
-            local _, _, server_id, instance_id, zone_uid, npc_id, spawn_uid = strsplit("-", guid)
-            Ether.DebugOutput(format("%s is a creature with NPC ID %d", link, npc_id))
-        elseif unit_type == "Player" then
-            local _, server_id, player_id = strsplit("-", guid)
-            Ether.DebugOutput(format("%s is a player with ID %s", link, player_id))
-        end
-        return name, token
+    local tokenGuid = UnitTokenFromGUID(guid)
+    if guid and tokenGuid then
+        return name, tokenGuid
     end
 end
 
 function Ether.CreateCustomUnit()
-    if (InCombatLockdown()) then
+    if InCombatLockdown() then
         return
     end
-    if not U_GUID("target") then
-        Ether.DebugOutput("Error: Custom unit not created. Target your custom unit. Prioritize group or raid members.")
+    local token = "target"
+    if not U_GUID(token) then
+        Ether.DebugOutput("Target a group or raid member")
         enabled = false
         return
     end
@@ -217,13 +195,14 @@ function Ether.CreateCustomUnit()
             if not name and not unit then
                 return nil
             end
+
             custom.unit = unit
             custom:SetAttribute("unit", custom.unit)
             Ether.Setup.CreateTooltip(custom, custom.unit)
             Ether.Setup.CreateHealthBar(custom, "HORIZONTAL")
             Ether.Setup.CreatePowerBar(custom)
             Ether.Setup.CreateNameText(custom, 10)
-            Ether.Setup.CreateBorder(custom)
+
             custom.name:SetText(name)
             Ether.Setup:CreateDrag(custom)
             custom.healthBar:SetStatusBarColor(0.18, 0.54, 0.34)
@@ -236,7 +215,6 @@ function Ether.CreateCustomUnit()
             custom:SetAttribute("*type1", "target")
             custom:SetAttribute("*type2", "togglemenu")
             custom:SetAttribute("type2", "togglemenu")
-
         end)
         if not success then
             Ether.DebugOutput("Custom unit creation failed - ", msg)
@@ -248,73 +226,6 @@ function Ether.CreateCustomUnit()
             end
         end
     end
-end
-
-function Ether:PetCondition(button)
-    if (InCombatLockdown()) then
-        return
-    end
-    local _, classFileName = UnitClass("player")
-    if classFileName ~= "HUNTER" then
-        return
-    end
-    if (not button.healthBar) then
-        return
-    end
-    local condition = CreateFrame("Frame", "nil", button)
-
-    condition:SetSize(16, 16)
-    condition:SetPoint("BOTTOMRIGHT", button.healthBar, "BOTTOMRIGHT", 0, 0)
-
-    condition.happy = condition:CreateTexture(nil, "OVERLAY")
-    condition.happy:SetTexture("Interface\\PetPaperDollFrame\\UI-PetHappiness")
-    condition.happy:SetAllPoints(condition)
-
-    condition.happy:SetScript("OnEnter", function()
-        if not UnitExists("pet") then
-            return
-        end
-        local happiness, damagePercentage, loyaltyRate = GetPetHappiness()
-        local petType = UnitCreatureFamily("pet")
-        GameTooltip:SetOwner(condition, "ANCHOR_RIGHT")
-        GameTooltip:SetText("Condition:")
-        GameTooltip:AddLine("Family: " .. petType)
-        GameTooltip:AddLine("Happiness: " .. ({ "Unhappy", "Content", "Happy" })[happiness])
-        GameTooltip:AddLine("Loyalty: " .. (loyaltyRate or "N/A"))
-        GameTooltip:AddLine("Pet is doing " .. damagePercentage .. "% damage")
-        GameTooltip:Show()
-    end)
-    condition.happy:SetScript("OnLeave", GameTooltip_Hide)
-
-    local PET_CORDS = {
-        [1] = { 0.375, 0.5625, 0, 0.359375 },
-        [2] = { 0.1875, 0.375, 0, 0.359375 },
-        [3] = { 0, 0.1875, 0, 0.359375 },
-    }
-
-    local function PetStatus()
-        local happiness = GetPetHappiness()
-        if (happiness) then
-            condition.happy:SetTexCoord(unpack(PET_CORDS[happiness]))
-        end
-    end
-
-    local function OnPetEvent(_, event, unit)
-        if event == "UNIT_POWER_UPDATE" and unit == "pet" then
-            local happiness = UnitPower("pet", Enum.PowerType.Happiness)
-            if happiness then
-                PetStatus()
-            end
-
-        elseif (event == "UNIT_PET") then
-            Ether.UpdateName(button)
-        end
-    end
-    local petEvent = CreateFrame('Frame')
-    PetStatus()
-    petEvent:RegisterUnitEvent("UNIT_POWER_UPDATE", "pet")
-    petEvent:RegisterUnitEvent("UNIT_PET", "player")
-    petEvent:SetScript("OnEvent", OnPetEvent)
 end
 
 local function MTInitial(self)
@@ -335,6 +246,7 @@ local function MTAttributeChanged(self)
         end
     end
 end
+
 local function MTShow(self)
     self.unit = self:GetAttribute("unit")
     MTInitial(self)
@@ -358,12 +270,11 @@ function Ether:CreateMainTankHeader()
     header:SetAttribute("columnSpacing", 2)
     header:SetAttribute("initialConfigFunction", [[
     RegisterUnitWatch(self)
-   local header = self:GetParent()
-   self:SetWidth(header:GetAttribute("ButtonWidth"))
-   self:SetHeight(header:GetAttribute("ButtonHeight"))
-   self:SetAttribute("*type1", "target")
-   self:SetAttribute("*type2", "togglemenu")
-
+    local header = self:GetParent()
+    self:SetWidth(header:GetAttribute("ButtonWidth"))
+    self:SetHeight(header:GetAttribute("ButtonHeight"))
+    self:SetAttribute("*type1", "target")
+    self:SetAttribute("*type2", "togglemenu")
    	local unit = self:GetAttribute("unit")
 ]])
 
@@ -402,4 +313,3 @@ function Ether:CreateMainTankHeader()
         Ether.Buttons.maintank[b.unit] = b
     end
 end
-
