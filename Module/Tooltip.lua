@@ -66,26 +66,6 @@ local function GetUnitRoleString(unit)
     return roleList
 end
 
-local function GetUnitPVPIcon(unit)
-    local factionGroup = UnitFactionGroup(unit)
-
-    if (UnitIsPVPFreeForAll(unit)) then
-        if (db.showPVPIcons) then
-            return '|TInterface\\AddOns\\MyCore\\Media\\UI-PVP-FFA:12|t'
-        else
-            return '|cffFF0000# |r'
-        end
-    elseif (factionGroup and UnitIsPVP(unit)) then
-        if (db.showPVPIcons) then
-            return '|TInterface\\AddOns\\MyCore\\Media\\UI-PVP-' .. factionGroup .. ':12|t'
-        else
-            return '|cff00FF00# |r'
-        end
-    else
-        return ''
-    end
-end
-
 local function UpdateTooltip(self, unit)
     if not unit or not U_EX(unit) then
         return

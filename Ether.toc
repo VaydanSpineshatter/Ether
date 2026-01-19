@@ -2,9 +2,9 @@
 ## Title: |cffcc66ffEther|r
 ## Notes: Ether Unit Frames
 ## Author: Vaydan-Spineshatter
-## Version: 5111
+## Version: 7111
 ## SavedVariables: ETHER_DATABASE_DX_AA, ETHER_ICON
-## IconTexture: Interface\AddOns\Ether\Media\Graphic\Icon
+## IconTexture: Interface\AddOns\Ether\Media\Texture\Icon
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibDBIcon-1.0, ChatThrottleLib
 ## X-Flavor: TBC
 ## X-Curse-Project-ID: 1376190
@@ -22,11 +22,13 @@ Module/Update/name.lua
 Module/Update/power.lua
 Module/Debug.lua
 Module/Aura.lua
-Module/Single/buttons.lua
-Settings/Frame.lua
-Module/Header/raid.lua
-Module/Header/party.lua
-Module/Header/raidpet.lua
+Settings/frame.lua
+Module/Units/Solo/player.lua
+Module/Units/Solo/hunter.lua
+Module/Units/Header/raid.lua
+Module/Units/Header/party.lua
+Module/Units/Header/raidpet.lua
+Module/Units/Header/maintank.lua
 Module/Roster.lua
 Module/Indicators.lua
 Module/Tooltip.lua

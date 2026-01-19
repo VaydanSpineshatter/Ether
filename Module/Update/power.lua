@@ -69,6 +69,7 @@ local function ReturnPower(self)
     return U_P(self)
 end
 Ether.ReturnPower = ReturnPower
+
 local function ReturnMaxPower(self)
     return U_MP(self)
 end
@@ -113,7 +114,6 @@ local function UpdatePowerAndMax(self)
     local mp = U_MP(self.unit)
     self.powerBar:SetValue(p)
     self.powerBar:SetMinMaxValues(0, mp)
-
     local r, g, b = GetPowerColor(self.unit)
     self.powerBar:SetStatusBarColor(r, g, b)
     self.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
@@ -128,7 +128,6 @@ local function UpdateSmoothPowerAndMax(self)
     local mp = U_MP(self.unit)
     self.powerBar:SetMinMaxSmoothedValue(0, mp)
     self.powerBar:SetSmoothedValue(p)
-
     local r, g, b = GetPowerColor(self.unit)
     self.powerBar:SetStatusBarColor(r, g, b)
     self.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
@@ -140,13 +139,10 @@ local function PowerChanged(_, event, unit)
         return
     end
     if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
-        if Ether.DB[901]["party"] then
+        if Ether.DB[901]["party"] and Ether.DB[201][7] == 1 and Ether.DB[701][4] == 1 and unit:match("^party") then
             local p = Ether.Buttons.party[unit]
             if p then
-                UpdatePowerAndMax(p)
-                if Ether.DB[701][1] == 1 then
-                    UpdatePowerText(p)
-                end
+                UpdatePowerText(p)
             end
         end
         if Ether.DB[901][unit] then
@@ -165,7 +161,10 @@ local function PowerChanged(_, event, unit)
         if not Ether.DB[901]["raid"] then
             return
         end
-        if Ether.DB[701][6] == 1 then
+        if not unit:match("^raid") then
+            return
+        end
+        if Ether.DB[701][6] == 1 and Ether.DB[201][8] == 1 then
             local r = Ether.Buttons.raid[unit]
             if r then
                 UpdatePowerText(r)

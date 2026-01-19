@@ -40,34 +40,40 @@ do
     end
 end
 
+--GetNumGroupMembers()
+--GetNumSubgroupMembers()
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
         if Ether.DB[1001][1002][2] == 1 then
-            C_After(0.1, function()
-                if U_EX("target") then
-                    Ether.Aura.SingleAuraUpdateBuff(Ether.unitButtons["target"])
-                    Ether.Aura.SingleAuraUpdateDebuff(Ether.unitButtons["target"])
-                end
-            end)
-        end
-        if Ether.DB[801][1] == 1 then
-            C_After(0.2, function()
-                Ether.Range:OnRosterOnTarget()
-            end)
+            if U_EX("target") then
+                Ether.Aura.SingleAuraUpdateBuff(Ether.unitButtons["target"])
+                Ether.Aura.SingleAuraUpdateDebuff(Ether.unitButtons["target"])
+            end
         end
     end
 end
 
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
-        if Ether.DB[801][1] == 1 then
-            C_After(0.2, function()
-                Ether.Range:OnRosterOnTarget()
-            end)
-        end
+        Ether.Indicators:UpdateIndicators()
     end
 end
 
+local function RosterLeaved(_, event)
+    if event == "PLAYER_LEAVING_WORLD" then
+        if Ether.DB[201][7] ~= 1 then
+            return
+        end
+        C_After(0.1, function()
+            Ether.Range:UpdateTargetAlpha()
+        end)
+    end
+end
+
+-- local snapCreate = {}
+-- snapCreate = Ether.DataSnapShot(Ether.DB[201])
+-- Ether.DataDisableAll(Ether.DB[201])
+-- Ether.DataRestore(Ether.DB[201], snapCreate)
 local function OnAfk(self)
     self.isActive = true
     Ether.CastBar.DisableCastEvents()
@@ -110,19 +116,11 @@ local function PlayerFlags(self, event, unit)
     end
 end
 
-local function RosterLeaving()
-     if Ether.DB[801][1] == 1 then
-        C_After(0.2, function()
-            Ether.Range:CleanUp()
-        end)
-    end
-end
-
-function Ether.Roster:Enable()
+function Roster:Enable()
     RegisterRosterEvent("GROUP_ROSTER_UPDATE", RosterChanged)
     RegisterRosterEvent("PLAYER_TARGET_CHANGED", TargetChanged)
-    RegisterRosterEvent("PLAYER_LEAVING_WORLD", RosterLeaving)
     RegisterRosterEvent("PLAYER_FLAGS_CHANGED", PlayerFlags)
+    RegisterRosterEvent("PLAYER_LEAVING_WORLD", RosterLeaved)
     if Ether.DB[801][1] == 1 then
         C_After(0.1, function()
             Ether.Range:Enable()
@@ -135,11 +133,10 @@ function Ether.Roster:Enable()
     end)
 end
 
-function Ether.Roster:Disable()
+function Roster:Disable()
     UnregisterRosterEvent("PLAYER_TARGET_CHANGED")
-    UnregisterRosterEvent("PLAYER_FLAGS_CHANGED")
-    UnregisterRosterEvent("PLAYER_LEAVING_WORLD")
     UnregisterRosterEvent("GROUP_ROSTER_UPDATE")
+    UnregisterRosterEvent("PLAYER_LEAVING_WORLD")
     if Ether.DB[801][1] == 0 then
         C_After(0.1, function()
             Ether.Range:Disable()

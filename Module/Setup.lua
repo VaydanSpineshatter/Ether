@@ -1,12 +1,13 @@
 local _, Ether = ...
 local Setup = {}
 Ether.Setup = Setup
+local math_floor = math.floor
 
 Ether.Setup.CreatePowerText = function(button)
     local power = button.healthBar:CreateFontString(nil, "OVERLAY")
     button.power = power
     power:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
-    power:SetPoint("BOTTOMRIGHT")
+    power:SetPoint("BOTTOMRIGHT", 0, 1)
     power:SetTextColor(1, 1, 1)
     return button
 end
@@ -399,28 +400,17 @@ Ether.Setup.CreatePlayerFlagsString = function(self)
     return self.Indicators.PlayerFlagsString
 end
 
-Ether.Setup.SingleAuraIcon = function(button)
-    local icon = button:CreateTexture(nil, "OVERLAY")
-    icon:SetAllPoints()
-    icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-    return icon
-end
-
-Ether.Setup.SingleAuraTimer = function(button, icon)
-    local timer = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
-    timer:SetAllPoints(icon)
-    timer:SetHideCountdownNumbers(true)
-    timer:SetReverse(true)
-    timer:SetBlingTexture("Interface\\Cooldown\\star4_edge", 1, 1, 1, 1)
-    return timer
-end
-
-Ether.Setup.SingleAuraCount = function(button)
-    local count = button:CreateFontString(nil, "OVERLAY")
-    count:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    count:SetPoint('LEFT')
-    count:Hide()
-    return count
+Ether.Setup.CreateDispelTexture = function(button)
+    local dispel = button.Debuffs[4]
+    if not dispel then
+        dispel = button.healthBar:CreateTexture(nil, "OVERLAY")
+        dispel:SetSize(8, 8)
+        dispel:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+        dispel:SetPoint("CENTER")
+    end
+    if dispel then
+        return dispel
+    end
 end
 
 Ether.Setup.CreateDebugFrame = function()
@@ -458,57 +448,120 @@ Ether.Setup.CreateDebugFrame = function()
     frame:Hide()
 end
 
+local function AuraPosition(i)
+    local row = math_floor((i - 1) / 8)
+    local col = (i - 1) % 8
+    local xOffset = col * (14 + 1)
+    local yOffset = 1 + row * (14 + 1)
 
---[[
+    return xOffset, yOffset
+end
 
-Ether.Setup.PixelPerfect = function(frame)
-    local scale = frame:GetEffectiveScale()
+local function SetupAuraIcon(button)
+    local icon = button:CreateTexture(nil, "OVERLAY")
+    icon:SetAllPoints()
+    icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    return icon
+end
 
-    local pixelWidth = frame:GetWidth() / scale
-    local pixelHeight = frame:GetHeight() / scale
+local function SetupAuraTimer(button, icon)
+    local timer = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+    timer:SetAllPoints(icon)
+    timer:SetHideCountdownNumbers(true)
+    timer:SetReverse(true)
+    timer:SetBlingTexture("Interface\\Cooldown\\star4_edge", 1, 1, 1, 1)
+    return timer
+end
 
-    local newPixelWidth = math.floor(pixelWidth + 0.5)
-    local newPixelHeight = math.floor(pixelHeight + 0.5)
+local function SetupAuraCount(button)
+    local count = button:CreateFontString(nil, "OVERLAY")
+    count:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    count:SetPoint('LEFT')
+    count:Hide()
+    return count
+end
 
-    frame:SetSize(newPixelWidth * scale, newPixelHeight * scale)
-
-    local point, relativeTo, relativePoint, xOfs, yOfs = frame:GetPoint()
-    if point then
-        local newX = math.floor(xOfs / scale + 0.5) * scale
-        local newY = math.floor(yOfs / scale + 0.5) * scale
-        frame:ClearAllPoints()
-        frame:SetPoint(point, relativeTo, relativePoint, newX, newY)
+Ether.Setup.SingleAuraSetup = function(button)
+    if (not button or not button.unit) then
+        return
     end
-    return frame
+    if not button.Aura then
+        button.Aura = {
+            Buffs = {},
+            Debuffs = {},
+            LastBuffs = {},
+            LastDebuffs = {}
+        }
+    end
+
+    for i = 1, 16 do
+        local frame = CreateFrame("Frame", nil, button)
+        frame:SetSize(14, 14)
+
+        local xOffset, yOffset = AuraPosition(i)
+
+        frame:SetPoint("BOTTOMLEFT", button, "TOPLEFT", xOffset - 1, yOffset + 2)
+        frame:SetShown(false)
+
+        frame.icon = SetupAuraIcon(frame)
+        frame.count = SetupAuraCount(frame)
+        frame.timer = SetupAuraTimer(frame, frame.icon)
+
+        button.Aura.Buffs[i] = frame
+    end
+
+    for i = 1, 16 do
+        local frame = CreateFrame("Frame", nil, button)
+        frame:SetSize(14, 14)
+
+        local xOffset, yOffset = AuraPosition(i)
+
+        frame:SetPoint("BOTTOMLEFT", button, "TOPLEFT", xOffset - 1, yOffset + 2)
+
+        frame:SetShown(false)
+
+        frame.icon = SetupAuraIcon(frame)
+        frame.count = SetupAuraCount(frame)
+        frame.timer = SetupAuraTimer(frame, frame.icon)
+
+        local border = frame:CreateTexture(nil, "BORDER")
+        border:SetColorTexture(1, 0, 0, 1)
+        border:SetPoint("TOPLEFT", -1, 1)
+        border:SetPoint("BOTTOMRIGHT", 1, -1)
+        border:Hide()
+
+        frame.border = border
+
+        button.Aura.Debuffs[i] = frame
+    end
 end
 
-local ClassCoordinate           = {
-	["WARRIOR"] = { 0, 0.25, 0, 0.25 },
-	["MAGE"]    = { 0.25, 0.49609375, 0, 0.25 },
-	["ROGUE"]   = { 0.49609375, 0.7421875, 0, 0.25 },
-	["DRUID"]   = { 0.7421875, 0.98828125, 0, 0.25 },
-	["HUNTER"]  = { 0, 0.25, 0.25, 0.5 },
-	["SHAMAN"]  = { 0.25, 0.49609375, 0.25, 0.5 },
-	["PRIEST"]  = { 0.49609375, 0.7421875, 0.25, 0.5 },
-	["WARLOCK"] = { 0.7421875, 0.98828125, 0.25, 0.5 },
-	["PALADIN"] = { 0, 0.25, 0.5, 0.75 }
-}
-]]
+local LPP = LibStub("LibPixelPerfect-1.0")
 
---[[
-local function FramesOverlap(frameA, frameB)
-	local sA, sB = frameA:GetEffectiveScale(), frameB:GetEffectiveScale();
-	return ((frameA:GetLeft()*sA) < (frameB:GetRight()*sB))
-		and ((frameB:GetLeft()*sB) < (frameA:GetRight()*sA))
-		and ((frameA:GetBottom()*sA) < (frameB:GetTop()*sB))
-		and ((frameB:GetBottom()*sB) < (frameA:GetTop()*sA))
+function Ether.AddBlackBorder(button)
+    local top = button:CreateTexture(nil, "BORDER")
+    top:SetColorTexture(0, 0, 0, 1)
+    LPP.PHeight(top, 1)
+    top:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-1), LPP.PScale(1))
+    top:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(1), LPP.PScale(1))
+    local bottom = button:CreateTexture(nil, "BORDER")
+    bottom:SetColorTexture(0, 0, 0, 1)
+    LPP.PHeight(bottom, 1)
+    bottom:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-1), LPP.PScale(-1))
+    bottom:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(1), LPP.PScale(-1))
+    local left = button:CreateTexture(nil, "BORDER")
+    left:SetColorTexture(0, 0, 0, 1)
+    LPP.PWidth(left, 1)
+    left:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-1), LPP.PScale(1))
+    left:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-1), LPP.PScale(-1))
+    local right = button:CreateTexture(nil, "BORDER")
+    right:SetColorTexture(0, 0, 0, 1)
+    LPP.PWidth(right, 1)
+    right:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(1), LPP.PScale(1))
+    right:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(1), LPP.PScale(-1))
+    button.top = top
+    button.left = left
+    button.right = right
+    button.bottom = bottom
+    return { top = top, bottom = bottom, left = left, right = right }
 end
-
-local function MouseIsOver(frame)
-	local x, y = GetCursorPosition();
-	local s = frame:GetEffectiveScale();
-	x, y = x/s, y/s;
-	return ((x >= frame:GetLeft()) and (x <= frame:GetRight())
-		and (y >= frame:GetBottom()) and (y <= frame:GetTop()))
-end
-]]

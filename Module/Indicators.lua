@@ -54,11 +54,11 @@ local EnabledStatus = {
     [6] = "AFK ",
     [7] = "DND ",
 }
-
+ local Events = {}
 local RegisterIndicatorEvent, UnregisterIndicatorEvent, GetIndicatorRegisterStatus, GetIndicatorEnabledStatus
 do
     local frame
-    local Events = {}
+
     local IsEventValid = C_EventUtils.IsEventValid
     function RegisterIndicatorEvent(castEvent, func)
         if not frame then
@@ -490,6 +490,8 @@ local isUpdating = false
 local creationDelay = 0.1
 local creationQueue = {}
 
+
+
 local function processFunc()
     if #creationQueue == 0 then
         isUpdating = false
@@ -540,24 +542,14 @@ function Indicators:UpdateIndicators()
         end
     end
 
+    if I[9] == 1 then
+        creationQueue[#creationQueue + 1] = function()
+            UpdatePlayerFlagsString()
+        end
+    end
+
     if not isUpdating then
         isUpdating = true;
         processFunc()
     end
 end
-
-
---[[
-HideIndicators("UnitFlagsIcon")
-HideIndicators("ConnectionIcon")
-HideIndicators("ReadyCheckIcon")
-Ether.Indicators.ReadyCheckTimer = nil
-HideIndicators("GroupRoleIcon")
-HideIndicators("MainTankIcon")
-HideIndicators("RaidTargetIcon")
-HideIndicators("ResurrectionIcon")
-HideIndicators("GroupLeaderIcon")
-HideIndicators("MasterLootIcon")
-HideIndicators("PlayerFlags")
-
-]]

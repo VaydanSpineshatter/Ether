@@ -1,18 +1,25 @@
 ---@class Ether
 local _, Ether = ...
+
 local L = Ether.L
+
+local pairs, ipairs = pairs, ipairs
+local GetMetadata = C_AddOns.GetAddOnMetadata
+Ether.version = GetMetadata("Ether", "Version")
+Ether.updatedChannel = false
+Ether.debug = false
+
 Ether.Header = {}
 Ether.Anchor = {}
 
-local mediaPath = {
-    Icon = { "Interface\\AddOns\\Ether\\Media\\Graphic\\Icon.blp" },
+Ether.mediaPath = {
+    Icon = { "Interface\\AddOns\\Ether\\Media\\Texture\\Icon.blp" },
     Font = { "Interface\\AddOns\\Ether\\Media\\Font\\expressway.ttf" },
     StatusBar = { "Interface\\AddOns\\Ether\\Media\\StatusBar\\UfBar.blp" },
     BlankBar = { "Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga" },
     NewBar = { "Interface\\AddOns\\Ether\\Media\\StatusBar\\striped.tga" },
-    OldBar = { "Interface\\AddOns\\Ether\\Media\\StatusBar\\otravi.tga" },
+    OldBar = { "Interface\\AddOns\\Ether\\Media\\StatusBar\\otravi.tga" }
 }
-Ether.mediaPath = mediaPath
 
 Ether.SlashInfo = {
     [1] = { cmd = "/ether", desc = "Toggle Commands" },
@@ -26,32 +33,28 @@ Ether.pos_Frames = pos_Frames
 Ether.unitButtons = {}
 Ether.HeaderStr = {}
 Ether.Buttons = {
-    SplitHeader = {},
     party = {},
     raid = {},
     maintank = {},
     raidpet = {},
-    single = {},
-    Update = {},
-    raidByGUID = {}
 }
 
 local function BuildContent(self)
     local success, msg = pcall(function()
-        Ether.InfoSection(self)
-        Ether.SlashSection(self)
-        Ether.HideSection(self)
-        Ether.FactorySection(self)
-        Ether.UpdateSection(self)
-        Ether.AuraSettingsSection(self)
-        Ether.AuraCustomSection(self)
-        Ether.AuraInfoSection(self)
-        Ether.RegisterSection(self)
-        Ether.LayoutSection(self)
-        Ether.RangeSection(self)
-        Ether.TooltipSection(self)
-        Ether.ConfigSection(self)
-        Ether.ProfileSection(self)
+        Ether.CreateModuleSection(self)
+        Ether.CreateSlashSection(self)
+        Ether.CreateHideSection(self)
+        Ether.CreateSection(self)
+        Ether.CreateUpdateSection(self)
+        Ether.CreateAuraSettingsSection(self)
+        Ether.CreateAuraCustomSection(self)
+        Ether.CreateAuraInfoSection(self)
+        Ether.CreateRegisterSection(self)
+        Ether.CreateLayoutSection(self)
+        Ether.CreateRangeSection(self)
+        Ether.CreateTooltipSection(self)
+        Ether.CreateConfigSection(self)
+        Ether.CreateProfileSection(self)
     end)
     if not success then
         if Ether.DebugOutput then
@@ -62,12 +65,7 @@ local function BuildContent(self)
     end
 end
 
-local pairs, ipairs = pairs, ipairs
-local GetMetadata = C_AddOns.GetAddOnMetadata
-Ether.version = GetMetadata("Ether", "Version")
-Ether.updatedChannel = false
-Ether.debug = false
-
+---@class Ether_Construct
 local Construct = {
     IsSuccess = false,
     IsLoaded = false,
@@ -75,51 +73,45 @@ local Construct = {
     Steps = { 0, 0, 0 },
     Frames = {},
     MenuButtons = {},
+    PosBtn = {},
     ScrollFrames = {},
     DropDownTemplates = {},
     Content = {
         Children = {},
         Buttons = {
-            General = { A = {} },
+            Module = { A = {} },
             Config = {},
             Hide = {},
             Create = { A = {} },
-            Auras = { A = {}, B = {}, C = {} },
+            Auras = { A = {}, B = {} },
             Indicators = { A = {}, B = {} },
             Update = { A = {}, B = {}, C = {} },
             Layout = { A = {}, B = {}, C = {}, D = {}, E = {} }
         }
     },
-    Auras = { Spells = {}, Colors = {} },
-    ContentKeys = {
-        [1] = { "Info", "Slash" },
-        [2] = { "Hide", "Factory", "Updates" },
-        [3] = { "Aura Settings", "Aura Custom", "Aura Info" },
-        [4] = { "Register" },
-        [5] = { "Layout", "Range", "Tooltip", "Config", "Profile" }
-    },
+    AuraColors = {},
+    AuraSpells = {},
     Menu = {
+        ["TOP"] = {
+            [1] = { "Module", "Slash" },
+            [2] = { "Hide", "Create", "Updates" },
+            [3] = { "Aura Settings", "Aura Custom", "Aura Info" },
+            [4] = { "Register" },
+            [5] = { "Layout", "Range", "Tooltip", "Config", "Profile" }
+        },
         ["LEFT"] = {
-            [1] = { "General" },
+            [1] = { "Info" },
             [2] = { "Units" },
             [3] = { "Auras" },
             [4] = { "Indicators" },
             [5] = { "Interface" }
         },
-        ["TOP"] = {
-            [1] = { "Info", "Slash" },
-            [2] = { "Hide", "Factory", "Updates" },
-            [3] = { "Aura Settings", "Aura Custom", "Aura Info" },
-            [4] = { "Register" },
-            [5] = { "Layout", "Range", "Tooltip", "Config", "Profile" }
-        }
     },
 }
-Ether.Construct = Construct
 
 local function IsSuccess(self)
     local success, msg = pcall(function()
-        assert(self.Steps[1] == 1 and self.Steps[2] == 1 and self.Steps[3] == 1, "Steps incomplete")
+        assert(self.Steps[1] == 1 and self.Steps[3] == 1 and self.Steps[3] == 1 and self.Steps[4] == 1, 'Steps incomplete')
     end)
     if not success then
         Ether.DebugOutput("Assertion failed - ", msg)
@@ -129,9 +121,36 @@ local function IsSuccess(self)
     end
 end
 
-local function ShowCategory(self, IdStr)
+local function ShowCategory(self, tab)
     if not self.IsLoaded then
         return
+    end
+
+    local tabLayer = nil
+    for layer = 1, 5 do
+        if self.Menu["TOP"][layer] then
+            for _, tabName in ipairs(self.Menu["TOP"][layer]) do
+                if tabName == tab then
+                    tabLayer = layer
+                    break
+                end
+            end
+        end
+        if tabLayer then
+            break
+        end
+    end
+
+    for _, layers in pairs(self.MenuButtons) do
+        for _, topBtn in pairs(layers) do
+            topBtn:Hide()
+        end
+    end
+
+    if tabLayer and self.MenuButtons[tabLayer] then
+        for _, topBtn in pairs(self.MenuButtons[tabLayer]) do
+            topBtn:Show()
+        end
     end
 
     for _, child in pairs(self.Content.Children) do
@@ -142,13 +161,11 @@ local function ShowCategory(self, IdStr)
         end
     end
 
-    local target = self.Content.Children[IdStr]
+    local target = self.Content.Children[tab]
     if target then
         if target._ScrollFrame then
             local scrollFrame = target._ScrollFrame
-
             scrollFrame:Show()
-
             target:Show()
             local width = scrollFrame:GetWidth()
             if width > 30 then
@@ -156,13 +173,10 @@ local function ShowCategory(self, IdStr)
             else
                 target:SetWidth(self.Frames["Content"]:GetWidth() - 30)
             end
-
             scrollFrame:UpdateScrollChildRect()
         else
             target:Show()
         end
-
-        Ether.DB["LAST_TAB"] = IdStr
     end
 end
 
@@ -171,9 +185,15 @@ local function InitializeSettings(self)
         return
     end
 
+    for _, frames in pairs(self.Frames) do
+        if frames then
+            self.Steps[1] = 1
+        end
+    end
+
     for layer = 1, 5 do
-        if self.ContentKeys[layer] then
-            for _, name in ipairs(self.ContentKeys[layer]) do
+        if self.Menu["TOP"][layer] then
+            for _, name in ipairs(self.Menu["TOP"][layer]) do
                 self.Content.Children[name] = Ether.CreateSettingsScrollTab(self.Frames["Content"], name)
                 self.Content.Children[name].tex = self.Content.Children[name]:CreateTexture(nil, "BACKGROUND")
                 self.Content.Children[name].tex:SetAllPoints()
@@ -186,7 +206,7 @@ local function InitializeSettings(self)
     BuildContent(self)
 
     if self.Content.Children["Layout"] then
-        self.Steps[1] = 1
+        self.Steps[2] = 1
     end
 
     for layer = 1, 5 do
@@ -229,8 +249,8 @@ local function InitializeSettings(self)
         end
     end
 
-    if self.Menu["TOP"] then
-        self.Steps[2] = 1
+    if self.Menu["TOP"][4] then
+        self.Steps[3] = 1
     end
 
     local last = nil
@@ -238,16 +258,21 @@ local function InitializeSettings(self)
         if self.Menu["LEFT"][layer] then
             for _, itemName in ipairs(self.Menu["LEFT"][layer]) do
                 local btn = Ether.CreateSettingsButtons(self, itemName, self.Frames["Left"], layer, function(_, btnLayer)
+                    local firstTabName = self.Menu["TOP"][btnLayer][1]
+                    Ether.DB[001].LAST_TAB = firstTabName
                     for _, layers in pairs(self.MenuButtons) do
                         for _, topBtn in pairs(layers) do
                             topBtn:Hide()
                         end
                     end
-
                     if self.MenuButtons[btnLayer] then
                         for _, topBtn in pairs(self.MenuButtons[btnLayer]) do
                             topBtn:Show()
                         end
+                    end
+                    if self.Menu["TOP"][btnLayer] and self.Menu["TOP"][btnLayer][1] then
+                        local firstTabName = self.Menu["TOP"][btnLayer][1]
+                        ShowCategory(self, firstTabName)
                     end
                 end, false)
 
@@ -264,8 +289,8 @@ local function InitializeSettings(self)
         end
     end
 
-    if self.Menu["LEFT"] then
-        self.Steps[3] = 1
+    if self.Menu["LEFT"][4] then
+        self.Steps[4] = 1
     end
 
     self.IsLoaded = true
@@ -273,19 +298,6 @@ local function InitializeSettings(self)
     if IsSuccess(self) then
         self.IsSuccess = true
     end
-end
-
-local function FindLayer(self, category)
-    for layer = 1, 5 do
-        if self.ContentKeys[layer] then
-            for _, name in ipairs(self.ContentKeys[layer]) do
-                if name == category then
-                    return layer
-                end
-            end
-        end
-    end
-    return nil
 end
 
 local function ToggleSettings(self)
@@ -296,17 +308,11 @@ local function ToggleSettings(self)
         return
     end
 
-    self.Frames["Main"]:SetShown(Ether.DB["SHOW"])
+    self.Frames["Main"]:SetShown(Ether.DB[001].SHOW)
+    local category = Ether.DB[001].LAST_TAB
 
-    local category = Ether.DB["LAST_TAB"] or "Info"
     if self.Content.Children[category] then
         ShowCategory(self, category)
-        local layer = FindLayer(self, category)
-        if layer and self.MenuButtons[layer] then
-            for _, topBtn in pairs(self.MenuButtons[layer]) do
-                topBtn:Show()
-            end
-        end
     end
 end
 
@@ -322,37 +328,22 @@ local function HiddenFrame(frame)
     frame:SetParent(hiddenParent)
 end
 
-local function BlizzardHidePlayer()
-    if Ether.DB[101][1] == 1 and PlayerFrame then
+local function HideBlizzard()
+    if Ether.DB[101][1] == 1 then
         HiddenFrame(PlayerFrame)
     end
-end
-
-local function BlizzardHidePlayersPet()
-    if Ether.DB[101][2] == 1 and PetFrame then
+    if Ether.DB[101][2] == 1 then
         HiddenFrame(PetFrame)
     end
-end
-
-local function BlizzardHideTarget()
-    if Ether.DB[101][3] == 1 and TargetFrame then
+    if Ether.DB[101][3] == 1 then
         HiddenFrame(TargetFrame)
     end
-end
-
-local function BlizzardHideFocus()
-    if Ether.DB[101][4] == 1 and FocusFrame then
+    if Ether.DB[101][4] == 1 then
         HiddenFrame(FocusFrame)
     end
-end
-
-local function BlizzardHideCastBar()
-    if Ether.DB[101][5] == 1 and PlayerCastingBarFrame then
+    if Ether.DB[101][5] == 1 then
         HiddenFrame(PlayerCastingBarFrame)
     end
-end
-
-local function HideBlizzardPartyFrames()
     if Ether.DB[101][6] == 1 then
         UIParent:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if CompactPartyFrame then
@@ -373,9 +364,6 @@ local function HideBlizzardPartyFrames()
             HiddenFrame(PartyMemberBackground)
         end
     end
-end
-
-local function HideBlizzardRaidFrames()
     if Ether.DB[101][7] == 1 then
         if CompactRaidFrameContainer then
             CompactRaidFrameContainer:UnregisterAllEvents()
@@ -387,9 +375,6 @@ local function HideBlizzardRaidFrames()
             end)
         end
     end
-end
-
-local function HideBlizzardRaidFrameManger()
     if Ether.DB[101][8] == 1 then
         if CompactRaidFrameManager_SetSetting then
             CompactRaidFrameManager_SetSetting('IsShown', '0')
@@ -397,6 +382,18 @@ local function HideBlizzardRaidFrameManger()
         if CompactRaidFrameManager then
             HiddenFrame(CompactRaidFrameManager)
         end
+    end
+    if Ether.DB[101][9] == 1 then
+        HiddenFrame(MicroMenu)
+    end
+    if Ether.DB[101][10] == 1 then
+        HiddenFrame(MainStatusTrackingBarContainer)
+    end
+    if Ether.DB[101][11] == 1 then
+        HiddenFrame(MainMenuBar)
+    end
+    if Ether.DB[101][12] == 1 then
+        HiddenFrame(BagsBar)
     end
 end
 
@@ -422,9 +419,9 @@ Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
     local theirVersion = tonumber(message)
     local myVersion = tonumber(Ether.version)
 
-    local lastCheck = Ether.DB["LAST_VERSION"] or 0
+    local lastCheck = Ether.DB[001].LAST_VERSION or 0
     if (time() - lastCheck >= 9200) and theirVersion and myVersion and myVersion < theirVersion then
-        Ether.DB["LAST_VERSION"] = time()
+        Ether.DB[001].LAST_VERSION = time()
 
         local msg = string_format("New version found (%d). Please visit %s to get the latest version.", theirVersion, "|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
 
@@ -443,12 +440,16 @@ do
 
     dataBroker = LDB:NewDataObject("EtherIcon", {
         type = "launcher",
-        icon = unpack(mediaPath.Icon)
+        icon = unpack(Ether.mediaPath.Icon)
     })
 
     local function OnClick(_, button)
         if button == "RightButton" then
-            Ether.NotShow("SHOW")
+            if Ether.DB[001].SHOW then
+                Ether.DB[001].SHOW = false
+            else
+                Ether.DB[001].SHOW = true
+            end
             ToggleSettings(Construct)
         elseif button == "LeftButton" then
             if not Ether.gridFrame then
@@ -456,7 +457,6 @@ do
             end
             local isShown = Ether.gridFrame:IsShown()
             Ether.gridFrame:SetShown(not isShown)
-            Construct.GridCheckbox:SetChecked(not isShown)
         end
     end
 
@@ -499,6 +499,10 @@ Ether.targetOfTargetEvents = targetOfTargetEvents
 local function startC_Process()
     local C = Ether.DB[201]
 
+    creationQueue[#creationQueue + 1] = function()
+        Ether.Aura:Enable()
+    end
+
     if C[7] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether:CreatePartyHeader()
@@ -508,6 +512,19 @@ local function startC_Process()
     if C[8] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether:CreateRaidHeader()
+        end
+        Ether.Indicators:UpdateIndicators()
+    end
+
+    if C[10] == 1 then
+        creationQueue[#creationQueue + 1] = function()
+            Ether:CreateMainTankHeader()
+        end
+    end
+
+    creationQueue[#creationQueue + 1] = function()
+        if not Construct.IsCreated then
+            Ether.CreateMainSettings(Construct)
         end
     end
 
@@ -523,21 +540,9 @@ local function startC_Process()
         end
     end
 
-    if Ether.DB[1001][1002][1] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether.Aura.SingleAuraFullInitial(Ether.unitButtons["player"])
-        end
-    end
-
     if C[2] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether:CreateUnitButtons("target")
-        end
-    end
-
-    if Ether.DB[1001][1002][2] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether.Aura.SingleAuraFullInitial(Ether.unitButtons["target"])
         end
     end
 
@@ -550,7 +555,12 @@ local function startC_Process()
     if C[4] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether:CreateUnitButtons("pet")
+        end
+    end
 
+    creationQueue[#creationQueue + 1] = function()
+        if Ether.unitButtons["pet"] then
+            Ether:PetCondition(Ether.unitButtons["pet"])
         end
     end
 
@@ -560,21 +570,21 @@ local function startC_Process()
         end
     end
 
-    if C[10] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateMainTankHeader()
-        end
-    end
-
     if C[6] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether:CreateUnitButtons("focus")
         end
     end
 
-    creationQueue[#creationQueue + 1] = function()
-        if Ether.unitButtons["pet"] then
-            Ether:PetCondition(Ether.unitButtons["pet"])
+    if Ether.DB[1001][1002][1] == 1 then
+        creationQueue[#creationQueue + 1] = function()
+            Ether.Aura.SingleAuraFullInitial(Ether.unitButtons["player"])
+        end
+    end
+
+    if Ether.DB[1001][1002][2] == 1 then
+        creationQueue[#creationQueue + 1] = function()
+            Ether.Aura.SingleAuraFullInitial(Ether.unitButtons["target"])
         end
     end
 
@@ -591,12 +601,6 @@ local function startC_Process()
     if Ether.DB[2001]["TARGET_BAR"] then
         creationQueue[#creationQueue + 1] = function()
             Ether.CastBar.Enable("target")
-        end
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        if not Construct.IsCreated then
-            Ether.CreateMainSettings(Construct)
         end
     end
 
@@ -647,16 +651,16 @@ local function OnInitialize(self, event, ...)
             ETHER_DATABASE_DX_AA = {}
         end
 
-        if type(ETHER_DATABASE_DX_AA.VERSION) ~= "number" then
-            ETHER_DATABASE_DX_AA.VERSION = 0
+        if type(ETHER_DATABASE_DX_AA[001]) ~= "table" then
+            ETHER_DATABASE_DX_AA[001] = {}
         end
 
         local version = tonumber(Ether.version)
-        if version == ETHER_DATABASE_DX_AA.VERSION then
+        if version == ETHER_DATABASE_DX_AA[001].VERSION then
             Ether.MergeToLeft(Ether.DataDefault, ETHER_DATABASE_DX_AA)
         else
             ETHER_DATABASE_DX_AA = Ether.DataDefault
-            ETHER_DATABASE_DX_AA.VERSION = version
+            ETHER_DATABASE_DX_AA[001].VERSION = version
         end
 
         Ether.DB = Ether.DataDefault
@@ -665,14 +669,7 @@ local function OnInitialize(self, event, ...)
         assert(type(Ether.DB[5111]) == "table", "Ether Position table missing")
         self:RegisterEvent("PLAYER_LOGOUT")
 
-        BlizzardHidePlayer()
-        BlizzardHideTarget()
-        BlizzardHidePlayersPet()
-        BlizzardHideFocus()
-        BlizzardHideCastBar()
-        HideBlizzardPartyFrames()
-        HideBlizzardRaidFrames()
-        HideBlizzardRaidFrameManger()
+        HideBlizzard()
 
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
@@ -683,7 +680,11 @@ local function OnInitialize(self, event, ...)
             input = string.lower(input or "")
             rest = string.lower(rest or "")
             if input == "settings" then
-                Ether.NotShow("SHOW")
+                if Ether.DB[001].SHOW then
+                    Ether.DB[001].SHOW = false
+                else
+                    Ether.DB[001].SHOW = true
+                end
                 ToggleSettings(Construct)
             elseif input == "debug" then
                 Ether.debug = not Ether.debug
@@ -711,7 +712,6 @@ local function OnInitialize(self, event, ...)
             LDI:Register("EtherIcon", Ether.dataBroker, ETHER_ICON)
         end
 
-        Ether.Aura:Enable()
         Ether.Roster:Enable()
         Ether.hStatus:Enable()
         Ether.nStatus:Enable()
@@ -726,7 +726,7 @@ local function OnInitialize(self, event, ...)
         local mt = Ether.RegisterPosition(Ether.Anchor.maintank, 340)
         mt:InitialPosition()
         local tooltip = CreateFrame("Frame", nil, UIParent)
-        tooltip:SetFrameLevel(100)
+        tooltip:SetFrameLevel(90)
         Ether.Anchor.tooltip = tooltip
         local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip, 301)
         tooltip_P:InitialPosition()
