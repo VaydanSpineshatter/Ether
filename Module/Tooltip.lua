@@ -100,10 +100,10 @@ local function UpdateTooltip(self, unit)
     end
 
 	if DB[4] == 1 and U_PVP_A(unit) then
-		self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Graphic\\UI-PVP-FFA")
+		self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-FFA")
 		self.pvp:Show()
 	elseif DB[4] == 1 and U_FG(unit) and U_PVP(unit) then
-		self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Graphic\\UI-PVP-" .. U_FG(unit))
+		self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-" .. U_FG(unit))
 		self.pvp:Show()
 	else
 		self.pvp:Hide()
