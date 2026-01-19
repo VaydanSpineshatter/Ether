@@ -20,17 +20,52 @@ local __SECURE_INITIALIZE = [[
 	local unit = self:GetAttribute("unit")
    ]]
 
+
+local function OnEnter(self)
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetUnit(self.unit)
+    GameTooltip:Show()
+end
+Ether.OnEnter = OnEnter
+
+local function OnLeave()
+    GameTooltip:Hide()
+end
+Ether.OnLeave = OnLeave
+
+
 local function InitialUpdate(self)
     Ether.InitialHealth(self)
     Ether.UpdateHealthAndMax(self)
     if Ether.DB[701][5] == 1 then
         Ether.UpdateHealthText(self)
     end
-    Ether.UpdatePowerAndMax(self)
     if Ether.DB[701][6] == 1 then
         Ether.UpdatePowerText(self)
     end
     Ether.UpdateName(self, true)
+end
+
+local function Show(self)
+    self.unit = self:GetAttribute("unit")
+    self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    self:RegisterEvent("UNIT_NAME_UPDATE")
+    InitialUpdate(self)
+    if Ether.DB[1001][1002][3] == 1 then
+        if U_EX(self.unit) then
+            C_After(0.1, function()
+                 Ether.Aura.FullAuraScan(self)
+            end)
+        end
+    end
+end
+
+local function Hide(self)
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    self:UnregisterEvent("UNIT_NAME_UPDATE")
+    if Ether.DB[1001][1002][3] == 1 then
+        Ether.Aura.RaidIconCleanUp(self)
+    end
 end
 
 local function OnAttributeChanged(self, name, value)
@@ -57,47 +92,21 @@ local function OnAttributeChanged(self, name, value)
 
         if newUnit and U_EX(newUnit) then
             InitialUpdate(self)
-            Ether.Aura.FullAuraScan(self)
-            C_After(0.15, function()
-                if U_EX(newUnit) then
-                    Ether.Indicators:UpdateIndicators()
-                end
-            end)
+            Ether.Indicators:UpdateIndicators()
+            if Ether.DB[1001][1002][3] == 1 then
+                C_After(0.1, function()
+                    Ether.Aura.FullAuraScan(self)
+                end)
+            end
         end
     end
 end
 
-local function Show(self)
-    self.unit = self:GetAttribute("unit")
-    self:RegisterEvent("GROUP_ROSTER_UPDATE")
-    self:RegisterEvent("UNIT_NAME_UPDATE")
-    InitialUpdate(self)
-    Ether.Aura.FullAuraScan(self)
-    Ether.GetClassColor(self)
-end
-
-local function Hide(self)
-    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    self:UnregisterEvent("UNIT_NAME_UPDATE")
-    Ether.Aura.RaidIconCleanUp(self)
-end
-
-local function OnEnter(self)
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetUnit(self.unit)
-    GameTooltip:Show()
-end
-Ether.OnEnter = OnEnter
-
-local function OnLeave()
-    GameTooltip:Hide()
-end
-Ether.OnLeave = OnLeave
-
-local function Event(self, event)
+local function Event(self, event, unit)
+    if self.unit ~= unit then return end
     if event == "GROUP_ROSTER_UPDATE" then
         local currentUnit = self:GetAttribute("unit")
-        if currentUnit ~= self.unit then
+        if currentUnit ~= unit then
             OnAttributeChanged(self, "unit", currentUnit)
         end
     elseif event == "UNIT_NAME_UPDATE" then
@@ -105,12 +114,14 @@ local function Event(self, event)
     end
 end
 
+
 local function initialConfigFunction(headerName, buttonName)
     local hl = Ether.DB[2001]["HIGHLIGHT"]
     local b = _G[buttonName]
     b.Indicators = {}
-    b.Buffs = {}
-    b.Debuffs = {}
+    b.RaidAura = {}
+
+    Ether.AddBlackBorder(b)
     local healthBar = CreateFrame("StatusBar", nil, b)
     b.healthBar = healthBar
     healthBar:SetPoint("TOPLEFT")
@@ -129,30 +140,6 @@ local function initialConfigFunction(headerName, buttonName)
     Ether.GetClassColor(b)
     Ether.Setup.CreatePowerText(b)
     Ether.Setup.CreateHealthText(b)
-    local top = b:CreateTexture(nil, "BORDER")
-    top:SetColorTexture(0, 0, 0, 1)
-    top:SetPoint("TOPLEFT", -1, 1)
-    top:SetPoint("TOPRIGHT", 1, 1)
-    top:SetHeight(1)
-    local bottom = b:CreateTexture(nil, "BORDER")
-    bottom:SetColorTexture(0, 0, 0, 1)
-    bottom:SetPoint("BOTTOMLEFT", -1, -1)
-    bottom:SetPoint("BOTTOMRIGHT", 1, -1)
-    bottom:SetHeight(1)
-    local left = b:CreateTexture(nil, "BORDER")
-    left:SetColorTexture(0, 0, 0, 1)
-    left:SetPoint("TOPLEFT", -1, 1)
-    left:SetPoint("BOTTOMLEFT", -1, -1)
-    left:SetWidth(1)
-    local right = b:CreateTexture(nil, "BORDER")
-    right:SetColorTexture(0, 0, 0, 1)
-    right:SetPoint("TOPRIGHT", 1, 1)
-    right:SetPoint("BOTTOMRIGHT", 1, -1)
-    right:SetWidth(1)
-    b.top = top
-    b.right = right
-    b.left = left
-    b.bottom = bottom
     if hl then
         local highlight = b:CreateTexture(nil, "HIGHLIGHT")
         b.highlight = highlight
@@ -172,38 +159,27 @@ local function initialConfigFunction(headerName, buttonName)
     Ether.Buttons.raid[buttonName] = b
 end
 
-local function CreateGroupHeader()
-    local o
-    local w, h, m
-    local solo = Ether.DB[2001]["LAYOUT_SOLO"]
-    local bg = Ether.DB[2001]["LAYOUT_BG"]
-    if bg then
-        w, h, m = 55, 55, 8
-        o = "1,2,3,4,5,6,7,8"
-    else
-        w, h, m = 85, 55, 5
-        o = "1,2,3,4,5"
-    end
+local function CreateHeader()
     header:SetPoint("TOPLEFT")
     header:SetParent(anchor)
     header:SetAttribute("template", "EtherUnitTemplate")
     header:SetAttribute("initialConfigFunction", __SECURE_INITIALIZE)
     header.initialConfigFunction = initialConfigFunction
-    header:SetAttribute("ButtonWidth", w)
-    header:SetAttribute("ButtonHeight", h)
+    header:SetAttribute("ButtonWidth", 55)
+    header:SetAttribute("ButtonHeight", 55)
     header:SetAttribute("columnAnchorPoint", "LEFT")
     header:SetAttribute("point", "TOP")
     header:SetAttribute("groupBy", "GROUP")
-    header:SetAttribute("groupingOrder", o)
+    header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset", 1)
-    header:SetAttribute("yOffset", -2)
-    header:SetAttribute("columnSpacing", 2)
+    header:SetAttribute("yOffset", -1)
+    header:SetAttribute("columnSpacing", 1)
     header:SetAttribute("unitsPerColumn", 5)
-    header:SetAttribute("maxColumns", m)
+    header:SetAttribute("maxColumns", 8)
     header:SetAttribute("showRaid", true)
-    header:SetAttribute("showParty", false)
-    header:SetAttribute("showPlayer", false)
-    header:SetAttribute("showSolo", solo)
+    header:SetAttribute("showParty",  false)
+    header:SetAttribute("showPlayer",  false)
+    header:SetAttribute("showSolo", false)
     header:Show()
     -- RegisterAttributeDriver(header, "state-visibility", "[group] show; hide")
 end
@@ -215,77 +191,11 @@ function Ether:CreateRaidHeader()
     end
     if not state then
         state = true
-        CreateGroupHeader()
+        CreateHeader()
     end
 end
 
-local timer = false
-local function startTimer()
-    if not timer then
-        timer = true
-        C_After(4, function()
-            timer = false
-        end)
-    end
-end
 
-function Ether.RefreshEtherRaidHeader()
-    if InCombatLockdown() then
-        return
-    end
-    if timer then
-        return
-    end
-    if not timer then
-        startTimer()
-        local o
-        local w, h, m
-        local solo = Ether.DB[2001]["LAYOUT_SOLO"]
-        local bg = Ether.DB[2001]["LAYOUT_BG"]
-        local hl = Ether.DB[2001]["HIGHLIGHT"]
-        if bg then
-            w, h, m = 55, 55, 8
-            o = "1,2,3,4,5,6,7,8"
-        else
-            w, h, m = 85, 55, 5
-            o = "1,2,3,4,5"
-        end
-        local name = header:GetName() .. "UnitButton"
-        local index = 1
-        local child = _G[name .. index]
-        while (child) do
-            child:ClearAllPoints()
-            child:SetWidth(w)
-            child:SetHeight(h)
-            if hl and child.highlight == nil then
-                local highlight = child:CreateTexture(nil, "HIGHLIGHT")
-                child.highlight = highlight
-                highlight:SetAllPoints()
-                highlight:SetColorTexture(0.80, 0.40, 1.00, .2)
-            else
-                if child.highlight then
-                    if not child.highlight:IsShown() then
-                        child.highlight:Show()
-                    else
-                        child.highlight:Hide()
-                    end
-                end
-            end
-            index = index + 1
-            child = _G[name .. index]
-        end
-        header:ClearAllPoints()
-        header:SetAttribute("groupingOrder", o)
-        header:SetAttribute("maxColumns", m)
-        header:SetAttribute("showSolo", solo)
-        header:SetPoint("TOPLEFT")
-        header:SetParent(anchor)
-        if (header:IsShown()) then
-            header:Hide()
-            header:Show()
-        end
-    end
-end
 
 
 

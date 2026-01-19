@@ -10,14 +10,12 @@ local U_GUID = UnitGUID
 local function Initial(self)
     C_After(0.1, function()
         Ether.InitialHealth(self)
-        Ether.InitialPower(self)
     end)
     Ether.UpdateHealthAndMax(self)
     Ether.UpdateName(self)
     if Ether.DB[701][3] == 1 then
         Ether.UpdateHealthText(self)
     end
-    Ether.UpdatePowerAndMax(self)
     if Ether.DB[701][4] == 1 then
         Ether.UpdatePowerText(self)
     end
@@ -38,11 +36,9 @@ local function OnAttributeChanged(self)
 end
 
 function Ether:CreatePartyHeader()
-    if (InCombatLockdown()) then
-        return
-    end
+
     header:SetPoint("TOPLEFT", anchor, "TOPLEFT")
-    header:SetAttribute("showPlayer", true)
+    header:SetAttribute("showPlayer", false)
     header:SetAttribute("showParty", true)
     header:SetAttribute("template", "EtherUnitTemplate")
     header:SetAttribute("initialConfigFunction", [[
@@ -54,41 +50,46 @@ function Ether:CreatePartyHeader()
 		self:SetAttribute("*type2", "togglemenu")
 		local unit = self:GetAttribute("unit")
 	]])
-    header:SetAttribute('ButtonHeight', 50)
-    header:SetAttribute('ButtonWidth', 120)
-    header:SetAttribute("point", "TOP")
-    header:SetAttribute("columnAnchorPoint", "BOTTOM")
+    header:SetAttribute("ButtonWidth", 55)
+    header:SetAttribute("ButtonHeight", 55)
+    header:SetAttribute("point", "LEFT")
+    header:SetAttribute("columnAnchorPoint", "RIGHT")
     header:SetAttribute("xOffset", 1)
     header:SetAttribute("yOffset", -1)
     header:SetAttribute("maxColumns", 1)
-    header:SetAttribute("unitsPerColumn", 5)
-    header:SetAttribute("startingIndex", -4)
+    header:SetAttribute("unitsPerColumn", 4)
+    header:SetAttribute("startingIndex", -3)
     header:Show()
     header:SetAttribute("startingIndex", 1)
 
+    RegisterAttributeDriver(header, "state-visibility", "[@raid1,exists] hide;[@party1,exists] show;[group:party] show;hide")
+
     for i, b in ipairs(header) do
-        Ether.Setup.CreateHealthBar(b, "HORIZONTAL")
-        Ether.Setup.CreatePowerBar(b)
-        Ether.Setup.CreateBorder(b)
+        local healthBar = CreateFrame("StatusBar", nil, b)
+        b.healthBar = healthBar
+        healthBar:SetPoint("TOPLEFT")
+        healthBar:SetAllPoints(b)
+        healthBar:SetOrientation("VERTICAL")
+        healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.StatusBar))
+        healthBar:SetMinMaxValues(0, 100)
+        healthBar:SetFrameLevel(b:GetFrameLevel() + 1)
+        local healthDrop = b:CreateTexture(nil, "ARTWORK", nil, -7)
+        b.healthDrop = healthDrop
+        healthDrop:SetAllPoints(healthBar)
+        healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
+        Ether.AddBlackBorder(b)
         Ether.Setup.CreatePrediction(b)
         Ether.Setup.CreateNameText(b, 10, 0)
         Ether.GetClassColor(b)
         Ether.Setup.CreatePowerText(b)
         Ether.Setup.CreateHealthText(b)
         b.unit = "party" .. i
-        if i == 1 then
-            b.unit = "player"
-        else
-            b.unit = "party" .. (i - 1)
-        end
         b:SetAttribute("unit", b.unit)
         b:SetScript("OnAttributeChanged", OnAttributeChanged)
         b:SetScript("OnShow", Show)
         b:RegisterForClicks("AnyUp")
         b:SetScript("OnEnter", Ether.OnEnter)
         b:SetScript("OnLeave", Ether.OnLeave)
-        Ether.InitialHealth(b)
-        Ether.InitialPower(b)
         Ether.Buttons.party[b.unit] = b
     end
 end
