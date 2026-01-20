@@ -1,10 +1,5 @@
 local _, Ether = ...
 
-local _, classFileName = UnitClass("player")
-if classFileName ~= "HUNTER" then
-    return
-end
-
 local petInfo = {
     [1] = { 0.375, 0.5625, 0, 0.359375 },
     [2] = { 0.1875, 0.375, 0, 0.359375 },
@@ -56,6 +51,12 @@ function Ether:PetCondition(button)
     if not button or not button.healthBar  then
         return
     end
+    
+    local _, classFileName = UnitClass("player")
+    if classFileName ~= "HUNTER" then
+        return
+    end
+
     local condition = CreateFrame("Frame", "nil", button)
     condition:SetSize(16, 16)
     condition:SetPoint("BOTTOMRIGHT", button.healthBar, "BOTTOMRIGHT", 0, 0)
