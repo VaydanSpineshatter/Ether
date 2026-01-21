@@ -2,7 +2,7 @@ local _, Ether = ...
 local Setup = {}
 Ether.Setup = Setup
 local math_floor = math.floor
-
+local tremove, tinsert = table.remove, table.insert
 Ether.Setup.CreatePowerText = function(button)
     local power = button.healthBar:CreateFontString(nil, "OVERLAY")
     button.power = power
@@ -225,7 +225,7 @@ function Ether.Setup:CreateGrid()
                 line:SetThickness(2)
                 line:SetStartPoint("TOPLEFT", UIParent, 0, -yTop)
                 line:SetEndPoint("TOPRIGHT", UIParent, screenWidth, -yTop)
-                table.insert(linePool, line)
+                tinsert(linePool, line)
             end
             if yBottom >= 0 then
                 local line = frame:CreateLine()
@@ -233,7 +233,7 @@ function Ether.Setup:CreateGrid()
                 line:SetThickness(2)
                 line:SetStartPoint("TOPLEFT", UIParent, 0, -yBottom)
                 line:SetEndPoint("TOPRIGHT", UIParent, screenWidth, -yBottom)
-                table.insert(linePool, line)
+                tinsert(linePool, line)
             end
             local xRight = centerX + offset
             local xLeft = centerX - offset
@@ -243,7 +243,7 @@ function Ether.Setup:CreateGrid()
                 line:SetThickness(2)
                 line:SetStartPoint("TOPLEFT", UIParent, xRight, 0)
                 line:SetEndPoint("BOTTOMLEFT", UIParent, xRight, -screenHeight)
-                table.insert(linePool, line)
+                tinsert(linePool, line)
             end
             if xLeft >= 0 then
                 local line = frame:CreateLine()
@@ -251,7 +251,7 @@ function Ether.Setup:CreateGrid()
                 line:SetThickness(2)
                 line:SetStartPoint("TOPLEFT", UIParent, xLeft, 0)
                 line:SetEndPoint("BOTTOMLEFT", UIParent, xLeft, -screenHeight)
-                table.insert(linePool, line)
+                tinsert(linePool, line)
             end
         end
         for offset = 20, math.max(centerX, centerY), 20 do
@@ -264,7 +264,7 @@ function Ether.Setup:CreateGrid()
                     line:SetThickness(1)
                     line:SetStartPoint("TOPLEFT", UIParent, 0, -yTop)
                     line:SetEndPoint("TOPRIGHT", UIParent, screenWidth, -yTop)
-                    table.insert(linePool, line)
+                    tinsert(linePool, line)
                 end
                 if yBottom >= 0 then
                     local line = frame:CreateLine()
@@ -272,7 +272,7 @@ function Ether.Setup:CreateGrid()
                     line:SetThickness(1)
                     line:SetStartPoint("TOPLEFT", UIParent, 0, -yBottom)
                     line:SetEndPoint("TOPRIGHT", UIParent, screenWidth, -yBottom)
-                    table.insert(linePool, line)
+                    tinsert(linePool, line)
                 end
                 local xRight = centerX + offset
                 local xLeft = centerX - offset
@@ -282,7 +282,7 @@ function Ether.Setup:CreateGrid()
                     line:SetThickness(1)
                     line:SetStartPoint("TOPLEFT", UIParent, xRight, 0)
                     line:SetEndPoint("BOTTOMLEFT", UIParent, xRight, -screenHeight)
-                    table.insert(linePool, line)
+                    tinsert(linePool, line)
                 end
                 if xLeft >= 0 then
                     local line = frame:CreateLine()
@@ -290,10 +290,75 @@ function Ether.Setup:CreateGrid()
                     line:SetThickness(1)
                     line:SetStartPoint("TOPLEFT", UIParent, xLeft, 0)
                     line:SetEndPoint("BOTTOMLEFT", UIParent, xLeft, -screenHeight)
-                    table.insert(linePool, line)
+                    tinsert(linePool, line)
                 end
             end
         end
+    end
+end
+
+local Temp = {}
+local ObjPool = {}
+function Ether.CreateObjPool(creatorFunc)
+    local obj = {
+        create = creatorFunc,
+        active = {},
+        inactive = {},
+        activeCount = 0,
+    }
+    setmetatable(obj, { __index = ObjPool })
+    return obj
+end
+function ObjPool:Acquire(...)
+    if self.activeCount >= 180 then
+        return nil
+    end
+    local obj = tremove(self.inactive)
+    if not obj then
+        obj = self.create()
+    end
+    self.activeCount = self.activeCount + 1
+    self.active[self.activeCount] = obj
+    obj._poolIndex = self.activeCount
+    if obj.Setup then
+        obj:Setup(...)
+    end
+    return obj
+end
+function ObjPool:Release(obj)
+    if not obj or not obj._poolIndex then
+        return
+    end
+    local index = obj._poolIndex
+    if index <= 0 or index > self.activeCount then
+        return
+    end
+    local last = self.active[self.activeCount]
+    self.active[index] = last
+    self.active[self.activeCount] = nil
+    if last and last ~= obj then
+        last._poolIndex = index
+    end
+    obj._poolIndex = -1
+    self.activeCount = self.activeCount - 1
+    if obj.Reset then
+        obj:Reset()
+    end
+    if #self.inactive < 150 then
+        self.inactive[#self.inactive + 1] = obj
+    end
+end
+function ObjPool:ReleaseAll()
+    for i = 1, self.activeCount do
+        Temp[i] = self.active[i]
+    end
+
+    for i = 1, #Temp do
+        self:Release(Temp[i])
+    end
+
+    for i = 1, #Temp do
+        Temp[i] = nil
     end
 end
 

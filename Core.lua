@@ -4,8 +4,7 @@ local _, Ether = ...
 local L = Ether.L
 
 local pairs, ipairs = pairs, ipairs
-local GetMetadata = C_AddOns.GetAddOnMetadata
-Ether.version = GetMetadata("Ether", "Version")
+Ether.version = C_AddOns.GetAddOnMetadata("Ether", "Version")
 Ether.updatedChannel = false
 Ether.debug = false
 
@@ -35,8 +34,7 @@ Ether.HeaderStr = {}
 Ether.Buttons = {
     party = {},
     raid = {},
-    maintank = {},
-    raidpet = {},
+    maintank = {}
 }
 
 local function BuildContent(self)
@@ -48,7 +46,6 @@ local function BuildContent(self)
         Ether.CreateUpdateSection(self)
         Ether.CreateAuraSettingsSection(self)
         Ether.CreateAuraCustomSection(self)
-        Ether.CreateAuraInfoSection(self)
         Ether.CreateRegisterSection(self)
         Ether.CreateLayoutSection(self)
         Ether.CreateRangeSection(self)
@@ -89,13 +86,11 @@ local Construct = {
             Layout = { A = {}, B = {}, C = {}, D = {}, E = {} }
         }
     },
-    AuraColors = {},
-    AuraSpells = {},
     Menu = {
         ["TOP"] = {
             [1] = { "Module", "Slash" },
             [2] = { "Hide", "Create", "Updates" },
-            [3] = { "Aura Settings", "Aura Custom", "Aura Info" },
+            [3] = { "Aura Settings", "Aura Custom" },
             [4] = { "Register" },
             [5] = { "Layout", "Range", "Tooltip", "Config", "Profile" }
         },
@@ -108,10 +103,10 @@ local Construct = {
         },
     },
 }
-
+--      [5] = { "Arena" },   --   [5] = { "Comm", "Setup" },
 local function IsSuccess(self)
     local success, msg = pcall(function()
-        assert(self.Steps[1] == 1 and self.Steps[3] == 1 and self.Steps[3] == 1 and self.Steps[4] == 1, 'Steps incomplete')
+        assert(self.Steps[1] == 1 and self.Steps[2] == 1 and self.Steps[3] == 1, "Steps incomplete")
     end)
     if not success then
         Ether.DebugOutput("Assertion failed - ", msg)
@@ -126,7 +121,7 @@ local function ShowCategory(self, tab)
         return
     end
 
-    local tabLayer = nil
+    local tabLayer
     for layer = 1, 5 do
         if self.Menu["TOP"][layer] then
             for _, tabName in ipairs(self.Menu["TOP"][layer]) do
@@ -185,12 +180,6 @@ local function InitializeSettings(self)
         return
     end
 
-    for _, frames in pairs(self.Frames) do
-        if frames then
-            self.Steps[1] = 1
-        end
-    end
-
     for layer = 1, 5 do
         if self.Menu["TOP"][layer] then
             for _, name in ipairs(self.Menu["TOP"][layer]) do
@@ -206,7 +195,7 @@ local function InitializeSettings(self)
     BuildContent(self)
 
     if self.Content.Children["Layout"] then
-        self.Steps[2] = 1
+        self.Steps[1] = 1
     end
 
     for layer = 1, 5 do
@@ -249,8 +238,8 @@ local function InitializeSettings(self)
         end
     end
 
-    if self.Menu["TOP"][4] then
-        self.Steps[3] = 1
+    if self.Menu["TOP"][5] then
+        self.Steps[2] = 1
     end
 
     local last = nil
@@ -271,7 +260,6 @@ local function InitializeSettings(self)
                         end
                     end
                     if self.Menu["TOP"][btnLayer] and self.Menu["TOP"][btnLayer][1] then
-                        local firstTabName = self.Menu["TOP"][btnLayer][1]
                         ShowCategory(self, firstTabName)
                     end
                 end, false)
@@ -289,8 +277,8 @@ local function InitializeSettings(self)
         end
     end
 
-    if self.Menu["LEFT"][4] then
-        self.Steps[4] = 1
+    if self.Menu["LEFT"][5] then
+        self.Steps[3] = 1
     end
 
     self.IsLoaded = true
@@ -408,11 +396,12 @@ local function UpdateSendChannel()
     end
 end
 
+local playerName = UnitName("player")
 local string_format = string.format
 local time = time
 local Comm = LibStub("AceComm-3.0")
 Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
-    if sender == UnitName("player") then
+    if sender == playerName then
         return
     end
 
@@ -528,12 +517,6 @@ local function startC_Process()
         end
     end
 
-    if C[9] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateRaidPetHeader()
-        end
-    end
-
     if C[1] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether:CreateUnitButtons("player")
@@ -643,32 +626,31 @@ local function OnInitialize(self, event, ...)
         self:RegisterEvent("PLAYER_LOGIN")
         self:UnregisterEvent("ADDON_LOADED")
 
-        if not Ether.DebugFrame then
-            Ether.Setup.CreateDebugFrame()
-        end
-
         if type(_G.ETHER_DATABASE_DX_AA) ~= "table" then
             ETHER_DATABASE_DX_AA = {}
         end
 
-        if type(ETHER_DATABASE_DX_AA[001]) ~= "table" then
-            ETHER_DATABASE_DX_AA[001] = {}
+        if not ETHER_DATABASE_DX_AA.profiles then
+            local charKey = Ether.GetCharacterKey()
+            local oldData = Ether.DeepCopy(ETHER_DATABASE_DX_AA)
+            local profileData = Ether.MergeToLeft(
+                    Ether.DeepCopy(Ether.DataDefault),
+                    oldData
+            )
+            ETHER_DATABASE_DX_AA.profiles = {
+                [charKey] = profileData
+            }
+            ETHER_DATABASE_DX_AA.currentProfile = charKey
         end
 
-        local version = tonumber(Ether.version)
-        if version == ETHER_DATABASE_DX_AA[001].VERSION then
-            Ether.MergeToLeft(Ether.DataDefault, ETHER_DATABASE_DX_AA)
-        else
-            ETHER_DATABASE_DX_AA = Ether.DataDefault
-            ETHER_DATABASE_DX_AA[001].VERSION = version
-        end
+        local DB = Ether.DeepCopy(Ether.GetCurrentProfile())
+        Ether.DB = DB
 
-        Ether.DB = Ether.DataDefault
-
-        assert(type(Ether.DB) == "table", "Ether Database failed to initialize")
-        assert(type(Ether.DB[5111]) == "table", "Ether Position table missing")
         self:RegisterEvent("PLAYER_LOGOUT")
 
+        if not Ether.DebugFrame then
+            Ether.Setup.CreateDebugFrame()
+        end
         HideBlizzard()
 
     elseif (event == "PLAYER_LOGIN") then
@@ -717,26 +699,24 @@ local function OnInitialize(self, event, ...)
         Ether.nStatus:Enable()
         Ether.pStatus:Enable()
 
-        local p = Ether.RegisterPosition(Ether.Anchor.party, 337)
+        local p = Ether.RegisterPosition(Ether.Anchor.party, 338)
         p:InitialPosition()
-        local r = Ether.RegisterPosition(Ether.Anchor.raid, 338)
+        local r = Ether.RegisterPosition(Ether.Anchor.raid, 339)
         r:InitialPosition()
-        local rp = Ether.RegisterPosition(Ether.Anchor.raidpet, 339)
-        rp:InitialPosition()
         local mt = Ether.RegisterPosition(Ether.Anchor.maintank, 340)
         mt:InitialPosition()
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(90)
         Ether.Anchor.tooltip = tooltip
-        local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip, 301)
+        local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip, 331)
         tooltip_P:InitialPosition()
         local token = {
-            [1] = 331,
-            [2] = 332,
-            [3] = 333,
-            [4] = 334,
-            [5] = 335,
-            [6] = 336
+            [1] = 332,
+            [2] = 333,
+            [3] = 334,
+            [4] = 335,
+            [5] = 336,
+            [6] = 337
         }
         for i, key in ipairs({ "player", "target", "targettarget", "pet", "pettarget", "focus" }) do
             if not Ether.Anchor[key] then
@@ -745,6 +725,7 @@ local function OnInitialize(self, event, ...)
                 pos_Frames["pos_" .. key]:InitialPosition()
             end
         end
+
         startC_Process()
 
     elseif (event == "GROUP_ROSTER_UPDATE") then
@@ -754,10 +735,14 @@ local function OnInitialize(self, event, ...)
             UpdateSendChannel()
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, sendChannel, nil, "NORMAL")
         end
+
     elseif (event == "PLAYER_LOGOUT") then
-        _G.ETHER_DATABASE_DX_AA = Ether.DeepCopy(Ether.DB)
+        if Ether.DB then
+            ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.DeepCopy(Ether.DB)
+        end
     end
 end
+
 local Initialize = CreateFrame("Frame")
 Initialize:RegisterEvent("ADDON_LOADED")
 Initialize:SetScript("OnEvent", OnInitialize)

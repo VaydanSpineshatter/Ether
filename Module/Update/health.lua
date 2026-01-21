@@ -269,12 +269,6 @@ local function HealthChanged(_, event, unit)
                 UpdateHealthAndMax(mt)
             end
         end
-        if Ether.DB[901]["raidpet"] then
-            local rp = Ether.Buttons.raidpet[unit]
-            if rp then
-                UpdateHealthAndMax(rp)
-            end
-        end
         if not Ether.DB[901]["raid"] or Ether.DB[201][8] ~= 1 or not unit:match("^raid") then
             return
         end
@@ -312,12 +306,6 @@ local function PredictionChanged(_, event, unit)
         local mt = Ether.Buttons.maintank[unit]
         if mt then
             UpdatePrediction(mt)
-        end
-    end
-    if Ether.DB[901]["raidpet"] then
-        local rp = Ether.Buttons.raidpet[unit]
-        if rp then
-            UpdatePrediction(rp)
         end
     end
     if not Ether.DB[901]["raid"] or Ether.DB[201][8] ~= 1 or not unit:match("^raid") then

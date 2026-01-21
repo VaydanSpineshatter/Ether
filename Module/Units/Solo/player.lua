@@ -1,10 +1,5 @@
 local _, Ether = ...
 
-local anchor = CreateFrame("Frame", "EtherMaintankAnchor", UIParent, "SecureFrameTemplate")
-Ether.Anchor.maintank = anchor
-local header = CreateFrame("Frame", "EtherMaintankHeader", anchor, "SecureGroupHeaderTemplate")
-
-local U_GUID = UnitGUID
 local C_After = C_Timer.After
 local C_Ticker = C_Timer.NewTicker
 
@@ -25,7 +20,7 @@ local function FullUpdate(self)
 end
 
 local function AttributeChanged(self)
-    local guid = self.unit and U_GUID(self.unit)
+    local guid = self.unit and UnitGUID(self.unit)
     if (guid ~= self.unitGUID) then
         self.unitGUID = guid
         if (guid) then
@@ -41,6 +36,7 @@ local function Show(self)
 end
 
 local function Update(self, event, unit)
+    if self.unit ~= unit then return end
     if not Ether.DB[901]["targettarget"] or self.unit ~= "targettarget" then
         return
     end
@@ -62,7 +58,7 @@ local function Update(self, event, unit)
 end
 
 function Ether:CreateUnitButtons(unit)
-    if (InCombatLockdown()) then
+    if InCombatLockdown() then
         return
     end
     if not Ether.unitButtons[unit] then
@@ -168,7 +164,7 @@ function Ether.stopUpdateFunc()
 end
 
 local function ParseGUID(unit)
-    local guid = U_GUID(unit)
+    local guid = UnitGUID(unit)
     local name = UnitName(unit)
     local tokenGuid = UnitTokenFromGUID(guid)
     if guid and tokenGuid then
@@ -181,7 +177,7 @@ function Ether.CreateCustomUnit()
         return
     end
     local token = "target"
-    if not U_GUID(token) then
+    if not UnitGUID(token) then
         Ether.DebugOutput("Target a group or raid member")
         enabled = false
         return
@@ -225,91 +221,5 @@ function Ether.CreateCustomUnit()
                 enabled = true
             end
         end
-    end
-end
-
-local function MTInitial(self)
-    C_After(0.1, function()
-        Ether.InitialHealth(self)
-        Ether.UpdateHealthAndMax(self)
-        Ether.UpdateName(self)
-    end)
-end
-
-local function MTAttributeChanged(self)
-    self.unit = self:GetAttribute("unit")
-    local guid = self.unit and U_GUID(self.unit)
-    if (guid ~= self.unitGUID) then
-        self.unitGUID = guid
-        if (guid) then
-            MTInitial(self)
-        end
-    end
-end
-
-local function MTShow(self)
-    self.unit = self:GetAttribute("unit")
-    MTInitial(self)
-end
-
-function Ether:CreateMainTankHeader()
-    if (InCombatLockdown()) then
-        return
-    end
-    header:SetPoint("TOPLEFT", anchor, "TOPLEFT")
-    header:SetAttribute("template", "EtherUnitTemplate")
-    header:SetAttribute("point", "LEFT")
-    header:SetAttribute("columnAnchorPoint", "LEFT")
-    header:SetAttribute("roleFilter", "MAINTANK")
-    header:SetAttribute("showRaid", true)
-    header:SetAttribute("strictFiltering", true)
-    header:SetAttribute("ButtonHeight", 35)
-    header:SetAttribute("ButtonWidth", 95)
-    header:SetAttribute("xOffset", 1)
-    header:SetAttribute("yOffset", -1)
-    header:SetAttribute("columnSpacing", 2)
-    header:SetAttribute("initialConfigFunction", [[
-    RegisterUnitWatch(self)
-    local header = self:GetParent()
-    self:SetWidth(header:GetAttribute("ButtonWidth"))
-    self:SetHeight(header:GetAttribute("ButtonHeight"))
-    self:SetAttribute("*type1", "target")
-    self:SetAttribute("*type2", "togglemenu")
-   	local unit = self:GetAttribute("unit")
-]])
-
-    header:SetAttribute("unitsPerColumn", 4)
-    header:SetAttribute("maxColumns", 1)
-    header:SetAttribute("startingIndex", -3)
-    header:Show()
-    header:SetAttribute("startingIndex", 1)
-
-    for i, b in ipairs(header) do
-        local unit = "raid" .. i
-        b.unit = unit
-        b:SetAttribute("unit", b.unit)
-        local healthBar = CreateFrame("StatusBar", nil, b)
-        b.healthBar = healthBar
-        healthBar:SetPoint("TOPLEFT")
-        healthBar:SetSize(95, 35)
-        healthBar:SetOrientation("HORIZONTAL")
-        healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.NewBar))
-        healthBar:SetMinMaxValues(0, 100)
-        healthBar:SetFrameLevel(b:GetFrameLevel() + 1)
-        local healthDrop = b:CreateTexture(nil, "ARTWORK", nil, -7)
-        b.healthDrop = healthDrop
-        healthDrop:SetAllPoints(healthBar)
-        healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
-        Ether.Setup.CreatePrediction(b)
-        Ether.Setup.CreateBorder(b)
-        Ether.Setup.CreateNameText(b, 10, 0)
-        Ether.GetClassColor(b)
-        b:SetAttribute("unit", b.unit)
-        b:RegisterForClicks("AnyUp")
-        b:SetScript("OnShow", MTShow)
-        b:HookScript("OnAttributeChanged", MTAttributeChanged)
-        b:SetScript("OnEnter", Ether.OnEnter)
-        b:SetScript("OnLeave", Ether.OnLeave)
-        Ether.Buttons.maintank[b.unit] = b
     end
 end

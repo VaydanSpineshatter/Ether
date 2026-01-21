@@ -5,10 +5,6 @@ Ether.Anchor.raid = anchor
 local header = CreateFrame("Frame", "EtherRaidGroupHeader", anchor, "SecureGroupHeaderTemplate")
 Ether.Header.raid = header
 
-local U_GUID = UnitGUID
-local C_After = C_Timer.After
-local U_EX = UnitExists
-
 local __SECURE_INITIALIZE = [[
     RegisterUnitWatch(self)
     local header = self:GetParent()
@@ -20,8 +16,8 @@ local __SECURE_INITIALIZE = [[
 	local unit = self:GetAttribute("unit")
    ]]
 
-
 local function OnEnter(self)
+    if not GameTooltip then return end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetUnit(self.unit)
     GameTooltip:Show()
@@ -29,10 +25,10 @@ end
 Ether.OnEnter = OnEnter
 
 local function OnLeave()
+    if not GameTooltip then return end
     GameTooltip:Hide()
 end
 Ether.OnLeave = OnLeave
-
 
 local function InitialUpdate(self)
     Ether.InitialHealth(self)
@@ -51,34 +47,23 @@ local function Show(self)
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("UNIT_NAME_UPDATE")
     InitialUpdate(self)
-    if Ether.DB[1001][1002][3] == 1 then
-        if U_EX(self.unit) then
-            C_After(0.1, function()
-                 Ether.Aura.FullAuraScan(self)
-            end)
-        end
-    end
 end
 
 local function Hide(self)
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("UNIT_NAME_UPDATE")
-    if Ether.DB[1001][1002][3] == 1 then
-        Ether.Aura.RaidIconCleanUp(self)
-    end
 end
 
-local function OnAttributeChanged(self, name, value)
-    if name ~= "unit" then
+local function OnAttributeChanged(self, name, unit)
+    if (name ~= "unit" or not unit) then
         return
     end
 
     local oldUnit = self.unit
-    local oldGuid = self.unitGUID
-    local newUnit = value
-    local newGuid = newUnit and U_GUID(newUnit)
+    local newUnit = unit or self:GetAttribute("unit")
+    local newGuid = newUnit and UnitGUID(newUnit)
 
-    if newGuid ~= oldGuid then
+    if newGuid ~= self.unitGUID then
         if oldUnit then
             Ether.Buttons.raid[oldUnit] = nil
         end
@@ -90,12 +75,12 @@ local function OnAttributeChanged(self, name, value)
             Ether.Buttons.raid[newUnit] = self
         end
 
-        if newUnit and U_EX(newUnit) then
+        if newUnit and UnitExists(newUnit) then
             InitialUpdate(self)
             Ether.Indicators:UpdateIndicators()
             if Ether.DB[1001][1002][3] == 1 then
-                C_After(0.1, function()
-                    Ether.Aura.FullAuraScan(self)
+                C_Timer.After(0.15, function()
+                    Ether.Aura.UpdateUnitAuras(self)
                 end)
             end
         end
@@ -103,24 +88,22 @@ local function OnAttributeChanged(self, name, value)
 end
 
 local function Event(self, event, unit)
-    if self.unit ~= unit then return end
+    self.unit = self:GetAttribute("unit")
+    if self.unit ~= unit then
+        return
+    end
     if event == "GROUP_ROSTER_UPDATE" then
-        local currentUnit = self:GetAttribute("unit")
-        if currentUnit ~= unit then
-            OnAttributeChanged(self, "unit", currentUnit)
-        end
+
     elseif event == "UNIT_NAME_UPDATE" then
         Ether.UpdateName(self, true)
     end
 end
 
-
 local function initialConfigFunction(headerName, buttonName)
-    local hl = Ether.DB[2001]["HIGHLIGHT"]
     local b = _G[buttonName]
     b.Indicators = {}
-    b.RaidAura = {}
-
+    b.raidAuras = {}
+    b.raidIcons = {}
     Ether.AddBlackBorder(b)
     local healthBar = CreateFrame("StatusBar", nil, b)
     b.healthBar = healthBar
@@ -140,12 +123,10 @@ local function initialConfigFunction(headerName, buttonName)
     Ether.GetClassColor(b)
     Ether.Setup.CreatePowerText(b)
     Ether.Setup.CreateHealthText(b)
-    if hl then
-        local highlight = b:CreateTexture(nil, "HIGHLIGHT")
-        b.highlight = highlight
-        highlight:SetAllPoints()
-        highlight:SetColorTexture(0.80, 0.40, 1.00, .2)
-    end
+    local highlight = b:CreateTexture(nil, "HIGHLIGHT")
+    b.highlight = highlight
+    highlight:SetAllPoints()
+    highlight:SetColorTexture(0.80, 0.40, 1.00, .2)
     local background = b:CreateTexture(nil, "BACKGROUND")
     background:SetAllPoints()
     background:SetColorTexture(0, 0, 0, 1)
@@ -155,8 +136,9 @@ local function initialConfigFunction(headerName, buttonName)
     b:SetScript("OnEnter", OnEnter)
     b:SetScript("OnLeave", OnLeave)
     b:SetScript("OnEvent", Event)
-    b:SetScript("OnAttributeChanged", OnAttributeChanged)
+    b:HookScript("OnAttributeChanged", OnAttributeChanged)
     Ether.Buttons.raid[buttonName] = b
+    return b
 end
 
 local function CreateHeader()
@@ -177,11 +159,10 @@ local function CreateHeader()
     header:SetAttribute("unitsPerColumn", 5)
     header:SetAttribute("maxColumns", 8)
     header:SetAttribute("showRaid", true)
-    header:SetAttribute("showParty",  false)
-    header:SetAttribute("showPlayer",  false)
+    header:SetAttribute("showParty", false)
+    header:SetAttribute("showPlayer", false)
     header:SetAttribute("showSolo", false)
-    header:Show()
-    -- RegisterAttributeDriver(header, "state-visibility", "[group] show; hide")
+    RegisterAttributeDriver(header, "state-visibility", "[@raid1,exists] show; hide")
 end
 
 local state = false
@@ -194,9 +175,6 @@ function Ether:CreateRaidHeader()
         CreateHeader()
     end
 end
-
-
-
 
 
 --[[

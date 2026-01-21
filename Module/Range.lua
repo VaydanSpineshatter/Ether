@@ -31,7 +31,7 @@ local classHostile = {
 local _, playerClass = UnitClass("player")
 local friendly = classFriendly[playerClass] or 355
 local hostile = classHostile[playerClass] or 772
-local isMelee = (playerClass == "ROGUE" or playerClass == "WARRIOR")
+--local isMelee = (playerClass == "ROGUE" or playerClass == "WARRIOR")
 
 function Range:IsUnitInRange(unit)
     if not unit then

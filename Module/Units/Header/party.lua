@@ -4,11 +4,8 @@ local anchor = CreateFrame("Frame", "EtherPartyAnchor", UIParent, "SecureFrameTe
 Ether.Anchor.party = anchor
 local header = CreateFrame("Frame", "EtherPartyHeader", anchor, "SecureGroupHeaderTemplate")
 
-local C_After = C_Timer.After
-local U_GUID = UnitGUID
-
 local function Initial(self)
-    C_After(0.1, function()
+    C_Timer.After(0.1, function()
         Ether.InitialHealth(self)
     end)
     Ether.UpdateHealthAndMax(self)
@@ -26,7 +23,7 @@ local function Show(self)
 end
 
 local function OnAttributeChanged(self)
-    local guid = self.unit and U_GUID(self.unit)
+    local guid = self.unit and UnitGUID(self.unit)
     if (guid ~= self.unitGUID) then
         self.unitGUID = guid
         if (guid) then
@@ -36,7 +33,7 @@ local function OnAttributeChanged(self)
 end
 
 function Ether:CreatePartyHeader()
-
+   if InCombatLockdown() then return end
     header:SetPoint("TOPLEFT", anchor, "TOPLEFT")
     header:SetAttribute("showPlayer", false)
     header:SetAttribute("showParty", true)

@@ -54,11 +54,11 @@ local EnabledStatus = {
     [6] = "AFK ",
     [7] = "DND ",
 }
- local Events = {}
+
+local Events = {}
 local RegisterIndicatorEvent, UnregisterIndicatorEvent, GetIndicatorRegisterStatus, GetIndicatorEnabledStatus
 do
     local frame
-
     local IsEventValid = C_EventUtils.IsEventValid
     function RegisterIndicatorEvent(castEvent, func)
         if not frame then
@@ -119,9 +119,9 @@ Ether.Indicators.GetIndicatorRegisterStatus = GetIndicatorRegisterStatus
 Ether.Indicators.GetIndicatorEnabledStatus = GetIndicatorEnabledStatus
 
 local function HideIndicators(tex)
-    for _, btn in pairs(Ether.Buttons.raid) do
-        if (btn and btn.Indicators and btn.Indicators[tex]) then
-            btn.Indicators[tex]:Hide()
+    for _, button in pairs(Ether.Buttons.raid) do
+        if (button and button.Indicators and button.Indicators[tex]) then
+            button.Indicators[tex]:Hide()
         end
     end
 end
@@ -144,9 +144,21 @@ local function UpdateUnitFlagsIcon()
                 elseif (IsGhost and Ether.DB[601][3] == 1 and Ether.DB[501][7] == 1) then
                     button.Indicators.UnitFlagsIcon:SetTexture(ghostIcon)
                     button.Indicators.UnitFlagsIcon:Show()
+                    if button.top then
+                        button.top:SetColorTexture(0, 0, 0, 1)
+                        button.right:SetColorTexture(0, 0, 0, 1)
+                        button.left:SetColorTexture(0, 0, 0, 1)
+                        button.bottom:SetColorTexture(0, 0, 0, 1)
+                    end
                 elseif (IsDead and Ether.DB[601][2] == 1 and Ether.DB[501][7] == 1) then
                     button.Indicators.UnitFlagsIcon:SetTexture(deadIcon)
                     button.Indicators.UnitFlagsIcon:Show()
+                    if button.top then
+                        button.top:SetColorTexture(0, 0, 0, 1)
+                        button.right:SetColorTexture(0, 0, 0, 1)
+                        button.left:SetColorTexture(0, 0, 0, 1)
+                        button.bottom:SetColorTexture(0, 0, 0, 1)
+                    end
                 else
                     button.name:SetTextColor(1, 1, 1)
                     button.Indicators.UnitFlagsIcon:Hide()
@@ -201,9 +213,9 @@ local function UpdateConfirmIcon()
 end
 
 local function HideReadyCheckIcons()
-    for _, frame in pairs(Ether.Buttons.raid) do
-        if frame.Indicators.ReadyCheckIcon then
-            frame.Indicators.ReadyCheckIcon:Hide()
+    for _, button in pairs(Ether.Buttons.raid) do
+        if button.Indicators.ReadyCheckIcon then
+            button.Indicators.ReadyCheckIcon:Hide()
         end
     end
     Ether.Indicators.ReadyCheckTimer = nil
@@ -487,10 +499,8 @@ end
 
 local tremove = table.remove
 local isUpdating = false
-local creationDelay = 0.1
+local creationDelay = 0.05
 local creationQueue = {}
-
-
 
 local function processFunc()
     if #creationQueue == 0 then

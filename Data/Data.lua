@@ -21,18 +21,22 @@ local _, Ether = ...
 ---| UIParent 5133
 ---| Position 5111
 
---- [301] = { Ether.Anchor.tooltip },
----[331] = { Ether.Anchor.player },
----[332] = { Ether.Anchor.target },
----[333] = { Ether.Anchor.targettarget },
----[334] = { Ether.Anchor.pet },
----[335] = { Ether.Anchor.pettarget },
----[336] = { Ether.Anchor.focus },
----[337] = { Ether.Anchor.party },
----[338] = { Ether.Anchor.raid },
----[339] = { Ether.Anchor.raidpet },
----[340] = { Ether.Anchor.maintank },
----[341] = { Ether.DebugFrame }
+---@alias Anchor number
+---| 331 tooltip
+---| 332 player
+---| 333 target
+---| 334 targettarget
+---| 335 pet
+---| 336 pettarget
+---| 337 focus
+---| 338 party
+---| 339 raid
+---| 340 maintank
+---| 341 Debug
+---| 342 Settings
+
+--- 5133 UIParent
+
 
 local Default = {
     [001] = {
@@ -43,7 +47,7 @@ local Default = {
         SELECTED = 341
     },
     [101] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-    [201] = { 1, 1, 1, 1, 1, 1, 1, 1, 0, 0 },
+    [201] = { 1, 1, 1, 1, 1, 1, 1, 1, 0 },
     [301] = { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
     [401] = { 1, 1 },
     [501] = { 1, 1, 1, 1, 1, 1, 1, 1, 1 },
@@ -59,11 +63,10 @@ local Default = {
         focus = true,
         party = true,
         raid = true,
-        raidpet = false,
         maintank = false,
     },
     [1001] = {
-        [1002] = { 1, 1, 1 },
+        [1002] = { 1, 1, 1, 1 },
         [1003] = {
             [6788] = {
                 enabled = true,
@@ -75,7 +78,6 @@ local Default = {
                     [3] = 0,
                     [4] = 1
                 },
-
                 offsetX = 0,
                 offsetY = -6,
                 size = 6
@@ -94,45 +96,25 @@ local Default = {
                 offsetY = 0,
                 size = 6
             },
-            [21564] = {
-                enabled = true,
-                name = "Prayer of Fortitude: Rank 2",
-                position = "BOTTOMLEFT",
-                color = {
-                    [1] = 0.80,
-                    [2] = 0.40,
-                    [3] = 1.00,
-                    [4] = 1
-                },
-                offsetX = 0,
-                offsetY = 0,
-                size = 6
-            }
         }
     },
     [2001] = {
-        ["CLASS"] = nil,
-        ["ROLE"] = nil,
         ["SMOOTH_HEALTH_SINGLE"] = false,
         ["SMOOTH_HEALTH_RAID"] = false,
         ["SMOOTH_POWER_SINGLE"] = false,
-        ["HIGHLIGHT"] = true,
-        ["LAYOUT_SOLO"] = true,
-        ["LAYOUT_BG"] = true,
         ["PLAYER_BAR"] = true,
         ["TARGET_BAR"] = true,
     },
     [5111] = {
-        [301] = { "TOPLEFT", 5133, "TOPLEFT", 300, -300, 1, 1, 1.0, 1.0 },
-        [331] = { "CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0 },
-        [332] = { "CENTER", 5133, "CENTER", 250, -250, 120, 50, 1.0, 1.0 },
-        [333] = { "CENTER", 5133, "CENTER", 0, -300, 120, 50, 1.0, 1.0 },
-        [334] = { "CENTER", 5133, "CENTER", -400, -100, 120, 50, 1.0, 1.0 },
-        [335] = { "CENTER", 5133, "CENTER", -300, 100, 120, 50, 1.0, 1.0 },
-        [336] = { "CENTER", 5133, "CENTER", 0, 100, 120, 50, 1.0, 1.0 },
-        [337] = { "CENTER", 5133, "CENTER", -100, -80, 1, 1, 1.0, 1.0 },
-        [338] = { "LEFT", 5133, "LEFT", 10, 0, 1, 1, 1.0, 1.0 },
-        [339] = { "LEFT", 5133, "LEFT", 10, 70, 1, 1, 1.0, 1.0 },
+        [331] = { "TOPLEFT", 5133, "TOPLEFT", 300, -300, 1, 1, 1.0, 1.0 },
+        [332] = { "CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0 },
+        [333] = { "CENTER", 5133, "CENTER", 250, -250, 120, 50, 1.0, 1.0 },
+        [334] = { "CENTER", 5133, "CENTER", 0, -300, 120, 50, 1.0, 1.0 },
+        [335] = { "CENTER", 5133, "CENTER", -400, -100, 120, 50, 1.0, 1.0 },
+        [336] = { "CENTER", 5133, "CENTER", -300, 100, 120, 50, 1.0, 1.0 },
+        [337] = { "CENTER", 5133, "CENTER", 0, 100, 120, 50, 1.0, 1.0 },
+        [338] = { "CENTER", 5133, "CENTER", -100, -80, 1, 1, 1.0, 1.0 },
+        [339] = { "LEFT", 5133, "LEFT", 10, 0, 1, 1, 1.0, 1.0 },
         [340] = { "TOPLEFT", 5133, "TOPLEFT", 20, -20, 1, 1, 1.0, 1.0 },
         [341] = { "TOP", 5133, "TOP", 80, -80, 320, 200, 1.0, 1.0 },
         [342] = { "TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0 }
@@ -170,8 +152,7 @@ Ether.DataDefault = Default
 ---| Focus 6
 ---| Party 7
 ---| Raid 8
----| Raid pet 9
----| Main Tank 10
+---| Main Tank 9
 
 ---@alias Tooltip_301 number
 ---| Enabled 1
@@ -224,7 +205,6 @@ Ether.DataDefault = Default
 ---@alias Range_801 number
 ---| Enable 1
 
-
 ---@alias Update_901 number
 ---| Player 331
 ---| Target 332
@@ -234,17 +214,13 @@ Ether.DataDefault = Default
 ---| Focus 336
 ---| Party 337
 ---| Raid 338
----| RaidPet 339
----| MainTank 340
+---| MainTank 339
 
 ---@alias AuraON number
 ---| Player 1
 ---| Target 2
 ---| Raid 3
-
---- 5133 UIParent
----| Debug 341
----| Settings 342
+---| RaidAuraIcon 4
 
 function Ether.DataEnableAll(t)
     for i = 1, #t do
@@ -322,4 +298,16 @@ function Ether.tContains(tbl, value)
         end
     end
     return false
+end
+
+function Ether.CopyTable(src)
+    local copy = {}
+    for k, v in pairs(src) do
+        if type(v) == "table" then
+            copy[k] = Ether.CopyTable(v)
+        else
+            copy[k] = v
+        end
+    end
+    return copy
 end

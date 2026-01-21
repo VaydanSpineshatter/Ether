@@ -66,12 +66,6 @@ if not Name then
                     UpdateName(mt)
                 end
             end
-            if Ether.DB[901]["raidpet"] then
-                local rp = Ether.Buttons.raidpet[unit]
-                if rp then
-                    UpdateName(rp, true)
-                end
-            end
         end
     end
 end

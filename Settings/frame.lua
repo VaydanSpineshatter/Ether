@@ -1,10 +1,8 @@
 local _, Ether = ...
-local tinsert = table.insert
-local playerName = UnitName("player")
-local string_format = string.format
+local tinsert, tsort, tconcat = table.insert, table.sort, table.concat
+local playerName, realmName = UnitName("player"), GetRealmName()
 local pairs, ipairs = pairs, ipairs
-local math_min = math.min
-local math_max = math.max
+local math_min, math_max = math.min, math.max
 
 local backDrop = {
     bgFile = "Interface\\Buttons\\UI-SliderBar-Background",
@@ -28,18 +26,8 @@ local function GetFont(_, target, tex, numb)
 end
 
 local function IsInBattleground()
-    local status, instanceType = IsInInstance()
+    local _, instanceType = IsInInstance()
     return instanceType == "pvp" or instanceType == "arena"
-end
-
-local function CreateMenuButton(parent, point, anchor, relative, setX, setY, size, callback)
-    local obj = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
-    obj:SetPoint(point, anchor, relative, setX, setY)
-    obj:SetSize(size, size)
-    if callback then
-        obj:SetScript("OnClick", callback)
-    end
-    return obj
 end
 
 function Ether.CreateModuleSection(self)
@@ -86,18 +74,6 @@ function Ether.CreateModuleSection(self)
         self.Content.Buttons.Module.A[i] = btn
     end
 
-    local btnReset = CreateFrame("Button", nil, self.Content.Buttons.Module.A[1], "GameMenuButtonTemplate")
-    btnReset:SetSize(100, 25)
-    btnReset:SetPoint("BOTTOMLEFT", 0, -300)
-    btnReset:SetText("Reset Data")
-    local fontString = btnReset:GetFontString()
-    if fontString then
-        fontString:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    end
-    btnReset:SetScript("OnClick", function()
-        StaticPopup_Show("ETHER_RESET_DATABASED")
-    end)
-
 end
 
 function Ether.CreateSlashSection(self)
@@ -107,7 +83,7 @@ function Ether.CreateSlashSection(self)
 
     local lastY = -20
     for _, entry in ipairs(Ether.SlashInfo) do
-        local fs = GetFont(self, self.Content.Children["Slash"], string_format("%s  –  %s", entry.cmd, entry.desc), 12)
+        local fs = GetFont(self, self.Content.Children["Slash"], string.format("%s  –  %s", entry.cmd, entry.desc), 12)
         fs:SetPoint("TOP", slash, "BOTTOM", 0, lastY)
         lastY = lastY - 18
     end
@@ -172,8 +148,7 @@ function Ether.CreateSection(self)
         [6] = { name = "|cff3399FFFocus|r", value = "FOCUS" },
         [7] = { name = "Party", value = "PARTY" },
         [8] = { name = "Raid", value = "RAID" },
-        [9] = { name = "RaidPet", value = "RAIDPET" },
-        [10] = { name = "MainTank", value = "MAINTANK" }
+        [9] = { name = "MainTank", value = "MAINTANK" }
     }
 
     local CreateAndBars = GetFont(self, parent, "|cffffff00Create/Delete Units|r", 15)
@@ -380,8 +355,7 @@ function Ether.CreateUpdateSection(self)
         [6] = { text = "Focus", value = "focus" },
         [7] = { text = "Party", value = "party" },
         [8] = { text = "Raid", value = "raid" },
-        [9] = { text = "Raid Pets", value = "raidpet" },
-        [10] = { text = "Main Tanks", value = "maintank" }
+        [9] = { text = "Main Tanks", value = "maintank" }
     }
 
     local Events = GetFont(self, parent, "|cffffff00Unit Events|r", 15)
@@ -674,7 +648,7 @@ local function CreateEditor(parent)
     sizeSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
             Ether.DB[1001][1003][selectedSpellId].size = value
-            frame.sizeValue:SetText(string_format("%.0f px", value))
+            frame.sizeValue:SetText(string.format("%.0f px", value))
             Ether.UpdatePreview()
         end
     end)
@@ -752,7 +726,7 @@ local function CreateEditor(parent)
     offsetXSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
             Ether.DB[1001][1003][selectedSpellId].offsetX = value
-            frame.offsetXValue:SetText(string_format("%.0f", value))
+            frame.offsetXValue:SetText(string.format("%.0f", value))
             Ether.UpdatePreview()
         end
     end)
@@ -773,7 +747,7 @@ local function CreateEditor(parent)
     offsetYSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
             Ether.DB[1001][1003][selectedSpellId].offsetY = value
-            frame.offsetYValue:SetText(string_format("%.0f", value))
+            frame.offsetYValue:SetText(string.format("%.0f", value))
             Ether.UpdatePreview()
         end
     end)
@@ -884,7 +858,23 @@ function Ether.UpdateAuraList()
             StaticPopup_Show("ETHER_DELETE_AURA", data.name or "this Aura", nil, spellId)
             self:GetParent():GetScript("OnLeave")(self:GetParent())
         end)
-
+        StaticPopupDialogs["ETHER_DELETE_AURA"] = {
+            text = "Destroy Aura ?",
+            button1 = "Yes",
+            button2 = "No",
+            OnAccept = function(self, spellId)
+                Ether.DB[1001][1003][spellId] = nil
+                if selectedSpellId == spellId then
+                    selectedSpellId = nil
+                end
+                Ether.UpdateAuraList()
+                Ether.UpdateEditor()
+            end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+            preferredIndex = 3,
+        }
         btn.spellId = spellId
         tinsert(AuraButtons, btn)
 
@@ -925,11 +915,11 @@ function Ether.UpdateEditor()
     Editor.offsetYSlider:Enable()
 
     Editor.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
-    Editor.rgbText:SetText(string_format("RGB: %d, %d, %d",
+    Editor.rgbText:SetText(string.format("RGB: %d, %d, %d",
             data.color[1] * 255, data.color[2] * 255, data.color[3] * 255))
 
     Editor.sizeSlider:SetValue(data.size)
-    Editor.sizeValue:SetText(string_format("%.0f px", data.size))
+    Editor.sizeValue:SetText(string.format("%.0f px", data.size))
 
     for pos, btn in pairs(Editor.posButtons) do
         if pos == data.position then
@@ -942,9 +932,9 @@ function Ether.UpdateEditor()
     end
 
     Editor.offsetXSlider:SetValue(data.offsetX)
-    Editor.offsetXValue:SetText(string_format("%.0f", data.offsetX))
+    Editor.offsetXValue:SetText(string.format("%.0f", data.offsetX))
     Editor.offsetYSlider:SetValue(data.offsetY)
-    Editor.offsetYValue:SetText(string_format("%.0f", data.offsetY))
+    Editor.offsetYValue:SetText(string.format("%.0f", data.offsetY))
 
     Ether.UpdatePreview()
 end
@@ -1003,51 +993,6 @@ function Ether.SelectAura(spellId)
     selectedSpellId = spellId
     Ether.UpdateAuraList()
     Ether.UpdateEditor()
-end
-
-function Ether.CreateAuraInfoSection(self)
-    local parent = self.Content.Children["Aura Info"]
-
-    local AuraInfo = {
-        [1] = { Id = 21564, name = "Prayer of Fortitude: Rank 2", color = "|cffCC66FFEther Pink|r" },
-        [2] = { Id = 10901, name = "Power Word Shield: Rank 3", color = "|cffffffffWhite|r" },
-        [3] = { Id = 6788, name = "Weakened Soul", color = "|cffff0000Red|r" },
-        [4] = { Id = 0, name = "Dynamic depending on class and skills" },
-        [5] = { Id = 0, name = "Magic: Border color: |cff3399FFAzure blue|r" },
-        [6] = { Id = 0, name = "Disease: Border color |cff996600Rust brown|r" },
-        [7] = { Id = 0, name = "Curse: Border color |cff9900FFViolet|r" },
-        [8] = { Id = 0, name = "Poison: Border color |cff009900Grass green|r" }
-    }
-
-    for _, data in ipairs(AuraInfo) do
-        if data.Id == 0 then
-            tinsert(self.AuraColors, data)
-        else
-            tinsert(self.AuraSpells, data)
-        end
-    end
-
-    local SpellLabel = GetFont(self, parent, "|cffffff00Spells|r", 15)
-    SpellLabel:SetPoint("TOP", 0, -10)
-
-    local yOff = -10
-
-    for _, data in ipairs(self.AuraSpells) do
-        local spellText = GetFont(self, parent, string_format("Spell: %s | ID: %d | Color: %s", data.name, data.Id, data.color or "None"), 12)
-        spellText:SetPoint("TOP", SpellLabel, "BOTTOM", 20, yOff)
-        yOff = yOff - 18
-    end
-
-    if #self.AuraColors > 0 then
-        local AuraLabel = GetFont(self, parent, "|cffffff00Aura Border Colors|r", 15)
-        AuraLabel:SetPoint("TOP", parent, "BOTTOM", 0, yOff - 30)
-        yOff = yOff - 60
-        for _, data in ipairs(self.AuraColors) do
-            local colorText = GetFont(self, parent, data.name, 12)
-            colorText:SetPoint("TOP", parent, "BOTTOM", 0, yOff)
-            yOff = yOff - 18
-        end
-    end
 end
 
 function Ether.CreateRegisterSection(self)
@@ -1191,21 +1136,6 @@ function Ether.CreateLayoutSection(self)
             end
         end)
 
-        local Refresh = GetFont(self, parent, "Refresh Header", 13)
-        Refresh:SetPoint("TOPLEFT", self.Content.Buttons.Layout.B[4], "BOTTOMLEFT", 0, -40)
-
-        local btnRefresh = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
-        btnRefresh:SetPoint("TOPLEFT", self.Content.Buttons.Layout.B[4], "BOTTOMLEFT", 0, -40)
-        btnRefresh:SetText("Refresh Header")
-        btnRefresh:SetSize(110, 28)
-        btnRefresh:SetScript("OnClick", function()
-            Ether.RefreshEtherRaidHeader()
-        end)
-        local fontString = btnRefresh:GetFontString()
-        if fontString then
-            fontString:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-        end
-
         self.Content.Buttons.Layout.B[i] = btn
     end
 end
@@ -1306,301 +1236,413 @@ function Ether.CreateConfigSection(self)
     local parent = self.Content.Children["Config"]
     local DB = Ether.DB
 
-    --- Font
-    local Config = GetFont(self, parent, "|cffffff00Select frame:", 13)
-    Config:SetPoint("TOPLEFT", 10, -10)
+    local FRAME_GROUPS = {
+        [331] = { name = "Tooltip", frame = Ether.Anchor.tooltip },
+        [332] = { name = "Player", frame = Ether.Anchor.player },
+        [333] = { name = "Target", frame = Ether.Anchor.target },
+        [334] = { name = "TargetTarget", frame = Ether.Anchor.targettarget },
+        [335] = { name = "Pet", frame = Ether.Anchor.pet },
+        [336] = { name = "Pet Target", frame = Ether.Anchor.pettarget },
+        [337] = { name = "Focus", frame = Ether.Anchor.focus },
+        [338] = { name = "Party", frame = Ether.Anchor.party },
+        [339] = { name = "Raid", frame = Ether.Anchor.raid },
+        [340] = { name = "Main Tank", frame = Ether.Anchor.maintank },
+        [341] = { name = "Debug", frame = Ether.DebugFrame },
+    }
 
-    local optionPoint = GetFont(self, parent, "Point", 13)
-    optionPoint:SetPoint("TOPLEFT", Config, "BOTTOMLEFT", 30, -80)
+    local ANCHOR_POINTS = {
+        "RIGHT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT",
+        "BOTTOM", "TOP", "LEFT", "TOPLEFT", "CENTER"
+    }
 
-    local optionRelative = GetFont(self, parent, "Relative", 13)
-    optionRelative:SetPoint("LEFT", optionPoint, "RIGHT", 200, 0)
+    local labels = {}
+    local function CreateLabel(text, point, relativeTo, relativePoint, x, y)
+        local label = GetFont(self, parent, text, 13)
+        label:SetPoint(point, relativeTo, relativePoint, x, y)
+        labels[text] = label
+        return label
+    end
 
-    local optionX = GetFont(self, parent, "Slide X", 13)
-    optionX:SetPoint("TOPLEFT", optionPoint, "BOTTOMLEFT", 30, -100)
-
-    local optionY = GetFont(self, parent, "Slide Y", 13)
-    optionY:SetPoint("LEFT", optionX, "RIGHT", 200, 0)
-
-    local optionScale = GetFont(self, parent, "Scale", 13)
-    optionScale:SetPoint("TOPLEFT", optionX, 'BOTTOMLEFT', 0, -50)
-
-    local optionAlpha = GetFont(self, parent, "Alpha", 13)
-    optionAlpha:SetPoint("LEFT", optionScale, "RIGHT", 220, 0)
-
-    --- UIDropDownMenuTemplate
-
-    local selectedFrame = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
-    selectedFrame:SetPoint("TOPLEFT", Config, "BOTTOMLEFT", 0, -10)
-    UIDropDownMenu_SetWidth(selectedFrame, 100)
-    UIDropDownMenu_JustifyText(selectedFrame, "CENTER")
-
-    local selectedPoint = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
-    selectedPoint:SetPoint("TOPLEFT", optionPoint, "BOTTOMLEFT", 0, -10)
-    UIDropDownMenu_SetWidth(selectedPoint, 80)
-    UIDropDownMenu_JustifyText(selectedPoint, "CENTER")
-
-    local selectedRelative = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
-    selectedRelative:SetPoint("TOPLEFT", optionRelative, "BOTTOMLEFT", 0, -10)
-    UIDropDownMenu_SetWidth(selectedRelative, 80)
-    UIDropDownMenu_JustifyText(selectedRelative, "CENTER")
-
-    --- OptionsSliderTemplate
-
-    local sliderRight = CreateFrame("Slider", nil, parent, "UISliderTemplateWithLabels, BackDropTemplate")
-    sliderRight:SetBackdrop(backDrop)
-    sliderRight:SetPoint("TOPLEFT", optionX, "BOTTOMLEFT", 0, -10)
-    sliderRight:SetObeyStepOnDrag(true)
-    sliderRight:SetSize(120, 20)
-    sliderRight:SetMinMaxValues(-800, 800)
-    sliderRight:SetValueStep(1)
-    sliderRight:SetValue(DB[5111][DB[001].SELECTED][4])
-    sliderRight:SetScript("OnValueChanged", function(slider, value)
-        slider.Text:SetText(string_format("%.0f", value))
-        local frame = DB[001].SELECTED
-        DB[5111][frame][4] = slider:GetValue()
-        Ether.Fire("FRAME_UPDATE", frame)
-    end)
-
-    local sliderLeft = CreateFrame("Slider", nil, parent, "UISliderTemplateWithLabels, BackDropTemplate")
-    sliderLeft:SetBackdrop(backDrop)
-    sliderLeft:SetPoint("TOPLEFT", optionY, "BOTTOMLEFT", 0, -10)
-    sliderLeft:SetObeyStepOnDrag(true)
-    sliderLeft:SetSize(120, 20)
-    sliderLeft:SetMinMaxValues(-800, 800)
-    sliderLeft:SetValueStep(1)
-    sliderLeft:SetValue(DB[5111][DB[001].SELECTED][5])
-    sliderLeft:SetScript("OnValueChanged", function(slider, value)
-        slider.Text:SetText(string_format("%.0f", value))
-        local frame = DB[001].SELECTED
-        DB[5111][frame][5] = slider:GetValue()
-        Ether.Fire("FRAME_UPDATE", frame)
-    end)
-
-    local sliderScale = CreateFrame("Slider", nil, parent, "UISliderTemplateWithLabels, BackDropTemplate")
-    sliderScale:SetBackdrop(backDrop)
-    sliderScale:SetPoint("TOPLEFT", sliderRight, "BOTTOMLEFT", 0, -50)
-    sliderScale:SetObeyStepOnDrag(true)
-    sliderScale:SetSize(120, 20)
-    sliderScale:SetMinMaxValues(0.5, 2)
-    sliderScale:SetValueStep(0.1)
-    sliderScale:SetValue(DB[5111][DB[001].SELECTED][8])
-    sliderScale:SetScript("OnValueChanged", function(slider, value)
-        slider.Text:SetText(string_format("%.0f%%", value * 100))
-        local frame = DB[001].SELECTED
-        DB[5111][frame][8] = slider:GetValue()
-        Ether.Fire("FRAME_UPDATE", frame)
-    end)
-
-    local sliderAlpha = CreateFrame("Slider", nil, parent, "UISliderTemplateWithLabels, BackDropTemplate")
-    sliderAlpha:SetBackdrop(backDrop)
-    sliderAlpha:SetPoint("TOPLEFT", sliderLeft, "BOTTOMLEFT", 0, -50)
-    sliderAlpha:SetObeyStepOnDrag(true)
-    sliderAlpha:SetSize(120, 20)
-    sliderAlpha:SetMinMaxValues(0.1, 1)
-    sliderAlpha:SetValueStep(0.1)
-    sliderAlpha:SetValue(DB[5111][DB[001].SELECTED][9])
-    sliderAlpha:SetScript("OnValueChanged", function(slider, value)
-        slider.Text:SetText(string_format("%.0f%%", value * 100))
-        local frame = DB[001].SELECTED
-        DB[5111][frame][9] = slider:GetValue()
-        Ether.Fire("FRAME_UPDATE", frame)
-    end)
+    CreateLabel("Select frame:", "TOPLEFT", parent, "TOPLEFT", 10, -10)
+    CreateLabel("Point", "TOPLEFT", labels["Select frame:"], "BOTTOMLEFT", 30, -80)
+    CreateLabel("Relative", "LEFT", labels["Point"], "RIGHT", 200, 0)
+    CreateLabel("Slide X", "TOPLEFT", labels["Point"], "BOTTOMLEFT", 30, -100)
+    CreateLabel("Slide Y", "LEFT", labels["Slide X"], "RIGHT", 200, 0)
+    CreateLabel("Scale", "TOPLEFT", labels["Slide X"], "BOTTOMLEFT", 0, -80)
+    CreateLabel("Alpha", "LEFT", labels["Scale"], "RIGHT", 220, 0)
+    local dropdowns = {}
+    local function CreateDropdown(name, relativeTo, width)
+        local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
+        dropdown:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, -10)
+        UIDropDownMenu_SetWidth(dropdown, width)
+        UIDropDownMenu_JustifyText(dropdown, "CENTER")
+        dropdowns[name] = dropdown
+        return dropdown
+    end
+    dropdowns.frame = CreateDropdown("frame", labels["Select frame:"], 100)
+    dropdowns.point = CreateDropdown("point", labels["Point"], 80)
+    dropdowns.relative = CreateDropdown("relative", labels["Relative"], 80)
+    local sliders = {}
+    local function CreateSlider(name, relativeTo, min, max, step, formatFunc)
+        local slider = CreateFrame("Slider", nil, parent, "UISliderTemplateWithLabels, BackDropTemplate")
+        slider:SetBackdrop(backDrop)
+        slider:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, -10)
+        slider:SetObeyStepOnDrag(true)
+        slider:SetSize(120, 20)
+        slider:SetMinMaxValues(min, max)
+        slider:SetValueStep(step)
+        local currentFrame = DB[001].SELECTED
+        local defaultValue = 0
+        if currentFrame and DB[5111] and DB[5111][currentFrame] then
+            if name == "x" then
+                defaultValue = DB[5111][currentFrame][4] or 0
+            elseif name == "y" then
+                defaultValue = DB[5111][currentFrame][5] or 0
+            elseif name == "scale" then
+                defaultValue = DB[5111][currentFrame][8] or 1
+            elseif name == "alpha" then
+                defaultValue = DB[5111][currentFrame][9] or 1
+            end
+        end
+        slider:SetValue(defaultValue)
+        slider:SetScript("OnValueChanged", function(self, value)
+            self.Text:SetText(formatFunc(value))
+            local frame = DB[001].SELECTED
+            if frame and DB[5111] and DB[5111][frame] then
+                local index = name == "x" and 4 or name == "y" and 5 or name == "scale" and 8 or name == "alpha" and 9
+                DB[5111][frame][index] = self:GetValue()
+                Ether.Fire("FRAME_UPDATE", frame)
+            end
+        end)
+        sliders[name] = slider
+        return slider
+    end
+    sliders.x = CreateSlider("x", labels["Slide X"], -800, 800, 1,
+            function(v)
+                return string.format("%.0f", v)
+            end)
+    sliders.y = CreateSlider("y", labels["Slide Y"], -800, 800, 1,
+            function(v)
+                return string.format("%.0f", v)
+            end)
+    sliders.scale = CreateSlider("scale", sliders.x, 0.5, 2, 0.1,
+            function(v)
+                return string.format("%.0f%%", v * 100)
+            end)
+    sliders.alpha = CreateSlider("alpha", sliders.y, 0.1, 1, 0.1,
+            function(v)
+                return string.format("%.0f%%", v * 100)
+            end)
 
     local function UpdateValue()
         local SELECTED = DB[001].SELECTED
-        if not SELECTED then
+        if not SELECTED or not DB[5111] or not DB[5111][SELECTED] then
             return
         end
-
         local pos = DB[5111][SELECTED]
-        if not pos then
-            return
+        UIDropDownMenu_SetText(dropdowns.point, pos[1] or "TOP")
+        UIDropDownMenu_SetText(dropdowns.relative, pos[3] or "TOP")
+        if sliders.x:GetValue() ~= (pos[4] or 0) then
+            sliders.x:SetValue(pos[4] or 0)
         end
-        UIDropDownMenu_SetText(selectedPoint, pos[1] or "TOP")
-        UIDropDownMenu_SetText(selectedRelative, pos[3] or "TOP")
-        if sliderRight:GetValue() ~= (pos[4] or 0) then
-            sliderRight:SetValue(pos[4] or 0)
+        if sliders.y:GetValue() ~= (pos[5] or 0) then
+            sliders.y:SetValue(pos[5] or 0)
         end
-        if sliderLeft:GetValue() ~= (pos[5] or 0) then
-            sliderLeft:SetValue(pos[5] or 0)
+        if sliders.scale:GetValue() ~= (pos[8] or 1) then
+            sliders.scale:SetValue(pos[8] or 1)
         end
-        if sliderScale:GetValue() ~= (pos[8] or 1) then
-            sliderScale:SetValue(pos[8] or 1)
-        end
-        if sliderAlpha:GetValue() ~= (pos[9] or 1) then
-            sliderAlpha:SetValue(pos[9] or 1)
+        if sliders.alpha:GetValue() ~= (pos[9] or 1) then
+            sliders.alpha:SetValue(pos[9] or 1)
         end
     end
-
-    local frameGroups = {
-        [301] = { Ether.Anchor.tooltip },
-        [331] = { Ether.Anchor.player },
-        [332] = { Ether.Anchor.target },
-        [333] = { Ether.Anchor.targettarget },
-        [334] = { Ether.Anchor.pet },
-        [335] = { Ether.Anchor.pettarget },
-        [336] = { Ether.Anchor.focus },
-        [337] = { Ether.Anchor.party },
-        [338] = { Ether.Anchor.raid },
-        [339] = { Ether.Anchor.raidpet },
-        [340] = { Ether.Anchor.maintank },
-        [341] = { Ether.DebugFrame }
-
-    }
-
-    local tablePoint = {
-        { name = "RIGHT", value = "RIGHT" },
-        { name = "TOPRIGHT", value = "TOPRIGHT" },
-        { name = "BOTTOMLEFT", value = "BOTTOMLEFT" },
-        { name = "BOTTOMRIGHT", value = "BOTTOMRIGHT" },
-        { name = "BOTTOM", value = "BOTTOM" },
-        { name = "TOP", value = "TOP" },
-        { name = "LEFT", value = "LEFT" },
-        { name = "TOPLEFT", value = "TOPLEFT" },
-        { name = "CENTER", value = "CENTER" }
-    }
-
-    local tableFrames = {
-        [1] = { name = "Tooltip", value = 301 },
-        [2] = { name = "Player", value = 331 },
-        [3] = { name = "Target", value = 332 },
-        [4] = { name = "TargetTarget", value = 333 },
-        [5] = { name = "Pet", value = 334 },
-        [6] = { name = "Pet Target", value = 335 },
-        [7] = { name = "Focus", value = 336 },
-        [8] = { name = "Party", value = 337 },
-        [9] = { name = "Raid", value = 338 },
-        [10] = { name = "Raid Pet", value = 339 },
-        [11] = { name = "Main Tank", value = 340 },
-        [12] = { name = "Debug", value = 341 },
-    }
-
-    --- UIDropDownMenu
-
-    UIDropDownMenu_Initialize(selectedFrame, function()
-        for _, option in ipairs(tableFrames) do
-            local frameKey = option.value
-            local framesList = frameGroups[frameKey]
-
-            if framesList then
+    local function CreateFrameDropdown()
+        UIDropDownMenu_Initialize(dropdowns.frame, function()
+            for id, data in pairs(FRAME_GROUPS) do
                 local info = UIDropDownMenu_CreateInfo()
-                info.text = option.name
-                info.value = option.value
+                info.text = data.name
+                info.value = id
                 info.func = function()
-                    local frame = DB[001].SELECTED
-                    Ether.DB[001].SELECTED = option.value
-                    UIDropDownMenu_SetSelectedValue(selectedFrame, option.value)
-                    UIDropDownMenu_SetText(selectedFrame, option.name)
+                    local oldFrame = DB[001].SELECTED
+                    Ether.DB[001].SELECTED = id
+                    UIDropDownMenu_SetSelectedValue(dropdowns.frame, id)
+                    UIDropDownMenu_SetText(dropdowns.frame, data.name)
                     UpdateValue()
-                    Ether.Fire("FRAME_UPDATE", frame)
+                    Ether.Fire("FRAME_UPDATE", oldFrame)
                 end
                 UIDropDownMenu_AddButton(info)
             end
-        end
-    end)
-
-    UIDropDownMenu_Initialize(selectedPoint, function()
-        for _, point in pairs(tablePoint) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = point.name
-            info.value = point.value
-            info.func = function()
-                local currentFrame = Ether.DB[001].SELECTED
-                if currentFrame and DB[5111] and DB[5111][currentFrame] then
-                    DB[5111][currentFrame][1] = point.value
-                    UIDropDownMenu_SetText(selectedPoint, point.name)
-                    Ether.Fire("FRAME_UPDATE", currentFrame)
-                    UpdateValue()
+        end)
+    end
+    local function CreatePointDropdown(dropdown, pointIndex)
+        UIDropDownMenu_Initialize(dropdown, function()
+            for _, point in ipairs(ANCHOR_POINTS) do
+                local info = UIDropDownMenu_CreateInfo()
+                info.text = point
+                info.value = point
+                info.func = function()
+                    local currentFrame = DB[001].SELECTED
+                    if currentFrame and DB[5111] and DB[5111][currentFrame] then
+                        DB[5111][currentFrame][pointIndex] = point
+                        UIDropDownMenu_SetText(dropdown, point)
+                        Ether.Fire("FRAME_UPDATE", currentFrame)
+                        UpdateValue()
+                    end
                 end
+                UIDropDownMenu_AddButton(info)
             end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
-
-    UIDropDownMenu_Initialize(selectedRelative, function()
-        for _, relative in pairs(tablePoint) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = relative.name
-            info.value = relative.value
-            info.func = function()
-                local currentFrame = Ether.DB[001].SELECTED
-                if currentFrame and DB[5111] and DB[5111][currentFrame] then
-                    DB[5111][currentFrame][3] = relative.value
-                    UIDropDownMenu_SetText(selectedPoint, relative.name)
-                    Ether.Fire("FRAME_UPDATE", currentFrame)
-                    UpdateValue()
-                end
-            end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
+        end)
+    end
+    CreateFrameDropdown()
+    CreatePointDropdown(dropdowns.point, 1)
+    CreatePointDropdown(dropdowns.relative, 3)
 
     Ether.RegisterCallback("FRAME_UPDATE", "FrameGroups", function(frameGroup)
-        if not frameGroup or not DB[5111][frameGroup] then
+        if not frameGroup or not DB[5111] or not DB[5111][frameGroup] or not FRAME_GROUPS[frameGroup] then
             return
         end
 
-        local frameInfo = frameGroups[frameGroup]
-        if not frameInfo then
-            return
-        end
-
+        local frameData = FRAME_GROUPS[frameGroup]
         local pos = DB[5111][frameGroup]
 
-        pos[1] = pos[1] or "CENTER"
-        pos[2] = pos[2] or 5133
-        pos[3] = pos[3] or "CENTER"
+        for i, default in ipairs({ "CENTER", 5133, "CENTER", 0, 0, 100, 100, 1, 1 }) do
+            pos[i] = pos[i] or default
+        end
         pos[4] = pos[4] and math.floor(pos[4] + 0.5) or 0
         pos[5] = pos[5] and math.floor(pos[5] + 0.5) or 0
-        pos[6] = pos[6] or 100
-        pos[7] = pos[7] or 100
-        pos[8] = pos[8] or 1
-        pos[9] = pos[9] or 1
 
         local relTo
         if pos[2] == 5133 then
             relTo = UIParent
         else
-            relTo = _G[pos[2]]
+            relTo = FRAME_GROUPS[pos[2]] and FRAME_GROUPS[pos[2]].frame or UIParent
             if not relTo or not relTo.GetCenter then
                 relTo = UIParent
             end
         end
+        local frame = frameData.frame
+        if frame and frame.SetPoint then
+            frame:ClearAllPoints()
+            frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
+            frame:SetSize(pos[6], pos[7])
+            frame:SetScale(pos[8])
+            frame:SetAlpha(pos[9])
+        end
 
-        for _, frame in ipairs(frameInfo) do
-            if frame and frame.SetPoint then
-                frame:ClearAllPoints()
-                frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
-                frame:SetSize(pos[6], pos[7])
-                frame:SetScale(pos[8])
-                frame:SetAlpha(pos[9])
-            end
+        if frameGroup == DB[001].SELECTED then
+            UpdateValue()
         end
     end)
 
     local function SetInitialValue()
-        local currentFrame = Ether.DB[001].SELECTED
-        if not currentFrame then
-            UIDropDownMenu_SetText(selectedFrame, "Choose frame...")
-            return
-        end
-
-        for _, option in ipairs(tableFrames) do
-            if option.value == currentFrame then
-                UIDropDownMenu_SetSelectedValue(selectedFrame, option.value)
-                UIDropDownMenu_SetText(selectedFrame, option.name)
-                UpdateValue()
-                break
-            end
+        local currentFrame = DB[001].SELECTED
+        if currentFrame and FRAME_GROUPS[currentFrame] then
+            UIDropDownMenu_SetSelectedValue(dropdowns.frame, currentFrame)
+            UIDropDownMenu_SetText(dropdowns.frame, FRAME_GROUPS[currentFrame].name)
+            UpdateValue()
+        else
+            UIDropDownMenu_SetText(dropdowns.frame, "Choose frame...")
         end
     end
     SetInitialValue()
 end
 
 function Ether.CreateProfileSection(self)
-    --  local parent = self.Content.Children["Profile"]
+    local parent = self.Content.Children["Profile"]
+    local dropdownLabel = parent:CreateFontString(nil, "OVERLAY")
+    dropdownLabel:SetFont(unpack(Ether.mediaPath.Font), 13, "OUTLINE")
+    dropdownLabel:SetPoint("TOPLEFT", 10, -10)
+    dropdownLabel:SetText("Current profile:")
+    local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
+    dropdown:SetPoint("TOPLEFT", dropdownLabel, "BOTTOMLEFT", 10, -20)
+    UIDropDownMenu_SetWidth(dropdown, 130)
+    local inputDialog = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    inputDialog:SetSize(300, 120)
+    inputDialog:SetPoint("CENTER")
+    inputDialog:SetFrameStrata("DIALOG")
+    inputDialog:Hide()
+    inputDialog:SetBackdrop({
+        bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true, tileSize = 32, edgeSize = 32,
+        insets = { left = 11, right = 12, top = 12, bottom = 11 }
+    })
+    local inputTitle = inputDialog:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    inputTitle:SetPoint("TOP", inputDialog, "TOP", 0, -15)
+    local inputBox = CreateFrame("EditBox", nil, inputDialog, "InputBoxTemplate")
+    inputBox:SetSize(250, 30)
+    inputBox:SetPoint("TOP", inputTitle, "BOTTOM", 0, -10)
+    inputBox:SetAutoFocus(false)
+    local okButton = CreateFrame("Button", nil, inputDialog, "GameMenuButtonTemplate")
+    okButton:SetSize(100, 25)
+    okButton:SetPoint("BOTTOMLEFT", inputDialog, "BOTTOM", 5, 15)
+    okButton:SetText("OK")
+    local cancelButton = CreateFrame("Button", nil, inputDialog, "GameMenuButtonTemplate")
+    cancelButton:SetSize(100, 25)
+    cancelButton:SetPoint("BOTTOMRIGHT", inputDialog, "BOTTOM", -5, 15)
+    cancelButton:SetText("Cancel")
+    cancelButton:SetScript("OnClick", function()
+        inputDialog:Hide()
+    end)
+    local function RefreshDropdown()
+        UIDropDownMenu_Initialize(dropdown, function(self, level)
+            local info = UIDropDownMenu_CreateInfo()
+            for _, profileName in ipairs(Ether.GetProfileList()) do
+                info.text = profileName
+                info.value = profileName
+                info.func = function(self)
+                    local success, msg = Ether.SwitchProfile(self.value)
+                    if success then
+                        UIDropDownMenu_SetSelectedValue(dropdown, self.value)
+                        UIDropDownMenu_SetText(dropdown, self.value)
+                        Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
 
+                        if parent.RefreshConfig then
+                            parent.RefreshConfig()
+                        end
+                    else
+                        Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    end
+                end
+                info.checked = (profileName == ETHER_DATABASE_DX_AA.currentProfile)
+                UIDropDownMenu_AddButton(info, level)
+            end
+        end)
+        UIDropDownMenu_SetSelectedValue(dropdown, ETHER_DATABASE_DX_AA.currentProfile)
+        UIDropDownMenu_SetText(dropdown, ETHER_DATABASE_DX_AA.currentProfile)
+    end
+    RefreshDropdown()
+    local buttonY = -80
+    local function CreateButton(text, w, h, xOffset, yOffset)
+        local btn = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
+        btn:SetSize(w, h)
+        btn:SetPoint("TOP", dropdown, "BOTTOM", xOffset, yOffset)
+        btn:SetText(text)
+        local fontString = btn:GetFontString()
+        if fontString then
+            fontString:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+        end
+        return btn
+    end
+    local newButton = CreateButton("Create new profile", 140, 30, 0, buttonY)
+    newButton:SetScript("OnClick", function()
+        inputTitle:SetText("Create new profile")
+        inputBox:SetText("")
+        inputDialog:Show()
+        inputBox:SetFocus()
+        okButton:SetScript("OnClick", function()
+            local name = inputBox:GetText()
+            if name and name ~= "" then
+                local success, msg = Ether.CreateProfile(name)
+                if success then
+                    RefreshDropdown()
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                else
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                end
+            end
+            inputDialog:Hide()
+        end)
+    end)
+    local copyButton = CreateButton("Copy profile", 140, 30, 0, buttonY - 40)
+    copyButton:SetScript("OnClick", function()
+        inputTitle:SetText("Copy profile")
+        inputBox:SetText(ETHER_DATABASE_DX_AA.currentProfile .. " - Copy")
+        inputDialog:Show()
+        inputBox:SetFocus()
+        okButton:SetScript("OnClick", function()
+            local name = inputBox:GetText()
+            if name and name ~= "" then
+
+                local success, msg = Ether.CopyProfile(ETHER_DATABASE_DX_AA.currentProfile, name)
+                if success then
+                    RefreshDropdown()
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                else
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                end
+            end
+            inputDialog:Hide()
+        end)
+    end)
+    local renameButton = CreateButton("Rename profile", 140, 30, 0, buttonY - 80)
+    renameButton:SetScript("OnClick", function()
+        inputTitle:SetText("Rename profile")
+        inputBox:SetText(ETHER_DATABASE_DX_AA.currentProfile)
+        inputDialog:Show()
+        inputBox:SetFocus()
+        okButton:SetScript("OnClick", function()
+            local newName = inputBox:GetText()
+            if newName and newName ~= "" then
+                local success, msg = Ether.RenameProfile(ETHER_DATABASE_DX_AA.currentProfile, newName)
+                if success then
+                    RefreshDropdown()
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                else
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                end
+            end
+            inputDialog:Hide()
+        end)
+    end)
+    local deleteButton = CreateButton("Delete profile", 140, 30, 0, buttonY - 120)
+    deleteButton:SetScript("OnClick", function()
+        local profileToDelete = ETHER_DATABASE_DX_AA.currentProfile
+        local profiles = Ether.GetProfileList()
+        if #profiles <= 1 then
+            Ether.DebugOutput("|cffcc66ffEther|r Cannot delete the only profile")
+            return
+        end
+        StaticPopupDialogs["ETHER_DELETE_PROFILE"] = {
+            text = "Are you sure you want to delete your profile '" .. profileToDelete .. "'?",
+            button1 = "Yes",
+            button2 = "No",
+            OnAccept = function()
+                local success, msg = Ether.DeleteProfile(profileToDelete)
+                if success then
+                    RefreshDropdown()
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    if parent.RefreshConfig then
+                        parent.RefreshConfig()
+                    end
+                else
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                end
+            end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+        }
+        StaticPopup_Show("ETHER_DELETE_PROFILE")
+    end)
+
+    local resetButton = CreateButton("Reset to default", 140, 30, 0, buttonY - 160)
+    resetButton:SetScript("OnClick", function()
+        StaticPopupDialogs["ETHER_RESET_PROFILE"] = {
+            text = "Reset profile to default settings?\nThis cannot be undone!",
+            button1 = "Yes",
+            button2 = "No",
+            OnAccept = function()
+                local success, msg = Ether.ResetProfile()
+                if success then
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    RefreshDropdown()
+                    if parent.RefreshConfig then
+                        parent.RefreshConfig()
+                    end
+                else
+                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                end
+            end,
+            timeout = 0,
+            whileDead = true,
+            hideOnEscape = true,
+        }
+        StaticPopup_Show("ETHER_RESET_PROFILE")
+    end)
+    parent.Refresh = RefreshDropdown
+    parent.RefreshConfig = function()
+        Ether.DebugOutput("|cffcc66ffEther|r UI refreshed for new profile")
+    end
 end
 
 local function CreateMainSettings(self)
@@ -1621,83 +1663,66 @@ local function CreateMainSettings(self)
         self.Frames["Main"]:SetScript("OnHide", function()
             Ether.DB[001].SHOW = false
         end)
-
         tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
         RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")
-
         local btnX = CreateFrame("Button", nil, self.Frames["Main"], "GameMenuButtonTemplate")
         btnX:SetPoint("TOPRIGHT", -10, -10)
+        btnX:GetFontString():SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
         btnX:SetText("X")
         btnX:SetSize(28, 28)
         btnX:SetScript("OnClick", function()
             self.Frames["Main"]:Hide()
         end)
 
-        local fontString = btnX:GetFontString()
-        if fontString then
-            fontString:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-        end
-
         self.Frames["Top"] = CreateFrame("Frame", nil, self.Frames["Main"])
         self.Frames["Top"]:SetPoint("TOPLEFT", 10, -10)
         self.Frames["Top"]:SetPoint("TOPRIGHT", -10, 0)
         self.Frames["Top"]:SetSize(0, 40)
-
         self.Frames["Bottom"] = CreateFrame('Frame', nil, self.Frames["Main"])
         self.Frames["Bottom"]:SetPoint("BOTTOMLEFT", 10, 10)
         self.Frames["Bottom"]:SetPoint("BOTTOMRIGHT", -10, 0)
         self.Frames["Bottom"]:SetSize(0, 30)
-
         self.Frames["Left"] = CreateFrame('Frame', nil, self.Frames["Main"])
         self.Frames["Left"]:SetPoint("TOPLEFT", self.Frames["Top"], 'BOTTOMLEFT')
         self.Frames["Left"]:SetPoint("BOTTOMLEFT", self.Frames["Bottom"], "TOPLEFT")
         self.Frames["Left"]:SetSize(110, 0)
-
         self.Frames["Right"] = CreateFrame("Frame", nil, self.Frames["Top"])
         self.Frames["Right"]:SetPoint("TOPRIGHT", self.Frames["Bottom"], "TOPRIGHT")
         self.Frames["Right"]:SetPoint("BOTTOMRIGHT", self.Frames["Bottom"], "TOPRIGHT")
         self.Frames["Right"]:SetSize(10, 0)
-
         self.Frames["Content"] = CreateFrame("Frame", nil, self.Frames["Top"])
         self.Frames["Content"]:SetPoint("TOP", self.Frames["Top"], 'BOTTOM')
         self.Frames["Content"]:SetPoint("BOTTOM", self.Frames["Bottom"], "TOP")
         self.Frames["Content"]:SetPoint("LEFT", self.Frames["Left"], "RIGHT")
         self.Frames["Content"]:SetPoint("RIGHT", self.Frames["Right"], "LEFT")
-
         local top = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
         top:SetColorTexture(1, 1, 1, 1)
         top:SetPoint("TOPLEFT", -2, 2)
         top:SetPoint("TOPRIGHT", 2, 2)
         top:SetHeight(1)
-
         local bottom = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
         bottom:SetColorTexture(1, 1, 1, 1)
         bottom:SetPoint("BOTTOMLEFT", -2, -2)
         bottom:SetPoint("BOTTOMRIGHT", 2, -2)
         bottom:SetHeight(1)
-
         local left = self.Frames["Content"]:CreateTexture(nil, "BORDER")
         left:SetColorTexture(1, 1, 1, 1)
         left:SetPoint("TOPLEFT", -2, 2)
         left:SetPoint("BOTTOMLEFT", -2, -2)
         left:SetWidth(1)
-
         local right = self.Frames["Content"]:CreateTexture(nil, "BORDER")
         right:SetColorTexture(1, 1, 1, 1)
         right:SetPoint("TOPRIGHT", 2, 2)
         right:SetPoint("BOTTOMRIGHT", 2, -2)
         right:SetWidth(1)
-
         local version = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
         version:SetFont(unpack(Ether.mediaPath.Font), 15, "OUTLINE")
         version:SetPoint("BOTTOMRIGHT", -10, 3)
         version:SetText("Beta Build |cE600CCFF" .. Ether.version .. "|r")
-
         local menuIcon = self.Frames["Bottom"]:CreateTexture(nil, "ARTWORK")
         menuIcon:SetSize(32, 32)
         menuIcon:SetTexture(unpack(Ether.mediaPath.Icon))
         menuIcon:SetPoint("BOTTOMLEFT", 0, 5)
-
         local name = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
         name:SetFont(unpack(Ether.mediaPath.Font), 20, "OUTLINE")
         name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
@@ -1719,11 +1744,9 @@ local function CreateSettingsButtons(self, name, parent, layer, onClick, isTopBu
     btn.Highlight = btn:CreateTexture(nil, "HIGHLIGHT")
     btn.Highlight:SetAllPoints()
     btn.Highlight:SetColorTexture(1, 1, 1, .4)
-
     btn:SetScript("OnClick", function()
         return onClick(name, layer)
     end)
-
     return btn
 end
 
@@ -1735,19 +1758,15 @@ local function CreateSettingsScrollTab(parent, name)
         scrollFrame.ScrollBar:SetPoint("TOPRIGHT", -5, -20)
         scrollFrame.ScrollBar:SetPoint("BOTTOMRIGHT", -5, 20)
     end
-
     local content = CreateFrame('Frame', name, scrollFrame)
     content:SetSize(scrollFrame:GetWidth() - 30, 1)
     scrollFrame:SetScrollChild(content)
-
     scrollFrame:EnableMouseWheel(true)
     scrollFrame:SetScript("OnMouseWheel", function(self, delta)
         local cur, max = self:GetVerticalScroll(), self:GetVerticalScrollRange()
         self:SetVerticalScroll(math_max(0, math_min(max, cur - (delta * 20))))
     end)
-
     content._ScrollFrame = scrollFrame
-
     return content
 end
 
@@ -1756,36 +1775,127 @@ Ether.CreateMainSettings = CreateMainSettings
 Ether.CreateSettingsButtons = CreateSettingsButtons
 Ether.CreateSettingsScrollTab = CreateSettingsScrollTab
 
-StaticPopupDialogs["ETHER_DELETE_AURA"] = {
-    text = "Destroy Aura ?",
-    button1 = "Yes",
-    button2 = "No",
-    OnAccept = function(self, spellId)
-        Ether.DB[1001][1003][spellId] = nil
-        if selectedSpellId == spellId then
-            selectedSpellId = nil
-        end
-        Ether.UpdateAuraList()
-        Ether.UpdateEditor()
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-    preferredIndex = 3,
-}
+function Ether.CopyProfile(sourceName, targetName)
+    if not ETHER_DATABASE_DX_AA.profiles[sourceName] then
+        return false, "Source profile not found"
+    end
+    if ETHER_DATABASE_DX_AA.profiles[targetName] then
+        return false, "Target profile already exists"
+    end
+    ETHER_DATABASE_DX_AA.profiles[targetName] = Ether.DeepCopy(ETHER_DATABASE_DX_AA.profiles[sourceName])
+    return true, "Profile copied"
+end
 
-StaticPopupDialogs["ETHER_RESET_DATABASED"] = {
-    text = "Reset Ether database?",
-    button1 = "Reset",
-    button2 = "Cancel",
-    OnAccept = function()
-        if not InCombatLockdown() then
-            Ether.DB[001].VERSION = 123456
-            ReloadUI()
+function Ether.SwitchProfile(name)
+    if not ETHER_DATABASE_DX_AA.profiles[name] then
+        return false, "Profile not found"
+    end
+    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.DeepCopy(Ether.DB)
+    ETHER_DATABASE_DX_AA.currentProfile = name
+    Ether.DB = Ether.DeepCopy(ETHER_DATABASE_DX_AA.profiles[name])
+    return true, "Profile changed to " .. name
+end
+
+function Ether.DeleteProfile(name)
+    if not ETHER_DATABASE_DX_AA.profiles[name] then
+        return false, "Profile not found"
+    end
+    local profileCount = 0
+    for _ in pairs(ETHER_DATABASE_DX_AA.profiles) do
+        profileCount = profileCount + 1
+    end
+    if profileCount <= 1 then
+        return false, "Cannot delete the only profile"
+    end
+    if name == ETHER_DATABASE_DX_AA.currentProfile then
+        local otherProfile
+        for profileName in pairs(ETHER_DATABASE_DX_AA.profiles) do
+            if profileName ~= name then
+                otherProfile = profileName
+                break
+            end
         end
-    end,
-    timeout = 0,
-    whileDead = true,
-    hideOnEscape = true,
-}
+        if not otherProfile then
+            return false, "No other profile available"
+        end
+        local success, msg = Ether.SwitchProfile(otherProfile)
+        if not success then
+            return false, "Failed to switch profile: " .. msg
+        end
+    end
+
+    ETHER_DATABASE_DX_AA.profiles[name] = nil
+    return true, "Profile deleted"
+end
+
+function Ether.GetCharacterKey()
+    return playerName .. " - " .. realmName
+end
+
+function Ether.GetCurrentProfile()
+    return ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile]
+end
+
+function Ether.GetProfileList()
+    local list = {}
+    for name in pairs(ETHER_DATABASE_DX_AA.profiles) do
+        tinsert(list, name)
+    end
+    tsort(list)
+    return list
+end
+
+function Ether.CreateProfile(name)
+    if ETHER_DATABASE_DX_AA.profiles[name] then
+        return false, "Profile already exists"
+    end
+    ETHER_DATABASE_DX_AA.profiles[name] = Ether.DeepCopy(Ether.DataDefault)
+    return true, "Profile created"
+end
+
+function Ether.RenameProfile(oldName, newName)
+    if not ETHER_DATABASE_DX_AA.profiles[oldName] then
+        return false, "Profile not found"
+    end
+    if ETHER_DATABASE_DX_AA.profiles[newName] then
+        return false, "Name already taken"
+    end
+    ETHER_DATABASE_DX_AA.profiles[newName] = ETHER_DATABASE_DX_AA.profiles[oldName]
+    ETHER_DATABASE_DX_AA.profiles[oldName] = nil
+    if ETHER_DATABASE_DX_AA.currentProfile == oldName then
+        ETHER_DATABASE_DX_AA.currentProfile = newName
+    end
+    return true, "Profile renamed"
+end
+--[[
+function Ether.RefreshAllPositions()
+    for frameId, frameData in pairs(FRAME_GROUPS or {}) do
+        if frameData.frame and frameData.frame.SetPoint then
+            Ether.Fire("FRAME_UPDATE", frameId)
+        end
+    end
+    Ether.DebugOutput("|cffcc66ffEther|r All positions refreshed")
+end
+]]
+function Ether.ResetProfile()
+    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.DeepCopy(Ether.DataDefault)
+    Ether.DB = Ether.DeepCopy(ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile])
+    ReloadUI()
+    return true, "Profile reset to default"
+end
+function Ether.CompressString(str)
+    return str:gsub("(.)%1%1%1+", function(c)
+        return c .. "#" .. (#str:match(c .. "+")) .. "#"
+    end)
+end
+
+function Ether.DecompressString(str)
+    return str:gsub("(.)#(%d+)#", function(c, count)
+        return c:rep(tonumber(count))
+    end)
+end
+
+function Ether.Validate(data)
+    return type(data) == "table"
+end
 

@@ -51,7 +51,7 @@ function Ether:PetCondition(button)
     if not button or not button.healthBar  then
         return
     end
-    
+
     local _, classFileName = UnitClass("player")
     if classFileName ~= "HUNTER" then
         return
