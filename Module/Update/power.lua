@@ -140,15 +140,15 @@ local function PowerChanged(_, event, unit)
     end
     if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
         if Ether.DB[901]["party"] and Ether.DB[201][7] == 1 and Ether.DB[701][4] == 1 and unit:match("^party") then
-            local p = Ether.Buttons.party[unit]
+            local p = Ether.unitButtons.party[unit]
             if p then
                 UpdatePowerText(p)
             end
         end
         if Ether.DB[901][unit] then
-            local s = Ether.unitButtons[unit]
+            local s = Ether.unitButtons.solo[unit]
             if s then
-                if Ether.DB[2001]["SMOOTH_POWER_SINGLE"] then
+                if Ether.DB[2001][3] == 1 then
                     UpdateSmoothPowerAndMax(s)
                 else
                     UpdatePowerAndMax(s)
@@ -165,7 +165,7 @@ local function PowerChanged(_, event, unit)
             return
         end
         if Ether.DB[701][6] == 1 and Ether.DB[201][8] == 1 then
-            local r = Ether.Buttons.raid[unit]
+            local r = Ether.unitButton.raid[unit]
             if r then
                 UpdatePowerText(r)
             end

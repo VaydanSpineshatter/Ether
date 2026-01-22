@@ -11,11 +11,12 @@ function Ether.RegisterPosition(parent, name)
         _parent = parent,
         _pos = Ether.DB[5111][name],
     }
-    setmetatable(obj, { __index = ObjPos })
+    setmetatable(obj, {__index = ObjPos})
     return obj
 end
 
 function ObjPos:InitialPosition()
+         ColorPickerFrame:Show()
     self._parent:SetClampedToScreen(true)
     self._parent:SetMovable(true)
     local relTo = self._pos[2]

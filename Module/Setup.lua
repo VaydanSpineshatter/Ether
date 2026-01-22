@@ -296,19 +296,22 @@ function Ether.Setup:CreateGrid()
         end
     end
 end
-
-local Temp = {}
+--[[
+local Temp
 local ObjPool = {}
-function Ether.CreateObjPool(creatorFunc)
+ObjPool.__index = ObjPool
+function Ether.ObjPoolNew(creatorFunc)
     local obj = {
         create = creatorFunc,
         active = {},
         inactive = {},
         activeCount = 0,
     }
-    setmetatable(obj, { __index = ObjPool })
+    setmetatable(obj, ObjPool)
     return obj
 end
+
+
 function ObjPool:Acquire(...)
     if self.activeCount >= 180 then
         return nil
@@ -323,8 +326,8 @@ function ObjPool:Acquire(...)
     if obj.Setup then
         obj:Setup(...)
     end
-    return obj
 end
+
 function ObjPool:Release(obj)
     if not obj or not obj._poolIndex then
         return
@@ -348,6 +351,7 @@ function ObjPool:Release(obj)
         self.inactive[#self.inactive + 1] = obj
     end
 end
+
 function ObjPool:ReleaseAll()
     for i = 1, self.activeCount do
         Temp[i] = self.active[i]
@@ -361,122 +365,7 @@ function ObjPool:ReleaseAll()
         Temp[i] = nil
     end
 end
-
-Ether.Setup.CreateReadyCheckTexture = function(self)
-    if (not self.Indicators.ReadyCheckIcon) then
-        self.Indicators.ReadyCheckIcon = self.healthBar:CreateTexture(nil, "OVERLAY")
-        self.Indicators.ReadyCheckIcon:SetSize(18, 18)
-        self.Indicators.ReadyCheckIcon:SetPoint("TOP", self.healthBar, "TOP", 0, 0)
-        self.Indicators.ReadyCheckIcon:Hide()
-    end
-end
-
-Ether.Setup.CreateUnitFlagsTexture = function(self)
-    if (not self.Indicators.UnitFlagsIcon) then
-        self.Indicators.UnitFlagsIcon = self.healthBar:CreateTexture(nil, "OVERLAY")
-        self.Indicators.UnitFlagsIcon:SetSize(12, 12)
-        self.Indicators.UnitFlagsIcon:SetPoint("TOP")
-    end
-    return self.Indicators.UnitFlagsIcon
-end
-
-Ether.Setup.CreateGroupRoleTexture = function(self)
-    if (not self.Indicators.GroupRoleIcon) then
-        self.Indicators.GroupRoleIcon = self.healthBar:CreateTexture(nil, 'OVERLAY')
-        self.Indicators.GroupRoleIcon:SetTexture("Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES")
-        self.Indicators.GroupRoleIcon:SetPoint('RIGHT', 0, 9)
-        self.Indicators.GroupRoleIcon:SetSize(12, 12)
-        self.Indicators.GroupRoleIcon:Hide()
-    end
-    return self.Indicators.GroupRoleIcon
-end
-
-Ether.Setup.CreateMainTankTexture = function(self)
-    if (not self.Indicators.MainTankIcon) then
-        self.Indicators.MainTankIcon = self.healthBar:CreateTexture(nil, 'OVERLAY')
-        self.Indicators.MainTankIcon:SetPoint("LEFT")
-        self.Indicators.MainTankIcon:SetSize(14, 14)
-        self.Indicators.MainTankIcon:Show()
-    end
-    return self.Indicators.MainTankIcon
-end
-
-Ether.Setup.CreateConnectionTexture = function(self)
-    if (not self.Indicators.ConnectionIcon) then
-        self.Indicators.ConnectionIcon = self.healthBar:CreateTexture(nil, "OVERLAY")
-        self.Indicators.ConnectionIcon:SetTexture("Interface\\CharacterFrame\\Disconnect-Icon")
-        self.Indicators.ConnectionIcon:SetTexCoord(0, 1, 0, 1)
-        self.Indicators.ConnectionIcon:SetPoint("TOPLEFT", 2, -2)
-        self.Indicators.ConnectionIcon:SetSize(24, 24)
-        self.Indicators.ConnectionIcon:Hide()
-    end
-    return self.Indicators.ConnectionIcon
-end
-
-Ether.Setup.CreateRaidTargetTexture = function(self)
-    if (not self.Indicators.RaidTargetIcon) then
-        self.Indicators.RaidTargetIcon = self.healthBar:CreateTexture(nil, "OVERLAY")
-        self.Indicators.RaidTargetIcon:SetPoint("BOTTOM", -2, 1)
-        self.Indicators.RaidTargetIcon:SetSize(11, 11)
-        self.Indicators.RaidTargetIcon:Hide()
-    end
-    return self.Indicators.RaidTargetIcon
-end
-
-Ether.Setup.CreateResurrectionTexture = function(self)
-    if (not self.Indicators.ResurrectionIcon) then
-        self.Indicators.ResurrectionIcon = self.healthBar:CreateTexture(nil, "OVERLAY")
-        self.Indicators.ResurrectionIcon:SetPoint("CENTER")
-        self.Indicators.ResurrectionIcon:SetSize(21, 21)
-        self.Indicators.ResurrectionIcon:SetTexture("Interface\\RaidFrame\\Raid-Icon-Rez")
-        self.Indicators.ResurrectionIcon:Hide()
-    end
-    return self.Indicators.ResurrectionIcon
-end
-
-Ether.Setup.CreateGroupLeaderTexture = function(self)
-    if (not self.Indicators.GroupLeaderIcon) then
-        self.Indicators.GroupLeaderIcon = self.healthBar:CreateTexture(nil, "OVERLAY")
-        self.Indicators.GroupLeaderIcon:SetPoint("RIGHT", 0, -2)
-        self.Indicators.GroupLeaderIcon:SetSize(12, 12)
-        self.Indicators.GroupLeaderIcon:Hide()
-    end
-    return self.Indicators.GroupLeaderIcon
-end
-
-Ether.Setup.CreateMasterLootTexture = function(self)
-    if not self.Indicators.MasterLootIcon then
-        self.Indicators.MasterLootIcon = self.healthBar:CreateTexture(nil, "OVERLAY")
-        self.Indicators.MasterLootIcon:SetTexture("Interface\\GroupFrame\\UI-Group-MasterLooter")
-        self.Indicators.MasterLootIcon:SetPoint("BOTTOMRIGHT", -2, 11)
-        self.Indicators.MasterLootIcon:SetSize(10, 10)
-        self.Indicators.MasterLootIcon:Hide()
-    end
-    return self.Indicators.MasterLootIcon
-end
-
-Ether.Setup.CreatePlayerFlagsString = function(self)
-    if not self.Indicators.PlayerFlagsString then
-        self.Indicators.PlayerFlagsString = self.healthBar:CreateFontString(nil, "OVERLAY")
-        self.Indicators.PlayerFlagsString:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
-        self.Indicators.PlayerFlagsString:SetPoint("TOPLEFT", 1, -1)
-        self.Indicators.PlayerFlagsString:Hide()
-    end
-    return self.Indicators.PlayerFlagsString
-end
-
-Ether.Setup.CreateDispelTexture = function(button)
-    local dispel = button.Debuffs[4]
-    if not dispel then
-        dispel = button.healthBar:CreateTexture(nil, "OVERLAY")
-        dispel:SetSize(8, 8)
-        dispel:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-        dispel:SetPoint("CENTER")
-    end
-    if dispel then
-        return dispel
-    end
-end
+]]
 
 Ether.Setup.CreateDebugFrame = function()
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
@@ -488,7 +377,7 @@ Ether.Setup.CreateDebugFrame = function()
         tile = true,
         tileSize = 16,
         edgeSize = 16,
-        insets = { left = 4, right = 4, top = 4, bottom = 4 }
+        insets = {left = 4, right = 4, top = 4, bottom = 4}
     })
     frame:SetBackdropColor(0.1, 0.1, 0.1, .9)
     frame:SetBackdropBorderColor(0.4, 0.4, 0.4)
@@ -628,5 +517,5 @@ function Ether.AddBlackBorder(button)
     button.left = left
     button.right = right
     button.bottom = bottom
-    return { top = top, bottom = bottom, left = left, right = right }
+    return {top = top, bottom = bottom, left = left, right = right}
 end

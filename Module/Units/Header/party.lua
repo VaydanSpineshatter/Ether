@@ -33,7 +33,9 @@ local function OnAttributeChanged(self)
 end
 
 function Ether:CreatePartyHeader()
-   if InCombatLockdown() then return end
+    if InCombatLockdown() then
+        return
+    end
     header:SetPoint("TOPLEFT", anchor, "TOPLEFT")
     header:SetAttribute("showPlayer", false)
     header:SetAttribute("showParty", true)
@@ -62,6 +64,10 @@ function Ether:CreatePartyHeader()
     RegisterAttributeDriver(header, "state-visibility", "[@raid1,exists] hide;[@party1,exists] show;[group:party] show;hide")
 
     for i, b in ipairs(header) do
+        b.Indicators = {}
+        b.raidAuras = {}
+        b:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
+        b:SetBackdropColor(0, 0, 0, 1)
         local healthBar = CreateFrame("StatusBar", nil, b)
         b.healthBar = healthBar
         healthBar:SetPoint("TOPLEFT")
@@ -87,6 +93,6 @@ function Ether:CreatePartyHeader()
         b:RegisterForClicks("AnyUp")
         b:SetScript("OnEnter", Ether.OnEnter)
         b:SetScript("OnLeave", Ether.OnLeave)
-        Ether.Buttons.party[b.unit] = b
+        Ether.unitButtons.party[b.unit] = b
     end
 end

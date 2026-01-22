@@ -13,20 +13,20 @@ local string_format = string.format
 local fm = "%.1f"
 
 local FACTION_COLORS = {
-    [0] = { r = 255, g = 0, b = 0 }, -- HOSTILE
-    [1] = { r = 255, g = 129, b = 0 }, -- UNFRIENDLY
-    [2] = { r = 255, g = 255, b = 0 }, -- NEUTRAL
-    [3] = { r = 0, g = 255, b = 0 }, -- FRIENDLY
-    [4] = { r = 0, g = 0, b = 255 }, -- PLAYER_SIMPLE
-    [5] = { r = 96, g = 96, b = 255 }, -- PLAYER_EXTENDED
-    [6] = { r = 170, g = 170, b = 255 }, -- PARTY
-    [7] = { r = 170, g = 255, b = 170 }, -- PARTY_PVP
-    [8] = { r = 83, g = 201, b = 255 }, -- FRIEND
-    [9] = { r = 128, g = 128, b = 128 }, -- DEAD
+    [0] = {r = 255, g = 0, b = 0}, -- HOSTILE
+    [1] = {r = 255, g = 129, b = 0}, -- UNFRIENDLY
+    [2] = {r = 255, g = 255, b = 0}, -- NEUTRAL
+    [3] = {r = 0, g = 255, b = 0}, -- FRIENDLY
+    [4] = {r = 0, g = 0, b = 255}, -- PLAYER_SIMPLE
+    [5] = {r = 96, g = 96, b = 255}, -- PLAYER_EXTENDED
+    [6] = {r = 170, g = 170, b = 255}, -- PARTY
+    [7] = {r = 170, g = 255, b = 170}, -- PARTY_PVP
+    [8] = {r = 83, g = 201, b = 255}, -- FRIEND
+    [9] = {r = 128, g = 128, b = 128}, -- DEAD
     [10] = {}, -- COMMENTATOR_TEAM_1
     [11] = {}, -- COMMENTATOR_TEAM_2
-    [13] = { r = 255, g = 255, b = 139 }, -- SELF
-    [14] = { r = 0, g = 153, b = 0 }, -- BATTLEGROUND_FRIENDLY_PVP
+    [13] = {r = 255, g = 255, b = 139}, -- SELF
+    [14] = {r = 0, g = 153, b = 0}, -- BATTLEGROUND_FRIENDLY_PVP
 }
 Ether.FACTION_COLORS = FACTION_COLORS
 
@@ -242,7 +242,7 @@ local function HealthChanged(_, event, unit)
     end
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
         if Ether.DB[901]["party"] and Ether.DB[201][7] == 1 and unit:match("^party") then
-            local p = Ether.Buttons.party[unit]
+            local p = Ether.unitButtons.party[unit]
             if p then
                 UpdateHealthAndMax(p)
                 if Ether.DB[701][3] == 1 then
@@ -251,30 +251,26 @@ local function HealthChanged(_, event, unit)
             end
         end
         if Ether.DB[901][unit] then
-            local s = Ether.unitButtons[unit]
+            local s = Ether.unitButtons.solo[unit]
             if s then
-                if Ether.DB[2001]["SMOOTH_HEALTH_SINGLE"] then
+                if Ether.DB[2001][3] == 1 then
                     UpdateSmoothHealthAndMax(s)
                 else
                     UpdateHealthAndMax(s)
                     if Ether.DB[701][1] == 1 then
-                       UpdateHealthText(s)
+                        UpdateHealthText(s)
                     end
                 end
-            end
-        end
-        if Ether.DB[901]["maintank"] then
-            local mt = Ether.Buttons.maintank[unit]
-            if mt then
-                UpdateHealthAndMax(mt)
             end
         end
         if not Ether.DB[901]["raid"] or Ether.DB[201][8] ~= 1 or not unit:match("^raid") then
             return
         end
-        local button = Ether.Buttons.raid[unit]
-        if not button then return end
-        if Ether.DB[2001]["SMOOTH_HEALTH_RAID"] then
+        local button = Ether.unitButtons.raid[unit]
+        if not button then
+            return
+        end
+        if Ether.DB[2001][5] == 1 then
             UpdateSmoothHealthAndMax(button)
         else
             UpdateHealthAndMax(button)
@@ -289,29 +285,25 @@ local function PredictionChanged(_, event, unit)
     if (not unit) then
         return
     end
-    if event ~= "UNIT_HEAL_PREDICTION" then return end
-    if Ether.DB[901]["party"] and Ether.DB[201][7]== 1 and unit:match("^party") then
-        local p = Ether.Buttons.party[unit]
+    if event ~= "UNIT_HEAL_PREDICTION" then
+        return
+    end
+    if Ether.DB[901]["party"] and Ether.DB[201][7] == 1 and unit:match("^party") then
+        local p = Ether.unitButtons.party[unit]
         if p and unit then
             UpdatePrediction(p)
         end
     end
     if Ether.DB[901][unit] then
-        local s = Ether.unitButtons[unit]
+        local s = Ether.unitButtons.solo[unit]
         if s then
             UpdatePrediction(s)
-        end
-    end
-    if Ether.DB[901]["maintank"] then
-        local mt = Ether.Buttons.maintank[unit]
-        if mt then
-            UpdatePrediction(mt)
         end
     end
     if not Ether.DB[901]["raid"] or Ether.DB[201][8] ~= 1 or not unit:match("^raid") then
         return
     end
-    local button = Ether.Buttons.raid[unit]
+    local button = Ether.unitButtons.raid[unit]
     if button then
         UpdatePrediction(button)
     end

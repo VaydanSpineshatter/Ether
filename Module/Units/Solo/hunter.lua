@@ -1,9 +1,9 @@
 local _, Ether = ...
 
 local petInfo = {
-    [1] = { 0.375, 0.5625, 0, 0.359375 },
-    [2] = { 0.1875, 0.375, 0, 0.359375 },
-    [3] = { 0, 0.1875, 0, 0.359375 }
+    [1] = {0.375, 0.5625, 0, 0.359375},
+    [2] = {0.1875, 0.375, 0, 0.359375},
+    [3] = {0, 0.1875, 0, 0.359375}
 }
 
 local function PetStatus(self)
@@ -22,7 +22,7 @@ local function Enter(self)
     GameTooltip:SetOwner(self, 'ANCHOR_RIGHT')
     GameTooltip:SetText('Condition:')
     GameTooltip:AddLine('Family: ' .. petType)
-    GameTooltip:AddLine('Happiness: ' .. ({ 'Unhappy', 'Content', 'Happy' })[happiness])
+    GameTooltip:AddLine('Happiness: ' .. ({'Unhappy', 'Content', 'Happy'})[happiness])
     GameTooltip:AddLine('Loyalty: ' .. (loyaltyRate or 'N/A'))
     GameTooltip:AddLine('Pet is doing ' .. damagePercentage .. '% damage')
     GameTooltip:Show()
@@ -48,7 +48,7 @@ local function Event(self, event, unit)
 end
 
 function Ether:PetCondition(button)
-    if not button or not button.healthBar  then
+    if not button or not button.healthBar then
         return
     end
 

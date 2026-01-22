@@ -14,13 +14,13 @@ local Config = {
     showTime = true,
     showName = true,
     showSafeZone = true,
-    texture = { "Interface\\Icons\\INV_Misc_QuestionMark" },
+    texture = {"Interface\\Icons\\INV_Misc_QuestionMark"},
     colors = {
-        casting = { 0.2, 0.6, 1.0, 0.8 },
-        channeling = { 0.18, 0.54, 0.34, 0.8 },
-        fail = { 1.0, 0.1, 0.1, 0.8 },
-        interrupted = { 0.50, 0.00, 0.50, 0.8 },
-        trading = { 1.00, 0.84, 0.00, 1 }
+        casting = {0.2, 0.6, 1.0, 0.8},
+        channeling = {0.18, 0.54, 0.34, 0.8},
+        fail = {1.0, 0.1, 0.1, 0.8},
+        interrupted = {0.50, 0.00, 0.50, 0.8},
+        trading = {1.00, 0.84, 0.00, 1}
     }
 }
 Ether.CastBar.Config = Config
@@ -136,7 +136,7 @@ local function CastStart(_, event, unit)
         return
     end
     if event == "UNIT_SPELLCAST_START" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellID = UnitCast(unit)
         if (not name or not bar) then
             return
@@ -179,7 +179,7 @@ local function CastFailed(_, event, unit, castID)
         return
     end
     if event == "UNIT_SPELLCAST_FAILED" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         if (bar.castID ~= castID) then
             return
         end
@@ -198,7 +198,7 @@ local function CastInterrupted(_, event, unit, castID)
         return
     end
     if event == "UNIT_SPELLCAST_INTERRUPTED" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         if (not bar or bar.castID ~= castID) then
             return
         end
@@ -217,7 +217,7 @@ local function CastDelayed(_, event, unit)
         return
     end
     if event == "UNIT_SPELLCAST_DELAYED" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         local _, _, _, startTime = UnitCast(unit)
         if (not startTime or not bar:IsShown()) then
             return
@@ -237,7 +237,7 @@ local function CastStop(_, event, unit, castID)
         return
     end
     if event == "UNIT_SPELLCAST_STOP" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         if (not bar or bar.castID ~= castID) then
             return
         end
@@ -251,7 +251,7 @@ local function ChannelStart(_, event, unit, _, spellID)
         return
     end
     if event == "UNIT_SPELLCAST_CHANNEL_START" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         local name, text, textureID, startTimeMS, endTimeMS, _, notInterruptible = UnitChannel(unit)
         if (not name or not bar) then
             return
@@ -295,7 +295,7 @@ local function ChannelUpdate(_, event, unit)
         return
     end
     if event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         local name, _, _, startTimeMS, endTimeMS = UnitChannel(unit)
         if (not name or not bar:IsShown()) then
             return
@@ -314,7 +314,7 @@ local function ChannelStop(_, event, unit)
         return
     end
     if event == "UNIT_SPELLCAST_CHANNEL_STOP" then
-        local bar = Ether.unitButtons[unit].castBar
+        local bar = Ether.unitButtons.solo[unit].castBar
         if (bar:IsShown()) then
             bar.channeling = nil
             bar.notInterruptible = nil
@@ -323,7 +323,7 @@ local function ChannelStop(_, event, unit)
 end
 
 local function EnableCastEvents()
-    if Ether.DB[2001]["PLAYER_BAR"] or Ether.DB[2001]["TARGET_BAR"] then
+    if Ether.DB[2001][1] or Ether.DB[2001][2] == 1 then
         RegisterCastBarEvent("UNIT_SPELLCAST_START", CastStart)
         RegisterCastBarEvent("UNIT_SPELLCAST_STOP", CastStop)
         RegisterCastBarEvent("UNIT_SPELLCAST_FAILED", CastFailed)
@@ -336,26 +336,28 @@ local function EnableCastEvents()
 end
 
 local function Enable(unit)
-    if not Ether.unitButtons[unit] then
+    if not Ether.unitButtons.solo[unit] then
         return
     end
-    if not Ether.unitButtons[unit].castBar then
-        Ether.Setup.CreateCastBar(Ether.unitButtons[unit])
-        RegisterUpdateFrame(Ether.unitButtons[unit].castBar)
+    if not Ether.unitButtons.solo[unit].castBar then
+        Ether.Setup.CreateCastBar(Ether.unitButtons.solo[unit])
+        RegisterUpdateFrame(Ether.unitButtons.solo[unit].castBar)
     end
     EnableCastEvents()
 end
 
 local function Disable(unit)
-    if not Ether.unitButtons[unit] then
+    if not Ether.unitButtons.solo[unit] then
         return
     end
-    if Ether.unitButtons[unit].castBar then
-        UnregisterUpdateFrame(Ether.unitButtons[unit].castBar)
+    if Ether.unitButtons.solo[unit].castBar then
+        UnregisterUpdateFrame(Ether.unitButtons.solo[unit].castBar)
     end
-    if (Ether.unitButtons[unit].castBar) then
-        Ether.unitButtons[unit].castBar:Hide()
-        Ether.unitButtons[unit].castBar = nil
+    if (Ether.unitButtons.solo[unit].castBar) then
+        Ether.unitButtons.solo[unit].castBar:Hide()
+        Ether.unitButtons.solo[unit].castBar:ClearAllPoints()
+        Ether.unitButtons.solo[unit].castBar:SetParent(nil)
+        Ether.unitButtons.solo[unit].castBar = nil
     end
 end
 
@@ -370,19 +372,10 @@ local function DisableCastEvents()
     UnregisterCastBarEvent("UNIT_SPELLCAST_CHANNEL_STOP")
 end
 
-local function StatusCastBar(target, unit)
-    if Ether.DB[2001][target] then
-        Ether.CastBar.Enable(unit)
-    else
-        Ether.CastBar.Disable(unit)
-    end
-end
-
 Ether.CastBar.Enable = Enable
 Ether.CastBar.Disable = Disable
 Ether.CastBar.EnableCastEvents = EnableCastEvents
 Ether.CastBar.DisableCastEvents = DisableCastEvents
 Ether.CastBar.DisableCastEvents = DisableCastEvents
-Ether.CastBar.StatusCastBar = StatusCastBar
 Ether.CastBar.RegisterUpdateFrame = RegisterUpdateFrame
 Ether.CastBar.UnregisterUpdateFrame = UnregisterUpdateFrame

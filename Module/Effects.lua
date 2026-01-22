@@ -18,14 +18,14 @@ local function ToggleAllBlinks()
 end
 
 Ether.StartBlink = function(tex, duration, interval)
-	if type(tex) == "nil" then
-		error("The element " .. tex .. " does not exist")
-		return
-	end
-	if type(duration) ~= "number" or type(interval) ~= "number" then
-		error("The element " .. (duration or interval) .. " must be a number")
-		return
-	end
+    if type(tex) == "nil" then
+        error("The element " .. tex .. " does not exist")
+        return
+    end
+    if type(duration) ~= "number" or type(interval) ~= "number" then
+        error("The element " .. (duration or interval) .. " must be a number")
+        return
+    end
     interval = interval or 0.5
     Ether.StopBlink(tex)
     Blinks[tex] = true

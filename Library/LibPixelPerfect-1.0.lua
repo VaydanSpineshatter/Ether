@@ -6,13 +6,13 @@ local lib
 ---@type string, number
 local MAJOR, MINOR = "LibPixelPerfect-1.0", 0
 if LibStub then
-	lib = LibStub:NewLibrary(MAJOR, MINOR)
-	if not lib then
+    lib = LibStub:NewLibrary(MAJOR, MINOR)
+    if not lib then
         -- The library is already loaded
         return
     end
 else
-	lib = {}
+    lib = {}
 end
 
 ---@type Frame

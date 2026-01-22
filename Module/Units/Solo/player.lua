@@ -35,24 +35,21 @@ local function Show(self)
     end)
 end
 
-local function Update(self, event, unit)
-    if self.unit ~= unit then return end
-    if not Ether.DB[901]["targettarget"] or self.unit ~= "targettarget" then
+local function Update(_, event, unit)
+    if not Ether.DB[901]["targettarget"] then
         return
     end
-    local button = Ether.unitButtons["targettarget"]
-
     if event == "UNIT_HEAL_PREDICTION" then
-        Ether.UpdatePrediction(button)
+        Ether.UpdatePrediction(Ether.unitButtons.solo["targettarget"])
     elseif event == "UNIT_MAXHEALTH" or event == "UNIT_HEALTH" then
-        Ether.UpdateHealthAndMax(button)
+        Ether.UpdateHealthAndMax(Ether.unitButtons.solo["targettarget"])
         if Ether.DB[701][1] == 1 then
-            Ether.UpdateHealthText(button)
+            Ether.UpdateHealthText(Ether.unitButtons.solo["targettarget"])
         end
     elseif event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
-        Ether.UpdatePowerAndMax(button)
+        Ether.UpdatePowerAndMax(Ether.unitButtons.solo["targettarget"])
         if Ether.DB[701][2] == 1 then
-            Ether.UpdatePowerText(button)
+            Ether.UpdatePowerText(Ether.unitButtons.solo["targettarget"])
         end
     end
 end
@@ -61,16 +58,17 @@ function Ether:CreateUnitButtons(unit)
     if InCombatLockdown() then
         return
     end
-    if not Ether.unitButtons[unit] then
+    if not Ether.unitButtons.solo[unit] then
         local button = CreateFrame("Button", "Ether_" .. unit .. "_UnitButton", Ether.Anchor[unit], "EtherUnitTemplate")
         button:SetAllPoints(Ether.Anchor[unit])
+        button:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
+        button:SetBackdropColor(0, 0, 0, 1)
         button.unit = unit
         button:SetAttribute("unit", button.unit)
         button:RegisterForClicks("AnyUp")
         button:SetAttribute("*type1", "target")
         button:SetAttribute("*type2", "togglemenu")
         button:SetAttribute("type2", "togglemenu")
-        button.Indicators = {}
         Ether.Setup.CreateTooltip(button, button.unit)
         Ether.Setup.CreateHealthBar(button, "HORIZONTAL")
         Ether.Setup.CreatePowerBar(button)
@@ -95,15 +93,15 @@ function Ether:CreateUnitButtons(unit)
 
         FullUpdate(button)
 
-        Ether.unitButtons[button.unit] = button
+        Ether.unitButtons.solo[button.unit] = button
 
         return button
     end
 end
 
 function Ether:DestroyUnitButtons(unit)
-    if Ether.unitButtons[unit] then
-        local button = Ether.unitButtons[unit]
+    if Ether.unitButtons.solo[unit] then
+        local button = Ether.unitButtons.solo[unit]
         button:Hide()
         button:ClearAllPoints()
         button:SetAttribute("unit", nil)
@@ -116,7 +114,7 @@ function Ether:DestroyUnitButtons(unit)
         end
         button:SetScript("OnAttributeChanged", nil)
         button:SetScript("OnShow", nil)
-        Ether.unitButtons[unit] = nil
+        Ether.unitButtons.solo[unit] = nil
     end
 end
 
@@ -193,6 +191,8 @@ function Ether.CreateCustomUnit()
             end
 
             custom.unit = unit
+            custom:SetBackdrop({"Interface\\Tooltips\\UI-Tooltip-Background"})
+            custom:SetBackdropColor(0, 0, 0, 1)
             custom:SetAttribute("unit", custom.unit)
             Ether.Setup.CreateTooltip(custom, custom.unit)
             Ether.Setup.CreateHealthBar(custom, "HORIZONTAL")

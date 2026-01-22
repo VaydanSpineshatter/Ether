@@ -37,58 +37,38 @@ do
         end
     end
 end
-
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
-        if Ether.DB[1001][1002][2] == 1 then
+        if Ether.DB[1002][2] == 1 then
             if UnitExists("target") then
-                Ether.Aura.SingleAuraUpdateBuff(Ether.unitButtons["target"])
-                Ether.Aura.SingleAuraUpdateDebuff(Ether.unitButtons["target"])
+                Ether.Aura.SingleAuraUpdateBuff(Ether.unitButtons.solo["target"])
+                Ether.Aura.SingleAuraUpdateDebuff(Ether.unitButtons.solo["target"])
             end
         end
     end
 end
---[[
-local function onRosterEvent()
-    for _, child in ipairs({ Ether.Header.raid:GetChildren() }) do
-        if child and child:IsVisible() then
-            local unit = child:GetAttribute("unit")
-            if unit then
-                Ether.Aura.UpdateUnitAuras(unit)
-            end
-        end
-    end
-end
-      --  if Ether.DB[1001][1002][3] == 1 then
-        --- onRosterEvent()
-        -- end
-]]
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
-        Ether.Indicators:UpdateIndicators()
-
+        Ether:UpdateIndicators()
     end
 end
 local function RosterEnter(_, event)
     if event == "PLAYER_JOINING_WORLD" then
-        if Ether.DB[1001][1002][3] == 1 then
+        if Ether.DB[1002][3] == 1 then
             C_After(0.2, function()
-                Ether.Aura.getTex:ReleaseAll()
+                Ether.AuraTexture:ReleaseAll()
             end)
         end
-
     end
 end
-
 local function RosterLeaved(_, event)
     if event == "PLAYER_LEAVING_WORLD" then
-        if Ether.DB[1001][1002][3] == 1 then
+        if Ether.DB[1002][3] == 1 then
             C_After(1, function()
-                Ether.Aura.getTex:ReleaseAll()
+                Ether.AuraTexture:ReleaseAll()
             end)
         end
-
-        if Ether.DB[201][7] == 1 then
+        if Ether.DB[801][1] == 1 then
             C_After(0.3, function()
                 Ether.Range:UpdateTargetAlpha()
             end)
@@ -153,11 +133,6 @@ function Roster:Enable()
             Ether.Range:Enable()
         end)
     end
-
-    C_After(0.2, function()
-        Ether.Indicators:Toggle()
-        Ether.Indicators:UpdateIndicators()
-    end)
 end
 
 function Roster:Disable()

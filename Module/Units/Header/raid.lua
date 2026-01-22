@@ -17,7 +17,9 @@ local __SECURE_INITIALIZE = [[
    ]]
 
 local function OnEnter(self)
-    if not GameTooltip then return end
+    if not GameTooltip then
+        return
+    end
     GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
     GameTooltip:SetUnit(self.unit)
     GameTooltip:Show()
@@ -25,7 +27,9 @@ end
 Ether.OnEnter = OnEnter
 
 local function OnLeave()
-    if not GameTooltip then return end
+    if not GameTooltip then
+        return
+    end
     GameTooltip:Hide()
 end
 Ether.OnLeave = OnLeave
@@ -40,6 +44,7 @@ local function InitialUpdate(self)
         Ether.UpdatePowerText(self)
     end
     Ether.UpdateName(self, true)
+
 end
 
 local function Show(self)
@@ -47,6 +52,7 @@ local function Show(self)
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("UNIT_NAME_UPDATE")
     InitialUpdate(self)
+    Ether.Aura.UpdateUnitAuras(self)
 end
 
 local function Hide(self)
@@ -65,21 +71,21 @@ local function OnAttributeChanged(self, name, unit)
 
     if newGuid ~= self.unitGUID then
         if oldUnit then
-            Ether.Buttons.raid[oldUnit] = nil
+            Ether.unitButtons.raid[oldUnit] = nil
         end
 
         self.unit = newUnit
         self.unitGUID = newGuid
 
         if newUnit then
-            Ether.Buttons.raid[newUnit] = self
+            Ether.unitButtons.raid[newUnit] = self
         end
 
         if newUnit and UnitExists(newUnit) then
             InitialUpdate(self)
-            Ether.Indicators:UpdateIndicators()
-            if Ether.DB[1001][1002][3] == 1 then
-                C_Timer.After(0.15, function()
+            Ether:UpdateIndicators()
+            if Ether.DB[1002][3] == 1 then
+                C_Timer.After(0.1, function()
                     Ether.Aura.UpdateUnitAuras(self)
                 end)
             end
@@ -93,7 +99,10 @@ local function Event(self, event, unit)
         return
     end
     if event == "GROUP_ROSTER_UPDATE" then
-
+        local currentUnit = self:GetAttribute("unit")
+        if currentUnit ~= unit then
+            OnAttributeChanged(self, "unit", currentUnit)
+        end
     elseif event == "UNIT_NAME_UPDATE" then
         Ether.UpdateName(self, true)
     end
@@ -104,6 +113,8 @@ local function initialConfigFunction(headerName, buttonName)
     b.Indicators = {}
     b.raidAuras = {}
     b.raidIcons = {}
+    b:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
+    b:SetBackdropColor(0, 0, 0, 1)
     Ether.AddBlackBorder(b)
     local healthBar = CreateFrame("StatusBar", nil, b)
     b.healthBar = healthBar
@@ -137,7 +148,7 @@ local function initialConfigFunction(headerName, buttonName)
     b:SetScript("OnLeave", OnLeave)
     b:SetScript("OnEvent", Event)
     b:HookScript("OnAttributeChanged", OnAttributeChanged)
-    Ether.Buttons.raid[buttonName] = b
+    Ether.unitButtons.raid[buttonName] = b
     return b
 end
 

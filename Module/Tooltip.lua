@@ -1,15 +1,13 @@
-local Ether = select(2, ...)
+local _, Ether = ...
 local Tooltip = {}
 Ether.Tooltip = Tooltip
 local L = Ether.L
 local GetG_Info = GetGuildInfo
 local RealmName = GetRealmName
-local U_N = UnitName
-local U_C = UnitClass
-local U_L = UnitLevel
-local U_GRA = UnitGroupRolesAssigned
-local U_IP = UnitIsPlayer
-local U_Reaction = UnitReaction
+local UnitName = UnitName
+local UnitClass = UnitClass
+local UnitIsPlayer = UnitIsPlayer
+local UnitReaction = UnitReaction
 local U_PVP = UnitIsPVP
 local U_PVP_A = UnitIsPVPFreeForAll
 local IsResting = IsResting
@@ -18,229 +16,298 @@ local U_FG = UnitFactionGroup
 local U_AFK = UnitIsAFK
 local U_DND = UnitIsDND
 local GetTargetIndex = GetRaidTargetIndex
-local string_format = string.format
 local U_RACE = UnitRace
 local U_CREATURE = UnitCreatureType
-local U_EX = UnitExists
-local afk = [[|cE600CCFFAFK|r]]
-local dnd = [[|cffCC66FFDND|r]]
-local tconcat, tinsert = table.concat, table.insert
-local tankIcon = '|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:0:19:22:41|t'
-local healIcon = '|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:20:39:1:20|t'
-local damagerIcon = '|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:20:39:22:41|t'
+local AFK = [[|cffff00ffAFK|r]]
+local DND = [[|cffCC66FFDND|r]]
+local TANK = '|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:0:19:22:41|t'
+local HEAL = '|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:20:39:1:20|t'
+local DAMAGER = '|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:20:39:22:41|t'
+local tankStr = "TANK"
+local healStr = "HEALER"
+local damagerStr = "DAMAGER"
 local fStr = " %s  |cff%02x%02x%02x%s|r"
 local cStr = "|cffffd700%s - %s|r"
 local aStr = " |cff%02x%02x%02x%s|r"
 local bStr = "|cff%02x%02x%02x%s|r "
-local TEMP_CAT = {}
 
+local tconcat = table.concat
+Tooltip.StringBuffer = (function()
+    local bufferPool = {}
+    local poolCount = 0
+    return {
+        Get = function()
+            local buffer
+            if poolCount > 0 then
+                buffer = bufferPool[poolCount]
+                bufferPool[poolCount] = nil
+                poolCount = poolCount - 1
+            else
+                buffer = {}
+            end
+            return buffer
+        end,
+        Add = function(buffer, str)
+            buffer[#buffer + 1] = str
+        end,
+        AddFormat = function(buffer, fmt, ...)
+            buffer[#buffer + 1] = string.format(fmt, ...)
+        end,
+        Concat = function(buffer, sep)
+            return tconcat(buffer, sep or "", 1, #buffer)
+        end,
+        Release = function(buffer)
+            for i = #buffer, 1, -1 do
+                buffer[i] = nil
+            end
+            if poolCount < 100 then
+                poolCount = poolCount + 1
+                bufferPool[poolCount] = buffer
+            end
+        end
+    }
+end)()
 local function GetF_UnitClass(unit)
-    local color = RAID_CLASS_COLORS[select(2, U_C(unit))]
-    if (color) then
-        return string_format(aStr, color.r * 255, color.g * 255, color.b * 255, U_C(unit))
+    local className, classFileName = UnitClass(unit)
+    local color = RAID_CLASS_COLORS[classFileName]
+    if color then
+        return string.format(aStr, color.r * 255, color.g * 255, color.b * 255, className)
     end
+    return ""
 end
-
-local function GetFormattedUnitLevel(unit)
-    local diff = GetQuestDifficultyColor(U_L(unit))
-    if (U_L(unit) == -1) then
-        return '|cffff0000??|r '
-    elseif (U_L(unit) == 0) then
-        return '? '
-    else
-        return string_format(bStr, diff.r * 255, diff.g * 255, diff.b * 255, U_L(unit))
+local levelColorCache = {}
+local function GetCachedLevelColor(level)
+    if not levelColorCache[level] then
+        if level == -1 then
+            levelColorCache[level] = '|cffff0000??|r '
+        elseif level == 0 then
+            levelColorCache[level] = '? '
+        else
+            local diff = GetQuestDifficultyColor(level)
+            levelColorCache[level] = string.format(bStr, diff.r * 255, diff.g * 255, diff.b * 255, level)
+        end
     end
+    return levelColorCache[level]
 end
 
 local function GetUnitRoleString(unit)
-    local role = U_GRA(unit)
+    local role = UnitGroupRolesAssigned(unit)
     local roleList = nil
 
-    if (role == 'TANK') then
-        roleList = ' ' .. tankIcon .. ''
-    elseif (role == 'HEALER') then
-        roleList = ' ' .. healIcon .. ''
-    elseif (role == 'DAMAGER') then
-        roleList = ' ' .. damagerIcon .. ''
+    if (role == tankStr) then
+        roleList = ' ' .. TANK .. ''
+    elseif (role == healStr) then
+        roleList = ' ' .. HEAL .. ''
+    elseif (role == damagerStr) then
+        roleList = ' ' .. DAMAGER .. ''
     end
     return roleList
 end
 
 local function UpdateTooltip(self, unit)
-    if not unit or not U_EX(unit) then
+    if not unit or not UnitExists(unit) then
         return
     end
 
     local DB = Ether.DB[301]
-    local name = U_N(unit)
-    local isPlayer = U_IP(unit)
-    local _, classFileName = U_C(unit)
-    local RC = Ether.RAID_COLORS
-    local FC = Ether.FACTION_COLORS
-    local r, g, b = 1, 1, 1
+    local name = UnitName(unit)
+    local isPlayer = UnitIsPlayer(unit)
+    local _, classFileName = UnitClass(unit)
+    local raidColors = Ether.RAID_COLORS
+    local factionColors = Ether.FACTION_COLORS
 
-    local targetName = U_N(unit .. 'target')
+    local buffer = Tooltip.StringBuffer.Get()
+
+    local targetName = UnitName(unit .. "target")
     if targetName then
         local you = U_IU(unit .. "target", "player")
-        local color = RC[select(2, U_C(unit .. 'target'))] or RC["UNKNOWN"]
-        self.target:SetText(you and L.TT_AIMING_YOU or string_format(fStr, L.TT_AIMING, color.r * 255, color.g * 255, color.b * 255, targetName))
+        local color = raidColors[select(2, UnitClass(unit .. 'target'))] or raidColors["UNKNOWN"]
+        self.target:SetText(you and L.TT_AIMING_YOU or
+                string.format(fStr, L.TT_AIMING, color.r * 255, color.g * 255, color.b * 255, targetName))
         self.target:Show()
     else
         self.target:Hide()
     end
 
-    if (DB[2] == 1 and U_AFK(unit)) then
-        self.flags:SetText(afk)
+    if DB[2] == 1 and U_AFK(unit) then
+        self.flags:SetText(AFK)
         self.flags:Show()
-    elseif (DB[3] == 1 and U_DND(unit)) then
-        self.flags:SetText(dnd)
+    elseif DB[3] == 1 and U_DND(unit) then
+        self.flags:SetText(DND)
         self.flags:Show()
     else
         self.flags:Hide()
     end
 
-	if DB[4] == 1 and U_PVP_A(unit) then
-		self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-FFA")
-		self.pvp:Show()
-	elseif DB[4] == 1 and U_FG(unit) and U_PVP(unit) then
-		self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-" .. U_FG(unit))
-		self.pvp:Show()
-	else
-		self.pvp:Hide()
-	end
-
-
-    if DB[5] == 1 then
-        if (U_IU(unit, "player") and IsResting()) then
-            self.resting:Show()
+    if DB[4] == 1 then
+        if U_PVP_A(unit) then
+            self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-FFA")
+            self.pvp:Show()
+        elseif U_FG(unit) and U_PVP(unit) then
+            self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-" .. U_FG(unit))
+            self.pvp:Show()
         else
-            self.resting:Hide()
+            self.pvp:Hide()
+        end
+    else
+        self.pvp:Hide()
+    end
+
+    if DB[5] == 1 and (U_IU(unit, "player") and IsResting()) then
+        self.resting:Show()
+    else
+        self.resting:Hide()
+    end
+
+    local nameColorR, nameColorG, nameColorB = 1, 1, 1
+    if DB[15] == 1 then
+        local reaction = UnitReaction(unit, "player")
+        if isPlayer and raidColors[classFileName] then
+            nameColorR, nameColorG, nameColorB = raidColors[classFileName].r, raidColors[classFileName].g, raidColors[classFileName].b
+        elseif reaction then
+            nameColorR, nameColorG, nameColorB = factionColors[reaction].r, factionColors[reaction].g, factionColors[reaction].b
         end
     end
 
     if DB[6] == 1 and DB[7] ~= 1 then
-        self.name:SetText(string_format("%s - %s", name, RealmName()))
-        self.name:SetTextColor(r, g, b)
+        self.name:SetText(string.format("%s - %s", name, RealmName()))
+        self.name:SetTextColor(nameColorR, nameColorG, nameColorB)
     elseif DB[7] == 1 and DB[6] ~= 1 then
         self.name:SetText(name)
-        self.name:SetTextColor(r, g, b)
+        self.name:SetTextColor(nameColorR, nameColorG, nameColorB)
     else
         self.name:SetText(name)
     end
 
-    wipe(TEMP_CAT)
-
     if DB[8] == 1 then
-        tinsert(TEMP_CAT, GetFormattedUnitLevel(unit))
+        Tooltip.StringBuffer.Add(buffer, GetCachedLevelColor(UnitLevel(unit)))
     end
 
-    if DB[9] == 1 and U_IP(unit) then
-        tinsert(TEMP_CAT, GetF_UnitClass(unit) .. '|r')
+    if DB[9] == 1 and isPlayer then
+        Tooltip.StringBuffer.Add(buffer, GetF_UnitClass(unit))
     end
 
     if DB[10] == 1 and isPlayer then
         local guildName, guildRankName = GetG_Info(unit)
         if guildName then
-            self.guild:SetText(string_format(cStr, guildName, guildRankName or L.TT_UNKNOWN))
+            self.guild:SetText(string.format(cStr, guildName, guildRankName or L.TT_UNKNOWN))
             self.guild:Show()
         else
             self.guild:Hide()
-
         end
+    else
+        self.guild:Hide()
     end
 
     if DB[11] == 1 then
-        tinsert(TEMP_CAT, GetUnitRoleString(unit))
+        Tooltip.StringBuffer.Add(buffer, GetUnitRoleString(unit))
     end
 
-    if (DB[12] == 1 and U_CREATURE(unit)) then
-        tinsert(TEMP_CAT, " " .. U_CREATURE(unit))
+    if DB[12] == 1 and U_CREATURE(unit) then
+        Tooltip.StringBuffer.Add(buffer, " " .. U_CREATURE(unit))
     end
 
-    if (DB[13] == 1 and U_RACE(unit)) then
-        tinsert(TEMP_CAT, " " .. U_RACE(unit))
+    if DB[13] == 1 and U_RACE(unit) then
+        Tooltip.StringBuffer.Add(buffer, " " .. U_RACE(unit))
     end
 
     if DB[14] == 1 then
         local index = GetTargetIndex(unit)
-        if (index) then
-            tinsert(TEMP_CAT, ICON_LIST[index] .. "11|t")
+        if index then
+            Tooltip.StringBuffer.Add(buffer, ICON_LIST[index] .. "11|t")
         end
     end
 
-    if #TEMP_CAT > 0 then
-        local concat = tconcat(TEMP_CAT, ",")
-        self.info:SetText(concat)
+    if #buffer > 0 then
+        self.info:SetText(Tooltip.StringBuffer.Concat(buffer, ","))
         self.info:Show()
     else
         self.info:Hide()
     end
 
-    if DB[15] == 1 then
-        local reaction = U_Reaction(unit, "player")
-        if isPlayer and RC[classFileName] then
-            r, g, b = RC[classFileName].r,
-            RC[classFileName].g,
-            RC[classFileName].b
-        elseif reaction then
-            r, g, b = FC[reaction].r,
-            FC[reaction].g,
-            FC[reaction].b
-        end
-    end
+    Tooltip.StringBuffer.Release(buffer)
 end
 
 local function SetupToolFrame(parent)
-
-    local frame = CreateFrame("Frame", nil, parent)
-    frame:SetAllPoints(parent)
+    local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    frame:SetPoint("TOPLEFT")
     frame:Hide()
-
-    local name = frame:CreateFontString(nil, "OVERLAY")
+    frame:SetSize(280, 110)
+    frame:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        tile = true, tileSize = 16, edgeSize = 16,
+        insets = {left = 4, right = 4, top = 4, bottom = 4}
+    })
+    frame:SetBackdropColor(0.08, 0.08, 0.08, 0.8)
+    frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.7)
+    local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.name = name
-    name:SetFont(unpack(Ether.mediaPath.Font), 13, "OUTLINE")
-    name:SetPoint("TOPLEFT", 10, -10)
+    name:SetFont(unpack(Ether.mediaPath.Font), 14, "OUTLINE")
+    name:SetPoint("TOPLEFT", 12, -12)
     name:SetJustifyH("LEFT")
-
+    name:SetTextColor(1, 0.9, 0.5, 1)
+    local nameLine = frame:CreateTexture(nil, "ARTWORK")
+    nameLine:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -4)
+    nameLine:SetPoint("RIGHT", frame, -12, 0)
+    nameLine:SetHeight(1)
+    nameLine:SetColorTexture(0.4, 0.4, 0.4, 0.6)
+    local guildIcon = frame:CreateTexture(nil, "OVERLAY")
+    guildIcon:SetSize(12, 12)
+    guildIcon:SetTexture(135026)
+    guildIcon:SetPoint("TOPLEFT", nameLine, "BOTTOMLEFT", 0, -8)
     local guild = frame:CreateFontString(nil, "OVERLAY")
     frame.guild = guild
-    guild:SetFont(unpack(Ether.mediaPath.Font), 13, "OUTLINE")
-    guild:SetTextColor(1, 1, 1)
-    guild:SetShadowColor(0, 0, 0, 0.8)
-    guild:SetShadowOffset(1, -1)
-    guild:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -5)
-
+    guild:SetFont(unpack(Ether.mediaPath.Font), 11, "OUTLINE")
+    guild:SetPoint("LEFT", guildIcon, "RIGHT", 4, 0)
+    guild:SetTextColor(0.7, 0.7, 1, 1)
     local info = frame:CreateFontString(nil, "OVERLAY")
     frame.info = info
-    info:SetFont(unpack(Ether.mediaPath.Font), 13, "OUTLINE")
-    info:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -30)
-
+    info:SetFont(unpack(Ether.mediaPath.Font), 11, "OUTLINE")
+    info:SetPoint("TOPLEFT", guildIcon, "BOTTOMLEFT", 0, -8)
+    info:SetTextColor(0.8, 0.8, 0.8, 1)
+    local targetIcon = frame:CreateTexture(nil, "OVERLAY")
+    targetIcon:SetSize(14, 14)
+    targetIcon:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
+    targetIcon:SetPoint("TOPLEFT", info, "BOTTOMLEFT", 0, -8)
+    local target = frame:CreateFontString(nil, "OVERLAY")
+    frame.target = target
+    target:SetFont(unpack(Ether.mediaPath.Font), 11, "OUTLINE")
+    target:SetPoint("LEFT", targetIcon, "RIGHT", 4, 0)
+    target:SetJustifyH("LEFT")
+    target:SetTextColor(1, 0.5, 0.5, 1)
     local flags = frame:CreateFontString(nil, "OVERLAY")
     frame.flags = flags
-    flags:SetFont(unpack(Ether.mediaPath.Font), 13, "OUTLINE")
-    flags:SetTextColor(1, 1, 1)
-    flags:SetShadowColor(0, 0, 0, 0.8)
-    flags:SetShadowOffset(1, -1)
-    flags:SetPoint("BOTTOMLEFT", name, "TOPLEFT", 0, 5)
+    flags:SetFont(unpack(Ether.mediaPath.Font), 12, "OUTLINE")
+    flags:SetPoint("BOTTOMRIGHT", frame, -10, 10)
     flags:SetJustifyH("RIGHT")
-
-    local pvp = frame:CreateTexture(nil, "ARTWORK")
+    flags:SetTextColor(0.6, 0.6, 0.6, 1)
+    local pvpBg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    pvpBg:SetSize(22, 22)
+    pvpBg:SetPoint("TOPRIGHT", frame, -8, -8)
+    pvpBg:SetBackdrop({
+        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 8,
+        insets = {left = 2, right = 2, top = 2, bottom = 2}
+    })
+    pvpBg:SetBackdropColor(0, 0, 0, 0.5)
+    pvpBg:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
+    local pvp = frame:CreateTexture(nil, "OVERLAY")
     frame.pvp = pvp
-    pvp:SetSize(18, 18)
-    pvp:SetPoint("RIGHT", name, "LEFT", -5, 0)
-
-    local resting = frame:CreateTexture(nil, "ARTWORK")
+    pvp:SetAllPoints(pvpBg)
+    local restBg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+    restBg:SetSize(22, 22)
+    restBg:SetPoint("RIGHT", pvpBg, "LEFT", -6, 0)
+    restBg:SetBackdrop(pvpBg:GetBackdrop())
+    restBg:SetBackdropColor(0, 0, 0, 0.5)
+    restBg:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
+    local resting = frame:CreateTexture(nil, "OVERLAY")
     frame.resting = resting
     resting:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
     resting:SetTexCoord(0.0625, 0.45, 0.0625, 0.45)
-    resting:SetSize(18, 18)
-    resting:SetPoint("RIGHT", name, "LEFT", -5, 20)
-
-    local target = frame:CreateFontString(nil, "OVERLAY")
-    frame.target = target
-    target:SetFont(unpack(Ether.mediaPath.Font), 13, "OUTLINE")
-    target:SetPoint("LEFT", name, "RIGHT", 0, 0)
-    target:SetJustifyH("CENTER")
+    resting:SetPoint("CENTER", restBg)
+    resting:SetAllPoints(restBg)
 
     return frame
 end
@@ -249,8 +316,6 @@ local function SetupHooks()
     local anchor = Ether.Anchor.tooltip
     if anchor then
         anchor = SetupToolFrame(anchor)
-    else
-        return
     end
 
     GameTooltip:HookScript("OnTooltipSetUnit", function(self)

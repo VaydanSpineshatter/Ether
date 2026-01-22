@@ -49,21 +49,15 @@ if not Name then
         end
         if event == "UNIT_NAME_UPDATE" then
             if Ether.DB[901]["party"] then
-                local p = Ether.Buttons.party[unit]
+                local p = Ether.unitButtons.party[unit]
                 if p then
                     UpdateName(p)
                 end
             end
             if Ether.DB[901][unit] then
-                local s = Ether.unitButtons[unit]
+                local s = Ether.unitButtons.solo[unit]
                 if s then
                     UpdateName(s)
-                end
-            end
-            if Ether.DB[901]["maintank"] then
-                local mt = Ether.Buttons.maintank[unit]
-                if mt then
-                    UpdateName(mt)
                 end
             end
         end
