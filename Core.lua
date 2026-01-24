@@ -663,6 +663,9 @@ local function OnInitialize(self, event, ...)
         if not Ether.DebugFrame then
             Ether.Setup.CreateDebugFrame()
         end
+        if Ether.DB[401][2] == 1 then
+            Ether.EnableMsgEvents()
+        end
         HideBlizzard()
 
     elseif (event == "PLAYER_LOGIN") then

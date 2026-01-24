@@ -54,21 +54,21 @@ do
         if not msgEvent:GetScript("OnEvent") then
             msgEvent:SetScript("OnEvent", Whisper)
             msgEvent:RegisterEvent("CHAT_MSG_WHISPER")
+            Ether.DB[401][2] = 1
         end
     end
     function disableWhisper()
         if msgEvent:GetScript("OnEvent") then
             msgEvent:SetScript("OnEvent", nil)
             msgEvent:UnregisterEvent("CHAT_MSG_WHISPER")
+            Ether.DB[401][2] = 0
         end
     end
 end
 local function EnableMsgEvents()
     if msgEvent:GetScript("OnEvent") and msgEvent:IsEventRegistered("CHAT_MSG_WHISPER") then
-        Ether.DebugOutput("|cffcc66ffEther|r - Whisper Off")
         disableWhisper()
     else
-        Ether.DebugOutput("|cffcc66ffEther|r - Whisper On")
         enableWhisper()
     end
 end

@@ -16,7 +16,6 @@ function Ether.RegisterPosition(parent, name)
 end
 
 function ObjPos:InitialPosition()
-         ColorPickerFrame:Show()
     self._parent:SetClampedToScreen(true)
     self._parent:SetMovable(true)
     local relTo = self._pos[2]
