@@ -1,8 +1,7 @@
 local _, Ether = ...
-local tinsert, tsort, tconcat = table.insert, table.sort, table.concat
+
 local playerName, realmName = UnitName("player"), GetRealmName()
-local pairs, ipairs = pairs, ipairs
-local math_max = math.max
+
 local function GetFont(_, target, tex, numb)
     target.label = target:CreateFontString(nil, "OVERLAY")
     target.label:SetFont(unpack(Ether.mediaPath.Font), numb, "OUTLINE")
@@ -87,7 +86,7 @@ function Ether.CreateHideSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", hide, "BOTTOMLEFT", 0, -20)
         else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Hide[i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", self.Content.Buttons.Hide.A[i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
         btn.label = GetFont(self, btn, opt.name, 12)
@@ -97,7 +96,7 @@ function Ether.CreateHideSection(self)
             local checked = self:GetChecked()
             Ether.DB[101][i] = checked and 1 or 0
         end)
-        self.Content.Buttons.Hide[i] = btn
+        self.Content.Buttons.Hide.A[i] = btn
     end
 end
 function Ether.CreateSection(self)
@@ -341,22 +340,6 @@ function Ether.CreateAuraSettingsSection(self)
     end
 end
 
-local function CopyAura(src)
-    return {
-        name = src.name,
-        size = src.size,
-        position = src.position,
-        offsetX = src.offsetX,
-        offsetY = src.offsetY,
-        enabled = src.enabled,
-        color = {src.color[1], src.color[2], src.color[3], src.color[4]},
-    }
-end
-
-local function GetSelectedAura()
-    return selectedSpellId and Ether.DB[1003][selectedSpellId]
-end
-
 function Ether:CreateSimpleInput(parent, width, height)
     local input = CreateFrame("EditBox", nil, parent)
     input:SetSize(width, height)
@@ -434,7 +417,102 @@ local function CreateAuraList(parent)
     addBtn:SetScript("OnLeave", function(self)
         self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     end)
+
+    local templateBg = frame:CreateTexture(nil, "BACKGROUND")
+    templateBg:SetColorTexture(0, 0, 0, 0.4)
+
+    local templateLabel = frame:CreateFontString(nil, "OVERLAY")
+    templateLabel:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    templateLabel:SetPoint("TOPLEFT", addBtn, "BOTTOMLEFT", 0, -20)
+    templateLabel:SetText("Load Template:")
+
+    local templateDropdown = CreateFrame("Frame", nil, frame, "UIDropDownMenuTemplate")
+    templateDropdown:SetPoint("TOPLEFT", templateLabel, "BOTTOMLEFT", 0, -5)
+    UIDropDownMenu_SetWidth(templateDropdown, 180)
+    UIDropDownMenu_SetText(templateDropdown, "Select Template...")
+
+    local loadTemplateBtn = CreateFrame("Button", nil, frame)
+    loadTemplateBtn:SetSize(80, 25)
+    loadTemplateBtn:SetPoint("LEFT", templateDropdown, "RIGHT", 10, 0)
+    loadTemplateBtn.bg = loadTemplateBtn:CreateTexture(nil, "BACKGROUND")
+    loadTemplateBtn.bg:SetAllPoints()
+    loadTemplateBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    loadTemplateBtn.text = loadTemplateBtn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    loadTemplateBtn.text:SetPoint("CENTER")
+    loadTemplateBtn.text:SetText("Load")
+    loadTemplateBtn:SetScript("OnClick", function(self)
+        local selectedTemplate = UIDropDownMenu_GetText(templateDropdown)
+        if selectedTemplate and selectedTemplate ~= "Select Template..." then
+            Ether:AddTemplateAuras(selectedTemplate, true)
+        end
+    end)
+    loadTemplateBtn:SetScript("OnEnter", function(self)
+        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
+    end)
+    loadTemplateBtn:SetScript("OnLeave", function(self)
+        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    end)
+
+    UIDropDownMenu_Initialize(templateDropdown, function()
+        local info = UIDropDownMenu_CreateInfo()
+
+        info.text = "|cffff0000Clear All Auras|r"
+        info.func = function()
+            wipe(Ether.DB[1003])
+            Ether.UpdateAuraList()
+            selectedSpellId = nil
+            Ether.UpdateEditor()
+            Ether.DebugOutput("|cff00ccffEther|r: All custom auras cleared")
+        end
+        UIDropDownMenu_AddButton(info)
+
+        UIDropDownMenu_AddSeparator()
+
+        for templateName, _ in pairs(Ether.AuraTemplates) do
+            info.text = templateName
+            info.func = function(self)
+                UIDropDownMenu_SetText(templateDropdown, templateName)
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+
+    templateBg:SetPoint("TOPLEFT", templateLabel, "TOPLEFT")
+    templateBg:SetPoint("BOTTOMRIGHT", loadTemplateBtn, "BOTTOMRIGHT")
     return frame
+end
+
+function Ether:AddTemplateAuras(templateName, replaceAll)
+    local template = Ether.AuraTemplates[templateName]
+    if not template then
+        return
+    end
+
+    local added = 0
+    local skipped = 0
+
+    for spellID, auraData in pairs(template) do
+        if not Ether.DB[1003][spellID] then
+            Ether.DB[1003][spellID] = Ether.CopyTable(auraData)
+            added = added + 1
+        else
+            skipped = skipped + 1
+        end
+    end
+
+    Ether.UpdateAuraList()
+
+    local msg = string.format("|cff00ccffEther|r: Template '%s' loaded. ", templateName)
+    if added > 0 then
+        msg = msg .. string.format("|cff00ff00+%d new auras|r", added)
+    end
+    if skipped > 0 then
+        msg = msg .. string.format(" (%d already existed)", skipped)
+    end
+    Ether.DebugOutput(msg)
+
+    selectedSpellId = nil
+    Ether.UpdateEditor()
 end
 
 local Editor
@@ -839,7 +917,7 @@ function Ether.UpdateAuraList()
             preferredIndex = 3,
         }
         btn.spellId = spellId
-        tinsert(AuraButtons, btn)
+        table.insert(AuraButtons, btn)
 
         if selectedSpellId == spellId then
             btn.bg:SetColorTexture(0, 0.8, 1, 0.8, .5)
@@ -847,7 +925,7 @@ function Ether.UpdateAuraList()
         yOffset = yOffset - 55
         index = index + 1
     end
-    AuraList.scrollChild:SetHeight(math_max(1, index * 55))
+    AuraList.scrollChild:SetHeight(math.max(1, index * 55))
 end
 function Ether.UpdateEditor()
     if not selectedSpellId or not Ether.DB[1003][selectedSpellId] then
@@ -928,33 +1006,13 @@ function Ether.UpdatePreview()
     end
 end
 
-function Ether.AddNewAura()
-    local newId = 1
-    while Ether.DB[1003][newId] do
-        newId = newId + 1
-    end
-
-    Ether.DB[1003][newId] = {
-        name = "Empty aura " .. newId,
-        color = {1, 1, 0, 1},
-        size = 6,
-        position = "TOP",
-        offsetX = 0,
-        offsetY = 0,
-        enabled = true
-    }
-
-    Ether.SelectAura(newId)
-end
-
 function Ether.SelectAura(spellId)
     selectedSpellId = spellId
     Ether.UpdateAuraList()
     Ether.UpdateEditor()
 end
 
-
-local function protoAura(newId)
+local function protoType(newId)
     local obj = {
         name = "New Aura " .. newId,
         color = {1, 1, 0, 1},
@@ -966,12 +1024,13 @@ local function protoAura(newId)
     }
     return obj
 end
+
 function Ether:AddNewAura()
     local newId = 1
     while Ether.DB[1003][newId] do
         newId = newId + 1
     end
-    Ether.DB[1003][newId] = protoAura(newId)
+    Ether.DB[1003][newId] = protoType(newId)
     Ether:SelectAura(newId)
 end
 
@@ -1085,9 +1144,9 @@ function Ether.CreateLayoutSection(self)
     local layoutValue = {
         [1] = {text = "Create/Delete Player CastBar"},
         [2] = {text = "Create/Delete Target CastBar"},
-        [3] = {text = "Smooth healthBar on Single Units"},
-        [4] = {text = "Smooth powerBar on Single Units"},
-        [5] = {text = "Smooth healthBar on Raid Units"}
+        [3] = {text = "Smooth healthBar on solo units"},
+        [4] = {text = "Smooth powerBar on solo units"},
+        [5] = {text = "Smooth healthBar on raid units"}
     }
 
     local layout = CreateFrame("Frame", nil, parent)
@@ -1099,7 +1158,7 @@ function Ether.CreateLayoutSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -10)
         else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Layout.B[i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", self.Content.Buttons.Layout.A[i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
         btn.label = GetFont(self, btn, opt.text, 12)
@@ -1122,9 +1181,10 @@ function Ether.CreateLayoutSection(self)
                 end
             end
         end)
-        self.Content.Buttons.Layout.B[i] = btn
+        self.Content.Buttons.Layout.A[i] = btn
     end
 end
+
 function Ether.CreateRangeSection(self)
     local parent = self.Content.Children["Range"]
     local rangeValue = {[1] = {name = "Enable Range"}}
@@ -1135,7 +1195,7 @@ function Ether.CreateRangeSection(self)
         if i == 1 then
             btn:SetPoint("TOP", parent, "TOPLEFT", 20, -10)
         else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Layout.C[i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", self.Content.Buttons.Layout.B[i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
 
@@ -1155,7 +1215,7 @@ function Ether.CreateRangeSection(self)
                 end
             end
         end)
-        self.Content.Buttons.Layout.C[i] = btn
+        self.Content.Buttons.Layout.B[i] = btn
     end
 end
 
@@ -1168,15 +1228,14 @@ function Ether.CreateTooltipSection(self)
         [3] = {name = "PVP Icon"},
         [4] = {name = "Resting Icon"},
         [5] = {name = "Realm"},
-        [6] = {name = "Only different realms"},
-        [7] = {name = "Level"},
-        [8] = {name = "Class"},
-        [9] = {name = "Guild"},
-        [10] = {name = "Role"},
-        [11] = {name = "Creature Type"},
-        [12] = {name = "Race", },
-        [13] = {name = "Raid Target"},
-        [14] = {name = "Reaction"}
+        [6] = {name = "Level"},
+        [7] = {name = "Class"},
+        [8] = {name = "Guild"},
+        [9] = {name = "Role"},
+        [10] = {name = "Creature Type"},
+        [11] = {name = "Race", },
+        [12] = {name = "Raid Target"},
+        [13] = {name = "Reaction"}
     }
 
     local tTip = GetFont(self, parent, "|cffffd700Tooltip Options:|r", 15)
@@ -1191,7 +1250,7 @@ function Ether.CreateTooltipSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", tTip, "BOTTOMLEFT", 0, -20)
         else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Layout.D[i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", self.Content.Buttons.Tooltip.A[i - 1], "BOTTOMLEFT", 0, 0)
         end
 
         btn:SetSize(24, 24)
@@ -1205,7 +1264,7 @@ function Ether.CreateTooltipSection(self)
             Ether.DB[301][i] = checked and 1 or 0
         end)
 
-        self.Content.Buttons.Layout.D[i] = btn
+        self.Content.Buttons.Tooltip.A[i] = btn
     end
 end
 
@@ -1477,10 +1536,6 @@ function Ether.CreateProfileSection(self)
                         UIDropDownMenu_SetSelectedValue(dropdown, self.value)
                         UIDropDownMenu_SetText(dropdown, self.value)
                         Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
-
-                        if parent.RefreshConfig then
-                            parent.RefreshConfig()
-                        end
                     else
                         Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
                     end
@@ -1518,6 +1573,8 @@ function Ether.CreateProfileSection(self)
                 else
                     Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
                 end
+            else
+                Ether.DebugOutput("|cffcc66ffEther|r Enter name")
             end
             inputDialog:Hide()
         end)
@@ -1760,9 +1817,10 @@ function Ether.CreateProfileSection(self)
     Ether.ExportPopup = frame
     parent.Refresh = RefreshDropdown
     parent.RefreshConfig = function()
-        Ether.DebugOutput("|cffcc66ffEther|r UI refreshed for new profile")
+       
     end
 end
+
 function Ether.ExportCurrentProfile()
     local profileName = ETHER_DATABASE_DX_AA.currentProfile
     local profileData = ETHER_DATABASE_DX_AA.profiles[profileName]
@@ -1774,7 +1832,7 @@ function Ether.ExportCurrentProfile()
         addon = "Ether",
         timestamp = time(),
         profileName = profileName,
-        data = Ether.DeepCopy(profileData)
+        data = Ether.CopyTable(profileData)
     }
     local serialized = Ether.TblToString(exportData)
     local encoded = Ether.Base64Encode(serialized)
@@ -1782,69 +1840,7 @@ function Ether.ExportCurrentProfile()
     Ether.DebugOutput("|cff888888Size:|r " .. #encoded .. " characters")
     return encoded
 end
-local BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-local PADDING_CHAR = '='
-function Ether.Base64Encode(data)
-    local result = {}
-    local bytes = {data:byte(1, -1)}
-    for i = 1, #bytes, 3 do
-        local a, b, c = bytes[i], bytes[i + 1], bytes[i + 2]
-        local index1 = math.floor(a / 4) + 1
-        tinsert(result, BASE64_CHARS:sub(index1, index1))
-        if b then
-            local index2 = ((a % 4) * 16) + math.floor(b / 16) + 1
-            tinsert(result, BASE64_CHARS:sub(index2, index2))
-            if c then
-                local index3 = ((b % 16) * 4) + math.floor(c / 64) + 1
-                tinsert(result, BASE64_CHARS:sub(index3, index3))
 
-                local index4 = (c % 64) + 1
-                tinsert(result, BASE64_CHARS:sub(index4, index4))
-            else
-                local index3 = ((b % 16) * 4) + 1
-                tinsert(result, BASE64_CHARS:sub(index3, index3))
-                tinsert(result, '=')
-            end
-        else
-            local index2 = ((a % 4) * 16) + 1
-            tinsert(result, BASE64_CHARS:sub(index2, index2))
-            tinsert(result, '==')
-        end
-    end
-    return tconcat(result)
-end
-
-function Ether.Base64Decode(data)
-    data = data:gsub('[^' .. BASE64_CHARS .. PADDING_CHAR .. ']', '')
-    local result = {}
-    for i = 1, #data, 4 do
-        local chunk = data:sub(i, i + 3)
-        if #chunk < 4 then
-            break
-        end
-        local values = {}
-        for j = 1, 4 do
-            local char = chunk:sub(j, j)
-            if char == '=' then
-                values[j] = 0
-            else
-                values[j] = BASE64_CHARS:find(char, 1, true) - 1
-            end
-        end
-        local byte1 = (values[1] * 4) + math.floor(values[2] / 16)
-        tinsert(result, string.char(byte1))
-
-        if values[3] ~= 0 or chunk:sub(3, 3) ~= '=' then
-            local byte2 = ((values[2] % 16) * 16) + math.floor(values[3] / 4)
-            tinsert(result, string.char(byte2))
-        end
-        if values[4] ~= 0 or chunk:sub(4, 4) ~= '=' then
-            local byte3 = ((values[3] % 4) * 64) + values[4]
-            tinsert(result, string.char(byte3))
-        end
-    end
-    return tconcat(result)
-end
 function Ether.ImportProfile(encodedString)
     if not encodedString or encodedString == "" then
         return false, "Empty import string"
@@ -1881,144 +1877,15 @@ function Ether.ImportProfile(encodedString)
         importedName = baseName .. "_" .. counter
     end
 
-    ETHER_DATABASE_DX_AA.profiles[importedName] = Ether.DeepCopy(importedData.data)
+    ETHER_DATABASE_DX_AA.profiles[importedName] = Ether.CopyTable(importedData.data)
 
     ETHER_DATABASE_DX_AA.currentProfile = importedName
-    Ether.DB = Ether.DeepCopy(Ether.GetCurrentProfile())
-
+    Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
+    Ether.RefreshAllSettings()
+    Ether.RefreshFramePositions()
     return true, "Successfully imported as: " .. importedName
 end
 
-function Ether.StringToTbl(str)
-    if not str or str == "" then
-        return false, "Empty string"
-    end
-    if not str:match("^%s*return") then
-        str = "return " .. str
-    end
-    local env = {
-        string = {
-            sub = string.sub,
-            find = string.find,
-            match = string.match,
-            gsub = string.gsub,
-            byte = string.byte,
-            char = string.char,
-            len = string.len,
-            lower = string.lower,
-            upper = string.upper,
-            rep = string.rep,
-            format = string.format,
-        },
-        table = {
-            insert = table.insert,
-            remove = table.remove,
-            concat = table.concat,
-            sort = table.sort,
-        },
-        math = {
-            floor = math.floor,
-            ceil = math.ceil,
-            abs = math.abs,
-            max = math.max,
-            min = math.min,
-            random = math.random,
-            sqrt = math.sqrt,
-        },
-        tonumber = tonumber,
-        tostring = tostring,
-        type = type,
-        pairs = pairs,
-        ipairs = ipairs,
-        next = next,
-        select = select,
-        unpack = unpack,
-        error = error,
-        pcall = pcall,
-        assert = assert,
-        _VERSION = _VERSION,
-    }
-    setmetatable(env, {
-        __index = function(t, k)
-            error("Access to forbidden global: " .. tostring(k), 2)
-        end,
-        __newindex = function(t, k, v)
-            error("Modification of environment forbidden", 2)
-        end
-    })
-    local func, err = loadstring(str)
-    if not func then
-        return false, "Compile error: " .. err
-    end
-
-    setfenv(func, env)
-
-    local success, result = pcall(func)
-    if not success then
-        return false, "Execution error: " .. result
-    end
-
-    return true, result
-end
-
-function Ether.TblToString(tbl)
-    return "return " .. Ether.SerializeTbl(tbl)
-end
-
-function Ether.SerializeTbl(tbl, indent)
-    indent = indent or 0
-    local result = {}
-    tinsert(result, "{")
-    local keys = {}
-    for k in pairs(tbl) do
-        tinsert(keys, k)
-    end
-    tsort(keys)
-    for i, key in ipairs(keys) do
-        local value = tbl[key]
-        local comma = i < #keys and "," or ""
-        local keyStr
-        if type(key) == "number" then
-            keyStr = "[" .. key .. "]"
-        elseif type(key) == "string" and key:match("^[a-zA-Z_][a-zA-Z0-9_]*$") then
-            keyStr = key
-        else
-            keyStr = "[" .. string.format("%q", tostring(key)) .. "]"
-        end
-        local valueStr
-        if type(value) == "table" then
-            local isEmpty = true
-            for _ in pairs(value) do
-                isEmpty = false;
-                break
-            end
-            if isEmpty then
-                valueStr = "{}"
-            elseif Ether.TableSize(value) < 3 then
-                valueStr = Ether.SerializeTbl(value, 0)
-            else
-                valueStr = Ether.SerializeTbl(value, indent + 2)
-            end
-        elseif type(value) == "string" then
-            valueStr = string.format("%q", value)
-        elseif type(value) == "number" then
-            valueStr = tostring(value)
-        elseif type(value) == "boolean" then
-            valueStr = value and "true" or "false"
-        elseif value == nil then
-            valueStr = "nil"
-        else
-            valueStr = string.format("%q", tostring(value))
-        end
-        if indent > 0 and type(value) == "table" and Ether.TableSize(value) > 2 then
-            tinsert(result, "\n" .. string.rep(" ", indent) .. keyStr .. " = " .. valueStr .. comma)
-        else
-            tinsert(result, keyStr .. " = " .. valueStr .. comma .. " ")
-        end
-    end
-    tinsert(result, "}")
-    return tconcat(result)
-end
 function Ether.ExportProfileToClipboard()
     local encoded, err = Ether.ExportCurrentProfile()
     if not encoded then
@@ -2038,92 +1905,10 @@ function Ether.ExportProfileToClipboard()
     end)
     Ether.DebugOutput("|cff00ff00Profile copied to clipboard!|r")
     Ether.DebugOutput("|cff888888You can now paste it anywhere|r")
+
     return encoded
 end
-function Ether.CreateMainSettings(self)
-    if not self.IsCreated then
-        self.Frames["Main"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
-        self.Frames["Main"]:SetFrameLevel(400)
-        self.Frames["Main"]:SetBackdrop({
-            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true,
-            tileSize = 16,
-            edgeSize = 16,
-            insets = {left = 4, right = 4, top = 4, bottom = 4}
-        })
-        self.Frames["Main"]:SetBackdropColor(0.1, 0.1, 0.1, 1)
-        self.Frames["Main"]:SetBackdropBorderColor(0, 0.8, 1, .7)
-        self.Frames["Main"]:Hide()
-        self.Frames["Main"]:SetScript("OnHide", function()
-            Ether.DB[001].SHOW = false
-        end)
-        tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
-        RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")
-        local btnX = CreateFrame("Button", nil, self.Frames["Main"], "GameMenuButtonTemplate")
-        btnX:SetPoint("TOPRIGHT", -10, -10)
-        btnX:GetFontString():SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-        btnX:SetText("X")
-        btnX:SetSize(28, 28)
-        btnX:SetScript("OnClick", function()
-            self.Frames["Main"]:Hide()
-        end)
-        self.Frames["Top"] = CreateFrame("Frame", nil, self.Frames["Main"])
-        self.Frames["Top"]:SetPoint("TOPLEFT", 10, -10)
-        self.Frames["Top"]:SetPoint("TOPRIGHT", -10, 0)
-        self.Frames["Top"]:SetSize(0, 40)
-        self.Frames["Bottom"] = CreateFrame('Frame', nil, self.Frames["Main"])
-        self.Frames["Bottom"]:SetPoint("BOTTOMLEFT", 10, 10)
-        self.Frames["Bottom"]:SetPoint("BOTTOMRIGHT", -10, 0)
-        self.Frames["Bottom"]:SetSize(0, 30)
-        self.Frames["Left"] = CreateFrame('Frame', nil, self.Frames["Main"])
-        self.Frames["Left"]:SetPoint("TOPLEFT", self.Frames["Top"], 'BOTTOMLEFT')
-        self.Frames["Left"]:SetPoint("BOTTOMLEFT", self.Frames["Bottom"], "TOPLEFT")
-        self.Frames["Left"]:SetSize(110, 0)
-        self.Frames["Right"] = CreateFrame("Frame", nil, self.Frames["Top"])
-        self.Frames["Right"]:SetPoint("TOPRIGHT", self.Frames["Bottom"], "TOPRIGHT")
-        self.Frames["Right"]:SetPoint("BOTTOMRIGHT", self.Frames["Bottom"], "TOPRIGHT")
-        self.Frames["Right"]:SetSize(10, 0)
-        self.Frames["Content"] = CreateFrame("Frame", nil, self.Frames["Top"])
-        self.Frames["Content"]:SetPoint("TOP", self.Frames["Top"], 'BOTTOM')
-        self.Frames["Content"]:SetPoint("BOTTOM", self.Frames["Bottom"], "TOP")
-        self.Frames["Content"]:SetPoint("LEFT", self.Frames["Left"], "RIGHT")
-        self.Frames["Content"]:SetPoint("RIGHT", self.Frames["Right"], "LEFT")
-        local top = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
-        top:SetColorTexture(1, 1, 1, 1)
-        top:SetPoint("TOPLEFT", -2, 2)
-        top:SetPoint("TOPRIGHT", 2, 2)
-        top:SetHeight(1)
-        local bottom = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
-        bottom:SetColorTexture(1, 1, 1, 1)
-        bottom:SetPoint("BOTTOMLEFT", -2, -2)
-        bottom:SetPoint("BOTTOMRIGHT", 2, -2)
-        bottom:SetHeight(1)
-        local left = self.Frames["Content"]:CreateTexture(nil, "BORDER")
-        left:SetColorTexture(1, 1, 1, 1)
-        left:SetPoint("TOPLEFT", -2, 2)
-        left:SetPoint("BOTTOMLEFT", -2, -2)
-        left:SetWidth(1)
-        local right = self.Frames["Content"]:CreateTexture(nil, "BORDER")
-        right:SetColorTexture(1, 1, 1, 1)
-        right:SetPoint("TOPRIGHT", 2, 2)
-        right:SetPoint("BOTTOMRIGHT", 2, -2)
-        right:SetWidth(1)
-        local version = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
-        version:SetFont(unpack(Ether.mediaPath.Font), 15, "OUTLINE")
-        version:SetPoint("BOTTOMRIGHT", -10, 3)
-        version:SetText("Beta Build |cE600CCFF" .. Ether.version .. "|r")
-        local menuIcon = self.Frames["Bottom"]:CreateTexture(nil, "ARTWORK")
-        menuIcon:SetSize(32, 32)
-        menuIcon:SetTexture(unpack(Ether.mediaPath.Icon))
-        menuIcon:SetPoint("BOTTOMLEFT", 0, 5)
-        local name = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
-        name:SetFont(unpack(Ether.mediaPath.Font), 20, "OUTLINE")
-        name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
-        name:SetText("|cffcc66ffEther|r")
-        self.IsCreated = true
-    end
-end
+
 function Ether.CopyProfile(sourceName, targetName)
     if not ETHER_DATABASE_DX_AA.profiles[sourceName] then
         return false, "Source profile not found"
@@ -2131,17 +1916,29 @@ function Ether.CopyProfile(sourceName, targetName)
     if ETHER_DATABASE_DX_AA.profiles[targetName] then
         return false, "Target profile already exists"
     end
-    ETHER_DATABASE_DX_AA.profiles[targetName] = Ether.DeepCopy(ETHER_DATABASE_DX_AA.profiles[sourceName])
+    ETHER_DATABASE_DX_AA.profiles[targetName] = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[sourceName])
     return true, "Profile copied"
 end
+
 function Ether.SwitchProfile(name)
     if not ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile not found"
     end
-    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.DeepCopy(Ether.DB)
+
+    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DB)
+
     ETHER_DATABASE_DX_AA.currentProfile = name
-    Ether.DB = Ether.DeepCopy(ETHER_DATABASE_DX_AA.profiles[name])
-    return true, "Profile changed to " .. name
+    Ether.DB = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[name])
+
+    Ether.RefreshAllSettings()
+    Ether.RefreshFramePositions()
+
+    if Ether.ConfigFrame and Ether.ConfigFrame:IsShown() then
+        Ether.ConfigFrame:Hide()
+        Ether.ConfigFrame:Show()
+    end
+
+    return true, "Switched to " .. name
 end
 function Ether.DeleteProfile(name)
     if not ETHER_DATABASE_DX_AA.profiles[name] then
@@ -2171,29 +1968,38 @@ function Ether.DeleteProfile(name)
         end
     end
     ETHER_DATABASE_DX_AA.profiles[name] = nil
+    Ether.RefreshAllSettings()
+    Ether.RefreshFramePositions()
     return true, "Profile deleted"
 end
+
 function Ether.GetCharacterKey()
-    return playerName .. " - " .. realmName
+    return playerName .. "-" .. realmName
 end
+
 function Ether.GetCurrentProfile()
     return ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile]
 end
+
 function Ether.GetProfileList()
     local list = {}
     for name in pairs(ETHER_DATABASE_DX_AA.profiles) do
-        tinsert(list, name)
+        table.insert(list, name)
     end
-    tsort(list)
+    table.sort(list)
     return list
 end
+
 function Ether.CreateProfile(name)
     if ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile already exists"
     end
-    ETHER_DATABASE_DX_AA.profiles[name] = Ether.DeepCopy(Ether.DataDefault)
+    ETHER_DATABASE_DX_AA.profiles[name] = Ether.CopyTable(Ether.DataDefault)
+    Ether.RefreshAllSettings()
+    Ether.RefreshFramePositions()
     return true, "Profile created"
 end
+
 function Ether.RenameProfile(oldName, newName)
     if not ETHER_DATABASE_DX_AA.profiles[oldName] then
         return false, "Profile not found"
@@ -2208,42 +2014,16 @@ function Ether.RenameProfile(oldName, newName)
     end
     return true, "Profile renamed"
 end
---[[
-function Ether.RefreshAllPositions()
-    for frameId, frameData in pairs(FRAME_GROUPS or {}) do
-        if frameData.frame and frameData.frame.SetPoint then
-            Ether.Fire("FRAME_UPDATE", frameId)
-        end
-    end
-    Ether.DebugOutput("|cffcc66ffEther|r All positions refreshed")
-end
-]]
+
 function Ether.ResetProfile()
-    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.DeepCopy(Ether.DataDefault)
-    Ether.DB = Ether.DeepCopy(ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile])
-    ReloadUI()
+    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DataDefault)
+    Ether.DB = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile])
+    wipe(Ether.DB[1003])
+    Ether.UpdateAuraList()
+    selectedSpellId = nil
+    Ether.UpdateEditor()
+    Ether.RefreshAllSettings()
+    Ether.RefreshFramePositions()
     return true, "Profile reset to default"
 end
-function Ether.CompressString(str)
-    return str:gsub("(.)%1%1%1+", function(c)
-        return c .. "#" .. (#str:match(c .. "+")) .. "#"
-    end)
-end
 
-function Ether.DecompressString(str)
-    return str:gsub("(.)#(%d+)#", function(c, count)
-        return c:rep(tonumber(count))
-    end)
-end
-
-function Ether.Validate(data)
-    return type(data) == "table"
-end
-
-function Ether.TableSize(t)
-    local count = 0
-    for _ in pairs(t) do
-        count = count + 1
-    end
-    return count
-end

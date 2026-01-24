@@ -2,7 +2,9 @@
 local _, Ether = ...
 local L = Ether.L
 local pairs, ipairs = pairs, ipairs
-Ether.version = C_AddOns.GetAddOnMetadata("Ether", "Version")
+Ether.version = ""
+Ether.charKey = "Unknown-Unknown"
+Ether.statusMigration = ""
 Ether.updatedChannel = false
 Ether.debug = false
 
@@ -72,12 +74,13 @@ local Construct = {
         Buttons = {
             Module = {A = {}},
             Config = {},
-            Hide = {},
+            Hide = {A = {}},
             Create = {A = {}},
             Auras = {A = {}, B = {}},
             Indicators = {A = {}, B = {}},
             Update = {A = {}, B = {}},
-            Layout = {A = {}, B = {}, C = {}, D = {}, E = {}}
+            Tooltip = {A = {}},
+            Layout = {A = {}, B = {}}
         }
     },
     Menu = {
@@ -86,7 +89,7 @@ local Construct = {
             [2] = {"Hide", "Create", "Updates"},
             [3] = {"Aura Settings", "Aura Custom"},
             [4] = {"Register"},
-            [5] = { "Comm", "Setup" },
+            [5] = {"Comm", "Setup"},
             [6] = {"Layout", "Range", "Tooltip", "Config", "Profile"}
         },
         ["LEFT"] = {
@@ -94,7 +97,7 @@ local Construct = {
             [2] = {"Units"},
             [3] = {"Auras"},
             [4] = {"Indicators"},
-            [5] = { "Arena" },
+            [5] = {"Arena"},
             [6] = {"Interface"}
         },
     },
@@ -178,6 +181,7 @@ local function CreateSettingsScrollTab(parent, name)
     content._ScrollFrame = scrollFrame
     return content
 end
+
 local function CreateSettingsButtons(self, name, parent, layer, onClick, isTopButton)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetHeight(25)
@@ -300,6 +304,91 @@ local function InitializeSettings(self)
     end
 end
 
+function Ether.CreateMainSettings(self)
+    if not self.IsCreated then
+        self.Frames["Main"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
+        self.Frames["Main"]:SetFrameLevel(400)
+        self.Frames["Main"]:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+            tile = true,
+            tileSize = 16,
+            edgeSize = 16,
+            insets = {left = 4, right = 4, top = 4, bottom = 4}
+        })
+        self.Frames["Main"]:SetBackdropColor(0.1, 0.1, 0.1, 1)
+        self.Frames["Main"]:SetBackdropBorderColor(0, 0.8, 1, .7)
+        self.Frames["Main"]:Hide()
+        self.Frames["Main"]:SetScript("OnHide", function()
+            Ether.DB[001].SHOW = false
+        end)
+        tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
+        RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")
+        local btnX = CreateFrame("Button", nil, self.Frames["Main"], "GameMenuButtonTemplate")
+        btnX:SetPoint("TOPRIGHT", -10, -10)
+        btnX:GetFontString():SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+        btnX:SetText("X")
+        btnX:SetSize(28, 28)
+        btnX:SetScript("OnClick", function()
+            self.Frames["Main"]:Hide()
+        end)
+        self.Frames["Top"] = CreateFrame("Frame", nil, self.Frames["Main"])
+        self.Frames["Top"]:SetPoint("TOPLEFT", 10, -10)
+        self.Frames["Top"]:SetPoint("TOPRIGHT", -10, 0)
+        self.Frames["Top"]:SetSize(0, 40)
+        self.Frames["Bottom"] = CreateFrame('Frame', nil, self.Frames["Main"])
+        self.Frames["Bottom"]:SetPoint("BOTTOMLEFT", 10, 10)
+        self.Frames["Bottom"]:SetPoint("BOTTOMRIGHT", -10, 0)
+        self.Frames["Bottom"]:SetSize(0, 30)
+        self.Frames["Left"] = CreateFrame('Frame', nil, self.Frames["Main"])
+        self.Frames["Left"]:SetPoint("TOPLEFT", self.Frames["Top"], 'BOTTOMLEFT')
+        self.Frames["Left"]:SetPoint("BOTTOMLEFT", self.Frames["Bottom"], "TOPLEFT")
+        self.Frames["Left"]:SetSize(110, 0)
+        self.Frames["Right"] = CreateFrame("Frame", nil, self.Frames["Top"])
+        self.Frames["Right"]:SetPoint("TOPRIGHT", self.Frames["Bottom"], "TOPRIGHT")
+        self.Frames["Right"]:SetPoint("BOTTOMRIGHT", self.Frames["Bottom"], "TOPRIGHT")
+        self.Frames["Right"]:SetSize(10, 0)
+        self.Frames["Content"] = CreateFrame("Frame", nil, self.Frames["Top"])
+        self.Frames["Content"]:SetPoint("TOP", self.Frames["Top"], 'BOTTOM')
+        self.Frames["Content"]:SetPoint("BOTTOM", self.Frames["Bottom"], "TOP")
+        self.Frames["Content"]:SetPoint("LEFT", self.Frames["Left"], "RIGHT")
+        self.Frames["Content"]:SetPoint("RIGHT", self.Frames["Right"], "LEFT")
+        local top = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
+        top:SetColorTexture(1, 1, 1, 1)
+        top:SetPoint("TOPLEFT", -2, 2)
+        top:SetPoint("TOPRIGHT", 2, 2)
+        top:SetHeight(1)
+        local bottom = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
+        bottom:SetColorTexture(1, 1, 1, 1)
+        bottom:SetPoint("BOTTOMLEFT", -2, -2)
+        bottom:SetPoint("BOTTOMRIGHT", 2, -2)
+        bottom:SetHeight(1)
+        local left = self.Frames["Content"]:CreateTexture(nil, "BORDER")
+        left:SetColorTexture(1, 1, 1, 1)
+        left:SetPoint("TOPLEFT", -2, 2)
+        left:SetPoint("BOTTOMLEFT", -2, -2)
+        left:SetWidth(1)
+        local right = self.Frames["Content"]:CreateTexture(nil, "BORDER")
+        right:SetColorTexture(1, 1, 1, 1)
+        right:SetPoint("TOPRIGHT", 2, 2)
+        right:SetPoint("BOTTOMRIGHT", 2, -2)
+        right:SetWidth(1)
+        local version = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
+        version:SetFont(unpack(Ether.mediaPath.Font), 15, "OUTLINE")
+        version:SetPoint("BOTTOMRIGHT", -10, 3)
+        version:SetText("Beta Build |cE600CCFF" .. Ether.version .. "|r")
+        local menuIcon = self.Frames["Bottom"]:CreateTexture(nil, "ARTWORK")
+        menuIcon:SetSize(32, 32)
+        menuIcon:SetTexture(unpack(Ether.mediaPath.Icon))
+        menuIcon:SetPoint("BOTTOMLEFT", 0, 5)
+        local name = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
+        name:SetFont(unpack(Ether.mediaPath.Font), 20, "OUTLINE")
+        name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
+        name:SetText("|cffcc66ffEther|r")
+        self.IsCreated = true
+    end
+end
+
 local function ToggleSettings(self)
     if not self.IsLoaded then
         InitializeSettings(self)
@@ -417,9 +506,9 @@ Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
     end
     local theirVersion = tonumber(message)
     local myVersion = tonumber(Ether.version)
-    local lastCheck = Ether.DB[001].LAST_VERSION or 0
+    local lastCheck = Ether.DB[001].LAST_UPDATE_CHECK or 0
     if (time() - lastCheck >= 9200) and theirVersion and myVersion and myVersion < theirVersion then
-        Ether.DB[001].LAST_VERSION = time()
+        Ether.DB[001].LAST_UPDATE_CHECK = time()
         local msg = string_format("New version found (%d). Please visit %s to get the latest version.", theirVersion, "|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
         if Ether.DebugOutput then
             Ether.DebugOutput(msg)
@@ -594,6 +683,7 @@ local function startC_Process()
         local settings = Ether.RegisterPosition(Construct.Frames["Main"], 341)
         settings:InitialPosition()
         settings:InitialDrag()
+
     end
 
     creationQueue[#creationQueue + 1] = function()
@@ -602,10 +692,12 @@ local function startC_Process()
         debug:InitialDrag()
     end
 
-    if Ether.DB[401][3] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether.Tooltip:Initialize()
-        end
+    creationQueue[#creationQueue + 1] = function()
+        Ether.DebugOutput(Ether.statusMigration)
+    end
+
+    creationQueue[#creationQueue + 1] = function()
+        Ether.Tooltip:Initialize()
     end
 
     creationQueue[#creationQueue + 1] = function()
@@ -618,58 +710,205 @@ local function startC_Process()
     end
 end
 
+function Ether.RefreshAllSettings()
+
+    if not Construct or not Construct.Content then
+        return
+    end
+
+    if Construct.Content.Buttons.Module and Construct.Content.Buttons.Module.A then
+        for i = 1, #Ether.DB[401] do
+            local checkbox = Construct.Content.Buttons.Module.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[401][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Hide and Construct.Content.Buttons.Hide.A then
+        for i = 1, #Ether.DB[101] do
+            local checkbox = Construct.Content.Buttons.Hide.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[101][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Create and Construct.Content.Buttons.Create.A then
+        for i = 1, #Ether.DB[201] do
+            local checkbox = Construct.Content.Buttons.Create.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[201][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Tooltip and Construct.Content.Buttons.Tooltip.A then
+        for i = 1, #Ether.DB[301] do
+            local checkbox = Construct.Content.Buttons.Tooltip.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[301][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Indicators and Construct.Content.Buttons.Indicators.A then
+        for i = 1, #Ether.DB[501] do
+            local checkbox = Construct.Content.Buttons.Indicators.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[501][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Indicators and Construct.Content.Buttons.Indicators.B then
+        for i = 1, #Ether.DB[601] do
+            local checkbox = Construct.Content.Buttons.Indicators.B[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[601][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Update and Construct.Content.Buttons.Update.A then
+        for i = 1, #Ether.DB[701] do
+            local checkbox = Construct.Content.Buttons.Update.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[701][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Update and Construct.Content.Buttons.Update.B then
+        local units = {
+            "player", "target", "targettarget", "pet", "pettarget",
+            "focus", "party", "raid"
+        }
+
+        for i, unitKey in ipairs(units) do
+            local checkbox = Construct.Content.Buttons.Update.B[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[901][unitKey] == true)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Layout and Construct.Content.Buttons.Layout.B then
+        for i = 1, #Ether.DB[801] do
+            local checkbox = Construct.Content.Buttons.Layout.B[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[801][i] == 1)
+            end
+        end
+    end
+
+    if Construct.Content.Buttons.Layout and Construct.Content.Buttons.Layout.A then
+        for i = 1, #Ether.DB[2001] do
+            local checkbox = Construct.Content.Buttons.Layout.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[2001][i] == 1)
+            end
+        end
+    end
+end
+
+function Ether.RefreshFramePositions()
+
+    local frames = {
+        [331] = Ether.Anchor.tooltip,
+        [332] = Ether.Anchor.player,
+        [333] = Ether.Anchor.target,
+        [334] = Ether.Anchor.targettarget,
+        [335] = Ether.Anchor.pet,
+        [336] = Ether.Anchor.pettarget,
+        [337] = Ether.Anchor.focus,
+        [338] = Ether.Anchor.party,
+        [339] = Ether.Anchor.raid,
+        [340] = Ether.DebugFrame,
+        [341] = Construct.Frames["Main"]
+    }
+
+    for frameID, frame in pairs(frames) do
+        if frame and Ether.DB[5111][frameID] then
+            local pos = Ether.DB[5111][frameID]
+
+            for i, default in ipairs({"CENTER", 5133, "CENTER", 0, 0, 100, 100, 1, 1}) do
+                pos[i] = pos[i] or default
+            end
+
+            local relTo = (pos[2] == 5133) and UIParent or frames[pos[2]] or UIParent
+
+            if frame.SetPoint then
+                frame:ClearAllPoints()
+                frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
+                frame:SetSize(pos[6], pos[7])
+                frame:SetScale(pos[8])
+                frame:SetAlpha(pos[9])
+
+                Ether.Fire("FRAME_UPDATED", frameID)
+            end
+        end
+    end
+
+end
+
 local function OnInitialize(self, event, ...)
     if (event == "ADDON_LOADED") then
         local loadedAddon = ...
 
         assert(loadedAddon == "Ether", "Unexpected addon string: " .. tostring(loadedAddon))
         assert(type(Ether.DataDefault) == "table", "Ether default database missing")
-        assert(type(Ether.MergeToLeft) == "function" and type(Ether.DeepCopy) == "function", "Ether table func missing")
+        assert(type(Ether.MergeToLeft) == "function" and type(Ether.CopyTable) == "function", "Ether table func missing")
 
         self:RegisterEvent("PLAYER_LOGIN")
         self:UnregisterEvent("ADDON_LOADED")
 
         if type(_G.ETHER_DATABASE_DX_AA) ~= "table" then
-            ETHER_DATABASE_DX_AA = {}
+            _G.ETHER_DATABASE_DX_AA = {}
         end
 
-        if type(ETHER_DATABASE_DX_AA[001]) ~= "table" then
-            ETHER_DATABASE_DX_AA[001] = {}
+        local charKey = Ether.GetCharacterKey()
+        if charKey then
+            Ether.charKey = charKey
         end
-
-        if Ether.version ~= ETHER_DATABASE_DX_AA[001].VERSION then
-            ETHER_DATABASE_DX_AA = Ether.DataDefault
-            ETHER_DATABASE_DX_AA[001].VERSION = Ether.version
-        end
-
-        if not ETHER_DATABASE_DX_AA.profiles then
-            local charKey = Ether.GetCharacterKey()
-            local oldData = Ether.DeepCopy(ETHER_DATABASE_DX_AA)
-            local profileData = Ether.MergeToLeft(
-                    Ether.DeepCopy(Ether.DataDefault),
-                    oldData
-            )
-            ETHER_DATABASE_DX_AA.profiles = {
-                [charKey] = profileData
-            }
-            ETHER_DATABASE_DX_AA.currentProfile = charKey
-        end
-
-        local DB = Ether.DeepCopy(Ether.GetCurrentProfile())
-        Ether.DB = DB
 
         self:RegisterEvent("PLAYER_LOGOUT")
+    elseif (event == "PLAYER_LOGIN") then
+
+        self:UnregisterEvent("PLAYER_LOGIN")
+
+        if not ETHER_DATABASE_DX_AA.profiles then
+            local profileData = Ether.MergeToLeft(
+                    Ether.CopyTable(Ether.DataDefault),
+                    ETHER_DATABASE_DX_AA
+            )
+            ETHER_DATABASE_DX_AA = {
+                profiles = {
+                    [Ether.charKey] = profileData
+                },
+                currentProfile = Ether.charKey
+            }
+
+        elseif not ETHER_DATABASE_DX_AA.profiles[Ether.charKey] then
+            ETHER_DATABASE_DX_AA.profiles[Ether.charKey] = Ether.CopyTable(Ether.DataDefault)
+        end
+
+        ETHER_DATABASE_DX_AA.currentProfile = Ether.charKey
 
         if not Ether.DebugFrame then
             Ether.Setup.CreateDebugFrame()
         end
+
+        Ether:MigrateArraysOnLogin()
+        Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
+
         if Ether.DB[401][2] == 1 then
             Ether.EnableMsgEvents()
         end
-        HideBlizzard()
 
-    elseif (event == "PLAYER_LOGIN") then
-        self:UnregisterEvent("PLAYER_LOGIN")
+        local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
+        Ether.version = version
+        HideBlizzard()
 
         SLASH_ETHER1 = "/ether"
         SlashCmdList["ETHER"] = function(msg)
@@ -691,7 +930,11 @@ local function OnInitialize(self, event, ...)
                     ReloadUI()
                 end
             elseif input == "msg" then
-                Ether.EnableMsgEvents()
+                if Construct.Content.Buttons.Module.A[2] then
+                    local checkbox = Construct.Content.Buttons.Module.A[2]
+                    checkbox:SetChecked(not checkbox:GetChecked())
+                    checkbox:GetScript("OnClick")(checkbox)
+                end
             else
                 for _, entry in ipairs(Ether.SlashInfo) do
                     Ether.DebugOutput(string_format("%s  –  %s", entry.cmd, entry.desc))
@@ -721,7 +964,7 @@ local function OnInitialize(self, event, ...)
         local r = Ether.RegisterPosition(Ether.Anchor.raid, 339)
         r:InitialPosition()
         local tooltip = CreateFrame("Frame", nil, UIParent)
-        tooltip:SetFrameLevel(90)
+        tooltip:SetFrameLevel(400)
         Ether.Anchor.tooltip = tooltip
         local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip, 331)
         tooltip_P:InitialPosition()
@@ -754,11 +997,17 @@ local function OnInitialize(self, event, ...)
 
     elseif (event == "PLAYER_LOGOUT") then
         if Ether.DB then
-            ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.DeepCopy(Ether.DB)
+            local charKey = Ether.GetCharacterKey()
+            if charKey then
+                ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
+            end
+            if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
+                ETHER_DATABASE_DX_AA.currentProfile = charKey
+            end
         end
     end
-end
 
+end
 local Initialize = CreateFrame("Frame")
 Initialize:RegisterEvent("ADDON_LOADED")
 Initialize:SetScript("OnEvent", OnInitialize)

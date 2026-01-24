@@ -1,16 +1,35 @@
 local _, Ether = ...
 
+local arrayLengths = {
+    [101] = 12, [201] = 8, [301] = 13, [401] = 3,
+    [501] = 9, [601] = 7, [701] = 6, [801] = 1,
+    [1002] = 3, [2001] = 5
+}
+
+local arrayDefaults = {
+    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [201] = {1, 1, 1, 1, 1, 1, 1, 1},
+    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [401] = {1, 0, 1},
+    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [601] = {1, 1, 1, 0, 1, 1, 1},
+    [701] = {0, 0, 0, 0, 0, 0},
+    [801] = {0},
+    [1002] = {1, 1, 1},
+    [2001] = {1, 1, 0, 0, 0}
+}
+
 local Default = {
     [001] = {
         VERSION = 0,
-        LAST_VERSION = 0,
+        LAST_UPDATE_CHECK = 0,
         SHOW = true,
         LAST_TAB = "Module",
-        SELECTED = 341
+        SELECTED = 341,
     },
     [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [201] = {1, 1, 1, 1, 1, 1, 1, 1, 0},
-    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [201] = {1, 1, 1, 1, 1, 1, 1, 1},
+    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     [401] = {1, 0, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [601] = {1, 1, 1, 0, 1, 1, 1},
@@ -26,7 +45,6 @@ local Default = {
         party = true,
         raid = true,
     },
-    [1001] = {},
     [1002] = {1, 1, 1},
     [1003] = {},
     [2001] = {1, 1, 0, 0, 0},
@@ -45,8 +63,6 @@ local Default = {
     }
 }
 Ether.DataDefault = Default
-
-
 
 ---@alias Menu number
 ---| DataInfo 001
@@ -129,15 +145,14 @@ Ether.DataDefault = Default
 ---| PVP 3
 ---| Resting 4
 ---| Realm 5
----| Different Realm 6
----| Level 7
----| Class 8
----| Guild 9
----| Role 10
----| Creature 11
----| Race 12
----| Raid Target 13
----| Reaction 14
+---| Level 6
+---| Class 7
+---| Guild 8
+---| Role 9
+---| Creature 10
+---| Race 11
+---| Raid Target 12
+---| Reaction 13
 
 ---@alias Module_401 number
 ---| Icon 1
@@ -237,24 +252,12 @@ function Ether.MergeToLeft(origTbl, newTbl)
     return origTbl
 end
 
-function Ether.DeepCopy(orig, seen)
-    seen = seen or {}
-    if seen[orig] then
-        return seen[orig]
+function Ether.ShallowCopy(t)
+    local t2 = {}
+    for k, v in pairs(t) do
+        t2[k] = v
     end
-
-    local copy
-    if type(orig) == "table" then
-        copy = {}
-        seen[orig] = copy
-        for k, v in pairs(orig) do
-            copy[Ether.DeepCopy(k, seen)] = Ether.DeepCopy(v, seen)
-        end
-        setmetatable(copy, Ether.DeepCopy(getmetatable(orig), seen))
-    else
-        copy = orig
-    end
-    return copy
+    return t2
 end
 
 function Ether.tContains(tbl, value)
@@ -282,9 +285,359 @@ function Ether.CopyTable(src)
     return copy
 end
 
+function Ether.TableSize(t)
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
+
+function Ether:MigrateArraysOnLogin()
+    local profile = Ether.GetCurrentProfile()
+    local migratedArrays = {}
+    local totalAdded = 0
+
+    for arrayID, expectedLength in pairs(arrayLengths) do
+        if profile[arrayID] then
+            local currentLength = #profile[arrayID]
+
+            if currentLength < expectedLength then
+                local added = expectedLength - currentLength
+                totalAdded = totalAdded + added
+
+                for i = currentLength + 1, expectedLength do
+                    if arrayDefaults[arrayID] and arrayDefaults[arrayID][i] then
+                        profile[arrayID][i] = arrayDefaults[arrayID][i]
+                    elseif Ether.DataDefault[arrayID] and Ether.DataDefault[arrayID][i] then
+                        profile[arrayID][i] = Ether.DataDefault[arrayID][i]
+                    else
+                        profile[arrayID][i] = 1
+                    end
+                end
+
+                table.insert(migratedArrays, string.format("|cff00ff00%d|r (+%d)",
+                        arrayID, added))
+
+            elseif currentLength > expectedLength then
+
+                Ether.DebugOutput(string.format("Array %d trimmed: %d → %d",
+                        arrayID, currentLength, expectedLength))
+                for i = expectedLength + 1, currentLength do
+                    profile[arrayID][i] = nil
+                end
+            end
+        else
+
+            profile[arrayID] = Ether.CopyTable(arrayDefaults[arrayID] or Ether.DataDefault[arrayID])
+            totalAdded = totalAdded + expectedLength
+            table.insert(migratedArrays, string.format("|cff00ff00%d|r (new)", arrayID))
+        end
+    end
+
+    if #migratedArrays > 0 then
+        Ether.DebugOutput(string.format("|cff00ccffEther|r: Database migration complete"))
+        Ether.DebugOutput(string.format("|cff00ccffEther|r: Added %d entries across %d arrays",
+                totalAdded, #migratedArrays))
+        Ether.DebugOutput(string.format("|cff00ccffEther|r: Updated arrays: %s",
+                table.concat(migratedArrays, ", ")))
+    else
+        Ether.statusMigration = "|cff00ccffEther|r: The database is already up to date.\nMigration is not necessary."
+    end
+end
+
+function Ether.StringToTbl(str)
+    if not str or str == "" then
+        return false, "Empty string"
+    end
+    if not str:match("^%s*return") then
+        str = "return " .. str
+    end
+    local env = {
+        string = {
+            sub = string.sub,
+            find = string.find,
+            match = string.match,
+            gsub = string.gsub,
+            byte = string.byte,
+            char = string.char,
+            len = string.len,
+            lower = string.lower,
+            upper = string.upper,
+            rep = string.rep,
+            format = string.format,
+        },
+        table = {
+            insert = table.insert,
+            remove = table.remove,
+            concat = table.concat,
+            sort = table.sort,
+        },
+        math = {
+            floor = math.floor,
+            ceil = math.ceil,
+            abs = math.abs,
+            max = math.max,
+            min = math.min,
+            random = math.random,
+            sqrt = math.sqrt,
+        },
+        tonumber = tonumber,
+        tostring = tostring,
+        type = type,
+        pairs = pairs,
+        ipairs = ipairs,
+        next = next,
+        select = select,
+        unpack = unpack,
+        error = error,
+        pcall = pcall,
+        assert = assert,
+        _VERSION = _VERSION,
+    }
+    setmetatable(env, {
+        __index = function(t, k)
+            error("Access to forbidden global: " .. tostring(k), 2)
+        end,
+        __newindex = function(t, k, v)
+            error("Modification of environment forbidden", 2)
+        end
+    })
+    local func, err = loadstring(str)
+    if not func then
+        return false, "Compile error: " .. err
+    end
+
+    setfenv(func, env)
+
+    local success, result = pcall(func)
+    if not success then
+        return false, "Execution error: " .. result
+    end
+
+    return true, result
+end
+
+local function isArray(tbl)
+    if type(tbl) ~= "table" then
+        return false
+    end
+
+    local count = 0
+    local maxIndex = 0
+
+    for k, v in pairs(tbl) do
+        if type(k) ~= "number" or k < 1 or k ~= math.floor(k) then
+            return false
+        end
+        count = count + 1
+        if k > maxIndex then
+            maxIndex = k
+        end
+    end
+
+    if count == 0 or count ~= maxIndex then
+        return false
+    end
+
+    return true
+end
+
+local function serializeValue(value, indent)
+    if type(value) == "table" then
+        if isArray(value) then
+            return Ether.SerializeArray(value)
+        else
+            return Ether.SerializeTbl(value, indent)
+        end
+    elseif type(value) == "string" then
+        return string.format("%q", value)
+    elseif type(value) == "number" then
+        return tostring(value)
+    elseif type(value) == "boolean" then
+        return value and "true" or "false"
+    elseif value == nil then
+        return "nil"
+    else
+        return string.format("%q", tostring(value))
+    end
+end
+
+function Ether.SerializeArray(tbl)
+    local items = {}
+    for i = 1, #tbl do
+        local value = tbl[i]
+        if type(value) == "table" then
+            if isArray(value) then
+                tinsert(items, Ether.SerializeArray(value))
+            else
+                tinsert(items, Ether.SerializeTbl(value, 0))
+            end
+        elseif type(value) == "string" then
+            tinsert(items, string.format("%q", value))
+        elseif type(value) == "number" then
+            tinsert(items, tostring(value))
+        elseif type(value) == "boolean" then
+            tinsert(items, value and "true" or "false")
+        elseif value == nil then
+            tinsert(items, "nil")
+        else
+            tinsert(items, string.format("%q", tostring(value)))
+        end
+    end
+    return "{" .. table.concat(items, ", ") .. "}"
+end
+
+function Ether.SerializeTbl(tbl, indent)
+    indent = indent or 0
+
+    local isEmpty = true
+    for _ in pairs(tbl) do
+        isEmpty = false
+        break
+    end
+    if isEmpty then
+        return "{}"
+    end
+
+    if isArray(tbl) then
+        return Ether.SerializeArray(tbl)
+    end
+
+    local result = {}
+    tinsert(result, "{")
+
+    local keys = {}
+    for k in pairs(tbl) do
+        tinsert(keys, k)
+    end
+    table.sort(keys, function(a, b)
+
+        if type(a) == type(b) then
+            return a < b
+        else
+            return type(a) == "number"
+        end
+    end)
+
+    for i, key in ipairs(keys) do
+        local value = tbl[key]
+        local comma = i < #keys and "," or ""
+
+        local keyStr
+        if type(key) == "number" then
+            keyStr = "[" .. key .. "]"
+        elseif type(key) == "string" and key:match("^[a-zA-Z_][a-zA-Z0-9_]*$") then
+            keyStr = key
+        else
+            keyStr = "[" .. string.format("%q", tostring(key)) .. "]"
+        end
+
+        local valueStr = serializeValue(value, indent + 2)
+
+        if indent > 0 and type(value) == "table" and not isArray(value) and Ether.TableSize(value) > 2 then
+            tinsert(result, "\n" .. string.rep(" ", indent) .. keyStr .. " = " .. valueStr .. comma)
+        else
+            tinsert(result, keyStr .. " = " .. valueStr .. comma .. " ")
+        end
+    end
+
+    tinsert(result, "}")
+    return table.concat(result)
+end
+
+function Ether.TblToString(tbl)
+    return "return " .. Ether.SerializeTbl(tbl)
+end
+
+local PADDING_CHAR = '='
+local BASE64_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+function Ether.Base64Encode(data)
+    local result = {}
+    for i = 1, #data, 3 do
+        local a, b, c = data:byte(i, i + 2)
+
+        local index1 = math.floor(a / 4) + 1
+        tinsert(result, BASE64_CHARS:sub(index1, index1))
+
+        if b then
+            local index2 = ((a % 4) * 16) + math.floor(b / 16) + 1
+            tinsert(result, BASE64_CHARS:sub(index2, index2))
+
+            if c then
+                local index3 = ((b % 16) * 4) + math.floor(c / 64) + 1
+                tinsert(result, BASE64_CHARS:sub(index3, index3))
+
+                local index4 = (c % 64) + 1
+                tinsert(result, BASE64_CHARS:sub(index4, index4))
+            else
+                local index3 = ((b % 16) * 4) + 1
+                tinsert(result, BASE64_CHARS:sub(index3, index3))
+                tinsert(result, '=')
+            end
+        else
+            local index2 = ((a % 4) * 16) + 1
+            tinsert(result, BASE64_CHARS:sub(index2, index2))
+            tinsert(result, '==')
+        end
+    end
+
+    return table.concat(result)
+end
+
+function Ether.Base64Decode(data)
+    data = data:gsub('[^' .. BASE64_CHARS .. PADDING_CHAR .. ']', '')
+    local result = {}
+    for i = 1, #data, 4 do
+        local chunk = data:sub(i, i + 3)
+        if #chunk < 4 then
+            break
+        end
+        local values = {}
+        for j = 1, 4 do
+            local char = chunk:sub(j, j)
+            if char == '=' then
+                values[j] = 0
+            else
+                values[j] = BASE64_CHARS:find(char, 1, true) - 1
+            end
+        end
+        local byte1 = (values[1] * 4) + math.floor(values[2] / 16)
+        tinsert(result, string.char(byte1))
+
+        if values[3] ~= 0 or chunk:sub(3, 3) ~= '=' then
+            local byte2 = ((values[2] % 16) * 16) + math.floor(values[3] / 4)
+            tinsert(result, string.char(byte2))
+        end
+        if values[4] ~= 0 or chunk:sub(4, 4) ~= '=' then
+            local byte3 = ((values[3] % 4) * 64) + values[4]
+            tinsert(result, string.char(byte3))
+        end
+    end
+    return table.concat(result)
+end
+
 Ether.AuraTemplates = {
     ["Priest - Buffs"] = {
-        [17] = {
+        [21564] = {
+            name = "Prayer of Fortitude: Rank 2",
+            color = {0.93, 0.91, 0.67, 1},
+            size = 8,
+            position = "BOTTOMLEFT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true
+        },
+        [27681] = {
+            name = "Prayer of Spirit: Rank 1",
+            color = {0.93, 0.91, 0.67, 1},
+            size = 8,
+            position = "BOTTOMLEFT",
+            offsetX = 8,
+            offsetY = 0,
+            enabled = true
+        },
+        [10901] = {
             name = "Power Word: Shield",
             color = {0.93, 0.91, 0.67, 1},
             size = 8,
@@ -293,7 +646,7 @@ Ether.AuraTemplates = {
             offsetY = 0,
             enabled = true
         },
-        [139] = {
+        [25315] = {
             name = "Renew",
             color = {0.2, 1, 0.2, 1},
             size = 8,
@@ -311,7 +664,7 @@ Ether.AuraTemplates = {
             offsetY = 0,
             enabled = true
         },
-        [33076] = {
+        [41635] = {
             name = "Prayer of Mending",
             color = {1, 0.8, 0.2, 1},
             size = 8,
@@ -371,10 +724,29 @@ Ether.AuraTemplates = {
             enabled = true
         }
     },
-
+    ["Druid - Buffs"] = {
+        [9885] = {
+            name = "Mark of the Wild: Rank 7",
+            color = {1, 0.4, 1, 1},
+            size = 8,
+            position = "BOTTOMLEFT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true
+        },
+        [21850] = {
+            name = "Gift of the Wild: Rank 2",
+            color = {0.2, 1, 0.2, 1},
+            size = 8,
+            position = "BOTTOMLEFT",
+            offsetX = 8,
+            offsetY = 0,
+            enabled = true
+        },
+    },
     ["Druid - HoTs"] = {
-        [774] = {
-            name = "Rejuv",
+        [25299] = {
+            name = "Rejuvenation",
             color = {1, 0.4, 1, 1},
             size = 8,
             position = "TOPLEFT",
@@ -382,7 +754,7 @@ Ether.AuraTemplates = {
             offsetY = 0,
             enabled = true
         },
-        [8936] = {
+        [9858] = {
             name = "Regrowth",
             color = {0.2, 1, 0.2, 1},
             size = 8,
@@ -391,7 +763,7 @@ Ether.AuraTemplates = {
             offsetY = 0,
             enabled = true
         },
-        [48438] = {
+        [34161] = {
             name = "Wild Growth",
             color = {0.4, 1, 0.4, 1},
             size = 8,
@@ -412,7 +784,7 @@ Ether.AuraTemplates = {
     },
 
     ["Shaman - Buffs"] = {
-        [974] = {
+        [32593] = {
             name = "Earth Shield",
             color = {0.6, 0.4, 0.2, 1},
             size = 8,
@@ -460,7 +832,7 @@ Ether.AuraTemplates = {
             offsetY = 0,
             enabled = true
         },
-        [498] = {
+        [13007] = {
             name = "Divine Prot",
             color = {1, 0.8, 0.2, 1},
             size = 10,
@@ -499,5 +871,26 @@ Ether.AuraTemplates = {
             offsetY = 0,
             enabled = true
         }
+    },
+
+    ["Mage - Cooldowns"] = {
+        [10157] = {
+            name = "Arcane Intellect: Rank 5",
+            color = {1, 1, 0.4, 1},
+            size = 6,
+            position = "BOTTOMLEFT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true
+        },
+        [23028] = {
+            name = "Arcane Brilliance: Rank 1",
+            color = {0.6, 0.2, 0.6, 1},
+            size = 6,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true
+        },
     }
 }

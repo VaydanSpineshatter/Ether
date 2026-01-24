@@ -397,7 +397,7 @@ local function auraUpdateTarget(unit, info)
     if not UnitExists("target") then
         return
     end
-    local button = Ether.unitButtons.solo[unit]
+    local button = Ether.unitButtons.solo["target"]
     if info.addedAuras then
         for _, aura in ipairs(info.addedAuras) do
             if aura.isHelpful then

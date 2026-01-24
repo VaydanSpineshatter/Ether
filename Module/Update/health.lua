@@ -13,21 +13,20 @@ local string_format = string.format
 local fm = "%.1f"
 
 local FACTION_COLORS = {
-    [0] = {r = 255, g = 0, b = 0}, -- HOSTILE
-    [1] = {r = 255, g = 129, b = 0}, -- UNFRIENDLY
-    [2] = {r = 255, g = 255, b = 0}, -- NEUTRAL
-    [3] = {r = 0, g = 255, b = 0}, -- FRIENDLY
-    [4] = {r = 0, g = 0, b = 255}, -- PLAYER_SIMPLE
-    [5] = {r = 96, g = 96, b = 255}, -- PLAYER_EXTENDED
-    [6] = {r = 170, g = 170, b = 255}, -- PARTY
-    [7] = {r = 170, g = 255, b = 170}, -- PARTY_PVP
-    [8] = {r = 83, g = 201, b = 255}, -- FRIEND
-    [9] = {r = 128, g = 128, b = 128}, -- DEAD
-    [10] = {}, -- COMMENTATOR_TEAM_1
-    [11] = {}, -- COMMENTATOR_TEAM_2
-    [13] = {r = 255, g = 255, b = 139}, -- SELF
-    [14] = {r = 0, g = 153, b = 0}, -- BATTLEGROUND_FRIENDLY_PVP
+    [0] = {r = 1.0, g = 0, b = 0}, -- 255/255=1.0
+    [1] = {r = 1.0, g = 0.506, b = 0}, -- 129/255=0.506
+    [2] = {r = 1.0, g = 1.0, b = 0},
+    [3] = {r = 0, g = 1.0, b = 0},
+    [4] = {r = 0, g = 0, b = 1.0},
+    [5] = {r = 0.376, g = 0.376, b = 1.0}, -- 96/255=0.376
+    [6] = {r = 0.667, g = 0.667, b = 1.0}, -- 170/255=0.667
+    [7] = {r = 0.667, g = 1.0, b = 0.667},
+    [8] = {r = 0.325, g = 0.788, b = 1.0}, -- 83/255=0.325, 201/255=0.788
+    [9] = {r = 0.502, g = 0.502, b = 0.502}, -- 128/255=0.502
+    [13] = {r = 1.0, g = 1.0, b = 0.545},
+    [14] = {r = 0, g = 0.6, b = 0},
 }
+
 Ether.FACTION_COLORS = FACTION_COLORS
 
 local RAID_COLORS = {

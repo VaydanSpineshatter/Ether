@@ -67,6 +67,7 @@ Tooltip.StringBuffer = (function()
         end
     }
 end)()
+
 local function GetF_UnitClass(unit)
     local className, classFileName = UnitClass(unit)
     local color = RAID_CLASS_COLORS[classFileName]
@@ -75,6 +76,7 @@ local function GetF_UnitClass(unit)
     end
     return ""
 end
+
 local levelColorCache = {}
 local function GetCachedLevelColor(level)
     if not levelColorCache[level] then
@@ -129,17 +131,30 @@ local function UpdateTooltip(self, unit)
         self.target:Hide()
     end
 
-    if DB[2] == 1 and U_AFK(unit) then
+    local nameColorR, nameColorG, nameColorB = 1, 0.9, 0.5
+
+    if isPlayer and raidColors[classFileName] then
+        nameColorR, nameColorG, nameColorB = raidColors[classFileName].r, raidColors[classFileName].g, raidColors[classFileName].b
+    elseif DB[13] == 1 then
+        local reaction = UnitReaction(unit, "player")
+        if reaction and factionColors[reaction] then
+            nameColorR, nameColorG, nameColorB = factionColors[reaction].r, factionColors[reaction].g, factionColors[reaction].b
+        end
+    end
+
+    self.name:SetTextColor(nameColorR, nameColorG, nameColorB)
+
+    if DB[1] == 1 and U_AFK(unit) then
         self.flags:SetText(AFK)
         self.flags:Show()
-    elseif DB[3] == 1 and U_DND(unit) then
+    elseif DB[2] == 1 and U_DND(unit) then
         self.flags:SetText(DND)
         self.flags:Show()
     else
         self.flags:Hide()
     end
 
-    if DB[4] == 1 then
+    if DB[3] == 1 then
         if U_PVP_A(unit) then
             self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-FFA")
             self.pvp:Show()
@@ -153,41 +168,33 @@ local function UpdateTooltip(self, unit)
         self.pvp:Hide()
     end
 
-    if DB[5] == 1 and (U_IU(unit, "player") and IsResting()) then
+    if DB[4] == 1 and (U_IU(unit, "player") and IsResting()) then
         self.resting:Show()
     else
         self.resting:Hide()
     end
 
-    local nameColorR, nameColorG, nameColorB = 1, 1, 1
-    if DB[15] == 1 then
-        local reaction = UnitReaction(unit, "player")
-        if isPlayer and raidColors[classFileName] then
-            nameColorR, nameColorG, nameColorB = raidColors[classFileName].r, raidColors[classFileName].g, raidColors[classFileName].b
-        elseif reaction then
-            nameColorR, nameColorG, nameColorB = factionColors[reaction].r, factionColors[reaction].g, factionColors[reaction].b
+    if DB[5] == 1 then
+        local realmRelation = UnitRealmRelationship(unit)
+        local isDifferentRealm = (realmRelation and realmRelation ~= LE_REALM_RELATION_SAME)
+        if isDifferentRealm then
+            self.name:SetText(string.format("%s - %s", name, RealmName()))
+        else
+            self.name:SetText(name)
         end
-    end
-
-    if DB[6] == 1 and DB[7] ~= 1 then
-        self.name:SetText(string.format("%s - %s", name, RealmName()))
-        self.name:SetTextColor(nameColorR, nameColorG, nameColorB)
-    elseif DB[7] == 1 and DB[6] ~= 1 then
-        self.name:SetText(name)
-        self.name:SetTextColor(nameColorR, nameColorG, nameColorB)
     else
         self.name:SetText(name)
     end
 
-    if DB[8] == 1 then
+    if DB[6] == 1 then
         Tooltip.StringBuffer.Add(buffer, GetCachedLevelColor(UnitLevel(unit)))
     end
 
-    if DB[9] == 1 and isPlayer then
+    if DB[7] == 1 and isPlayer then
         Tooltip.StringBuffer.Add(buffer, GetF_UnitClass(unit))
     end
 
-    if DB[10] == 1 and isPlayer then
+    if DB[8] == 1 and isPlayer then
         local guildName, guildRankName = GetG_Info(unit)
         if guildName then
             self.guild:SetText(string.format(cStr, guildName, guildRankName or L.TT_UNKNOWN))
@@ -199,19 +206,19 @@ local function UpdateTooltip(self, unit)
         self.guild:Hide()
     end
 
-    if DB[11] == 1 then
+    if DB[9] == 1 then
         Tooltip.StringBuffer.Add(buffer, GetUnitRoleString(unit))
     end
 
-    if DB[12] == 1 and U_CREATURE(unit) then
+    if DB[10] == 1 and U_CREATURE(unit) then
         Tooltip.StringBuffer.Add(buffer, " " .. U_CREATURE(unit))
     end
 
-    if DB[13] == 1 and U_RACE(unit) then
+    if DB[11] == 1 and U_RACE(unit) then
         Tooltip.StringBuffer.Add(buffer, " " .. U_RACE(unit))
     end
 
-    if DB[14] == 1 then
+    if DB[12] == 1 then
         local index = GetTargetIndex(unit)
         if index then
             Tooltip.StringBuffer.Add(buffer, ICON_LIST[index] .. "11|t")
@@ -311,16 +318,22 @@ local function SetupToolFrame(parent)
 
     return frame
 end
+local anchor
 
 local function SetupHooks()
-    local anchor = Ether.Anchor.tooltip
-    if anchor then
+    anchor = Ether.Anchor.tooltip
+    if not anchor then
+        return
+    end
+    if not anchor.name then
         anchor = SetupToolFrame(anchor)
     end
-
     GameTooltip:HookScript("OnTooltipSetUnit", function(self)
+        if Ether.DB[401][3] ~= 1 then
+            return
+        end
         local _, unit = self:GetUnit()
-        if unit then
+        if unit and anchor then
             if not anchor:IsShown() then
                 anchor:Show()
             end
@@ -329,17 +342,15 @@ local function SetupHooks()
     end)
 
     GameTooltip:HookScript("OnTooltipCleared", function()
-        if anchor:IsShown() then
+        if Ether.DB[401][3] ~= 1 then
+            return
+        end
+        if anchor and anchor:IsShown() then
             anchor:Hide()
         end
     end)
-
 end
 
 function Tooltip:Initialize()
     SetupHooks()
 end
-
-
-
-

@@ -49,13 +49,12 @@ local function TargetChanged(_, event)
 end
 local function onEnterEvent()
     for i = 1, GetNumGroupMembers() do
-    local unit = "raid" .. i
-    if unit then
-        Ether.Aura.UpdateUnitAuras(unit)
+        local unit = "raid" .. i
+        if unit then
+            Ether.Aura.UpdateUnitAuras(unit)
+        end
     end
-   end
 end
-
 
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then

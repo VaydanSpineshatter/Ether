@@ -150,7 +150,7 @@ local function CreateIndicatorsTexture(self, icon, size, posi, x, y)
 end
 
 local function UpdateUnitFlagsIcon()
-      for _, button in pairs(Ether.unitButtons.raid and Ether.unitButtons.party) do
+    for _, button in pairs(Ether.unitButtons.raid and Ether.unitButtons.party) do
         if button then
             CreateIndicatorsTexture(button, "UnitFlagsIcon", 12, "TOP")
             local unit = button:GetAttribute("unit")
@@ -191,7 +191,7 @@ end
 local IndicatorsRdy = {}
 
 local function UpdateReadyCheckIcon()
-       for _, button in pairs(Ether.unitButtons.raid and Ether.unitButtons.party) do
+    for _, button in pairs(Ether.unitButtons.raid and Ether.unitButtons.party) do
         if button then
             CreateIndicatorsTexture(button, "ReadyCheckIcon", 18, "TOP")
             local unit = button:GetAttribute("unit")
@@ -293,7 +293,7 @@ local function UpdateGroupRoleIcon(self, role)
 end
 
 local function UpdateGroupLeaderIcon()
-        for _, button in pairs(Ether.unitButtons.raid ) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         CreateIndicatorsTexture(button, "GroupLeaderIcon", 12, "RIGHT")
         if button then
             local unit = button:GetAttribute("unit")
@@ -312,7 +312,7 @@ local function UpdateGroupLeaderIcon()
 end
 
 local function UpdateMasterLootIcon()
-      for _, button in pairs(Ether.unitButtons.raid ) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         local unit = button:GetAttribute("unit")
         if unit then
             CreateIndicatorsTexture(button, "MasterLootIcon", 12, "BOTTOMRIGHT", 0, 12)
@@ -329,7 +329,7 @@ local function UpdateMasterLootIcon()
     end
 end
 local function UpdatePlayerRolesIcon()
-          for _, button in pairs(Ether.unitButtons.raid ) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         local unit = button:GetAttribute("unit")
         if unit then
             local role = UnitGroupRolesAssigned(unit)
@@ -343,7 +343,7 @@ local function UpdatePlayerRolesIcon()
     end
 end
 local function UpdateConnectionIcon()
-       for _, button in pairs(Ether.unitButtons.raid ) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         CreateIndicatorsTexture(button, "ConnectionIcon", 24, "TOPLEFT")
         local unit = button:GetAttribute("unit")
         if unit and unit == button.unit then
@@ -360,7 +360,7 @@ local function UpdateConnectionIcon()
 end
 
 local function UpdateRaidTargetIcon()
-      for _, button in pairs(Ether.unitButtons.raid) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         if button then
             CreateIndicatorsTexture(button, "RaidTargetIcon", 12, "BOTTOM")
             local unit = button:GetAttribute("unit")
@@ -381,7 +381,7 @@ local function UpdateRaidTargetIcon()
     end
 end
 local function UpdateResurrectionIcon()
-      for _, button in pairs(Ether.unitButtons.raid) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         if button then
             CreateIndicatorsTexture(button, "ResurrectionIcon", 24, "CENTER")
             local unit = button:GetAttribute("unit")
@@ -398,7 +398,7 @@ local function UpdateResurrectionIcon()
     end
 end
 local function UpdatePlayerFlagsString()
-    for _, button in pairs(Ether.unitButtons.raid ) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         if button then
             CreatePlayerFlagsString(button)
             local unit = button:GetAttribute("unit")
