@@ -39,7 +39,7 @@ local function Event(self, event, unit)
     if event ~= "UNIT_POWER_UPDATE" or unit ~= "pet" then
         return
     end
-    if Ether.unitButtons["pet"]:IsVisible() then
+    if Ether.unitButtons.solo["pet"]:IsVisible() then
         local p = UnitPower("pet", Enum.PowerType.Happiness)
         if p then
             PetStatus(self)
