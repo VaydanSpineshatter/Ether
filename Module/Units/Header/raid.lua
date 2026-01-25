@@ -13,7 +13,7 @@ local __SECURE_INITIALIZE = [[
     self:SetWidth(header:GetAttribute("ButtonWidth"))
 	self:SetHeight(header:GetAttribute("ButtonHeight"))
 	header:CallMethod("initialConfigFunction", self:GetName())
-	local unit = self:GetAttribute("unit")
+    local unit = self:GetAttribute("unit")
    ]]
 
 local function OnEnter(self)
@@ -34,78 +34,58 @@ local function OnLeave()
 end
 Ether.OnLeave = OnLeave
 
-local function InitialUpdate(self)
+local function Update(self)
     Ether.InitialHealth(self)
     Ether.UpdateHealthAndMax(self)
-    if Ether.DB[701][5] == 1 then
+    if Ether.DB[701][3] == 1 then
         Ether.UpdateHealthText(self)
     end
-    if Ether.DB[701][6] == 1 then
+    if Ether.DB[701][4] == 1 then
         Ether.UpdatePowerText(self)
     end
-    Ether.UpdateName(self, true)
+    Ether.UpdateRaidName(self)
+end
+Ether.updateRaid = Update
 
+
+local function FullUpdate(self)
+    local guid = self.unit and UnitGUID(self.unit)
+    if (guid ~= self.unitGUID) then
+        self.unitGUID = guid
+        if (guid) then
+            Update(self)
+        end
+    end
+end
+local function OnAttributeChanged(self, name, value)
+    if name == "unit" and value then
+        self.unit = self:GetAttribute("unit")
+        Ether.unitButtons.raid[self.unit] = self
+        FullUpdate(self)
+    end
+end
+local function Event(self, event, unit)
+    if event == "GROUP_ROSTER_UPDATE" or event == "UNIT_NAME_UPDATE" then
+            Ether:UpdateIndicators()
+    end
 end
 
 local function Show(self)
     self.unit = self:GetAttribute("unit")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("UNIT_NAME_UPDATE")
-    InitialUpdate(self)
-    Ether.Aura.UpdateUnitAuras(self)
+    Update(self)
+    if UnitExists(self.unit) then
+        Ether.Aura.UpdateRaidAuras(self.unit)
+        Ether.Aura.DispelAuraScan(self.unit)
+    end
 end
 
 local function Hide(self)
+    self.unit = self:GetAttribute("unit")
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("UNIT_NAME_UPDATE")
-end
-
-local function OnAttributeChanged(self, name, unit)
-    if (name ~= "unit" or not unit) then
-        return
-    end
-
-    local oldUnit = self.unit
-    local newUnit = unit or self:GetAttribute("unit")
-    local newGuid = newUnit and UnitGUID(newUnit)
-
-    if newGuid ~= self.unitGUID then
-        if oldUnit then
-            Ether.unitButtons.raid[oldUnit] = nil
-        end
-
-        self.unit = newUnit
-        self.unitGUID = newGuid
-
-        if newUnit then
-            Ether.unitButtons.raid[newUnit] = self
-        end
-
-        if newUnit and UnitExists(newUnit) then
-            InitialUpdate(self)
-            Ether:UpdateIndicators()
-            if Ether.DB[1002][3] == 1 then
-                C_Timer.After(0.1, function()
-                    Ether.Aura.UpdateUnitAuras(self)
-                end)
-            end
-        end
-    end
-end
-
-local function Event(self, event, unit)
-    self.unit = self:GetAttribute("unit")
-    if self.unit ~= unit then
-        return
-    end
-    if event == "GROUP_ROSTER_UPDATE" then
-        local currentUnit = self:GetAttribute("unit")
-        if currentUnit ~= unit then
-            OnAttributeChanged(self, "unit", currentUnit)
-        end
-    elseif event == "UNIT_NAME_UPDATE" then
-        Ether.UpdateName(self, true)
-    end
+    Ether.Aura.RaidAuraClearUp(self.unit)
 end
 
 local function initialConfigFunction(headerName, buttonName)
@@ -113,6 +93,7 @@ local function initialConfigFunction(headerName, buttonName)
     b.Indicators = {}
     b.raidAuras = {}
     b.raidIcons = {}
+
     b:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
     b:SetBackdropColor(0, 0, 0, 1)
     Ether.AddBlackBorder(b)
@@ -165,15 +146,15 @@ local function CreateHeader()
     header:SetAttribute("groupBy", "GROUP")
     header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset", 1)
-    header:SetAttribute("yOffset", -1)
-    header:SetAttribute("columnSpacing", 1)
+    header:SetAttribute("yOffset", -2)
+    header:SetAttribute("columnSpacing", 2)
     header:SetAttribute("unitsPerColumn", 5)
     header:SetAttribute("maxColumns", 8)
     header:SetAttribute("showRaid", true)
     header:SetAttribute("showParty", false)
     header:SetAttribute("showPlayer", false)
-    header:SetAttribute("showSolo", false)
-    RegisterAttributeDriver(header, "state-visibility", "[@raid1,exists] show; hide")
+    header:SetAttribute("showSolo", true)
+    header:Show()
 end
 
 local state = false

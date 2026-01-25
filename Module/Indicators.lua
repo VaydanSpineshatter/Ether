@@ -1,8 +1,8 @@
 local _, Ether = ...
 
-local U_Dead, U_Ghost = UnitIsDead, UnitIsGhost
-local U_AFK = UnitIsAFK
-local U_DND = UnitIsDND
+local UnitIsDead, UnitIsGhost = UnitIsDead, UnitIsGhost
+local UnitIsAFK = UnitIsAFK
+local UnitIsDND = UnitIsDND
 local UnitHasIncomingResurrection = UnitHasIncomingResurrection
 local GetReadyCheckStatus = GetReadyCheckStatus
 local GetPartyAssignment = GetPartyAssignment
@@ -11,10 +11,9 @@ local Enum = Enum
 local GetLoot = C_PartyInfo.GetLootMethod
 local pairs = pairs
 local GroupLeader = UnitIsGroupLeader
-
 local C_After = C_Timer.After
 local U_ICN = UnitIsConnected
-local U_ISC = UnitIsCharmed
+local UnitIsCharmed = UnitIsCharmed
 local U_IU = UnitIsUnit
 local rdyTex = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local notRdyTex = "Interface\\RaidFrame\\ReadyCheck-NotReady"
@@ -150,14 +149,14 @@ local function CreateIndicatorsTexture(self, icon, size, posi, x, y)
 end
 
 local function UpdateUnitFlagsIcon()
-    for _, button in pairs(Ether.unitButtons.raid and Ether.unitButtons.party) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         if button then
             CreateIndicatorsTexture(button, "UnitFlagsIcon", 12, "TOP")
             local unit = button:GetAttribute("unit")
             if unit then
-                local IsCharmed = U_ISC(unit)
-                local IsDead = U_Dead(unit)
-                local IsGhost = U_Ghost(unit)
+                local IsCharmed = UnitIsCharmed(unit)
+                local IsDead = UnitIsDead(unit)
+                local IsGhost = UnitIsGhost(unit)
                 if (IsCharmed and Ether.DB[601][1] == 1 and Ether.DB[501][7] == 1) then
                     button.Indicators.UnitFlagsIcon:SetTexture(charmedIcon)
                     button.name:SetTextColor(1.00, 0.00, 0.00)
@@ -191,7 +190,7 @@ end
 local IndicatorsRdy = {}
 
 local function UpdateReadyCheckIcon()
-    for _, button in pairs(Ether.unitButtons.raid and Ether.unitButtons.party) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         if button then
             CreateIndicatorsTexture(button, "ReadyCheckIcon", 18, "TOP")
             local unit = button:GetAttribute("unit")
@@ -216,7 +215,7 @@ local function UpdateReadyCheckIcon()
     end
 end
 local function UpdateConfirmIcon()
-    for _, button in pairs(Ether.unitButtons.raid and Ether.unitButtons.party) do
+    for _, button in pairs(Ether.unitButtons.raid) do
         if button then
             local unit = button:GetAttribute("unit")
             if unit then
@@ -397,14 +396,15 @@ local function UpdateResurrectionIcon()
         end
     end
 end
+
 local function UpdatePlayerFlagsString()
     for _, button in pairs(Ether.unitButtons.raid) do
         if button then
             CreatePlayerFlagsString(button)
             local unit = button:GetAttribute("unit")
             if unit then
-                local away = U_AFK(unit)
-                local dnd = U_DND(unit)
+                local away = UnitIsAFK(unit)
+                local dnd = UnitIsDND(unit)
                 if (away and Ether.DB[601][6] == 1 and Ether.DB[501][7] == 1) then
                     button.Indicators.PlayerFlagsString:SetText(afkStr)
                     button.Indicators.PlayerFlagsString:Show()

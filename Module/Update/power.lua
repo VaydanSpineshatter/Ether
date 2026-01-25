@@ -1,10 +1,9 @@
 local _, Ether = ...
 local pStatus = {}
 Ether.pStatus = pStatus
-
-local U_PT = UnitPowerType
-local U_P = UnitPower
-local U_MP = UnitPowerMax
+local UnitPowerType = UnitPowerType
+local UnitPower = UnitPower
+local UnitPowerMax = UnitPowerMax
 local string_format = string.format
 local fm = "%.1f"
 
@@ -39,8 +38,8 @@ do
     function RegisterPEvent(castEvent, func)
         if not frame then
             frame = CreateFrame("Frame")
-            frame:SetScript("OnEvent", function(self, event, unit, ...)
-                Events[event](self, event, unit, ...)
+            frame:SetScript("OnEvent", function(self, event, unit)
+                Events[event](self, event, unit)
             end)
         end
         if not Events[castEvent] then
@@ -66,12 +65,12 @@ do
 end
 
 local function ReturnPower(self)
-    return U_P(self)
+    return UnitPower(self)
 end
 Ether.ReturnPower = ReturnPower
 
 local function ReturnMaxPower(self)
-    return U_MP(self)
+    return UnitPowerMax(self)
 end
 
 local function InitialPower(self)
@@ -87,7 +86,7 @@ local function UpdatePowerText(self)
     if not self.unit or not self.power then
         return
     end
-    local p = U_P(self.unit)
+    local p = UnitPower(self.unit)
     if p <= 0 then
         return
     end
@@ -100,7 +99,7 @@ end
 Ether.UpdatePowerText = UpdatePowerText
 
 local function GetPowerColor(self)
-    local powerTypeID = U_PT(self)
+    local powerTypeID = UnitPowerType(self)
     local c = Power_Colors[powerTypeID] or Power_Colors[1]
     return c.r, c.g, c.b or false
 end
@@ -110,8 +109,8 @@ local function UpdatePowerAndMax(self)
     if not self.unit or not self.powerBar then
         return
     end
-    local p = U_P(self.unit)
-    local mp = U_MP(self.unit)
+    local p = UnitPower(self.unit)
+    local mp = UnitPowerMax(self.unit)
     self.powerBar:SetValue(p)
     self.powerBar:SetMinMaxValues(0, mp)
     local r, g, b = GetPowerColor(self.unit)
@@ -124,8 +123,8 @@ local function UpdateSmoothPowerAndMax(self)
     if not self.unit or not self.powerBar then
         return
     end
-    local p = U_P(self.unit)
-    local mp = U_MP(self.unit)
+    local p = UnitPower(self.unit)
+    local mp = UnitPowerMax(self.unit)
     self.powerBar:SetMinMaxSmoothedValue(0, mp)
     self.powerBar:SetSmoothedValue(p)
     local r, g, b = GetPowerColor(self.unit)
@@ -139,16 +138,10 @@ local function PowerChanged(_, event, unit)
         return
     end
     if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
-        if Ether.DB[901]["party"] and Ether.DB[201][7] == 1 and Ether.DB[701][4] == 1 and unit:match("^party") then
-            local p = Ether.unitButtons.party[unit]
-            if p then
-                UpdatePowerText(p)
-            end
-        end
         if Ether.DB[901][unit] then
             local s = Ether.unitButtons.solo[unit]
             if s then
-                if Ether.DB[2001][3] == 1 then
+                if Ether.DB[801][4] == 1 then
                     UpdateSmoothPowerAndMax(s)
                 else
                     UpdatePowerAndMax(s)
@@ -158,14 +151,8 @@ local function PowerChanged(_, event, unit)
                 end
             end
         end
-        if not Ether.DB[901]["raid"] then
-            return
-        end
-        if not unit:match("^raid") then
-            return
-        end
-        if Ether.DB[701][6] == 1 and Ether.DB[201][8] == 1 then
-            local r = Ether.unitButton.raid[unit]
+        if Ether.DB[901]["raid"] and Ether.DB[701][4] == 1 then
+            local r = Ether.unitButtons.raid[unit]
             if r then
                 UpdatePowerText(r)
             end

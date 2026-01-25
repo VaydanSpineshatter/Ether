@@ -78,7 +78,7 @@ function Ether.CreateHideSection(self)
         [12] = {name = "Blizzard BagsBar"}
     }
     local hide = GetFont(self, parent, "|cffffff00Hide Blizzard Frames|r", 15)
-    hide:SetPoint("TOP", 0, -10)
+    hide:SetPoint("TOPLEFT", 10, -10)
     local bF = CreateFrame("Frame", nil, parent)
     bF:SetSize(200, (#HideValue * 30) + 60)
     for i, opt in ipairs(HideValue) do
@@ -108,11 +108,10 @@ function Ether.CreateSection(self)
         [4] = {name = "|cffCC66FFPlayer's Pet|r", value = "PET"},
         [5] = {name = "|cffCC66FFPlayers Pet Target|r", value = "PETTARGET"},
         [6] = {name = "|cff3399FFFocus|r", value = "FOCUS"},
-        [7] = {name = "Party", value = "PARTY"},
-        [8] = {name = "Raid", value = "RAID"},
+        [7] = {name = "Raid", value = "RAID"},
     }
     local CreateAndBars = GetFont(self, parent, "|cffffff00Create/Delete Units|r", 15)
-    CreateAndBars:SetPoint("TOP", 0, -10)
+    CreateAndBars:SetPoint("TOPLEFT", 10, -10)
     local uF = CreateFrame('Frame', nil, parent)
     uF:SetSize(200, (#CreateUnits * 30) + 60)
     for i, opt in ipairs(CreateUnits) do
@@ -152,15 +151,6 @@ function Ether.CreateSection(self)
             Ether.DB[201][i] = checked and 1 or 0
             unitFactory(i)
             if i == 7 then
-                if not Ether.unitButtons.party["party1"] then
-                    Ether:CreatePartyHeader()
-                end
-                if Ether.DB[201][7] == 1 then
-                    Ether.Anchor.party:SetShown(true)
-                else
-                    Ether.Anchor.party:SetShown(false)
-                end
-            elseif i == 8 then
                 Ether:CreateRaidHeader()
                 if Ether.DB[201][8] == 1 then
                     Ether.Anchor.raid:SetShown(true)
@@ -171,22 +161,21 @@ function Ether.CreateSection(self)
         end)
         self.Content.Buttons.Create.A[i] = btn
     end
-    local customUnits = GetFont(self, parent, "|cff00ff00Create Custom|r", 13)
-    customUnits:SetPoint("TOPLEFT", self.Content.Buttons.Create.A[8], "BOTTOMLEFT", 0, -40)
-    self.custom = CreateFrame("Button", nil, parent, "UIRadioButtonTemplate")
-    self.custom:SetPoint("TOP", customUnits, "BOTTOM", 0, -20)
-    self.custom:SetSize(20, 20)
-    self.custom:SetScript("OnClick", function()
-        if not UnitAffectingCombat("player") then
-            Ether.CreateCustomUnit()
-        end
+
+    local CreateCustom = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
+    CreateCustom:SetPoint("TOPLEFT", self.Content.Buttons.Create.A[7], "BOTTOMLEFT", 0, -40)
+    CreateCustom:GetFontString():SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    CreateCustom:SetText("Create Custom")
+    CreateCustom:SetSize(100, 30)
+    CreateCustom:SetScript("OnClick", function()
+        Ether.CreateCustomUnit()
     end)
-    local DestroyUnit = GetFont(self, parent, "|cffff0000Destroy Custom|r", 13)
-    DestroyUnit:SetPoint("LEFT", customUnits, "RIGHT", 40, 0)
-    self.destroyCustom = CreateFrame("Button", nil, parent, "UIRadioButtonTemplate")
-    self.destroyCustom:SetPoint("TOP", DestroyUnit, "BOTTOM", 0, -20)
-    self.destroyCustom:SetSize(20, 20)
-    self.destroyCustom:SetScript("OnClick", function()
+    local destroyCustom = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
+    destroyCustom:SetPoint("TOPLEFT", CreateCustom, "BOTTOMLEFT")
+    destroyCustom:GetFontString():SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    destroyCustom:SetText("Destroy Custom")
+    destroyCustom:SetSize(100, 30)
+    destroyCustom:SetScript("OnClick", function()
         Ether.stopUpdateFunc()
     end)
 end
@@ -222,12 +211,8 @@ local function resetHealthPowerText(value)
     elseif value == 2 then
         GetTblText(Ether.unitButtons["solo"], "power")
     elseif value == 3 then
-        GetTblText(Ether.unitButtons["party"], "health")
-    elseif value == 4 then
-        GetTblText(Ether.unitButtons["party"], "power")
-    elseif value == 5 then
         GetTblText(Ether.unitButtons["raid"], "health")
-    elseif value == 6 then
+    elseif value == 4 then
         GetTblText(Ether.unitButtons["raid"], "power")
     end
 end
@@ -236,10 +221,8 @@ function Ether.CreateUpdateSection(self)
     local UpdateValue = {
         [1] = {text = "Health Solo"},
         [2] = {text = "Power Solo"},
-        [3] = {text = "Health Party"},
-        [4] = {text = "Power Party"},
-        [5] = {text = "Raid Health"},
-        [6] = {text = "Raid Power"}
+        [3] = {text = "Health Header"},
+        [4] = {text = "Power Header"},
     }
     local Update = GetFont(self, parent, "|cffffff00Health & Power Text:|r", 15)
     Update:SetPoint("TOPLEFT", 30, -10)
@@ -270,8 +253,7 @@ function Ether.CreateUpdateSection(self)
         [4] = {text = "Pet", value = "pet"},
         [5] = {text = "Pet Target", value = "pettarget"},
         [6] = {text = "Focus", value = "focus"},
-        [7] = {text = "Party", value = "party"},
-        [8] = {text = "Raid", value = "raid"}
+        [7] = {text = "Raid", value = "raid"}
     }
     local Events = GetFont(self, parent, "|cffffff00Unit Events|r", 15)
     Events:SetPoint("TOP", 40, -10)
@@ -298,9 +280,9 @@ end
 function Ether.CreateAuraSettingsSection(self)
     local parent = self.Content.Children["Aura Settings"]
     local CreateAura = {
-        [1] = {text = "Player Aura"},
-        [2] = {text = "Target Aura"},
-        [3] = {text = "Party & Raid Aura"}
+        [1] = {text = "Player Auras"},
+        [2] = {text = "Target Auras"},
+        [3] = {text = "Header Auras"}
     }
     local CreateAuras = GetFont(self, parent, "|cffffff00Update Auras|r", 15)
     CreateAuras:SetPoint("TOPLEFT", 30, -10)
@@ -316,19 +298,19 @@ function Ether.CreateAuraSettingsSection(self)
         btn:SetSize(24, 24)
         btn.label = GetFont(self, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
-        btn:SetChecked(Ether.DB[1002][i] == 1)
+        btn:SetChecked(Ether.DB[1001][i] == 1)
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
-            Ether.DB[1002][i] = checked and 1 or 0
+            Ether.DB[1001][i] = checked and 1 or 0
             if i == 1 then
-                if Ether.DB[1002][1] == 1 then
+                if Ether.DB[1001][1] == 1 then
                     Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["player"])
                     ShowHideSingleAura(Ether.unitButtons.solo["player"], true)
                 else
                     ShowHideSingleAura(Ether.unitButtons.solo["player"], false)
                 end
             elseif i == 2 then
-                if Ether.DB[1002][2] == 1 then
+                if Ether.DB[1001][2] == 1 then
                     Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["target"])
                     ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
                 else
@@ -1020,7 +1002,8 @@ local function protoType(newId)
         position = "TOP",
         offsetX = 0,
         offsetY = 0,
-        enabled = true
+        enabled = true,
+        enabled = false
     }
     return obj
 end
@@ -1144,9 +1127,10 @@ function Ether.CreateLayoutSection(self)
     local layoutValue = {
         [1] = {text = "Create/Delete Player CastBar"},
         [2] = {text = "Create/Delete Target CastBar"},
-        [3] = {text = "Smooth healthBar on solo units"},
-        [4] = {text = "Smooth powerBar on solo units"},
-        [5] = {text = "Smooth healthBar on raid units"}
+        [3] = {text = "Smooth Bar Solo Health"},
+        [4] = {text = "Smooth Bar Solo Power"},
+        [5] = {text = "Smooth Bar Header"},
+        [6] = {text = "Range checker"}
     }
 
     local layout = CreateFrame("Frame", nil, parent)
@@ -1163,59 +1147,37 @@ function Ether.CreateLayoutSection(self)
         btn:SetSize(24, 24)
         btn.label = GetFont(self, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
-        btn:SetChecked(Ether.DB[2001][i] == 1)
-        btn:SetScript("OnClick", function(self)
-            local checked = self:GetChecked()
-            Ether.DB[2001][i] = checked and 1 or 0
-            if i == 1 then
-                if Ether.DB[2001][1] == 1 then
-                    Ether.CastBar.Enable("player")
-                else
-                    Ether.CastBar.Disable("player")
-                end
-            elseif i == 2 then
-                if Ether.DB[2001][2] == 1 then
-                    Ether.CastBar.Enable("target")
-                else
-                    Ether.CastBar.Disable("target")
-                end
-            end
-        end)
-        self.Content.Buttons.Layout.A[i] = btn
-    end
-end
-
-function Ether.CreateRangeSection(self)
-    local parent = self.Content.Children["Range"]
-    local rangeValue = {[1] = {name = "Enable Range"}}
-    local layout = CreateFrame("Frame", nil, parent)
-    layout:SetSize(200, (#rangeValue * 30) + 60)
-    for i, opt in ipairs(rangeValue) do
-        local btn = CreateFrame("CheckButton", nil, layout, "InterfaceOptionsCheckButtonTemplate")
-        if i == 1 then
-            btn:SetPoint("TOP", parent, "TOPLEFT", 20, -10)
-        else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Layout.B[i - 1], "BOTTOMLEFT", 0, 0)
-        end
-        btn:SetSize(24, 24)
-
-        btn.label = GetFont(self, btn, opt.name, 12)
-        btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
-
         btn:SetChecked(Ether.DB[801][i] == 1)
-
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[801][i] = checked and 1 or 0
             if i == 1 then
                 if Ether.DB[801][1] == 1 then
+                    Ether.CastBar.Enable("player")
+                else
+                    Ether.CastBar.Disable("player")
+                end
+            elseif i == 2 then
+                if Ether.DB[801][2] == 1 then
+                    Ether.CastBar.Enable("target")
+                else
+                    Ether.CastBar.Disable("target")
+                end
+            elseif i == 2 then
+                if Ether.DB[801][2] == 1 then
+                    Ether.CastBar.Enable("target")
+                else
+                    Ether.CastBar.Disable("target")
+                end
+            elseif i == 6 then
+                if Ether.DB[801][6] == 1 then
                     Ether.Range:Enable()
                 else
                     Ether.Range:Disable()
                 end
             end
         end)
-        self.Content.Buttons.Layout.B[i] = btn
+        self.Content.Buttons.Layout.A[i] = btn
     end
 end
 
@@ -1280,8 +1242,7 @@ function Ether.CreateConfigSection(self)
         [335] = {name = "Pet", frame = Ether.Anchor.pet},
         [336] = {name = "Pet Target", frame = Ether.Anchor.pettarget},
         [337] = {name = "Focus", frame = Ether.Anchor.focus},
-        [338] = {name = "Party", frame = Ether.Anchor.party},
-        [339] = {name = "Raid", frame = Ether.Anchor.raid},
+        [338] = {name = "Raid", frame = Ether.Anchor.raid},
         [340] = {name = "Debug", frame = Ether.DebugFrame},
     }
 
@@ -1436,6 +1397,43 @@ function Ether.CreateConfigSection(self)
     CreateFrameDropdown()
     CreatePointDropdown(dropdowns.point, 1)
     CreatePointDropdown(dropdowns.relative, 3)
+
+    Ether.RegisterCallback("FRAME_UPDATE", "FrameGroups", function(frameGroup)
+        if not frameGroup or not DB[5111] or not DB[5111][frameGroup] or not FRAME_GROUPS[frameGroup] then
+            return
+        end
+
+        local frameData = FRAME_GROUPS[frameGroup]
+        local pos = DB[5111][frameGroup]
+
+        for i, default in ipairs({"CENTER", 5133, "CENTER", 0, 0, 100, 100, 1, 1}) do
+            pos[i] = pos[i] or default
+        end
+        pos[4] = pos[4] and math.floor(pos[4] + 0.5) or 0
+        pos[5] = pos[5] and math.floor(pos[5] + 0.5) or 0
+
+        local relTo
+        if pos[2] == 5133 then
+            relTo = UIParent
+        else
+            relTo = FRAME_GROUPS[pos[2]] and FRAME_GROUPS[pos[2]].frame or UIParent
+            if not relTo or not relTo.GetCenter then
+                relTo = UIParent
+            end
+        end
+        local frame = frameData.frame
+        if frame and frame.SetPoint then
+            frame:ClearAllPoints()
+            frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
+            frame:SetSize(pos[6], pos[7])
+            frame:SetScale(pos[8])
+            frame:SetAlpha(pos[9])
+        end
+
+        if frameGroup == DB[001].SELECTED then
+            UpdateValue()
+        end
+    end)
 
     Ether.RegisterCallback("FRAME_UPDATE", "FrameGroups", function(frameGroup)
         if not frameGroup or not DB[5111] or not DB[5111][frameGroup] or not FRAME_GROUPS[frameGroup] then
@@ -1817,7 +1815,7 @@ function Ether.CreateProfileSection(self)
     Ether.ExportPopup = frame
     parent.Refresh = RefreshDropdown
     parent.RefreshConfig = function()
-       
+
     end
 end
 

@@ -7,7 +7,7 @@ Ether.charKey = "Unknown-Unknown"
 Ether.statusMigration = ""
 Ether.updatedChannel = false
 Ether.debug = false
-
+local panelIsCreated = false
 Ether.Header = {}
 Ether.Anchor = {}
 
@@ -46,7 +46,6 @@ local function BuildContent(self)
         Ether.CreateAuraCustomSection(self)
         Ether.CreateRegisterSection(self)
         Ether.CreateLayoutSection(self)
-        Ether.CreateRangeSection(self)
         Ether.CreateTooltipSection(self)
         Ether.CreateConfigSection(self)
         Ether.CreateProfileSection(self)
@@ -80,7 +79,7 @@ local Construct = {
             Indicators = {A = {}, B = {}},
             Update = {A = {}, B = {}},
             Tooltip = {A = {}},
-            Layout = {A = {}, B = {}}
+            Layout = {A = {}}
         }
     },
     Menu = {
@@ -90,7 +89,7 @@ local Construct = {
             [3] = {"Aura Settings", "Aura Custom"},
             [4] = {"Register"},
             [5] = {"Comm", "Setup"},
-            [6] = {"Layout", "Range", "Tooltip", "Config", "Profile"}
+            [6] = {"Layout", "Tooltip", "Config", "Profile"}
         },
         ["LEFT"] = {
             [1] = {"Info"},
@@ -530,6 +529,9 @@ do
 
     local function OnClick(_, button)
         if button == "RightButton" then
+            if not panelIsCreated then
+                return
+            end
             if Ether.DB[001].SHOW then
                 Ether.DB[001].SHOW = false
             else
@@ -584,16 +586,14 @@ local function startC_Process()
     local C = Ether.DB[201]
 
     creationQueue[#creationQueue + 1] = function()
+        Ether.CreateMainSettings(Construct)
+    end
+
+    creationQueue[#creationQueue + 1] = function()
         Ether.Aura:Enable()
     end
 
     if C[7] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreatePartyHeader()
-        end
-    end
-
-    if C[8] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether:CreateRaidHeader()
         end
@@ -601,12 +601,6 @@ local function startC_Process()
     creationQueue[#creationQueue + 1] = function()
         Ether:UpdateIndicators()
         Ether:IndicatorsToggle()
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        if not Construct.IsCreated then
-            Ether.CreateMainSettings(Construct)
-        end
     end
 
     if C[1] == 1 then
@@ -651,13 +645,13 @@ local function startC_Process()
         end
     end
 
-    if Ether.DB[1002][1] == 1 then
+    if Ether.DB[1001][1] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["player"])
         end
     end
 
-    if Ether.DB[1002][2] == 1 then
+    if Ether.DB[1001][2] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["target"])
         end
@@ -667,33 +661,28 @@ local function startC_Process()
         targetOfTargetEvents()
     end
 
-    if Ether.DB[2001][1] == 1 then
+    if Ether.DB[801][1] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether.CastBar.Enable("player")
         end
     end
 
-    if Ether.DB[2001][2] == 1 then
+    if Ether.DB[801][2] == 1 then
         creationQueue[#creationQueue + 1] = function()
             Ether.CastBar.Enable("target")
         end
     end
 
     creationQueue[#creationQueue + 1] = function()
-        local settings = Ether.RegisterPosition(Construct.Frames["Main"], 341)
+        local settings = Ether.RegisterPosition(Construct.Frames["Main"], 340)
         settings:InitialPosition()
         settings:InitialDrag()
-
     end
 
     creationQueue[#creationQueue + 1] = function()
-        local debug = Ether.RegisterPosition(Ether.DebugFrame, 340)
+        local debug = Ether.RegisterPosition(Ether.DebugFrame, 339)
         debug:InitialPosition()
         debug:InitialDrag()
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        Ether.DebugOutput(Ether.statusMigration)
     end
 
     creationQueue[#creationQueue + 1] = function()
@@ -702,6 +691,10 @@ local function startC_Process()
 
     creationQueue[#creationQueue + 1] = function()
         ToggleSettings(Construct)
+    end
+
+    creationQueue[#creationQueue + 1] = function()
+        panelIsCreated = true
     end
 
     if not isCreating then
@@ -782,7 +775,7 @@ function Ether.RefreshAllSettings()
     if Construct.Content.Buttons.Update and Construct.Content.Buttons.Update.B then
         local units = {
             "player", "target", "targettarget", "pet", "pettarget",
-            "focus", "party", "raid"
+            "focus", "raid"
         }
 
         for i, unitKey in ipairs(units) do
@@ -793,20 +786,11 @@ function Ether.RefreshAllSettings()
         end
     end
 
-    if Construct.Content.Buttons.Layout and Construct.Content.Buttons.Layout.B then
-        for i = 1, #Ether.DB[801] do
-            local checkbox = Construct.Content.Buttons.Layout.B[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[801][i] == 1)
-            end
-        end
-    end
-
     if Construct.Content.Buttons.Layout and Construct.Content.Buttons.Layout.A then
-        for i = 1, #Ether.DB[2001] do
+        for i = 1, #Ether.DB[801] do
             local checkbox = Construct.Content.Buttons.Layout.A[i]
             if checkbox then
-                checkbox:SetChecked(Ether.DB[2001][i] == 1)
+                checkbox:SetChecked(Ether.DB[801][i] == 1)
             end
         end
     end
@@ -822,10 +806,9 @@ function Ether.RefreshFramePositions()
         [335] = Ether.Anchor.pet,
         [336] = Ether.Anchor.pettarget,
         [337] = Ether.Anchor.focus,
-        [338] = Ether.Anchor.party,
-        [339] = Ether.Anchor.raid,
-        [340] = Ether.DebugFrame,
-        [341] = Construct.Frames["Main"]
+        [338] = Ether.Anchor.raid,
+        [339] = Ether.DebugFrame,
+        [340] = Construct.Frames["Main"]
     }
 
     for frameID, frame in pairs(frames) do
@@ -849,7 +832,6 @@ function Ether.RefreshFramePositions()
             end
         end
     end
-
 end
 
 local function OnInitialize(self, event, ...)
@@ -916,6 +898,9 @@ local function OnInitialize(self, event, ...)
             input = string.lower(input or "")
             rest = string.lower(rest or "")
             if input == "settings" then
+                if not panelIsCreated then
+                    return
+                end
                 if Ether.DB[001].SHOW then
                     Ether.DB[001].SHOW = false
                 else
@@ -953,15 +938,14 @@ local function OnInitialize(self, event, ...)
             local LDI = LibStub("LibDBIcon-1.0", true)
             LDI:Register("EtherIcon", Ether.dataBroker, ETHER_ICON)
         end
+
         Ether:IndicatorsToggle()
         Ether.Roster:Enable()
         Ether.hStatus:Enable()
         Ether.nStatus:Enable()
         Ether.pStatus:Enable()
 
-        local p = Ether.RegisterPosition(Ether.Anchor.party, 338)
-        p:InitialPosition()
-        local r = Ether.RegisterPosition(Ether.Anchor.raid, 339)
+        local r = Ether.RegisterPosition(Ether.Anchor.raid, 338)
         r:InitialPosition()
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(400)
@@ -994,7 +978,6 @@ local function OnInitialize(self, event, ...)
             UpdateSendChannel()
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, sendChannel, nil, "NORMAL")
         end
-
     elseif (event == "PLAYER_LOGOUT") then
         if Ether.DB then
             local charKey = Ether.GetCharacterKey()
@@ -1011,28 +994,3 @@ end
 local Initialize = CreateFrame("Frame")
 Initialize:RegisterEvent("ADDON_LOADED")
 Initialize:SetScript("OnEvent", OnInitialize)
-
-
---[[
-    local AuraInfo = {
-        [1] = { Id = 10938, name = "Power Word: Fortitude: Rank 6", color = "|cffCC66FFEther Pink|r" },
-        [2] = { Id = 21564, name = "Prayer of Fortitude: Rank 2", color = "|cffCC66FFEther Pink|r" },
-        [3] = { Id = 27841, name = "Divine Spirit: Rank 4", color = "|cff00ffffCyan|r" },
-        [4] = { Id = 27681, name = "Prayer of Spirit: Rank 1", color = "|cff00ffffCyan|r" },
-        [5] = { Id = 10958, name = "Shadow Protection: Rank 3", color = "Black" },
-        [6] = { Id = 27683, name = "Prayer of Shadow Protection: Rank 1", color = "Black" },
-        [7] = { Id = 10157, name = "Arcane Intellect: Rank 5", color = "|cE600CCFFEther Blue|r" },
-        [8] = { Id = 23028, name = "Arcane Brilliance: Rank 1", color = "|cE600CCFFEther Blue|r" },
-        [9] = { Id = 9885, name = "Mark of the Wild: Rank 7", color = "|cffffa500Orange|r" },
-        [10] = { Id = 21850, name = "Gift of the Wild: Rank 2", color = "|cffffa500Orange|r" },
-        [11] = { Id = 25315, name = "Renew: Rank 10", color = "|cff00ff00Green|r" },
-        [12] = { Id = 10901, name = "Power Word Shield: Rank 3", color = "White" },
-        [13] = { Id = 6788, name = "Weakened Soul", color = "|cffff0000Red|r" },
-        [14] = { Id = 6346, name = "Fear Ward", color = "|cff8b4513Saddle Brown|r" },
-        [15] = { Id = 0, name = "Dynamic depending on class and skills" },
-        [16] = { Id = 0, name = "Magic: Border color: |cff3399FFAzure blue|r" },
-        [17] = { Id = 0, name = "Disease: Border color |cff996600Rust brown|r" },
-        [18] = { Id = 0, name = "Curse: Border color |cff9900FFViolet|r" },
-        [19] = { Id = 0, name = "Poison: Border color |cff009900Grass green|r" }
-    }
-]]

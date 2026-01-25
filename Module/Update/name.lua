@@ -1,7 +1,10 @@
 local _, Ether = ...
 local nStatus = {}
 Ether.nStatus = nStatus
-local U_N = UnitName
+local UnitName = UnitName
+local string_byte = string.byte
+local UnitIsUnit = UnitIsUnit
+local SELF = "|cffffd700ME|r"
 
 local function utf8sub(str, start, numChars)
     if not str then
@@ -9,7 +12,7 @@ local function utf8sub(str, start, numChars)
     end
     local currentIndex = start
     while numChars > 0 and currentIndex <= #str do
-        local char = string.byte(str, currentIndex)
+        local char = string_byte(str, currentIndex)
         if char >= 240 then
             currentIndex = currentIndex + 4
         elseif char >= 225 then
@@ -24,21 +27,29 @@ local function utf8sub(str, start, numChars)
     return str:sub(start, currentIndex - 1)
 end
 
-local function UpdateName(self, bool)
+function Ether.UpdateSoloName(self)
     if not self.unit then
         return
     end
-    local name = U_N(self.unit)
-    if (name) then
-        self.name:SetTextColor(1, 1, 1)
-        if bool then
-            self.name:SetText(utf8sub(name, 1, 3))
-        else
-            self.name:SetText(name)
-        end
+    local name = UnitName(self.unit)
+    if UnitIsUnit(self.unit, "player") then
+        self.name:SetText(SELF)
+    else
+        self.name:SetText(name)
     end
 end
-Ether.UpdateName = UpdateName
+
+function Ether.UpdateRaidName(self)
+    if not self.unit then
+        return
+    end
+    local name = UnitName(self.unit)
+    if UnitIsUnit(self.unit, "player") then
+        self.name:SetText(SELF)
+    else
+        self.name:SetText(utf8sub(name, 1, 3))
+    end
+end
 
 local Name, Event
 if not Name then
@@ -48,16 +59,16 @@ if not Name then
             return
         end
         if event == "UNIT_NAME_UPDATE" then
-            if Ether.DB[901]["party"] then
-                local p = Ether.unitButtons.party[unit]
-                if p then
-                    UpdateName(p)
+            if Ether.DB[901]["raid"] and Ether.DB[201][7] == 1 then
+                local r = Ether.unitButtons.raid[unit]
+                if r then
+                   Ether.UpdateRaidName(r)
                 end
             end
             if Ether.DB[901][unit] then
                 local s = Ether.unitButtons.solo[unit]
                 if s then
-                    UpdateName(s)
+                    Ether.UpdateSoloName(s)
                 end
             end
         end

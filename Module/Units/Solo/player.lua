@@ -9,7 +9,7 @@ local function FullUpdate(self)
         Ether.InitialPower(self)
     end)
     Ether.UpdateHealthAndMax(self)
-    Ether.UpdateName(self)
+    Ether.UpdateSoloName(self)
     if Ether.DB[701][1] == 1 then
         Ether.UpdateHealthText(self)
     end
@@ -90,9 +90,7 @@ function Ether:CreateUnitButtons(unit)
         button:SetScript("OnShow", Show)
         Ether.InitialHealth(button)
         Ether.InitialPower(button)
-
         FullUpdate(button)
-
         Ether.unitButtons.solo[button.unit] = button
 
         return button

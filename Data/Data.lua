@@ -1,89 +1,27 @@
 local _, Ether = ...
-
-local arrayLengths = {
-    [101] = 12, [201] = 8, [301] = 13, [401] = 3,
-    [501] = 9, [601] = 7, [701] = 6, [801] = 1,
-    [1002] = 3, [2001] = 5
-}
-
-local arrayDefaults = {
-    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [201] = {1, 1, 1, 1, 1, 1, 1, 1},
-    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 0, 1},
-    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [601] = {1, 1, 1, 0, 1, 1, 1},
-    [701] = {0, 0, 0, 0, 0, 0},
-    [801] = {0},
-    [1002] = {1, 1, 1},
-    [2001] = {1, 1, 0, 0, 0}
-}
-
-local Default = {
-    [001] = {
-        VERSION = 0,
-        LAST_UPDATE_CHECK = 0,
-        SHOW = true,
-        LAST_TAB = "Module",
-        SELECTED = 341,
-    },
-    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [201] = {1, 1, 1, 1, 1, 1, 1, 1},
-    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 0, 1},
-    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [601] = {1, 1, 1, 0, 1, 1, 1},
-    [701] = {0, 0, 0, 0, 0, 0},
-    [801] = {0},
-    [901] = {
-        player = true,
-        target = true,
-        targettarget = true,
-        pet = true,
-        pettarget = true,
-        focus = true,
-        party = true,
-        raid = true,
-    },
-    [1002] = {1, 1, 1},
-    [1003] = {},
-    [2001] = {1, 1, 0, 0, 0},
-    [5111] = {
-        [331] = {"BOTTOMLEFT", 5133, "BOTTOMLEFT", 350, 250, 180, 100, 1.0, 1.0},
-        [332] = {"CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0},
-        [333] = {"CENTER", 5133, "CENTER", 250, -250, 120, 50, 1.0, 1.0},
-        [334] = {"CENTER", 5133, "CENTER", 0, -300, 120, 50, 1.0, 1.0},
-        [335] = {"CENTER", 5133, "CENTER", -400, -100, 120, 50, 1.0, 1.0},
-        [336] = {"CENTER", 5133, "CENTER", -300, 100, 120, 50, 1.0, 1.0},
-        [337] = {"CENTER", 5133, "CENTER", 0, 100, 120, 50, 1.0, 1.0},
-        [338] = {"CENTER", 5133, "CENTER", -100, -80, 1, 1, 1.0, 1.0},
-        [339] = {"LEFT", 5133, "LEFT", 10, 0, 1, 1, 1.0, 1.0},
-        [340] = {"TOP", 5133, "TOP", 80, -80, 320, 200, 1.0, 1.0},
-        [341] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0}
-    }
-}
-Ether.DataDefault = Default
+local tinsert = table.insert
+local tconcat = table.concat
+local tsort = table.sort
+local pairs, ipairs = pairs, ipairs
+local tostring = tostring
+local string_format = string.format
+local type = type
+local math_floor = math.floor
+local string_char = string.char
 
 ---@alias Menu number
----| DataInfo 001
----| HIDE 101
----| CREATE 201
----| TOOLTIP 301
+---| Data 001
+---| Hide 101
+---| Create 201
+---| Tooltip 301
 ---| MODULES 401
 ---| Indicators Register 501
 ---| Indicators Status 601
 ---| Update Text 701
----| Range 801
+---| Layout 801
 ---| Updated Units 901
 ---| Aura 1001
----| Aura Enabled on player, target, raid 1002
----| Aura Size 1003
----| Buffs 1004
----| Debuffs 1005
----| Custom 1006
----| Layout 2001
----| UIParent 5133
----| Position 5111
+---| Aura Custom 1003
 
 ---@alias Anchor number
 ---| 331 tooltip
@@ -93,22 +31,11 @@ Ether.DataDefault = Default
 ---| 335 pet
 ---| 336 pettarget
 ---| 337 focus
----| 338 party
----| 339 raid
----| 340 Debug
----| 341 Settings
+---| 338 raid
+---| 339 Debug
+---| 340 Settings
 
---- 5133 UIParent
-
-
----@alias Layout_2001 number
----| smooth health solo 1
----| smooth health raid  2
----| smooth health solo power solo 3
----| player bar 4
----| target bar 5
-
----@alias Data_001 number
+---@alias Data_001 table
 ---| Version 1
 ---| LastVersion 2
 ---| ShowSettings 3
@@ -136,8 +63,7 @@ Ether.DataDefault = Default
 ---| Pet 4
 ---| Pet Target 5
 ---| Focus 6
----| Party 7
----| Raid 8
+---| Raid 7
 
 ---@alias Tooltip_301 number
 ---| AFK 1
@@ -156,10 +82,10 @@ Ether.DataDefault = Default
 
 ---@alias Module_401 number
 ---| Icon 1
----| whisper 2
----| tooltip 3
+---| Whisper 2
+---| Tooltip 3
 
----@alias I_Register_501 number
+---@alias IndicatorRegister_501 number
 ---| READY_CHECK READY_CHECK_CONFIRM READY_FINISHED 1
 ---| UNIT_CONNECTION 2
 ---| RAID_TARGET_UPDATE 3
@@ -170,7 +96,7 @@ Ether.DataDefault = Default
 ---| PLAYER_ROLES_ASSIGNED 8
 ---| PLAYER_FLAGS_CHANGED 9
 
----@alias I_Enable_601 number
+---@alias IndicatorStatus_601 number
 ---| Unit Is Charmed 1
 ---| Unit Is Dead 2
 ---| Unit Is Ghost 3
@@ -180,32 +106,93 @@ Ether.DataDefault = Default
 ---| DND String 7
 
 ---@alias UpdateText_701 number
----| Single-Health 1
----| Single-Power 2
----| Party-Health 3
----| Party-Power 4
----| Raid-Health 5
----| Raid-Power 6
+---| Solo Health 1
+---| Solo Power 2
+---| Header Health 5
+---| Header Power 6
 
----@alias Range_801 number
----| Enable 1
+---@alias Layout_801 number
+---| playerCastBar 1
+---| targetCastBar 2
+---| smooth health Solo 3
+---| smooth Power Solo 4
+---| smooth health Header 5
+---| range checker 6
 
----@alias Update_901 number
----| Player 331
----| Target 332
----| TargetTarget 333
----| Pet 334
----| PetTarget 335
----| Focus 336
----| Party 337
----| Raid 338
----| MainTank 339
+---@alias Update_901 boolean
+---| Player
+---| Target
+---| TargetTarget
+---| Pet
+---| PetTarget
+---| Focus
+---| Header
 
----@alias AuraON number
+---@alias AuraEnable_1001 number
 ---| Player 1
 ---| Target 2
----| Raid 3
----| RaidAuraIcon 4
+---| Header 3
+
+local arrayLengths = {
+    [101] = 12, [201] = 7, [301] = 13, [401] = 3,
+    [501] = 9, [601] = 7, [701] = 4, [801] = 6,
+    [1001] = 3
+}
+
+local arrayDefaults = {
+    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [201] = {1, 1, 1, 1, 1, 1, 1},
+    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [401] = {1, 0, 1},
+    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [601] = {1, 1, 1, 0, 1, 1, 1},
+    [701] = {0, 0, 0, 0},
+    [801] = {1, 1, 0, 0, 0, 0},
+    [1001] = {1, 1, 1},
+}
+
+local Default = {
+    [001] = {
+        VERSION = 0,
+        LAST_UPDATE_CHECK = 0,
+        SHOW = true,
+        LAST_TAB = "Module",
+        SELECTED = 341,
+    },
+    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [201] = {1, 1, 1, 1, 1, 1, 1},
+    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [401] = {1, 0, 1},
+    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [601] = {1, 1, 1, 0, 1, 1, 1},
+    [701] = {0, 0, 0, 0},
+    [801] = {1, 1, 0, 0, 0, 0},
+    [901] = {
+        player = true,
+        target = true,
+        targettarget = true,
+        pet = true,
+        pettarget = true,
+        focus = true,
+        raid = true,
+    },
+    [1001] = {1, 1, 1},
+    [1003] = {},
+   -- [1101] = {},
+    [5111] = {
+        [331] = {"BOTTOMRIGHT", 5133, "BOTTOMRIGHT", -220, 220, 180, 100, 1.0, 1.0},
+        [332] = {"CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0},
+        [333] = {"CENTER", 5133, "CENTER", 250, -250, 120, 50, 1.0, 1.0},
+        [334] = {"CENTER", 5133, "CENTER", 0, -300, 120, 50, 1.0, 1.0},
+        [335] = {"CENTER", 5133, "CENTER", -400, -100, 120, 50, 1.0, 1.0},
+        [336] = {"CENTER", 5133, "CENTER", -300, 100, 120, 50, 1.0, 1.0},
+        [337] = {"LEFT", 5133, "LEFT", 500, 100, 120, 50, 1.0, 1.0},
+        [338] = {"LEFT", 5133, "LEFT", 10, 0, 1, 1, 1.0, 1.0},
+        [339] = {"TOP", 5133, "TOP", 80, -80, 320, 200, 1.0, 1.0},
+        [340] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0}
+    }
+}
+Ether.DataDefault = Default
 
 function Ether.DataEnableAll(t)
     for i = 1, #t do
@@ -252,27 +239,6 @@ function Ether.MergeToLeft(origTbl, newTbl)
     return origTbl
 end
 
-function Ether.ShallowCopy(t)
-    local t2 = {}
-    for k, v in pairs(t) do
-        t2[k] = v
-    end
-    return t2
-end
-
-function Ether.tContains(tbl, value)
-    if not tbl or type(tbl) ~= "table" then
-        return false
-    end
-
-    for i = 1, #tbl do
-        if tbl[i] == value then
-            return true
-        end
-    end
-    return false
-end
-
 function Ether.CopyTable(src)
     local copy = {}
     for k, v in pairs(src) do
@@ -316,12 +282,12 @@ function Ether:MigrateArraysOnLogin()
                     end
                 end
 
-                table.insert(migratedArrays, string.format("|cff00ff00%d|r (+%d)",
+                tinsert(migratedArrays, string_format("|cff00ff00%d|r (+%d)",
                         arrayID, added))
 
             elseif currentLength > expectedLength then
 
-                Ether.DebugOutput(string.format("Array %d trimmed: %d → %d",
+                Ether.DebugOutput(string_format("Array %d trimmed: %d → %d",
                         arrayID, currentLength, expectedLength))
                 for i = expectedLength + 1, currentLength do
                     profile[arrayID][i] = nil
@@ -331,18 +297,16 @@ function Ether:MigrateArraysOnLogin()
 
             profile[arrayID] = Ether.CopyTable(arrayDefaults[arrayID] or Ether.DataDefault[arrayID])
             totalAdded = totalAdded + expectedLength
-            table.insert(migratedArrays, string.format("|cff00ff00%d|r (new)", arrayID))
+            tinsert(migratedArrays, string_format("|cff00ff00%d|r (new)", arrayID))
         end
     end
 
     if #migratedArrays > 0 then
-        Ether.DebugOutput(string.format("|cff00ccffEther|r: Database migration complete"))
-        Ether.DebugOutput(string.format("|cff00ccffEther|r: Added %d entries across %d arrays",
+        Ether.DebugOutput(string_format("|cff00ccffEther|r: Database migration complete"))
+        Ether.DebugOutput(string_format("|cff00ccffEther|r: Added %d entries across %d arrays",
                 totalAdded, #migratedArrays))
-        Ether.DebugOutput(string.format("|cff00ccffEther|r: Updated arrays: %s",
-                table.concat(migratedArrays, ", ")))
-    else
-        Ether.statusMigration = "|cff00ccffEther|r: The database is already up to date.\nMigration is not necessary."
+        Ether.DebugOutput(string_format("|cff00ccffEther|r: Updated arrays: %s",
+                tconcat(migratedArrays, ", ")))
     end
 end
 
@@ -427,7 +391,7 @@ local function isArray(tbl)
     local maxIndex = 0
 
     for k, v in pairs(tbl) do
-        if type(k) ~= "number" or k < 1 or k ~= math.floor(k) then
+        if type(k) ~= "number" or k < 1 or k ~= math_floor(k) then
             return false
         end
         count = count + 1
@@ -451,7 +415,7 @@ local function serializeValue(value, indent)
             return Ether.SerializeTbl(value, indent)
         end
     elseif type(value) == "string" then
-        return string.format("%q", value)
+        return string_format("%q", value)
     elseif type(value) == "number" then
         return tostring(value)
     elseif type(value) == "boolean" then
@@ -459,7 +423,7 @@ local function serializeValue(value, indent)
     elseif value == nil then
         return "nil"
     else
-        return string.format("%q", tostring(value))
+        return string_format("%q", tostring(value))
     end
 end
 
@@ -474,7 +438,7 @@ function Ether.SerializeArray(tbl)
                 tinsert(items, Ether.SerializeTbl(value, 0))
             end
         elseif type(value) == "string" then
-            tinsert(items, string.format("%q", value))
+            tinsert(items, string_format("%q", value))
         elseif type(value) == "number" then
             tinsert(items, tostring(value))
         elseif type(value) == "boolean" then
@@ -482,10 +446,10 @@ function Ether.SerializeArray(tbl)
         elseif value == nil then
             tinsert(items, "nil")
         else
-            tinsert(items, string.format("%q", tostring(value)))
+            tinsert(items, string_format("%q", tostring(value)))
         end
     end
-    return "{" .. table.concat(items, ", ") .. "}"
+    return "{" .. tconcat(items, ", ") .. "}"
 end
 
 function Ether.SerializeTbl(tbl, indent)
@@ -511,7 +475,7 @@ function Ether.SerializeTbl(tbl, indent)
     for k in pairs(tbl) do
         tinsert(keys, k)
     end
-    table.sort(keys, function(a, b)
+    tsort(keys, function(a, b)
 
         if type(a) == type(b) then
             return a < b
@@ -530,7 +494,7 @@ function Ether.SerializeTbl(tbl, indent)
         elseif type(key) == "string" and key:match("^[a-zA-Z_][a-zA-Z0-9_]*$") then
             keyStr = key
         else
-            keyStr = "[" .. string.format("%q", tostring(key)) .. "]"
+            keyStr = "[" .. string_format("%q", tostring(key)) .. "]"
         end
 
         local valueStr = serializeValue(value, indent + 2)
@@ -543,7 +507,7 @@ function Ether.SerializeTbl(tbl, indent)
     end
 
     tinsert(result, "}")
-    return table.concat(result)
+    return tconcat(result)
 end
 
 function Ether.TblToString(tbl)
@@ -557,15 +521,15 @@ function Ether.Base64Encode(data)
     for i = 1, #data, 3 do
         local a, b, c = data:byte(i, i + 2)
 
-        local index1 = math.floor(a / 4) + 1
+        local index1 = math_floor(a / 4) + 1
         tinsert(result, BASE64_CHARS:sub(index1, index1))
 
         if b then
-            local index2 = ((a % 4) * 16) + math.floor(b / 16) + 1
+            local index2 = ((a % 4) * 16) + math_floor(b / 16) + 1
             tinsert(result, BASE64_CHARS:sub(index2, index2))
 
             if c then
-                local index3 = ((b % 16) * 4) + math.floor(c / 64) + 1
+                local index3 = ((b % 16) * 4) + math_floor(c / 64) + 1
                 tinsert(result, BASE64_CHARS:sub(index3, index3))
 
                 local index4 = (c % 64) + 1
@@ -582,7 +546,7 @@ function Ether.Base64Encode(data)
         end
     end
 
-    return table.concat(result)
+    return tconcat(result)
 end
 
 function Ether.Base64Decode(data)
@@ -602,187 +566,216 @@ function Ether.Base64Decode(data)
                 values[j] = BASE64_CHARS:find(char, 1, true) - 1
             end
         end
-        local byte1 = (values[1] * 4) + math.floor(values[2] / 16)
-        tinsert(result, string.char(byte1))
+        local byte1 = (values[1] * 4) + math_floor(values[2] / 16)
+        tinsert(result, string_char(byte1))
 
         if values[3] ~= 0 or chunk:sub(3, 3) ~= '=' then
-            local byte2 = ((values[2] % 16) * 16) + math.floor(values[3] / 4)
-            tinsert(result, string.char(byte2))
+            local byte2 = ((values[2] % 16) * 16) + math_floor(values[3] / 4)
+            tinsert(result, string_char(byte2))
         end
         if values[4] ~= 0 or chunk:sub(4, 4) ~= '=' then
             local byte3 = ((values[3] % 4) * 64) + values[4]
-            tinsert(result, string.char(byte3))
+            tinsert(result, string_char(byte3))
         end
     end
-    return table.concat(result)
+    return tconcat(result)
 end
+
+
+
+--[[
+    local AuraInfo = {
+        [1] = { Id = 10938, name = "Power Word: Fortitude: Rank 6", color = "|cffCC66FFEther Pink|r" },
+        [2] = { Id = 21564, name = "Prayer of Fortitude: Rank 2", color = "|cffCC66FFEther Pink|r" },
+        [3] = { Id = 27841, name = "Divine Spirit: Rank 4", color = "|cff00ffffCyan|r" },
+        [4] = { Id = 27681, name = "Prayer of Spirit: Rank 1", color = "|cff00ffffCyan|r" },
+        [5] = { Id = 10958, name = "Shadow Protection: Rank 3", color = "Black" },
+        [6] = { Id = 27683, name = "Prayer of Shadow Protection: Rank 1", color = "Black" },
+        [7] = { Id = 10157, name = "Arcane Intellect: Rank 5", color = "|cE600CCFFEther Blue|r" },
+        [8] = { Id = 23028, name = "Arcane Brilliance: Rank 1", color = "|cE600CCFFEther Blue|r" },
+        [9] = { Id = 9885, name = "Mark of the Wild: Rank 7", color = "|cffffa500Orange|r" },
+        [10] = { Id = 21850, name = "Gift of the Wild: Rank 2", color = "|cffffa500Orange|r" },
+        [11] = { Id = 25315, name = "Renew: Rank 10", color = "|cff00ff00Green|r" },
+        [12] = { Id = 10901, name = "Power Word Shield: Rank 3", color = "White" },
+        [13] = { Id = 6788, name = "Weakened Soul", color = "|cffff0000Red|r" },
+        [14] = { Id = 6346, name = "Fear Ward", color = "|cff8b4513Saddle Brown|r" },
+        [15] = { Id = 0, name = "Dynamic depending on class and skills" },
+        [16] = { Id = 0, name = "Magic: Border color: |cff3399FFAzure blue|r" },
+        [17] = { Id = 0, name = "Disease: Border color |cff996600Rust brown|r" },
+        [18] = { Id = 0, name = "Curse: Border color |cff9900FFViolet|r" },
+        [19] = { Id = 0, name = "Poison: Border color |cff009900Grass green|r" }
+    }
+]]
 
 Ether.AuraTemplates = {
     ["Priest - Buffs"] = {
         [21564] = {
             name = "Prayer of Fortitude: Rank 2",
             color = {0.93, 0.91, 0.67, 1},
-            size = 8,
+            size = 6,
             position = "BOTTOMLEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [27681] = {
             name = "Prayer of Spirit: Rank 1",
             color = {0.93, 0.91, 0.67, 1},
-            size = 8,
+            size = 6,
             position = "BOTTOMLEFT",
-            offsetX = 8,
+            offsetX = 6,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
+        },
+        [27683] = {
+            name = "Prayer of Shadow Protection",
+            color = {0, 0, 0, 1},
+            size = 6,
+            position = "BOTTOMLEFT",
+            offsetX = 12,
+            offsetY = 0,
+            enabled = true,
+            debuff = false
         },
         [10901] = {
             name = "Power Word: Shield",
             color = {0.93, 0.91, 0.67, 1},
-            size = 8,
+            size = 6,
             position = "TOPLEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [25315] = {
             name = "Renew",
             color = {0.2, 1, 0.2, 1},
-            size = 8,
-            position = "TOP",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true
-        },
-        [10060] = {
-            name = "Power Infusion",
-            color = {0.5, 0.5, 1, 1},
-            size = 8,
+            size = 6,
             position = "TOPRIGHT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
-        [41635] = {
-            name = "Prayer of Mending",
-            color = {1, 0.8, 0.2, 1},
-            size = 8,
-            position = "LEFT",
+        [6346] = {
+            name = "Fear Ward",
+            color = {1, 0.2, 0.5, 1},
+            size = 6,
+            position = "TOP",
             offsetX = 0,
-            offsetY = 0,
-            enabled = true
+            offsetY = -6,
+            enabled = true,
+            debuff = false
         }
     },
-    ["Priest - Debuffs"] = {
-        [6788] = {
-            name = "Weakened Soul",
-            color = {1, 0, 0, 1},
-            size = 8,
-            position = "BOTTOM",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true
-        }
-    },
-
     ["Paladin - Buffs"] = {
         [1022] = {
             name = "BoP",
             color = {1, 0.8, 0.2, 1},
-            size = 8,
+            size = 6,
             position = "TOPLEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [6940] = {
             name = "BoS",
             color = {1, 0.4, 0.4, 1},
-            size = 8,
+            size = 6,
             position = "TOP",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [1044] = {
             name = "BoF",
             color = {0.4, 0.8, 1, 1},
-            size = 8,
+            size = 6,
             position = "TOPRIGHT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [53563] = {
             name = "Beacon",
             color = {1, 1, 0.2, 1},
-            size = 8,
+            size = 6,
             position = "LEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         }
     },
     ["Druid - Buffs"] = {
         [9885] = {
             name = "Mark of the Wild: Rank 7",
             color = {1, 0.4, 1, 1},
-            size = 8,
+            size = 6,
             position = "BOTTOMLEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [21850] = {
             name = "Gift of the Wild: Rank 2",
             color = {0.2, 1, 0.2, 1},
-            size = 8,
+            size = 6,
             position = "BOTTOMLEFT",
             offsetX = 8,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
     },
     ["Druid - HoTs"] = {
         [25299] = {
             name = "Rejuvenation",
             color = {1, 0.4, 1, 1},
-            size = 8,
+            size = 6,
             position = "TOPLEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [9858] = {
             name = "Regrowth",
             color = {0.2, 1, 0.2, 1},
-            size = 8,
+            size = 6,
             position = "TOP",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [34161] = {
             name = "Wild Growth",
             color = {0.4, 1, 0.4, 1},
-            size = 8,
+            size = 6,
             position = "TOPRIGHT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [33763] = {
             name = "Lifebloom",
             color = {1, 0.8, 0, 1},
-            size = 8,
+            size = 6,
             position = "LEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         }
     },
-
     ["Shaman - Buffs"] = {
         [32593] = {
             name = "Earth Shield",
@@ -791,7 +784,8 @@ Ether.AuraTemplates = {
             position = "TOPLEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [61295] = {
             name = "Riptide",
@@ -800,10 +794,10 @@ Ether.AuraTemplates = {
             position = "TOP",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         }
     },
-
     ["Tank - Cooldowns"] = {
         [871] = {
             name = "Shield Wall",
@@ -812,7 +806,8 @@ Ether.AuraTemplates = {
             position = "CENTER",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [48792] = {
             name = "IBF",
@@ -821,7 +816,8 @@ Ether.AuraTemplates = {
             position = "CENTER",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [22812] = {
             name = "Barkskin",
@@ -830,7 +826,8 @@ Ether.AuraTemplates = {
             position = "CENTER",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [13007] = {
             name = "Divine Prot",
@@ -839,40 +836,10 @@ Ether.AuraTemplates = {
             position = "CENTER",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         }
     },
-
-    ["Raid - Cooldowns"] = {
-        [64843] = {
-            name = "Divine Hymn",
-            color = {1, 1, 0.4, 1},
-            size = 12,
-            position = "CENTER",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true
-        },
-        [15286] = {
-            name = "VE",
-            color = {0.6, 0.2, 0.6, 1},
-            size = 10,
-            position = "TOPLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true
-        },
-        [31821] = {
-            name = "Aura Mastery",
-            color = {1, 0.8, 0, 1},
-            size = 10,
-            position = "TOP",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true
-        }
-    },
-
     ["Mage - Cooldowns"] = {
         [10157] = {
             name = "Arcane Intellect: Rank 5",
@@ -881,7 +848,8 @@ Ether.AuraTemplates = {
             position = "BOTTOMLEFT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
         [23028] = {
             name = "Arcane Brilliance: Rank 1",
@@ -890,7 +858,8 @@ Ether.AuraTemplates = {
             position = "BOTTOMRIGHT",
             offsetX = 0,
             offsetY = 0,
-            enabled = true
+            enabled = true,
+            debuff = false
         },
     }
 }

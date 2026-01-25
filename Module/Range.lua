@@ -74,14 +74,6 @@ function Range:UpdateTargetAlpha()
     end
 
     if Ether.DB[201][7] == 1 then
-        for _, button in pairs(Ether.unitButtons.party) do
-            if button and button.unit and button:IsVisible() then
-                Range:UpdateAlpha(button)
-            end
-        end
-    end
-
-    if Ether.DB[201][8] == 1 then
         for _, button in pairs(Ether.unitButtons.raid) do
             if button and button.unit and button:IsVisible() then
                 Range:UpdateAlpha(button)
@@ -96,11 +88,6 @@ local function RemoveAlpha()
         Ether.unitButtons.solo["target"]:SetAlpha(1)
     end
     for _, button in pairs(Ether.unitButtons.raid) do
-        if button and button:IsVisible() then
-            button:SetAlpha(1.0)
-        end
-    end
-    for _, button in pairs(Ether.unitButtons.party) do
         if button and button:IsVisible() then
             button:SetAlpha(1.0)
         end

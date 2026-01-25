@@ -1,14 +1,13 @@
 local _, Ether = ...
 local hStatus = {}
 Ether.hStatus = hStatus
-
-local U_H = UnitHealth
-local U_MH = UnitHealthMax
-local U_IP = UnitIsPlayer
-local U_C = UnitClass
+local UnitHealth = UnitHealth
+local UnitHealthMax = UnitHealthMax
+local UnitIsPlayer = UnitIsPlayer
+local UnitClass = UnitClass
 local math_max = math.max
 local math_min = math.min
-local U_GIH = UnitGetIncomingHeals
+local UnitGetIncomingHeals = UnitGetIncomingHeals
 local string_format = string.format
 local fm = "%.1f"
 
@@ -91,8 +90,8 @@ do
     function RegisterHEvent(castEvent, func)
         if not frame then
             frame = CreateFrame("Frame")
-            frame:SetScript("OnEvent", function(self, event, unit, ...)
-                Events[event](self, event, unit, ...)
+            frame:SetScript("OnEvent", function(self, event, unit)
+                Events[event](self, event, unit)
             end)
         end
         if not Events[castEvent] then
@@ -122,10 +121,10 @@ local function GetClassColor(unit)
         return
     end
 
-    if (not U_IP(unit)) then
+    if (not UnitIsPlayer(unit)) then
         return 0.18, 0.54, 0.34
     else
-        local _, classFilename = U_C(unit)
+        local _, classFilename = UnitClass(unit)
         local c = RAID_COLORS[classFilename]
         if c then
             return c.r, c.g, c.b
@@ -137,12 +136,12 @@ end
 Ether.GetClassColor = GetClassColor
 
 local function ReturnHealth(self)
-    return U_H(self)
+    return UnitHealth(self)
 end
 Ether.ReturnHealth = ReturnHealth
 
 local function ReturnMaxHealth(self)
-    return U_MH(self)
+    return UnitHealthMax(self)
 end
 
 local function InitialHealth(self)
@@ -158,7 +157,7 @@ local function UpdateHealthText(self)
     if not self.unit or not self.health then
         return
     end
-    local h = U_H(self.unit)
+    local h = UnitHealth(self.unit)
     if h <= 0 then
         return
     end
@@ -175,8 +174,8 @@ local function UpdatePrediction(button)
         return
     end
 
-    local myIncomingHeal = U_GIH(button.unit, "player") or 0
-    local allIncomingHeal = U_GIH(button.unit) or 0
+    local myIncomingHeal = UnitGetIncomingHeals(button.unit, "player") or 0
+    local allIncomingHeal = UnitGetIncomingHeals(button.unit) or 0
 
     local otherIncomingHeal = 0
 
@@ -208,8 +207,8 @@ local function UpdateHealthAndMax(button)
         return
     end
 
-    local h = U_H(button.unit)
-    local mh = U_MH(button.unit)
+    local h = UnitHealth(button.unit)
+    local mh = UnitHealthMax(button.unit)
 
     button.healthBar:SetValue(h)
     button.healthBar:SetMinMaxValues(0, mh)
@@ -225,8 +224,8 @@ local function UpdateSmoothHealthAndMax(button)
     if not button or not button.unit then
         return
     end
-    local h = U_H(button.unit)
-    local mh = U_MH(button.unit)
+    local h = UnitHealth(button.unit)
+    local mh = UnitHealthMax(button.unit)
     local r, g, b = GetClassColor(button.unit)
     button.healthBar:SetStatusBarColor(r, g, b)
     button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
@@ -240,19 +239,10 @@ local function HealthChanged(_, event, unit)
         return
     end
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
-        if Ether.DB[901]["party"] and Ether.DB[201][7] == 1 and unit:match("^party") then
-            local p = Ether.unitButtons.party[unit]
-            if p then
-                UpdateHealthAndMax(p)
-                if Ether.DB[701][3] == 1 then
-                    UpdateHealthText(p)
-                end
-            end
-        end
         if Ether.DB[901][unit] then
             local s = Ether.unitButtons.solo[unit]
             if s then
-                if Ether.DB[2001][3] == 1 then
+                if Ether.DB[801][3] == 1 then
                     UpdateSmoothHealthAndMax(s)
                 else
                     UpdateHealthAndMax(s)
@@ -262,19 +252,18 @@ local function HealthChanged(_, event, unit)
                 end
             end
         end
-        if not Ether.DB[901]["raid"] or Ether.DB[201][8] ~= 1 or not unit:match("^raid") then
-            return
-        end
-        local button = Ether.unitButtons.raid[unit]
-        if not button then
-            return
-        end
-        if Ether.DB[2001][5] == 1 then
-            UpdateSmoothHealthAndMax(button)
-        else
-            UpdateHealthAndMax(button)
-            if Ether.DB[701][5] == 1 then
-                UpdateHealthText(button)
+        if Ether.DB[901]["raid"] or Ether.DB[201][7] == 1 then
+            local button = Ether.unitButtons.raid[unit]
+            if not button then
+                return
+            end
+            if Ether.DB[801][5] == 1 then
+                UpdateSmoothHealthAndMax(button)
+            else
+                UpdateHealthAndMax(button)
+                if Ether.DB[701][3] == 1 then
+                    UpdateHealthText(button)
+                end
             end
         end
     end
@@ -287,24 +276,17 @@ local function PredictionChanged(_, event, unit)
     if event ~= "UNIT_HEAL_PREDICTION" then
         return
     end
-    if Ether.DB[901]["party"] and Ether.DB[201][7] == 1 and unit:match("^party") then
-        local p = Ether.unitButtons.party[unit]
-        if p and unit then
-            UpdatePrediction(p)
-        end
-    end
     if Ether.DB[901][unit] then
         local s = Ether.unitButtons.solo[unit]
         if s then
             UpdatePrediction(s)
         end
     end
-    if not Ether.DB[901]["raid"] or Ether.DB[201][8] ~= 1 or not unit:match("^raid") then
-        return
-    end
-    local button = Ether.unitButtons.raid[unit]
-    if button then
-        UpdatePrediction(button)
+    if Ether.DB[901]["raid"] and Ether.DB[201][7] == 1 then
+        local button = Ether.unitButtons.raid[unit]
+        if button then
+            UpdatePrediction(button)
+        end
     end
 end
 
