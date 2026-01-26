@@ -1,6 +1,4 @@
 local _, Ether = ...
-local nStatus = {}
-Ether.nStatus = nStatus
 local UnitName = UnitName
 local string_byte = string.byte
 local UnitIsUnit = UnitIsUnit
@@ -52,17 +50,17 @@ function Ether.UpdateRaidName(self)
 end
 
 local Name, Event
-if not Name then
+do
     Name = CreateFrame("Frame")
     function Event(_, event, unit)
         if (not unit) then
             return
         end
         if event == "UNIT_NAME_UPDATE" then
-            if Ether.DB[901]["raid"] and Ether.DB[201][7] == 1 then
+            if Ether.DB[901]["raid"] then
                 local r = Ether.unitButtons.raid[unit]
                 if r then
-                   Ether.UpdateRaidName(r)
+                    Ether.UpdateRaidName(r)
                 end
             end
             if Ether.DB[901][unit] then
@@ -75,14 +73,14 @@ if not Name then
     end
 end
 
-function nStatus:Enable()
+function Ether:NameEnable()
     if not Name:GetScript("OnEvent") then
         Name:RegisterEvent("UNIT_NAME_UPDATE")
         Name:SetScript("OnEvent", Event)
     end
 end
 
-function nStatus:Disable()
+function Ether:NameDisable()
     Name:UnregisterEvent("UNIT_NAME_UPDATE")
     Name:SetScript("OnEvent", nil)
 end

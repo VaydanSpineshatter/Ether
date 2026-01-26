@@ -16,21 +16,30 @@ function Ether.RegisterPosition(parent, name)
 end
 
 function ObjPos:InitialPosition()
-    self._parent:SetClampedToScreen(true)
-    self._parent:SetMovable(true)
-    local relTo = self._pos[2]
-    if type(relTo) == "number" then
-        if relTo == 5133 then
-            relTo = UIParent
-        else
-            relTo = _G[relTo] or 5133
+    local success, msg = pcall(function()
+        self._parent:SetClampedToScreen(true)
+        self._parent:SetMovable(true)
+        local relTo = self._pos[2]
+        if type(relTo) == "number" then
+            if relTo == 5133 then
+                relTo = UIParent
+            else
+                relTo = _G[relTo] or 5133
+            end
+            self._parent:ClearAllPoints()
+            self._parent:SetPoint(self._pos[1], relTo, self._pos[3], self._pos[4], self._pos[5]);
+            self._parent:SetWidth(self._pos[6])
+            self._parent:SetHeight(self._pos[7])
+            self._parent:SetScale(self._pos[8])
+            self._parent:SetAlpha(self._pos[9])
         end
-        self._parent:ClearAllPoints()
-        self._parent:SetPoint(self._pos[1], relTo, self._pos[3], self._pos[4], self._pos[5]);
-        self._parent:SetWidth(self._pos[6])
-        self._parent:SetHeight(self._pos[7])
-        self._parent:SetScale(self._pos[8])
-        self._parent:SetAlpha(self._pos[9])
+    end)
+    if not success then
+        if Ether.DebugOutput then
+            Ether.DebugOutput("ObjPos - InitialPosition failed - ", msg)
+        else
+            print("ObjPos - InitialPosition failed - ", msg)
+        end
     end
 end
 

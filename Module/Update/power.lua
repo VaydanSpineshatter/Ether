@@ -1,6 +1,5 @@
 local _, Ether = ...
-local pStatus = {}
-Ether.pStatus = pStatus
+
 local UnitPowerType = UnitPowerType
 local UnitPower = UnitPower
 local UnitPowerMax = UnitPowerMax
@@ -73,27 +72,27 @@ local function ReturnMaxPower(self)
     return UnitPowerMax(self)
 end
 
-local function InitialPower(self)
-    if not (self.unit) then
+local function InitialPower(button)
+    if not button or not button.unit or not button.powerBar then
         return
     end
-    self.powerBar:SetValue(ReturnPower(self.unit))
-    self.powerBar:SetMinMaxValues(0, ReturnMaxPower(self.unit))
+    button.powerBar:SetValue(ReturnPower(button.unit))
+    button.powerBar:SetMinMaxValues(0, ReturnMaxPower(button.unit))
 end
 Ether.InitialPower = InitialPower
 
-local function UpdatePowerText(self)
-    if not self.unit or not self.power then
+local function UpdatePowerText(button)
+    if not button or not button.unit or not button.power then
         return
     end
-    local p = UnitPower(self.unit)
+    local p = UnitPower(button.unit)
     if p <= 0 then
         return
     end
     if p >= 1000 then
-        self.power:SetText(string_format(fm, p / 1000))
+       button.power:SetText(string_format(fm, p / 1000))
     else
-        self.power:SetText(p)
+       button.power:SetText(p)
     end
 end
 Ether.UpdatePowerText = UpdatePowerText
@@ -105,31 +104,32 @@ local function GetPowerColor(self)
 end
 Ether.GetPowerColor = GetPowerColor
 
-local function UpdatePowerAndMax(self)
-    if not self.unit or not self.powerBar then
+local function UpdatePowerAndMax(button)
+    if not button or not button.unit or not button.powerBar then
         return
     end
-    local p = UnitPower(self.unit)
-    local mp = UnitPowerMax(self.unit)
-    self.powerBar:SetValue(p)
-    self.powerBar:SetMinMaxValues(0, mp)
-    local r, g, b = GetPowerColor(self.unit)
-    self.powerBar:SetStatusBarColor(r, g, b)
-    self.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
+    local p = UnitPower(button.unit)
+    local mp = UnitPowerMax(button.unit)
+
+    button.powerBar:SetValue(p)
+    button.powerBar:SetMinMaxValues(0, mp)
+    local r, g, b = GetPowerColor(button.unit)
+    button.powerBar:SetStatusBarColor(r, g, b)
+    button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
 end
 Ether.UpdatePowerAndMax = UpdatePowerAndMax
 
-local function UpdateSmoothPowerAndMax(self)
-    if not self.unit or not self.powerBar then
+local function UpdateSmoothPowerAndMax(button)
+    if not button or not button.unit or not button.powerBar then
         return
     end
-    local p = UnitPower(self.unit)
-    local mp = UnitPowerMax(self.unit)
-    self.powerBar:SetMinMaxSmoothedValue(0, mp)
-    self.powerBar:SetSmoothedValue(p)
-    local r, g, b = GetPowerColor(self.unit)
-    self.powerBar:SetStatusBarColor(r, g, b)
-    self.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
+    local p = UnitPower(button.unit)
+    local mp = UnitPowerMax(button.unit)
+    button.powerBar:SetMinMaxSmoothedValue(0, mp)
+    button.powerBar:SetSmoothedValue(p)
+    local r, g, b = GetPowerColor(button.unit)
+    button.powerBar:SetStatusBarColor(r, g, b)
+    button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
 end
 Ether.UpdateSmoothPowerAndMa = UpdateSmoothPowerAndMax
 
@@ -160,13 +160,13 @@ local function PowerChanged(_, event, unit)
     end
 end
 
-function pStatus:Enable()
+function Ether:PowerEnable()
     RegisterPEvent("UNIT_POWER_UPDATE", PowerChanged)
     RegisterPEvent("UNIT_MAXPOWER", PowerChanged)
     RegisterPEvent("UNIT_DISPLAYPOWER", PowerChanged)
 end
 
-function pStatus:Disable()
+function Ether:PowerDisable()
     UnregisterPEvent("UNIT_POWER_UPDATE")
     UnregisterPEvent("UNIT_MAXPOWER")
     UnregisterPEvent("UNIT_DISPLAYPOWER")

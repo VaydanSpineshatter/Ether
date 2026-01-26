@@ -108,7 +108,6 @@ function Ether.CreateSection(self)
         [4] = {name = "|cffCC66FFPlayer's Pet|r", value = "PET"},
         [5] = {name = "|cffCC66FFPlayers Pet Target|r", value = "PETTARGET"},
         [6] = {name = "|cff3399FFFocus|r", value = "FOCUS"},
-        [7] = {name = "Raid", value = "RAID"},
     }
     local CreateAndBars = GetFont(self, parent, "|cffffff00Create/Delete Units|r", 15)
     CreateAndBars:SetPoint("TOPLEFT", 10, -10)
@@ -140,7 +139,7 @@ function Ether.CreateSection(self)
             if Ether.DB[201][index] == 1 then
                 Ether:CreateUnitButtons(unitKeys[index])
                 if index == 3 then
-                    Ether.targetOfTargetEvents()
+                    Ether.registerToTEvents()
                 end
             elseif Ether.DB[201][index] == 0 then
                 Ether:DestroyUnitButtons(unitKeys[index])
@@ -150,14 +149,6 @@ function Ether.CreateSection(self)
             local checked = self:GetChecked()
             Ether.DB[201][i] = checked and 1 or 0
             unitFactory(i)
-            if i == 7 then
-                Ether:CreateRaidHeader()
-                if Ether.DB[201][8] == 1 then
-                    Ether.Anchor.raid:SetShown(true)
-                else
-                    Ether.Anchor.raid:SetShown(false)
-                end
-            end
         end)
         self.Content.Buttons.Create.A[i] = btn
     end
@@ -225,7 +216,7 @@ function Ether.CreateUpdateSection(self)
         [4] = {text = "Power Header"},
     }
     local Update = GetFont(self, parent, "|cffffff00Health & Power Text:|r", 15)
-    Update:SetPoint("TOPLEFT", 30, -10)
+    Update:SetPoint("TOPLEFT", 10, -10)
     local UpdateToggle = CreateFrame("Frame", nil, parent)
     UpdateToggle:SetSize(200, (#UpdateValue * 30) + 60)
     for i, opt in ipairs(UpdateValue) do
@@ -304,14 +295,14 @@ function Ether.CreateAuraSettingsSection(self)
             Ether.DB[1001][i] = checked and 1 or 0
             if i == 1 then
                 if Ether.DB[1001][1] == 1 then
-                    Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["player"])
+                    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
                     ShowHideSingleAura(Ether.unitButtons.solo["player"], true)
                 else
                     ShowHideSingleAura(Ether.unitButtons.solo["player"], false)
                 end
             elseif i == 2 then
                 if Ether.DB[1001][2] == 1 then
-                    Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["target"])
+                    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
                     ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
                 else
                     ShowHideSingleAura(Ether.unitButtons.solo["target"], false)
@@ -322,129 +313,55 @@ function Ether.CreateAuraSettingsSection(self)
     end
 end
 
-function Ether:CreateSimpleInput(parent, width, height)
-    local input = CreateFrame("EditBox", nil, parent)
-    input:SetSize(width, height)
-    input:SetAutoFocus(false)
-
-    local bg = input:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0.1, 0.1, 0.1, 0.5)
-
-    local line = input:CreateTexture(nil, "BORDER")
-    line:SetPoint("BOTTOMLEFT")
-    line:SetPoint("BOTTOMRIGHT")
-    line:SetHeight(1)
-    line:SetColorTexture(0.35, 0.35, 0.35, 0.5)
-    input:SetFont(unpack(Ether.mediaPath.Font), 11, "")
-    input:SetTextColor(0.95, 0.95, 0.95, 1)
-    input:SetTextInsets(4, 4, 2, 2)
-
-    input:SetScript("OnEditFocusGained", function(self)
-        line:SetColorTexture(0.4, 0.6, 1, 0.8)
-        line:SetHeight(2)
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
-    end)
-    input:SetScript("OnEditFocusLost", function(self)
-        line:SetColorTexture(0.35, 0.35, 0.35, 0.5)
-        line:SetHeight(1)
-        bg:SetColorTexture(0.1, 0.1, 0.1, 0.5)
-    end)
-    input:SetScript("OnEscapePressed", function(self)
-        self:ClearFocus()
-    end)
-
-    return input
-end
-
 local selectedSpellId = nil
 
 local AuraList
 local AuraButtons = {}
 
 local function CreateAuraList(parent)
-    local frame = CreateFrame("Frame", nil, parent)
-    AuraList = frame
-    AuraList:SetPoint("TOPLEFT")
-    AuraList:SetSize(210, 390)
 
-    local bg = frame:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0, 0, 0, 0.4)
-
-    local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT")
-    scrollFrame:SetPoint("BOTTOMRIGHT", -25, 45)
-
-    local scrollChild = CreateFrame("Frame", nil, scrollFrame)
-    scrollChild:SetSize(190, 1)
-    scrollFrame:SetScrollChild(scrollChild)
-    AuraList.scrollChild = scrollChild
-
-    local addBtn = CreateFrame("Button", nil, frame)
-    addBtn:SetSize(170, 25)
-    addBtn:SetPoint("BOTTOMLEFT", 5, 5)
-    addBtn.bg = addBtn:CreateTexture(nil, "BACKGROUND")
-    addBtn.bg:SetAllPoints()
-    addBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    addBtn.text = addBtn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    addBtn.text:SetPoint("CENTER")
-    addBtn.text:SetText("Add Aura")
-    addBtn:SetScript("OnClick", function(self)
-        Ether.AddNewAura()
-    end)
-    addBtn:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
-    end)
-    addBtn:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    end)
-
-    local templateBg = frame:CreateTexture(nil, "BACKGROUND")
-    templateBg:SetColorTexture(0, 0, 0, 0.4)
-
-    local templateLabel = frame:CreateFontString(nil, "OVERLAY")
+    local templateLabel = parent:CreateFontString(nil, "OVERLAY")
     templateLabel:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    templateLabel:SetPoint("TOPLEFT", addBtn, "BOTTOMLEFT", 0, -20)
+    templateLabel:SetPoint("TOPLEFT", 10, -10)
     templateLabel:SetText("Load Template:")
 
-    local templateDropdown = CreateFrame("Frame", nil, frame, "UIDropDownMenuTemplate")
-    templateDropdown:SetPoint("TOPLEFT", templateLabel, "BOTTOMLEFT", 0, -5)
-    UIDropDownMenu_SetWidth(templateDropdown, 180)
+    local templateDropdown = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
+    templateDropdown:SetPoint("TOPLEFT", templateLabel, "BOTTOMLEFT", -10, -10)
+    UIDropDownMenu_SetWidth(templateDropdown, 140)
     UIDropDownMenu_SetText(templateDropdown, "Select Template...")
 
-    local loadTemplateBtn = CreateFrame("Button", nil, frame)
-    loadTemplateBtn:SetSize(80, 25)
-    loadTemplateBtn:SetPoint("LEFT", templateDropdown, "RIGHT", 10, 0)
-    loadTemplateBtn.bg = loadTemplateBtn:CreateTexture(nil, "BACKGROUND")
-    loadTemplateBtn.bg:SetAllPoints()
-    loadTemplateBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    loadTemplateBtn.text = loadTemplateBtn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    loadTemplateBtn.text:SetPoint("CENTER")
-    loadTemplateBtn.text:SetText("Load")
-    loadTemplateBtn:SetScript("OnClick", function(self)
+    local loadBtn = CreateFrame("Button", nil, parent)
+    loadBtn:SetSize(80, 25)
+    loadBtn:SetPoint("TOP", 45, -10)
+    loadBtn.bg = loadBtn:CreateTexture(nil, "BACKGROUND")
+    loadBtn.bg:SetAllPoints()
+    loadBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    loadBtn.text = loadBtn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    loadBtn.text:SetPoint("CENTER")
+    loadBtn.text:SetText("Load")
+    loadBtn:SetScript("OnClick", function(self)
         local selectedTemplate = UIDropDownMenu_GetText(templateDropdown)
         if selectedTemplate and selectedTemplate ~= "Select Template..." then
             Ether:AddTemplateAuras(selectedTemplate, true)
         end
     end)
-    loadTemplateBtn:SetScript("OnEnter", function(self)
+    loadBtn:SetScript("OnEnter", function(self)
         self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
     end)
-    loadTemplateBtn:SetScript("OnLeave", function(self)
+    loadBtn:SetScript("OnLeave", function(self)
         self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     end)
 
     UIDropDownMenu_Initialize(templateDropdown, function()
         local info = UIDropDownMenu_CreateInfo()
 
-        info.text = "|cffff0000Clear All Auras|r"
+        info.text = "|cffff0000Clear Auras|r"
         info.func = function()
             wipe(Ether.DB[1003])
             Ether.UpdateAuraList()
             selectedSpellId = nil
             Ether.UpdateEditor()
-            Ether.DebugOutput("|cff00ccffEther|r: All custom auras cleared")
+            Ether.DebugOutput("|cff00ccffAuras|r: Custom auras cleared")
         end
         UIDropDownMenu_AddButton(info)
 
@@ -459,8 +376,39 @@ local function CreateAuraList(parent)
         end
     end)
 
-    templateBg:SetPoint("TOPLEFT", templateLabel, "TOPLEFT")
-    templateBg:SetPoint("BOTTOMRIGHT", loadTemplateBtn, "BOTTOMRIGHT")
+    local frame = CreateFrame("Frame", nil, parent)
+    AuraList = frame
+    AuraList:SetPoint("TOPLEFT", templateLabel, "BOTTOMLEFT", 0, -50)
+    AuraList:SetSize(210, 320)
+
+    local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT")
+    scrollFrame:SetPoint("BOTTOMRIGHT", -25, 35)
+
+    local scrollChild = CreateFrame("Frame", nil, scrollFrame)
+    scrollChild:SetSize(190, 1)
+    scrollFrame:SetScrollChild(scrollChild)
+    AuraList.scrollChild = scrollChild
+
+    local addBtn = CreateFrame("Button", nil, frame)
+    addBtn:SetSize(80, 25)
+    addBtn:SetPoint("LEFT", loadBtn, "RIGHT", 10, 0)
+    addBtn.bg = addBtn:CreateTexture(nil, "BACKGROUND")
+    addBtn.bg:SetAllPoints()
+    addBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    addBtn.text = addBtn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    addBtn.text:SetPoint("CENTER")
+    addBtn.text:SetText("New Aura")
+    addBtn:SetScript("OnClick", function(self)
+        Ether.AddNewAura()
+    end)
+    addBtn:SetScript("OnEnter", function(self)
+        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
+    end)
+    addBtn:SetScript("OnLeave", function(self)
+        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    end)
+
     return frame
 end
 
@@ -484,7 +432,7 @@ function Ether:AddTemplateAuras(templateName, replaceAll)
 
     Ether.UpdateAuraList()
 
-    local msg = string.format("|cff00ccffEther|r: Template '%s' loaded. ", templateName)
+    local msg = string.format("|cff00ccffAuras|r: Template '%s' loaded. ", templateName)
     if added > 0 then
         msg = msg .. string.format("|cff00ff00+%d new auras|r", added)
     end
@@ -499,33 +447,32 @@ end
 
 local Editor
 
-local function CreateSimpleInput(parent, width, height)
+local function CreateLineInput(parent, width, height)
     local input = CreateFrame("EditBox", nil, parent)
     input:SetSize(width, height)
     input:SetAutoFocus(false)
 
     local bg = input:CreateTexture(nil, "BACKGROUND")
     bg:SetAllPoints()
-    bg:SetColorTexture(0.1, 0.1, 0.1, 0.5)
+    bg:SetColorTexture(1, 1, 1, 0.1)
 
     local line = input:CreateTexture(nil, "BORDER")
     line:SetPoint("BOTTOMLEFT")
     line:SetPoint("BOTTOMRIGHT")
     line:SetHeight(1)
-    line:SetColorTexture(0.35, 0.35, 0.35, 0.5)
-    input:SetFont(unpack(Ether.mediaPath.Font), 11, "")
-    input:SetTextColor(0.95, 0.95, 0.95, 1)
+    line:SetColorTexture(0.80, 0.40, 1.00, 1)
+    input:SetFont(unpack(Ether.mediaPath.Font), 11, "OUTLINE")
     input:SetTextInsets(4, 4, 2, 2)
 
     input:SetScript("OnEditFocusGained", function(self)
-        line:SetColorTexture(0.4, 0.6, 1, 0.8)
-        line:SetHeight(2)
-        bg:SetColorTexture(0.12, 0.12, 0.12, 0.5)
+        line:SetColorTexture(0, 0.8, 1, 1)
+        line:SetHeight(1)
+        bg:SetColorTexture(1, 1, 1, 0.1)
     end)
     input:SetScript("OnEditFocusLost", function(self)
-        line:SetColorTexture(0.35, 0.35, 0.35, 0.5)
+        line:SetColorTexture(0.80, 0.40, 1.00, 1)
         line:SetHeight(1)
-        bg:SetColorTexture(0.1, 0.1, 0.1, 0.5)
+        bg:SetColorTexture(1, 1, 1, 0.1)
     end)
     input:SetScript("OnEscapePressed", function(self)
         self:ClearFocus()
@@ -534,15 +481,86 @@ local function CreateSimpleInput(parent, width, height)
     return input
 end
 
+local colorPickerCallbacks = {
+    currentSpellId = nil,
+    editorFrame = nil
+}
+
+local function GenericColorChanged()
+    local state = colorPickerCallbacks
+    if state.currentSpellId and Ether.DB[1003][state.currentSpellId] then
+        local r, g, b = ColorPickerFrame:GetColorRGB()
+        local a = ColorPickerFrame:GetColorAlpha()
+        local auraData = Ether.DB[1003][state.currentSpellId]
+
+        auraData.color[1], auraData.color[2], auraData.color[3], auraData.color[4] = r, g, b, a
+
+        if state.editorFrame then
+            state.editorFrame.colorBtn.bg:SetColorTexture(r, g, b, a)
+            state.editorFrame.rgbText:SetText(string.format("RGB: %d, %d, %d", r * 255, g * 255, b * 255))
+            Ether.UpdatePreview()
+            Ether.UpdateAuraList()
+        end
+    end
+end
+
+local function GenericCancel(prevValues)
+    local state = colorPickerCallbacks
+    if state.currentSpellId and Ether.DB[1003][state.currentSpellId] then
+        local auraData = Ether.DB[1003][state.currentSpellId]
+
+        if prevValues then
+            auraData.color[1] = prevValues.r
+            auraData.color[2] = prevValues.g
+            auraData.color[3] = prevValues.b
+            auraData.color[4] = prevValues.a
+        end
+
+        if state.editorFrame then
+            local r, g, b, a = auraData.color[1], auraData.color[2], auraData.color[3], auraData.color[4]
+            state.editorFrame.colorBtn.bg:SetColorTexture(r, g, b, a)
+            state.editorFrame.rgbText:SetText(string.format("RGB: %d, %d, %d", r * 255, g * 255, b * 255))
+            Ether.UpdatePreview()
+            Ether.UpdateAuraList()
+        end
+    end
+    colorPickerCallbacks.currentSpellId = nil
+    colorPickerCallbacks.editorFrame = nil
+end
+
+local originalColor
+local currentEditor
+local function OnCancel(prevValues)
+    if selectedSpellId and Ether.DB[1003][selectedSpellId] then
+        local auraData = Ether.DB[1003][selectedSpellId]
+
+        if prevValues then
+            auraData.color[1] = prevValues.r
+            auraData.color[2] = prevValues.g
+            auraData.color[3] = prevValues.b
+            auraData.color[4] = prevValues.a
+        else
+            auraData.color = {unpack(originalColor)}
+        end
+
+        local color = prevValues or {
+            r = originalColor[1],
+            g = originalColor[2],
+            b = originalColor[3],
+            a = originalColor[4]
+        }
+        currentEditor.colorBtn.bg:SetColorTexture(color.r, color.g, color.b, color.a)
+        currentEditor.rgbText:SetText(string.format("RGB: %d, %d, %d",
+                color.r * 255, color.g * 255, color.b * 255))
+        Ether.UpdateAuraList()
+    end
+end
+
 local function CreateEditor(parent)
     local frame = CreateFrame("Frame", nil, parent)
     Editor = frame
-    frame:SetPoint("TOPLEFT", AuraList, "TOPRIGHT")
-    frame:SetSize(380, 390)
-
-    local bg = frame:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(0, 0, 0, 0.4)
+    frame:SetPoint("TOPRIGHT", 80, -50)
+    frame:SetSize(320, 300)
 
     local name = frame:CreateFontString(nil, "OVERLAY")
     frame.nameLabel = name
@@ -551,7 +569,7 @@ local function CreateEditor(parent)
     name:SetText("Name")
     name:SetAlpha(.6)
 
-    local nameInput = CreateSimpleInput(frame, 140, 24)
+    local nameInput = CreateLineInput(frame, 140, 24)
     frame.nameInput = nameInput
     nameInput:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -10)
     nameInput:SetScript("OnEnterPressed", function(self)
@@ -569,7 +587,7 @@ local function CreateEditor(parent)
     spellID:SetText("Spell ID")
     spellID:SetAlpha(.6)
 
-    local spellIdInput = CreateSimpleInput(frame, 140, 24)
+    local spellIdInput = CreateLineInput(frame, 140, 24)
     frame.spellIdInput = spellIdInput
     spellIdInput:SetPoint("TOPLEFT", spellID, "BOTTOMLEFT", 0, -10)
     spellIdInput:SetNumeric(true)
@@ -586,69 +604,16 @@ local function CreateEditor(parent)
         self:ClearFocus()
     end)
 
-    local color = frame:CreateFontString(nil, "OVERLAY")
-    frame.colorLabel = color
-    color:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    color:SetPoint("TOPLEFT", spellIdInput, "BOTTOMLEFT", 0, -30)
-    color:SetText("Color")
-
-    local colorBtn = CreateFrame("Button", nil, frame)
-    frame.colorBtn = colorBtn
-    colorBtn:SetSize(25, 25)
-    colorBtn:SetPoint("TOPLEFT", color, "BOTTOMLEFT", 0, -10)
-    frame.colorBtn.bg = colorBtn:CreateTexture(nil, "BACKGROUND")
-    frame.colorBtn.bg:SetAllPoints()
-    frame.colorBtn.bg:SetColorTexture(1, 1, 0, 1)
-    frame.colorBtn:SetScript("OnClick", function()
-        if selectedSpellId then
-            local data = Ether.DB[1003][selectedSpellId]
-            ColorPickerFrame:SetColorRGB(data.color[1], data.color[2], data.color[3])
-            ColorPickerFrame.previousValues = {data.color[1], data.color[2], data.color[3], data.color[4]}
-            ColorPickerFrame.swatchFunc = function()
-                local r, g, b = ColorPickerFrame:GetColorRGB()
-                data.color[1] = r
-                data.color[2] = g
-                data.color[3] = b
-                frame.colorBtn.bg:SetColorTexture(r, g, b, data.color[4])
-                Ether.UpdateAuraList()
-            end
-            ColorPickerFrame.opacityFunc = function()
-                local a = OpacitySliderFrame:GetValue()
-                data.color[4] = a
-                frame.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], a)
-                Ether.UpdateAuraList()
-            end
-            ColorPickerFrame.cancelFunc = function()
-                local prev = ColorPickerFrame.previousValues
-                data.color[1] = prev[1]
-                data.color[2] = prev[2]
-                data.color[3] = prev[3]
-                data.color[4] = prev[4]
-                frame.colorBtn.bg:SetColorTexture(prev[1], prev[2], prev[3], prev[4])
-                Ether.UpdateAuraList()
-            end
-            ColorPickerFrame.hasOpacity = true
-            ColorPickerFrame.opacity = data.color[4]
-            ColorPickerFrame:Show()
-        end
-    end)
-
-    local rgbText = frame:CreateFontString(nil, "OVERLAY")
-    frame.rgbText = rgbText
-    rgbText:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    rgbText:SetPoint("LEFT", color, "RIGHT", 10, 0)
-    rgbText:SetText("RGB: 255, 255, 0")
-
     local sizeLabel = frame:CreateFontString(nil, "OVERLAY")
     frame.sizeLabel = sizeLabel
     sizeLabel:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    sizeLabel:SetPoint("TOPLEFT", colorBtn, "BOTTOMLEFT", 0, -30)
+    sizeLabel:SetPoint("TOPLEFT", spellIdInput, "BOTTOMLEFT", 0, -100)
     sizeLabel:SetText("Size")
 
     local sizeSlider = CreateFrame("Slider", nil, frame, "OptionsSliderTemplate")
     frame.sizeSlider = sizeSlider
     sizeSlider:SetPoint("TOPLEFT", sizeLabel, "BOTTOMLEFT")
-    sizeSlider:SetWidth(140)
+    sizeSlider:SetWidth(100)
     sizeSlider:SetMinMaxValues(4, 20)
     sizeSlider:SetValueStep(1)
     sizeSlider:SetObeyStepOnDrag(true)
@@ -663,7 +628,7 @@ local function CreateEditor(parent)
     end)
     local sizeSliderBG = sizeSlider:CreateTexture(nil, "BACKGROUND")
     sizeSliderBG:SetPoint("CENTER")
-    sizeSliderBG:SetSize(140, 10)
+    sizeSliderBG:SetSize(100, 10)
     sizeSliderBG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     sizeSliderBG:SetDrawLayer("BACKGROUND", -1)
 
@@ -673,6 +638,69 @@ local function CreateEditor(parent)
     sizeValue:SetPoint("TOP", sizeSlider, "BOTTOM", 0, -5)
     sizeValue:SetText("6 px")
 
+    local colorBtn = CreateFrame("Button", nil, frame)
+    frame.colorBtn = colorBtn
+    colorBtn:SetSize(15, 15)
+    colorBtn:SetPoint("LEFT", sizeSlider, "RIGHT", 20, 0)
+    frame.colorBtn.bg = colorBtn:CreateTexture(nil, "BACKGROUND")
+    frame.colorBtn.bg:SetAllPoints()
+    frame.colorBtn.bg:SetColorTexture(1, 1, 0, 1)
+    frame.colorBtn:SetScript("OnClick", function()
+        if not selectedSpellId then
+            return
+        end
+        local data = Ether.DB[1003][selectedSpellId]
+        originalColor = data.color
+        currentEditor = frame
+        local function OnColorChanged()
+            local r, g, b = ColorPickerFrame:GetColorRGB()
+            local a = ColorPickerFrame:GetColorAlpha()
+            if selectedSpellId and Ether.DB[1003][selectedSpellId] then
+                local auraData = Ether.DB[1003][selectedSpellId]
+                auraData.color[1], auraData.color[2], auraData.color[3], auraData.color[4] = r, g, b, a
+                currentEditor.colorBtn.bg:SetColorTexture(r, g, b, a)
+                currentEditor.rgbText:SetText(string.format("RGB: %d, %d, %d", r * 255, g * 255, b * 255))
+                Ether.UpdateAuraList()
+            end
+        end
+
+        local swatchTexture = frame.colorBtn.bg
+        ColorPickerFrame:SetupColorPickerAndShow({
+            swatchFunc = OnColorChanged,
+            opacityFunc = OnColorChanged,
+            cancelFunc = OnCancel,
+            hasOpacity = true,
+            opacity = data.color[4],
+            r = data.color[1],
+            g = data.color[2],
+            b = data.color[3],
+            swatch = swatchTexture
+        })
+    end)
+
+    local rgbText = frame:CreateFontString(nil, "OVERLAY")
+    frame.rgbText = rgbText
+    rgbText:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    rgbText:SetPoint("LEFT", sizeSlider, "RIGHT", 40, 0)
+    rgbText:SetText("RGB: 255, 255, 0")
+
+    local preview = CreateFrame("Frame", nil, frame)
+    frame.preview = preview
+    preview:SetPoint("TOPLEFT", 15, -140)
+    preview:SetSize(55, 55)
+
+    local healthBar = CreateFrame("StatusBar", nil, preview)
+    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
+    preview.healthBar = healthBar
+    healthBar:SetPoint("BOTTOMLEFT")
+    healthBar:SetSize(55, 55)
+    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.StatusBar))
+
+    preview.indicator = preview:CreateTexture(nil, "OVERLAY")
+    preview.indicator:SetSize(6, 6)
+    preview.indicator:SetPoint("TOP", healthBar, "TOP", 0, 0)
+    preview.indicator:SetColorTexture(1, 1, 0, 1)
+
     local positions = {
         {"TOPLEFT", "TOP", "TOPRIGHT"},
         {"LEFT", "CENTER", "RIGHT"},
@@ -680,7 +708,7 @@ local function CreateEditor(parent)
     }
 
     frame.posButtons = {}
-    local startX, startY = 180, -100
+    local startX, startY = 120, -120
     local btnSize = 25
 
     for row = 1, 3 do
@@ -733,10 +761,12 @@ local function CreateEditor(parent)
     local offsetXSlider = CreateFrame("Slider", nil, frame, "OptionsSliderTemplate")
     frame.offsetXSlider = offsetXSlider
     offsetXSlider:SetPoint("TOPLEFT", offsetXLabel, "BOTTOMLEFT")
-    offsetXSlider:SetWidth(140)
+    offsetXSlider:SetWidth(100)
     offsetXSlider:SetMinMaxValues(-20, 20)
     offsetXSlider:SetValueStep(1)
     offsetXSlider:SetObeyStepOnDrag(true)
+    offsetXSlider.Low:SetText("-20")
+    offsetXSlider.High:SetText("20")
     offsetXSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].offsetX = value
@@ -746,22 +776,24 @@ local function CreateEditor(parent)
     end)
     local offsetXBG = offsetXSlider:CreateTexture(nil, "BACKGROUND")
     offsetXBG:SetPoint("CENTER")
-    offsetXBG:SetSize(140, 10)
+    offsetXBG:SetSize(100, 10)
     offsetXBG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     offsetXBG:SetDrawLayer("BACKGROUND", -1)
 
     local offsetYLabel = frame:CreateFontString(nil, "OVERLAY")
     frame.offsetYLabel = offsetYLabel
     offsetYLabel:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    offsetYLabel:SetPoint("TOPLEFT", offsetXLabel, "BOTTOMLEFT", 0, -50)
+    offsetYLabel:SetPoint("LEFT", offsetXLabel, "RIGHT", 80, 0)
     offsetYLabel:SetText("Y Offset")
 
     local offsetYSlider = CreateFrame("Slider", nil, frame, "OptionsSliderTemplate")
     frame.offsetYSlider = offsetYSlider
     offsetYSlider:SetPoint("TOPLEFT", offsetYLabel, "BOTTOMLEFT")
-    offsetYSlider:SetWidth(140)
+    offsetYSlider:SetWidth(100)
     offsetYSlider:SetMinMaxValues(-20, 20)
     offsetYSlider:SetValueStep(1)
+    offsetYSlider.Low:SetText("-20")
+    offsetYSlider.High:SetText("20")
     offsetYSlider:SetObeyStepOnDrag(true)
     offsetYSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
@@ -772,9 +804,10 @@ local function CreateEditor(parent)
     end)
     local offsetYBG = offsetYSlider:CreateTexture(nil, "BACKGROUND")
     offsetYBG:SetPoint("CENTER")
-    offsetYBG:SetSize(140, 10)
+    offsetYBG:SetSize(100, 10)
     offsetYBG:SetColorTexture(0.2, 0.2, 0.2, 0.6)
     offsetYBG:SetDrawLayer("BACKGROUND", -1)
+
     local offsetXValue = frame:CreateFontString(nil, "OVERLAY")
     frame.offsetXValue = offsetXValue
     offsetXValue:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
@@ -786,23 +819,6 @@ local function CreateEditor(parent)
     offsetYValue:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     offsetYValue:SetPoint("TOP", offsetYSlider, "BOTTOM")
     offsetYValue:SetText("0")
-
-    local preview = CreateFrame("Frame", nil, frame)
-    frame.preview = preview
-    preview:SetPoint("TOPLEFT", colorBtn, "TOPRIGHT", 40, 0)
-    preview:SetSize(55, 55)
-
-    local healthBar = CreateFrame("StatusBar", nil, preview)
-    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
-    preview.healthBar = healthBar
-    healthBar:SetPoint("BOTTOMLEFT")
-    healthBar:SetSize(55, 55)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.StatusBar))
-
-    preview.indicator = preview:CreateTexture(nil, "OVERLAY")
-    preview.indicator:SetSize(6, 6)
-    preview.indicator:SetPoint("TOP", healthBar, "TOP", 0, 0)
-    preview.indicator:SetColorTexture(1, 1, 0, 1)
 
     return frame
 end
@@ -902,7 +918,7 @@ function Ether.UpdateAuraList()
         table.insert(AuraButtons, btn)
 
         if selectedSpellId == spellId then
-            btn.bg:SetColorTexture(0, 0.8, 1, 0.8, .5)
+            btn.bg:SetColorTexture(0, 0.8, 1, 0.8, .3)
         end
         yOffset = yOffset - 55
         index = index + 1
@@ -1130,7 +1146,7 @@ function Ether.CreateLayoutSection(self)
         [3] = {text = "Smooth Bar Solo Health"},
         [4] = {text = "Smooth Bar Solo Power"},
         [5] = {text = "Smooth Bar Header"},
-        [6] = {text = "Range checker"}
+        [6] = {text = "Range check"},
     }
 
     local layout = CreateFrame("Frame", nil, parent)
@@ -1171,9 +1187,9 @@ function Ether.CreateLayoutSection(self)
                 end
             elseif i == 6 then
                 if Ether.DB[801][6] == 1 then
-                    Ether.Range:Enable()
+                    Ether:RangeEnable()
                 else
-                    Ether.Range:Disable()
+                    Ether:RangeDisable()
                 end
             end
         end)

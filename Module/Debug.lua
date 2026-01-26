@@ -48,7 +48,8 @@ do
             return
         end
         local msg, sender = ...
-        Ether.DebugOutput(string.format("|cffcc66ff%s|r  %s", sender, msg))
+        local senderName = select(1, string.split("-", sender))
+        Ether.DebugOutput(string.format("|cffcc66ffFrom %s:|r %s", senderName, msg))
     end
     function enableWhisper()
         if not msgEvent:GetScript("OnEvent") then

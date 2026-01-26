@@ -1,9 +1,12 @@
 local _, Ether = ...
-local Range = {}
-Ether.Range = Range
 
 local pairs = pairs
 local C_Ticker = C_Timer.NewTicker
+local UnitIsVisible = UnitIsVisible
+local UnitInAnyGroup = UnitInAnyGroup
+local UnitPhaseReason = UnitPhaseReason
+local UnitInRange = UnitInRange
+local IsSpellInRange = C_Spell.IsSpellInRange
 
 local classFriendly = {
     PRIEST = 2061, -- Flash Heal
@@ -31,18 +34,19 @@ local classHostile = {
 local _, playerClass = UnitClass("player")
 local friendly = classFriendly[playerClass] or 355
 local hostile = classHostile[playerClass] or 772
---local isMelee = (playerClass == "ROGUE" or playerClass == "WARRIOR")
 
-function Range:IsUnitInRange(unit)
+local rangeCache = {}
+Ether.rangeCache = rangeCache
+function Ether:IsUnitInRange(unit)
     if not unit then
         return
     end
 
     local inRange
     if UnitCanAssist("player", unit) then
-        inRange = C_Spell.IsSpellInRange(friendly, unit)
+        inRange = IsSpellInRange(friendly, unit)
     elseif UnitCanAttack("player", unit) then
-        inRange = C_Spell.IsSpellInRange(hostile, unit)
+        inRange = IsSpellInRange(hostile, unit)
     else
         return
     end
@@ -50,7 +54,7 @@ function Range:IsUnitInRange(unit)
     return inRange
 end
 
-function Range:UpdateAlpha(button)
+function Ether:UpdateAlpha(button)
     if not button or not button.unit then
         return
     end
@@ -58,29 +62,36 @@ function Range:UpdateAlpha(button)
     if UnitPhaseReason(button.unit) then
         return
     end
+    if not UnitIsVisible(button.unit) then
+        button:SetAlpha(0.45)
+        return
+    end
     if IsInGroup() then
         inRange = UnitInRange(button.unit)
     else
-        inRange = Range:IsUnitInRange(button.unit)
+        inRange = Ether:IsUnitInRange(button.unit)
     end
-    button:SetAlpha(inRange and 1.0 or 0.45)
+    local value = Ether:IsUnitInRange(button.unit) and 1.0 or 0.45
+    button:SetAlpha(value)
 end
 
-function Range:UpdateTargetAlpha()
-    if Ether.DB[201][2] == 1 then
-        if Ether.unitButtons["target"] then
-            Range:UpdateAlpha(Ether.unitButtons.solo["target"])
-        end
+function Ether:UpdateTargetAlpha()
+    if Ether.unitButtons.solo["target"] then
+        Ether:UpdateAlpha(Ether.unitButtons.solo["target"])
     end
-
-    if Ether.DB[201][7] == 1 then
+    if not UnitInAnyGroup("player") then
         for _, button in pairs(Ether.unitButtons.raid) do
-            if button and button.unit and button:IsVisible() then
-                Range:UpdateAlpha(button)
+            if button and button:IsVisible() then
+                button:SetAlpha(1.0)
             end
         end
+        return
     end
-
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button.unit and button:IsVisible() then
+            Ether:UpdateAlpha(button)
+        end
+    end
 end
 
 local function RemoveAlpha()
@@ -96,15 +107,16 @@ end
 
 local rangeTicker = nil
 
-function Range:Enable()
+function Ether:RangeEnable()
+
     if not rangeTicker then
         rangeTicker = C_Ticker(1.7, function()
-            Range:UpdateTargetAlpha()
+            Ether:UpdateTargetAlpha()
         end)
     end
 end
 
-function Range:Disable()
+function Ether:RangeDisable()
     if rangeTicker then
         rangeTicker:Cancel()
         rangeTicker = nil

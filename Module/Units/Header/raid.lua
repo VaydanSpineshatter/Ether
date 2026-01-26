@@ -5,15 +5,21 @@ Ether.Anchor.raid = anchor
 local header = CreateFrame("Frame", "EtherRaidGroupHeader", anchor, "SecureGroupHeaderTemplate")
 Ether.Header.raid = header
 
+--local secureHandler = CreateFrame("Frame", nil, nil, "SecureHandlerBaseTemplate")
+
+--secureHandler:WrapScript(header, "OnAttributeChanged", [[
+
+--]])
+
 local __SECURE_INITIALIZE = [[
-    RegisterUnitWatch(self)
     local header = self:GetParent()
-    self:SetAttribute("*type1", "target")
-	self:SetAttribute("*type2", "togglemenu")
     self:SetWidth(header:GetAttribute("ButtonWidth"))
-	self:SetHeight(header:GetAttribute("ButtonHeight"))
-	header:CallMethod("initialConfigFunction", self:GetName())
-    local unit = self:GetAttribute("unit")
+    self:SetHeight(header:GetAttribute("ButtonHeight"))
+    self:SetAttribute("*type1", "target")
+    self:SetAttribute("*type2", "togglemenu")
+    self:SetAttribute("isHeaderDriven", true)
+    header:CallMethod("CreateChildren", self:GetName())
+
    ]]
 
 local function OnEnter(self)
@@ -34,21 +40,25 @@ local function OnLeave()
 end
 Ether.OnLeave = OnLeave
 
+-- if Ether.DB[701][3] == 1 then
+-- Ether.UpdateHealthText(self)
+-- end
+--  if Ether.DB[701][4] == 1 then
+--    Ether.UpdatePowerText(self)
+--  end
+
 local function Update(self)
     Ether.InitialHealth(self)
     Ether.UpdateHealthAndMax(self)
-    if Ether.DB[701][3] == 1 then
-        Ether.UpdateHealthText(self)
-    end
-    if Ether.DB[701][4] == 1 then
-        Ether.UpdatePowerText(self)
-    end
     Ether.UpdateRaidName(self)
+    C_Timer.After(0.05, function()
+        Ether:UpdateUnitAuras(self.unit)
+        Ether:DispelAuraScan(self.unit)
+    end)
 end
 Ether.updateRaid = Update
 
-
-local function FullUpdate(self)
+local function CheckGUID(self)
     local guid = self.unit and UnitGUID(self.unit)
     if (guid ~= self.unitGUID) then
         self.unitGUID = guid
@@ -57,16 +67,30 @@ local function FullUpdate(self)
         end
     end
 end
-local function OnAttributeChanged(self, name, value)
-    if name == "unit" and value then
-        self.unit = self:GetAttribute("unit")
-        Ether.unitButtons.raid[self.unit] = self
-        FullUpdate(self)
-    end
+
+local function GetDB()
+    return Ether.DB and Ether.DB[1001] and Ether.DB[1001][3]
 end
-local function Event(self, event, unit)
-    if event == "GROUP_ROSTER_UPDATE" or event == "UNIT_NAME_UPDATE" then
-            Ether:UpdateIndicators()
+
+local function OnAttributeChanged(self, name, unit)
+    if name ~= "unit" or not unit then
+        return
+    end
+    self.unit = self:GetAttribute("unit")
+    Ether:RaidAuraCleanUp(self.unit)
+    C_Timer.After(0.05, function()
+        Ether:DispelAuraScan(self.unit)
+        Ether:UpdateUnitAuras(self.unit)
+    end)
+    Ether.unitButtons.raid[self.unit] = self
+    CheckGUID(self)
+end
+
+local function Event(self, event)
+    self.unit = self:GetAttribute("unit")
+    if event == "GROUP_ROSTER_UPDATE" then
+    elseif event == "UNIT_NAME_UPDATE" then
+
     end
 end
 
@@ -75,25 +99,20 @@ local function Show(self)
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     self:RegisterEvent("UNIT_NAME_UPDATE")
     Update(self)
-    if UnitExists(self.unit) then
-        Ether.Aura.UpdateRaidAuras(self.unit)
-        Ether.Aura.DispelAuraScan(self.unit)
-    end
 end
 
 local function Hide(self)
     self.unit = self:GetAttribute("unit")
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     self:UnregisterEvent("UNIT_NAME_UPDATE")
-    Ether.Aura.RaidAuraClearUp(self.unit)
+    Ether:RaidAuraCleanUp(self.unit)
 end
 
-local function initialConfigFunction(headerName, buttonName)
+function header:CreateChildren(buttonName)
     local b = _G[buttonName]
     b.Indicators = {}
     b.raidAuras = {}
     b.raidIcons = {}
-
     b:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
     b:SetBackdropColor(0, 0, 0, 1)
     Ether.AddBlackBorder(b)
@@ -129,44 +148,30 @@ local function initialConfigFunction(headerName, buttonName)
     b:SetScript("OnLeave", OnLeave)
     b:SetScript("OnEvent", Event)
     b:HookScript("OnAttributeChanged", OnAttributeChanged)
-    Ether.unitButtons.raid[buttonName] = b
     return b
 end
 
-local function CreateHeader()
-    header:SetPoint("TOPLEFT")
-    header:SetParent(anchor)
-    header:SetAttribute("template", "EtherUnitTemplate")
-    header:SetAttribute("initialConfigFunction", __SECURE_INITIALIZE)
-    header.initialConfigFunction = initialConfigFunction
-    header:SetAttribute("ButtonWidth", 55)
-    header:SetAttribute("ButtonHeight", 55)
-    header:SetAttribute("columnAnchorPoint", "LEFT")
-    header:SetAttribute("point", "TOP")
-    header:SetAttribute("groupBy", "GROUP")
-    header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
-    header:SetAttribute("xOffset", 1)
-    header:SetAttribute("yOffset", -2)
-    header:SetAttribute("columnSpacing", 2)
-    header:SetAttribute("unitsPerColumn", 5)
-    header:SetAttribute("maxColumns", 8)
-    header:SetAttribute("showRaid", true)
-    header:SetAttribute("showParty", false)
-    header:SetAttribute("showPlayer", false)
-    header:SetAttribute("showSolo", true)
-    header:Show()
-end
-
-local state = false
-function Ether:CreateRaidHeader()
-    if InCombatLockdown() then
-        return
-    end
-    if not state then
-        state = true
-        CreateHeader()
-    end
-end
+header:SetAllPoints(anchor)
+header:SetAttribute("template", "EtherUnitTemplate")
+header:SetAttribute("initial-unitWatch", true)
+header:SetAttribute("groupingFilter", "1,2,3,4,5,6,7,8")
+header:SetAttribute("initialConfigFunction", __SECURE_INITIALIZE)
+header:SetAttribute("ButtonWidth", 55)
+header:SetAttribute("ButtonHeight", 55)
+header:SetAttribute("columnAnchorPoint", "LEFT")
+header:SetAttribute("point", "TOP")
+header:SetAttribute("groupBy", "GROUP")
+header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
+header:SetAttribute("xOffset", 1)
+header:SetAttribute("yOffset", -3)
+header:SetAttribute("columnSpacing", 3)
+header:SetAttribute("unitsPerColumn", 5)
+header:SetAttribute("maxColumns", 8)
+header:SetAttribute("showRaid", true)
+header:SetAttribute("showParty", false)
+header:SetAttribute("showPlayer", false)
+header:SetAttribute("showSolo", true)
+header:Show()
 
 
 --[[

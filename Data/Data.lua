@@ -117,7 +117,8 @@ local string_char = string.char
 ---| smooth health Solo 3
 ---| smooth Power Solo 4
 ---| smooth health Header 5
----| range checker 6
+---| range checker  6
+
 
 ---@alias Update_901 boolean
 ---| Player
@@ -133,23 +134,10 @@ local string_char = string.char
 ---| Target 2
 ---| Header 3
 
-local arrayLengths = {
-    [101] = 12, [201] = 7, [301] = 13, [401] = 3,
-    [501] = 9, [601] = 7, [701] = 4, [801] = 6,
-    [1001] = 3
-}
-
-local arrayDefaults = {
-    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [201] = {1, 1, 1, 1, 1, 1, 1},
-    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 0, 1},
-    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [601] = {1, 1, 1, 0, 1, 1, 1},
-    [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0},
-    [1001] = {1, 1, 1},
-}
+---@alias AuraEnable_1101 number
+---| arena 1
+---| arena 2
+---| arena 3
 
 local Default = {
     [001] = {
@@ -157,10 +145,10 @@ local Default = {
         LAST_UPDATE_CHECK = 0,
         SHOW = true,
         LAST_TAB = "Module",
-        SELECTED = 341,
+        SELECTED = 331,
     },
     [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [201] = {1, 1, 1, 1, 1, 1, 1},
+    [201] = {1, 1, 1, 1, 1, 1},
     [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     [401] = {1, 0, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -178,7 +166,7 @@ local Default = {
     },
     [1001] = {1, 1, 1},
     [1003] = {},
-   -- [1101] = {},
+    [1101] = {1, 1, 1},
     [5111] = {
         [331] = {"BOTTOMRIGHT", 5133, "BOTTOMRIGHT", -220, 220, 180, 100, 1.0, 1.0},
         [332] = {"CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0},
@@ -187,12 +175,37 @@ local Default = {
         [335] = {"CENTER", 5133, "CENTER", -400, -100, 120, 50, 1.0, 1.0},
         [336] = {"CENTER", 5133, "CENTER", -300, 100, 120, 50, 1.0, 1.0},
         [337] = {"LEFT", 5133, "LEFT", 500, 100, 120, 50, 1.0, 1.0},
-        [338] = {"LEFT", 5133, "LEFT", 10, 0, 1, 1, 1.0, 1.0},
+        [338] = {"LEFT", 5133, "LEFT", 50, 0, 1, 1, 1.0, 1.0},
         [339] = {"TOP", 5133, "TOP", 80, -80, 320, 200, 1.0, 1.0},
-        [340] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0}
+        [340] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
+        [341] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
     }
 }
 Ether.DataDefault = Default
+
+local arrayLengths = {
+    [101] = 12, [201] = 6, [301] = 13, [401] = 3,
+    [501] = 9, [601] = 7, [701] = 4, [801] = 6,
+    [1001] = 3, [1101] = 3
+}
+
+local arrayDefaults = {
+    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [201] = {1, 1, 1, 1, 1, 1},
+    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [401] = {1, 0, 1},
+    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [601] = {1, 1, 1, 0, 1, 1, 1},
+    [701] = {0, 0, 0, 0},
+    [801] = {1, 1, 0, 0, 0, 0},
+    [1001] = {1, 1, 1},
+    [1101] = {1, 1, 1}
+}
+
+local units_901 = {
+    "player", "target", "targettarget", "pet", "pettarget",
+    "focus", "raid"
+}
 
 function Ether.DataEnableAll(t)
     for i = 1, #t do
@@ -605,6 +618,8 @@ end
         [18] = { Id = 0, name = "Curse: Border color |cff9900FFViolet|r" },
         [19] = { Id = 0, name = "Poison: Border color |cff009900Grass green|r" }
     }
+    ["EtherPink"]   = { r = 0.80, g = 0.40, b = 1.00, str = "cffCC66FF" },
+	["EtherBlue"]   = { r = 0.00, g = 0.80, b = 1.00, str = "cE600CCFF" }
 ]]
 
 Ether.AuraTemplates = {

@@ -391,6 +391,13 @@ Ether.Setup.SingleAuraSetup = function(button)
         frame.count = SetupAuraCount(frame)
         frame.timer = SetupAuraTimer(frame, frame.icon)
 
+        frame:SetScript("OnEnter",
+        function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetUnitAura(button.unit, i, "HELPFUL")
+            GameTooltip:Show()
+        end)
+         frame:SetScript("OnLeave", GameTooltip_Hide)
         button.Aura.Buffs[i] = frame
     end
 
@@ -414,7 +421,14 @@ Ether.Setup.SingleAuraSetup = function(button)
         border:SetPoint("BOTTOMRIGHT", 1, -1)
         border:Hide()
 
-        frame.border = border
+        frame:SetScript("OnEnter",
+            function(self)
+                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                GameTooltip:SetUnitAura(button.unit, i, "HARMFUL")
+                GameTooltip:Show()
+            end)
+         frame:SetScript("OnLeave", GameTooltip_Hide)
+         frame.border = border
 
         button.Aura.Debuffs[i] = frame
     end

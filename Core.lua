@@ -10,6 +10,7 @@ Ether.debug = false
 local panelIsCreated = false
 Ether.Header = {}
 Ether.Anchor = {}
+local prefix_Ether = "EtherCom"
 
 Ether.mediaPath = {
     Icon = {"Interface\\AddOns\\Ether\\Media\\Texture\\Icon.blp"},
@@ -563,7 +564,6 @@ local tremove = table.remove
 local isCreating = false
 local creationDelay = 0.08
 local creationQueue = {}
-local totEvents = {"UNIT_HEALTH", "UNIT_MAXHEALTH", "UNIT_POWER_UPDATE", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER", "UNIT_HEAL_PREDICTION"}
 
 local function processFunc()
     if #creationQueue == 0 then
@@ -574,33 +574,11 @@ local function processFunc()
     C_Timer.After(creationDelay, processFunc)
 end
 
-local function targetOfTargetEvents()
-    if Ether.unitButtons.solo["targettarget"] then
-        for e = 1, 6 do
-            Ether.unitButtons.solo["targettarget"]:RegisterUnitEvent(totEvents[e], "targettarget")
-        end
-    end
-end
-Ether.targetOfTargetEvents = targetOfTargetEvents
 local function startC_Process()
     local C = Ether.DB[201]
 
     creationQueue[#creationQueue + 1] = function()
         Ether.CreateMainSettings(Construct)
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        Ether.Aura:Enable()
-    end
-
-    if C[7] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateRaidHeader()
-        end
-    end
-    creationQueue[#creationQueue + 1] = function()
-        Ether:UpdateIndicators()
-        Ether:IndicatorsToggle()
     end
 
     if C[1] == 1 then
@@ -647,18 +625,18 @@ local function startC_Process()
 
     if Ether.DB[1001][1] == 1 then
         creationQueue[#creationQueue + 1] = function()
-            Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["player"])
+            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
         end
     end
 
     if Ether.DB[1001][2] == 1 then
         creationQueue[#creationQueue + 1] = function()
-            Ether.Aura.SingleAuraFullInitial(Ether.unitButtons.solo["target"])
+             Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
         end
     end
 
     creationQueue[#creationQueue + 1] = function()
-        targetOfTargetEvents()
+        Ether.registerToTEvents()
     end
 
     if Ether.DB[801][1] == 1 then
@@ -849,15 +827,13 @@ local function OnInitialize(self, event, ...)
             _G.ETHER_DATABASE_DX_AA = {}
         end
 
-        local charKey = Ether.GetCharacterKey()
-        if charKey then
-            Ether.charKey = charKey
-        end
-
         self:RegisterEvent("PLAYER_LOGOUT")
     elseif (event == "PLAYER_LOGIN") then
-
         self:UnregisterEvent("PLAYER_LOGIN")
+
+        --C_ChatInfo.RegisterAddonMessagePrefix(prefix_Ether)
+
+        local charKey = Ether.GetCharacterKey()
 
         if not ETHER_DATABASE_DX_AA.profiles then
             local profileData = Ether.MergeToLeft(
@@ -866,29 +842,31 @@ local function OnInitialize(self, event, ...)
             )
             ETHER_DATABASE_DX_AA = {
                 profiles = {
-                    [Ether.charKey] = profileData
+                    [charKey] = profileData
                 },
-                currentProfile = Ether.charKey
+                currentProfile = charKey
             }
 
-        elseif not ETHER_DATABASE_DX_AA.profiles[Ether.charKey] then
-            ETHER_DATABASE_DX_AA.profiles[Ether.charKey] = Ether.CopyTable(Ether.DataDefault)
+        elseif not ETHER_DATABASE_DX_AA.profiles[charKey] then
+            ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DataDefault)
         end
 
-        ETHER_DATABASE_DX_AA.currentProfile = Ether.charKey
+        ETHER_DATABASE_DX_AA.currentProfile = charKey
 
         if not Ether.DebugFrame then
             Ether.Setup.CreateDebugFrame()
         end
 
         Ether:MigrateArraysOnLogin()
-        Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
 
+        Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
+        Ether:RosterEnable()
         if Ether.DB[401][2] == 1 then
             Ether.EnableMsgEvents()
         end
 
         local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
+
         Ether.version = version
         HideBlizzard()
 
@@ -939,12 +917,6 @@ local function OnInitialize(self, event, ...)
             LDI:Register("EtherIcon", Ether.dataBroker, ETHER_ICON)
         end
 
-        Ether:IndicatorsToggle()
-        Ether.Roster:Enable()
-        Ether.hStatus:Enable()
-        Ether.nStatus:Enable()
-        Ether.pStatus:Enable()
-
         local r = Ether.RegisterPosition(Ether.Anchor.raid, 338)
         r:InitialPosition()
         local tooltip = CreateFrame("Frame", nil, UIParent)
@@ -979,17 +951,14 @@ local function OnInitialize(self, event, ...)
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, sendChannel, nil, "NORMAL")
         end
     elseif (event == "PLAYER_LOGOUT") then
-        if Ether.DB then
-            local charKey = Ether.GetCharacterKey()
-            if charKey then
-                ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
-            end
-            if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
-                ETHER_DATABASE_DX_AA.currentProfile = charKey
-            end
+        local charKey = Ether.GetCharacterKey()
+        if charKey then
+            ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
+        end
+        if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
+            ETHER_DATABASE_DX_AA.currentProfile = charKey
         end
     end
-
 end
 local Initialize = CreateFrame("Frame")
 Initialize:RegisterEvent("ADDON_LOADED")

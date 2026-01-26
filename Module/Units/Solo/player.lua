@@ -30,9 +30,7 @@ local function AttributeChanged(self)
 end
 
 local function Show(self)
-    C_After(0.05, function()
-        FullUpdate(self)
-    end)
+   FullUpdate(self)
 end
 
 local function Update(_, event, unit)
@@ -88,9 +86,7 @@ function Ether:CreateUnitButtons(unit)
         end
         button:SetScript("OnAttributeChanged", AttributeChanged)
         button:SetScript("OnShow", Show)
-        Ether.InitialHealth(button)
-        Ether.InitialPower(button)
-        FullUpdate(button)
+        FullUpdate(button, true)
         Ether.unitButtons.solo[button.unit] = button
 
         return button
@@ -218,6 +214,15 @@ function Ether.CreateCustomUnit()
                 updateFunc(custom, custom.unit)
                 enabled = true
             end
+        end
+    end
+end
+
+
+function Ether.registerToTEvents()
+    if Ether.unitButtons.solo["targettarget"] then
+        for _, key in ipairs({"UNIT_HEALTH", "UNIT_MAXHEALTH", "UNIT_POWER_UPDATE", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER", "UNIT_HEAL_PREDICTION"}) do
+            Ether.unitButtons.solo["targettarget"]:RegisterUnitEvent(key, "targettarget")
         end
     end
 end

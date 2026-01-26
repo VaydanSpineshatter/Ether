@@ -1,76 +1,125 @@
 local _, Ether = ...
 local comm = {}
 Ether.comm = comm
-
-local function ping(message)
-    if Ether.DB[8771] ~= 1 then
-        return
-    end
-end
-
-local function data(message)
-    if Ether.DB[8771] ~= 1 then
-        return
-    end
-end
-
+--[[
 local arena1, arena2, arena3, arena4, arena5 = "", "", "", "", ""
 local validUser
+local playerName = UnitName("player")
 local teamData = {}
-local prefix_Ether
-local function ReceivedCast(_, event, prefix, message, _, sender, ...)
-    if Ether.DB[8771] ~= 1 then
+local prefix_Ether = "EtherCom"
+local receivedData = {}
+Ether.communication = true
+local function ping(message)
+    if Ether.DB[1101] ~= 1 then
         return
     end
-    if (Ether.communication == false) then
+
+    Ether.DebugOutput("Ping: " .. (message or "no message"))
+end
+
+local function dataProcessing(message)
+    if Ether.DB[1101] ~= 1 then
+        return
+    end
+
+end
+
+local function MSG(self, event, ...)
+    if Ether.DB[1101] ~= 1 then
+        return
+    end
+    if Ether.communication == false then
         return
     end
     if event ~= "CHAT_MSG_ADDON" then
         return
     end
+    local prefix, message, _, sender = ...
     if prefix ~= prefix_Ether then
         return
     end
     local senderName = select(1, string.split("-", sender))
-    if senderName == Ether.prefix then
+
+    Ether.DebugOutput("Ping: " .. (message or "no message"))
+    ping("Ping von " .. sender)
+    if receivedData[senderName] == message then
         return
     end
-    if data[senderName] == message then
-        return
-    end
-    data[senderName] = message
+    receivedData[senderName] = message
 
-    if message == sender then
+    local data = {strsplit(":", message)}
 
-        if validUser then
-            --  local validate = "arena" .. i
-            return
-        end
-        for i, v in ipairs({strsplit(":", message)}) do
-            data[i] = v
-        end
-        if data and data[1] then
-            if data[1] == "Stop Cast" then
-                Ether.Fire("", data)
-            else
-                Ether.Fire("", data)
-            end
-        end
+    if data[1] == "PING" then
+
+        ping("Ping von " .. senderName)
+
+        C_ChatInfo.SendAddonMessage(prefix_Ether, "PONG", "ARENA", sender)
+
+    elseif data[1] == "Stop Cast" then
+        Ether.Fire("StopCast", data)
+    else
+        Ether.Fire("CastData", data)
     end
 end
 
-local info, msg
-if not info and msg then
-    info, msg = CreateFrame("Frame"), CreateFrame("Frame")
-    function comm:ProcessData(T)
+function comm:SendPing(target)
+    if Ether.DB[1101] ~= 1 then
+        return
+    end
+    C_ChatInfo.SendAddonMessage(prefix_Ether, "PING", "ARENA", target)
+
+end
+
+function comm:SendStopCast(target)
+    if Ether.DB[1101] ~= 1 then
+        return
+    end
+    C_ChatInfo.SendAddonMessage(prefix_Ether, "Stop Cast", "ARENA", target)
+end
+
+function comm:SendArenaData(arenaNumber, data, target)
+    if Ether.DB and Ether.DB[8771] ~= 1 then
+        return
+    end
+    local msg = "ARENA:" .. arenaNumber .. ":" .. data
+    C_ChatInfo.SendAddonMessage(prefix_Ether, msg, "ARENA", target)
+end
+
+function comm:ProcessData(dataTable, source)
+
+    if dataTable[1] == "PING" then
+        Ether.DebugOutput("Ping received from " .. (source or "unknown"))
     end
 end
 
---[[
-  function Ether.RegisterCallback:ReceivedData(DataIn)
-        comm:ProcessData(DataIn,"")
+local function alignMSG()
+end
+Ether.DebugOutput()
+ C_ChatInfo.SendAddonMessage(prefix_Ether, "", "WHISPER")
+end
+
+
+
+local commEnable, commDisable
+do
+    local msgEvent
+    function commEnable()
+        msgEvent = CreateFrame("Frame")
+        if not msgEvent:IsEventRegistered("CHAT_MSG_ADDON") then
+            msgEvent:RegisterEvent("CHAT_MSG_ADDON")
+            msgEvent:SetScript("OnEvent", MSG)
+        end
     end
-    function Ether.RegisterCallback:OutgoingData(DataOut)
-        comm:ProcessData(DataOut, "")
+    function commDisable()
+        msgEvent:UnregisterAllEvents()
+        msgEvent:SetScript("OnEvent",nil)
     end
+end
+
+function comm:Enable()
+    commEnable()
+end
+function comm:Disable()
+    commDisable()
+end
 ]]
