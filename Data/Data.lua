@@ -140,7 +140,6 @@ local string_char = string.char
 
 local Default = {
     [001] = {
-        VERSION = 0,
         LAST_UPDATE_CHECK = 0,
         SHOW = true,
         LAST_TAB = "Module",
@@ -182,30 +181,6 @@ local Default = {
 }
 Ether.DataDefault = Default
 
-local arrayLengths = {
-    [101] = 12, [201] = 6, [301] = 13, [401] = 3,
-    [501] = 9, [601] = 7, [701] = 4, [801] = 6,
-    [1001] = 3, [1101] = 3
-}
-
-local arrayDefaults = {
-    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [201] = {1, 1, 1, 1, 1, 1},
-    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 0, 1},
-    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [601] = {1, 1, 1, 0, 1, 1, 1},
-    [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0},
-    [1001] = {1, 1, 1},
-    [1101] = {1, 1, 1}
-}
-
-local units_901 = {
-    "player", "target", "targettarget", "pet", "pettarget",
-    "focus", "raid"
-}
-
 function Ether.DataEnableAll(t)
     for i = 1, #t do
         t[i] = 1
@@ -240,17 +215,6 @@ function Ether.DataMigrate(old, newSize, default)
     return t
 end
 
-function Ether.MergeToLeft(origTbl, newTbl)
-    for k, v in pairs(newTbl) do
-        if type(v) == "table" and type(origTbl[k]) == "table" then
-            Ether.MergeToLeft(origTbl[k], v)
-        else
-            origTbl[k] = v
-        end
-    end
-    return origTbl
-end
-
 function Ether.CopyTable(src)
     local copy = {}
     for k, v in pairs(src) do
@@ -269,57 +233,6 @@ function Ether.TableSize(t)
         count = count + 1
     end
     return count
-end
-
-function Ether:MigrateArraysOnLogin()
-    local profile = Ether.GetCurrentProfile()
-    local migratedArrays = {}
-    local totalAdded = 0
-
-    for arrayID, expectedLength in pairs(arrayLengths) do
-        if profile[arrayID] then
-            local currentLength = #profile[arrayID]
-
-            if currentLength < expectedLength then
-                local added = expectedLength - currentLength
-                totalAdded = totalAdded + added
-
-                for i = currentLength + 1, expectedLength do
-                    if arrayDefaults[arrayID] and arrayDefaults[arrayID][i] then
-                        profile[arrayID][i] = arrayDefaults[arrayID][i]
-                    elseif Ether.DataDefault[arrayID] and Ether.DataDefault[arrayID][i] then
-                        profile[arrayID][i] = Ether.DataDefault[arrayID][i]
-                    else
-                        profile[arrayID][i] = 1
-                    end
-                end
-
-                tinsert(migratedArrays, string_format("|cff00ff00%d|r (+%d)",
-                        arrayID, added))
-
-            elseif currentLength > expectedLength then
-
-                Ether.DebugOutput(string_format("Array %d trimmed: %d → %d",
-                        arrayID, currentLength, expectedLength))
-                for i = expectedLength + 1, currentLength do
-                    profile[arrayID][i] = nil
-                end
-            end
-        else
-
-            profile[arrayID] = Ether.CopyTable(arrayDefaults[arrayID] or Ether.DataDefault[arrayID])
-            totalAdded = totalAdded + expectedLength
-            tinsert(migratedArrays, string_format("|cff00ff00%d|r (new)", arrayID))
-        end
-    end
-
-    if #migratedArrays > 0 then
-        Ether.DebugOutput(string_format("|cff00ccffEther|r: Database migration complete"))
-        Ether.DebugOutput(string_format("|cff00ccffEther|r: Added %d entries across %d arrays",
-                totalAdded, #migratedArrays))
-        Ether.DebugOutput(string_format("|cff00ccffEther|r: Updated arrays: %s",
-                tconcat(migratedArrays, ", ")))
-    end
 end
 
 function Ether.StringToTbl(str)

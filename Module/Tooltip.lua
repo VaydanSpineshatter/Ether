@@ -352,5 +352,7 @@ local function SetupHooks()
 end
 
 function Tooltip:Initialize()
+    local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip)
+    tooltip_P:InitialPosition(331)
     SetupHooks()
 end

@@ -3,13 +3,17 @@ local _, Ether = ...
 local anchor = CreateFrame("Frame", "EtherRaidGroupAnchor", UIParent, "SecureFrameTemplate")
 Ether.Anchor.raid = anchor
 if InCombatLockdown() then
-    print("User in combat lockdown - Reload interface")
+    if Ether.DebugOutput then
+        Ether.DebugOutput("Users in combat lockdown – Reload interface outside of combat")
+    else
+        print("Users in combat lockdown – Reload interface outside of combat")
+    end
     return
 end
 local header = CreateFrame("Frame", "EtherRaidGroupHeader", anchor, "SecureGroupHeaderTemplate")
 Ether.Header.raid = header
 
---local secureHandler = CreateFrame("Frame", nil, nil, "SecureHandlerBaseTemplate")
+--local secureHandler = CreateFrame("Frame", "EtherRaidHandler", UIParent, "SecureHandlerBaseTemplate")
 --secureHandler:WrapScript(header, "OnAttributeChanged", [[
 --]])
 
@@ -113,7 +117,9 @@ function header:CreateChildren(buttonName)
     button:SetScript("OnEnter", OnEnter)
     button:SetScript("OnLeave", OnLeave)
     button:HookScript("OnAttributeChanged", OnAttributeChanged)
-    button:RegisterForClicks("AnyUp")
+    if not InCombatLockdown() then
+        button:RegisterForClicks("AnyUp")
+    end
     return button
 end
 

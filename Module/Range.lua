@@ -35,7 +35,6 @@ local _, playerClass = UnitClass("player")
 local friendly = classFriendly[playerClass] or 355
 local hostile = classHostile[playerClass] or 772
 
-
 function Ether:IsUnitInRange(unit)
     if not unit then
         return
@@ -122,5 +121,4 @@ function Ether:RangeDisable()
         rangeTicker = nil
     end
     RemoveAlpha()
-    wipe(Ether.rangeCache)
 end

@@ -1897,8 +1897,8 @@ function Ether.ImportProfile(encodedString)
 
     ETHER_DATABASE_DX_AA.currentProfile = importedName
     Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
-    Ether.RefreshAllSettings()
-    Ether.RefreshFramePositions()
+    Ether:RefreshAllSettings()
+    Ether:RefreshFramePositions()
     return true, "Successfully imported as: " .. importedName
 end
 
@@ -1946,8 +1946,8 @@ function Ether.SwitchProfile(name)
     ETHER_DATABASE_DX_AA.currentProfile = name
     Ether.DB = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[name])
 
-    Ether.RefreshAllSettings()
-    Ether.RefreshFramePositions()
+    Ether:RefreshAllSettings()
+    Ether:RefreshFramePositions()
 
     if Ether.ConfigFrame and Ether.ConfigFrame:IsShown() then
         Ether.ConfigFrame:Hide()
@@ -1984,8 +1984,8 @@ function Ether.DeleteProfile(name)
         end
     end
     ETHER_DATABASE_DX_AA.profiles[name] = nil
-    Ether.RefreshAllSettings()
-    Ether.RefreshFramePositions()
+    Ether:RefreshAllSettings()
+    Ether:RefreshFramePositions()
     return true, "Profile deleted"
 end
 
@@ -2011,8 +2011,8 @@ function Ether.CreateProfile(name)
         return false, "Profile already exists"
     end
     ETHER_DATABASE_DX_AA.profiles[name] = Ether.CopyTable(Ether.DataDefault)
-    Ether.RefreshAllSettings()
-    Ether.RefreshFramePositions()
+    Ether:RefreshAllSettings()
+    Ether:RefreshFramePositions()
     return true, "Profile created"
 end
 
@@ -2038,8 +2038,8 @@ function Ether.ResetProfile()
     Ether.UpdateAuraList()
     selectedSpellId = nil
     Ether.UpdateEditor()
-    Ether.RefreshAllSettings()
-    Ether.RefreshFramePositions()
+    Ether:RefreshAllSettings()
+    Ether:RefreshFramePositions()
     return true, "Profile reset to default"
 end
 

@@ -4,10 +4,8 @@ local L = Ether.L
 local pairs, ipairs = pairs, ipairs
 Ether.version = ""
 Ether.charKey = "Unknown-Unknown"
-Ether.statusMigration = ""
 Ether.updatedChannel = false
 Ether.debug = false
-local panelIsCreated = false
 Ether.Header = {}
 Ether.Anchor = {}
 
@@ -378,6 +376,9 @@ function Ether.CreateMainSettings(self)
         name:SetFont(unpack(Ether.mediaPath.Font), 20, "OUTLINE")
         name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
         name:SetText("|cffcc66ffEther|r")
+        local settings = Ether.RegisterPosition(Construct.Frames["Main"])
+        settings:InitialPosition(340)
+        settings:InitialDrag(340)
         self.IsCreated = true
     end
 end
@@ -410,6 +411,14 @@ local function HiddenFrame(frame)
 end
 
 local function HideBlizzard()
+    if InCombatLockdown() then
+        if Ether.DebugOutput then
+            Ether.DebugOutput("Users in combat lockdown – Reload interface outside of combat")
+        else
+            print("Users in combat lockdown – Reload interface outside of combat")
+        end
+        return
+    end
     if Ether.DB[101][1] == 1 then
         HiddenFrame(PlayerFrame)
     end
@@ -491,7 +500,6 @@ end
 
 local playerName = UnitName("player")
 local string_format = string.format
-local time = time
 local Comm = LibStub("AceComm-3.0")
 Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
     if sender == playerName then
@@ -505,6 +513,8 @@ Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
         local msg = string_format("New version found (%d). Please visit %s to get the latest version.", theirVersion, "|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
         if Ether.DebugOutput then
             Ether.DebugOutput(msg)
+        else
+            print(msg)
         end
     end
 end)
@@ -523,7 +533,6 @@ do
 
     local function OnClick(_, button)
         if button == "RightButton" then
-            if not panelIsCreated then return end
             if Ether.DB[001].SHOW then
                 Ether.DB[001].SHOW = false
             else
@@ -551,7 +560,7 @@ do
     Ether.dataBroker = dataBroker
 end
 
-function Ether.RefreshAllSettings()
+function Ether:RefreshAllSettings()
 
     if not Construct or not Construct.Content then
         return
@@ -644,7 +653,7 @@ function Ether.RefreshAllSettings()
     end
 end
 
-function Ether.RefreshFramePositions()
+function Ether:RefreshFramePositions()
 
     local frames = {
         [331] = Ether.Anchor.tooltip,
@@ -682,13 +691,19 @@ function Ether.RefreshFramePositions()
     end
 end
 
+local arraysLength = {
+    [101] = 12, [201] = 6, [301] = 13, [401] = 3,
+    [501] = 9, [601] = 7, [701] = 4, [801] = 6,
+    [1001] = 3, [1101] = 3
+}
+
 local function OnInitialize(self, event, ...)
     if (event == "ADDON_LOADED") then
         local loadedAddon = ...
 
         assert(loadedAddon == "Ether", "Unexpected addon string: " .. tostring(loadedAddon))
         assert(type(Ether.DataDefault) == "table", "Ether default database missing")
-        assert(type(Ether.MergeToLeft) == "function" and type(Ether.CopyTable) == "function", "Ether table func missing")
+        assert(type(Ether.CopyTable) == "function", "Ether table func missing")
 
         self:RegisterEvent("PLAYER_LOGIN")
         self:UnregisterEvent("ADDON_LOADED")
@@ -700,32 +715,60 @@ local function OnInitialize(self, event, ...)
         self:RegisterEvent("PLAYER_LOGOUT")
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
-
         local charKey = Ether.GetCharacterKey()
         if not charKey then
             charKey = Ether.charKey
         end
-
         if not ETHER_DATABASE_DX_AA.profiles then
-            local profileData = Ether.MergeToLeft(
-                    Ether.CopyTable(Ether.DataDefault),
-                    ETHER_DATABASE_DX_AA
-            )
             ETHER_DATABASE_DX_AA = {
                 profiles = {
-                    [charKey] = profileData
+                    [charKey] = Ether.CopyTable(Ether.DataDefault)
                 },
                 currentProfile = charKey
             }
-
         elseif not ETHER_DATABASE_DX_AA.profiles[charKey] then
             ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DataDefault)
+        else
+            local profile = ETHER_DATABASE_DX_AA.profiles[charKey]
+            for key, value in pairs(Ether.DataDefault) do
+                if profile[key] == nil then
+                    profile[key] = Ether.CopyTable(value)
+                end
+            end
+            if profile[001] then
+                for subkey in pairs(Ether.DataDefault[001]) do
+                    if profile[001][subkey] == nil then
+                        profile[001] = Ether.CopyTable(Ether.DataDefault[001])
+                        break
+                    end
+                end
+            end
+            if profile[901] then
+                for subkey in pairs(Ether.DataDefault[901]) do
+                    if profile[901][subkey] == nil then
+                        profile[901] = Ether.CopyTable(Ether.DataDefault[901])
+                        break
+                    end
+                end
+            end
+            if profile[5111] then
+                for subkey in pairs(Ether.DataDefault[5111]) do
+                    if profile[5111][subkey] == nil then
+                        profile[5111] = Ether.CopyTable(Ether.DataDefault[5111])
+                        break
+                    end
+                end
+            end
+
+            for arrayID, expectedLength in pairs(arraysLength) do
+                if profile[arrayID] and type(profile[arrayID]) == "table" then
+                    if #profile[arrayID] ~= expectedLength then
+                        profile[arrayID] = Ether.DataMigrate(profile[arrayID], expectedLength, 1)
+                    end
+                end
+            end
         end
-
         ETHER_DATABASE_DX_AA.currentProfile = charKey
-
-        Ether:MigrateArraysOnLogin()
-
         Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
 
         local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
@@ -739,9 +782,6 @@ local function OnInitialize(self, event, ...)
             input = string.lower(input or "")
             rest = string.lower(rest or "")
             if input == "settings" then
-                if not panelIsCreated then
-                    return
-                end
                 if Ether.DB[001].SHOW then
                     Ether.DB[001].SHOW = false
                 else
@@ -793,8 +833,6 @@ local function OnInitialize(self, event, ...)
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(400)
         Ether.Anchor.tooltip = tooltip
-        local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip)
-        tooltip_P:InitialPosition(331)
         local token = {
             [1] = 332,
             [2] = 333,
@@ -811,7 +849,6 @@ local function OnInitialize(self, event, ...)
                 pos_Frames["pos_" .. key]:InitialPosition(token[i])
             end
         end
-
         Ether.CreateMainSettings(Construct)
         if Ether.DB[201][1] == 1 then
             Ether:CreateUnitButtons("player")
@@ -847,16 +884,28 @@ local function OnInitialize(self, event, ...)
         if Ether.DB[801][2] == 1 then
             Ether.CastBar.Enable("target")
         end
-        local settings = Ether.RegisterPosition(Construct.Frames["Main"])
-        settings:InitialPosition(340)
-        settings:InitialDrag(340)
 
         Ether.Tooltip:Initialize()
 
         ToggleSettings(Construct)
 
-        panelIsCreated = true
-
+        if not InCombatLockdown() then
+            if Ether.Header and Ether.Header.raid then
+                local header = Ether.Header.raid
+                local name = header:GetName() .. "UnitButton"
+                local index = 1
+                local child = _G[name .. index]
+                while (child) do
+                    child:ClearAllPoints()
+                    index = index + 1
+                    child = _G[name .. index]
+                end
+                if header:IsShown() then
+                    header:Hide()
+                    header:Show()
+                end
+            end
+        end
 
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
