@@ -76,25 +76,6 @@ function Ether.IsValidUnitForAuras(unit)
     return UnitExists(unit)
 end
 
-local roster = {
-    units = {}, -- [unit] = {guid, name, button, class, isPlayer, isPet}
-    guids = {}, -- [guid] = unit
-    buttons = {}, -- [unit] = button
-    names = {}, -- [unit] = name
-    classes = {}, -- [unit] = class
-}
-
-
---[[
- for _, child in ipairs(Ether.Header.raid) do
-            if child and child:GetAttribute("unit") then
-                local unit = child:GetAttribute("unit")
-                Ether.unitButtons.raid[unit] = child
-            end
-        end
-        ]]
-
-
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
         if Ether.DB[1001][2] == 1 then
