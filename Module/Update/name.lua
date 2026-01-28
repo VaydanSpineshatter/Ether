@@ -2,50 +2,44 @@ local _, Ether = ...
 local UnitName = UnitName
 local string_byte = string.byte
 local UnitIsUnit = UnitIsUnit
-local SELF = "|cffffd700ME|r"
+local ME = "|cffffd700ME|r"
 
-local function utf8sub(str, start, numChars)
-    if not str then
-        return
-    end
-    local currentIndex = start
-    while numChars > 0 and currentIndex <= #str do
-        local char = string_byte(str, currentIndex)
+local function utf8sub(name, start, numChars)
+    local byteIndex = start
+    local charCount = 0
+    while charCount < numChars and byteIndex <= #name do
+        local char = string_byte(name, byteIndex)
         if char >= 240 then
-            currentIndex = currentIndex + 4
+            byteIndex = byteIndex + 4
         elseif char >= 225 then
-            currentIndex = currentIndex + 3
+            byteIndex = byteIndex + 3
         elseif char >= 192 then
-            currentIndex = currentIndex + 2
+            byteIndex = byteIndex + 2
         else
-            currentIndex = currentIndex + 1
+            byteIndex = byteIndex + 1
         end
-        numChars = numChars - 1
+        charCount = charCount + 1
     end
-    return str:sub(start, currentIndex - 1)
+    local endIndex = byteIndex - 1
+    return name:sub(start, endIndex)
 end
 
-function Ether.UpdateSoloName(self)
-    if not self.unit then
+function Ether:UpdateName(button, IsRaid)
+    if not button or not button.unit or not button.name then
         return
     end
-    local name = UnitName(self.unit)
-    if UnitIsUnit(self.unit, "player") then
-        self.name:SetText(SELF)
-    else
-        self.name:SetText(name)
-    end
-end
-
-function Ether.UpdateRaidName(self)
-    if not self.unit then
-        return
-    end
-    local name = UnitName(self.unit)
-    if UnitIsUnit(self.unit, "player") then
-        self.name:SetText(SELF)
-    else
-        self.name:SetText(utf8sub(name, 1, 3))
+    local unit = button.unit
+    local name = UnitName(unit)
+    if name then
+        if UnitIsUnit(unit, "player") then
+            button.name:SetText(ME)
+        else
+            if IsRaid then
+                button.name:SetText(utf8sub(name, 1, 3))
+            else
+                button.name:SetText(utf8sub(name, 1, 10))
+            end
+        end
     end
 end
 
@@ -60,13 +54,13 @@ do
             if Ether.DB[901]["raid"] then
                 local r = Ether.unitButtons.raid[unit]
                 if r then
-                    Ether.UpdateRaidName(r)
+                    Ether:UpdateName(r, true)
                 end
             end
             if Ether.DB[901][unit] then
                 local s = Ether.unitButtons.solo[unit]
                 if s then
-                    Ether.UpdateSoloName(s)
+                    Ether:UpdateName(s)
                 end
             end
         end

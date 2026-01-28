@@ -340,7 +340,7 @@ local function Enable(unit)
         return
     end
     if not Ether.unitButtons.solo[unit].castBar then
-        Ether.Setup.CreateCastBar(Ether.unitButtons.solo[unit])
+        Ether:SetupCastBar(Ether.unitButtons.solo[unit])
         RegisterUpdateFrame(Ether.unitButtons.solo[unit].castBar)
     end
     EnableCastEvents()

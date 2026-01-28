@@ -1,11 +1,12 @@
 local _, Ether = ...
-
 local math_floor = math.floor
 local math_ceil = math.ceil
-local G_Time = GetTime
 local pairs, ipairs = pairs, ipairs
 local GetBuffDataByIndex = C_UnitAuras.GetBuffDataByIndex
 local GetDebuffDataByIndex = C_UnitAuras.GetDebuffDataByIndex
+local GetUnitAuras = C_UnitAuras.GetUnitAuras
+local UnitGUID = UnitGUID
+local UnitExists = UnitExists
 local dispelClass = {
     MAGE = {["Curse"] = true},
     PRIEST = {["Magic"] = true, ["Disease"] = true},
@@ -35,101 +36,82 @@ local dispelByPlayer = {}
 dispelByPlayer = dispelClass[classFilename]
 
 local raidIcons = {}
-
-local function UpdateIconUI(unit, spellId, config, active)
-    local button = Ether.unitButtons.raid[unit]
-    local frame = CreateFrame("Frame", nil, UIParent)
-    if active then
-        if not raidIcons[spellId] then
-            raidIcons[spellId] = frame:CreateTexture(nil, "OVERLAY")
-            raidIcons[spellId]:SetParent(button.healthBar)
-            raidIcons[spellId]:SetColorTexture(unpack(config.color))
-            raidIcons[spellId]:SetSize(config.size, config.size)
-            raidIcons[spellId]:SetPoint(config.position, config.offsetX, config.offsetY)
-            raidIcons[spellId]:Show()
-        end
-    else
-        if raidIcons[spellId] then
-            raidIcons[spellId]:Hide()
-            raidIcons[spellId]:ClearAllPoints()
-            raidIcons[spellId] = nil
-        end
-    end
-end
-
-local auraCache = {}
-local function UpdateSingleAura(unit, spellId, config)
-    local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellId, "HELPFUL|HARMFUL")
-    local unitCache = auraCache[unit]
-    if not unitCache then
-        unitCache = {};
-        auraCache[unit] = unitCache
-    end
-
-    local wasActive = unitCache[spellId] and unitCache[spellId].active
-    local nowActive = aura and aura.expirationTime and aura.expirationTime > G_Time()
-
-    unitCache[spellId] = {
-        active = nowActive,
-        expTime = aura and aura.expirationTime or 0
-    }
-
-    if wasActive ~= nowActive then
-        UpdateIconUI(unit, spellId, config, nowActive)
-    end
-end
-
-function Ether:UpdateUnitAuras(unit)
-    if not UnitExists(unit) then
-        return
-    end
-
-    local config = Ether.DB[1003]
-    if not next(config) then
-        return
-    end
-
-    for spellId, auraConfig in pairs(config) do
-        if auraConfig.enabled then
-            UpdateSingleAura(unit, spellId, auraConfig)
-        end
-    end
-end
-
 local raidAurasAdded = {}
 local raidDispel = {}
 local raidDebuffAdded = {}
+local foundSpells = {}
 
-function Ether:RaidAuraCleanUp(unit)
-        if not UnitExists(unit) then return end
-    local button = Ether.unitButtons.raid[unit]
-    if not button then
+function Ether:CleanupIconsForGUID(guid)
+    if not raidIcons[guid] then
         return
     end
-    if auraCache[unit] then
-        auraCache[unit] = nil
-    end
-    local config = Ether.DB[1003]
-    for spellId in pairs(config) do
-        if raidIcons[spellId] then
-            raidIcons[spellId]:Hide()
-            raidIcons[spellId]:ClearAllPoints()
-            raidIcons[spellId] = nil
-        end
+
+    for spellId, texture in pairs(raidIcons[guid]) do
+        texture:Hide()
+        texture:ClearAllPoints()
+        texture:SetParent(nil)
     end
 
-    if button.top then
-        button.top:SetColorTexture(0, 0, 0, .6)
-        button.right:SetColorTexture(0, 0, 0, .6)
-        button.left:SetColorTexture(0, 0, 0, .6)
-        button.bottom:SetColorTexture(0, 0, 0, .6)
+    raidIcons[guid] = nil
+    foundSpells[guid] = nil
+end
+
+function Ether:CleanupAllRaidIcons()
+    for guid, _ in pairs(raidIcons) do
+        Ether:CleanupIconsForGUID(guid)
+    end
+end
+
+function Ether:UpdateRaidIsHelpful(unit)
+    if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then
+        return
+    end
+    local guid = UnitGUID(unit)
+    if not guid then
+        return
+    end
+    local config = Ether.DB[1003]
+    if not config then
+        return
+    end
+    if not raidIcons[guid] then
+        raidIcons[guid] = {}
+    end
+    if not foundSpells[guid] then
+        foundSpells[guid] = {}
+    end
+    wipe(foundSpells[guid])
+    local index = 1
+    while true do
+        local aura = GetBuffDataByIndex(unit, index)
+        if not aura then
+            break
+        end
+        if aura.spellId and config[aura.spellId] then
+            local spellConfig = config[aura.spellId]
+            if not raidIcons[guid][aura.spellId] then
+                local texture = Ether.unitButtons.raid[unit].healthBar:CreateTexture(nil, "OVERLAY")
+                texture:SetColorTexture(unpack(spellConfig.color))
+                texture:SetSize(spellConfig.size, spellConfig.size)
+                texture:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
+                raidIcons[guid][aura.spellId] = texture
+            end
+            raidIcons[guid][aura.spellId]:Show()
+            foundSpells[guid][aura.spellId] = true
+        end
+        index = index + 1
+    end
+    for spellId, texture in pairs(raidIcons[guid]) do
+        if not foundSpells[guid][spellId] then
+            texture:Hide()
+        end
     end
 end
 
 function Ether:DispelAuraScan(unit)
-    if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then return end
-
-
+    if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then
+        return
+    end
     local dispel, priority = nil, 0
     local index = 1
     local hasDispelDebuff = false
@@ -167,14 +149,26 @@ function Ether:DispelAuraScan(unit)
 end
 
 local function raidAuraUpdate(unit, updateInfo)
-    if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then return end
+    if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then
+        return
+    end
+
+    local guid = UnitGUID(unit)
+    if not guid then
+        return
+    end
+
     local config = Ether.DB[1003]
-    local auraAdded, auraDispel
+    local auraAdded, auraDispel = false, false
+
     if updateInfo.addedAuras then
         for _, aura in next, updateInfo.addedAuras do
             if aura.isHelpful and config[aura.spellId] then
                 auraAdded = true
-                raidAurasAdded[aura.auraInstanceID] = aura
+                raidAurasAdded[aura.auraInstanceID] = {
+                    spellId = aura.spellId,
+                    guid = guid
+                }
             end
             if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                 auraDispel = true
@@ -182,6 +176,7 @@ local function raidAuraUpdate(unit, updateInfo)
             end
         end
     end
+
     if updateInfo.removedAuraInstanceIDs then
         for _, auraInstanceID in next, updateInfo.removedAuraInstanceIDs do
             if raidDispel[auraInstanceID] then
@@ -189,14 +184,22 @@ local function raidAuraUpdate(unit, updateInfo)
                 raidDispel[auraInstanceID] = nil
             end
             if raidAurasAdded[auraInstanceID] then
-                auraAdded = true
+                local auraData = raidAurasAdded[auraInstanceID]
+                local auraGuid = auraData.guid
+                local spellId = auraData.spellId
+                if raidIcons[auraGuid] and raidIcons[auraGuid][spellId] then
+                    raidIcons[auraGuid][spellId]:Hide()
+                end
+
                 raidAurasAdded[auraInstanceID] = nil
             end
         end
     end
+
     if auraAdded then
-        Ether:UpdateUnitAuras(unit)
+        Ether:UpdateRaidIsHelpful(unit)
     end
+
     if auraDispel then
         Ether:DispelAuraScan(unit)
     end
@@ -239,8 +242,6 @@ local function AuraPosition(i)
 
     return xOffset, yOffset
 end
-
-local GetUnitAuras = C_UnitAuras.GetUnitAuras
 
 function Ether:SingleAuraUpdateBuff(button)
     if not button or not button.unit or not button.Aura then
@@ -342,7 +343,7 @@ function Ether:SingleAuraUpdateDebuff(button)
                 local yOffset = startY + row * (14 + 1)
 
                 now:ClearAllPoints()
-                now:SetPoint('BOTTOMLEFT', button, 'TOPLEFT', col * (14 + 1) - 1, yOffset + 2)
+                now:SetPoint("BOTTOMLEFT", button, "TOPLEFT", col * (14 + 1) - 1, yOffset + 2)
 
                 local last = auras.LastDebuffs[debuffIndex] or {}
 
@@ -388,7 +389,7 @@ function Ether:SingleAuraUpdateDebuff(button)
 end
 
 function Ether:SingleAuraFullInitial(self)
-    Ether.Setup.SingleAuraSetup(self)
+    Ether:SingleAuraSetup(self)
     Ether:SingleAuraUpdateBuff(self)
     Ether:SingleAuraUpdateDebuff(self)
 end
@@ -510,7 +511,6 @@ local function AuraWipe()
     wipe(raidAurasAdded)
     wipe(raidDispel)
     wipe(raidDebuffAdded)
-    wipe(auraCache)
 end
 
 function Ether:AuraEnable()

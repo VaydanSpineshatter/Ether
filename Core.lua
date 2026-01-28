@@ -10,15 +10,15 @@ Ether.debug = false
 local panelIsCreated = false
 Ether.Header = {}
 Ether.Anchor = {}
-local prefix_Ether = "EtherCom"
 
 Ether.mediaPath = {
     Icon = {"Interface\\AddOns\\Ether\\Media\\Texture\\Icon.blp"},
     Font = {"Interface\\AddOns\\Ether\\Media\\Font\\expressway.ttf"},
-    StatusBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\UfBar.blp"},
-    BlankBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
-    NewBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\striped.tga"},
-    OldBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\otravi.tga"}
+    statusBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\UfBar.blp"},
+    soloBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\striped.tga"},
+    powerBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\otravi.tga"},
+    headerBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\header.tga"},
+    predictionBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
 }
 
 Ether.SlashInfo = {
@@ -107,7 +107,6 @@ function Ether.ShowCategory(self, tab)
     if not self.IsLoaded then
         return
     end
-
     local tabLayer
     for layer = 1, 6 do
         if self.Menu["TOP"][layer] then
@@ -122,19 +121,16 @@ function Ether.ShowCategory(self, tab)
             break
         end
     end
-
     for _, layers in pairs(self.MenuButtons) do
         for _, topBtn in pairs(layers) do
             topBtn:Hide()
         end
     end
-
     if tabLayer and self.MenuButtons[tabLayer] then
         for _, topBtn in pairs(self.MenuButtons[tabLayer]) do
             topBtn:Show()
         end
     end
-
     for _, child in pairs(self.Content.Children) do
         if child._ScrollFrame then
             child._ScrollFrame:Hide()
@@ -142,7 +138,6 @@ function Ether.ShowCategory(self, tab)
             child:Hide()
         end
     end
-
     local target = self.Content.Children[tab]
     if target then
         if target._ScrollFrame then
@@ -541,7 +536,7 @@ do
             ToggleSettings(Construct)
         elseif button == "LeftButton" then
             if not Ether.gridFrame then
-                Ether.Setup:CreateGrid()
+                Ether:SetupGridFrame()
             end
             local isShown = Ether.gridFrame:IsShown()
             Ether.gridFrame:SetShown(not isShown)
@@ -558,127 +553,6 @@ do
     dataBroker.OnTooltipShow = ShowTooltip
     dataBroker.OnClick = OnClick
     Ether.dataBroker = dataBroker
-end
-
-local tremove = table.remove
-local isCreating = false
-local creationDelay = 0.08
-local creationQueue = {}
-
-local function processFunc()
-    if #creationQueue == 0 then
-        isCreating = false
-        return
-    end
-    tremove(creationQueue, 1)()
-    C_Timer.After(creationDelay, processFunc)
-end
-
-local function startC_Process()
-    local C = Ether.DB[201]
-
-    creationQueue[#creationQueue + 1] = function()
-        Ether.CreateMainSettings(Construct)
-    end
-
-    if C[1] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateUnitButtons("player")
-        end
-    end
-
-    if C[2] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateUnitButtons("target")
-        end
-    end
-
-    if C[3] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateUnitButtons("targettarget")
-        end
-    end
-
-    if C[4] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateUnitButtons("pet")
-        end
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        if Ether.unitButtons.solo["pet"] then
-            Ether:PetCondition(Ether.unitButtons.solo["pet"])
-        end
-    end
-
-    if C[5] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateUnitButtons("pettarget")
-        end
-    end
-
-    if C[6] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:CreateUnitButtons("focus")
-        end
-    end
-
-    if Ether.DB[1001][1] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
-        end
-    end
-
-    if Ether.DB[1001][2] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-             Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
-        end
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        Ether.registerToTEvents()
-    end
-
-    if Ether.DB[801][1] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether.CastBar.Enable("player")
-        end
-    end
-
-    if Ether.DB[801][2] == 1 then
-        creationQueue[#creationQueue + 1] = function()
-            Ether.CastBar.Enable("target")
-        end
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        local settings = Ether.RegisterPosition(Construct.Frames["Main"], 340)
-        settings:InitialPosition()
-        settings:InitialDrag()
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        local debug = Ether.RegisterPosition(Ether.DebugFrame, 339)
-        debug:InitialPosition()
-        debug:InitialDrag()
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        Ether.Tooltip:Initialize()
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        ToggleSettings(Construct)
-    end
-
-    creationQueue[#creationQueue + 1] = function()
-        panelIsCreated = true
-    end
-
-    if not isCreating then
-        isCreating = true
-        processFunc()
-    end
 end
 
 function Ether.RefreshAllSettings()
@@ -831,9 +705,10 @@ local function OnInitialize(self, event, ...)
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
 
-        --C_ChatInfo.RegisterAddonMessagePrefix(prefix_Ether)
-
         local charKey = Ether.GetCharacterKey()
+        if not charKey then
+            charKey = Ether.charKey
+        end
 
         if not ETHER_DATABASE_DX_AA.profiles then
             local profileData = Ether.MergeToLeft(
@@ -853,17 +728,9 @@ local function OnInitialize(self, event, ...)
 
         ETHER_DATABASE_DX_AA.currentProfile = charKey
 
-        if not Ether.DebugFrame then
-            Ether.Setup.CreateDebugFrame()
-        end
-
         Ether:MigrateArraysOnLogin()
 
         Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
-        Ether:RosterEnable()
-        if Ether.DB[401][2] == 1 then
-            Ether.EnableMsgEvents()
-        end
 
         local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
 
@@ -916,14 +783,22 @@ local function OnInitialize(self, event, ...)
             local LDI = LibStub("LibDBIcon-1.0", true)
             LDI:Register("EtherIcon", Ether.dataBroker, ETHER_ICON)
         end
+        if not Ether.DebugFrame then
+            Ether:SetupDebugFrame()
+        end
 
-        local r = Ether.RegisterPosition(Ether.Anchor.raid, 338)
-        r:InitialPosition()
+        Ether:RosterEnable()
+        if Ether.DB[401][2] == 1 then
+            Ether.EnableMsgEvents()
+        end
+
+        local r = Ether.RegisterPosition(Ether.Anchor.raid)
+        r:InitialPosition(338)
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(400)
         Ether.Anchor.tooltip = tooltip
-        local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip, 331)
-        tooltip_P:InitialPosition()
+        local tooltip_P = Ether.RegisterPosition(Ether.Anchor.tooltip)
+        tooltip_P:InitialPosition(331)
         local token = {
             [1] = 332,
             [2] = 333,
@@ -936,12 +811,56 @@ local function OnInitialize(self, event, ...)
         for i, key in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus"}) do
             if not Ether.Anchor[key] then
                 Ether.Anchor[key] = CreateFrame("Frame", "Ether_" .. key .. "_Anchor", UIParent, "SecureFrameTemplate")
-                pos_Frames["pos_" .. key] = Ether.RegisterPosition(Ether.Anchor[key], token[i])
-                pos_Frames["pos_" .. key]:InitialPosition()
+                pos_Frames["pos_" .. key] = Ether.RegisterPosition(Ether.Anchor[key])
+                pos_Frames["pos_" .. key]:InitialPosition(token[i])
             end
         end
 
-        startC_Process()
+        Ether.CreateMainSettings(Construct)
+        if Ether.DB[201][1] == 1 then
+            Ether:CreateUnitButtons("player")
+        end
+        if Ether.DB[201][2] == 1 then
+            Ether:CreateUnitButtons("target")
+        end
+        if Ether.DB[201][3] == 1 then
+            Ether:CreateUnitButtons("targettarget")
+        end
+        if Ether.DB[201][4] == 1 then
+            Ether:CreateUnitButtons("pet")
+        end
+        if Ether.unitButtons.solo["pet"] then
+            Ether:PetCondition(Ether.unitButtons.solo["pet"])
+        end
+        if Ether.DB[201][5] == 1 then
+            Ether:CreateUnitButtons("pettarget")
+        end
+        if Ether.DB[201][6] == 1 then
+            Ether:CreateUnitButtons("focus")
+        end
+        if Ether.DB[1001][1] == 1 then
+            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
+        end
+        if Ether.DB[1001][2] == 1 then
+            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
+        end
+        Ether.registerToTEvents()
+        if Ether.DB[801][1] == 1 then
+            Ether.CastBar.Enable("player")
+        end
+        if Ether.DB[801][2] == 1 then
+            Ether.CastBar.Enable("target")
+        end
+        local settings = Ether.RegisterPosition(Construct.Frames["Main"])
+        settings:InitialPosition(340)
+        settings:InitialDrag(340)
+
+        Ether.Tooltip:Initialize()
+
+        ToggleSettings(Construct)
+
+        panelIsCreated = true
+
 
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")

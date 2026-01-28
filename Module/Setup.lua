@@ -1,9 +1,10 @@
 local _, Ether = ...
-local Setup = {}
-Ether.Setup = Setup
 local math_floor = math.floor
-local tremove, tinsert = table.remove, table.insert
-Ether.Setup.CreatePowerText = function(button)
+local tinsert = table.insert
+local LPP = LibStub("LibPixelPerfect-1.0")
+
+function Ether:SetupPowerText(button)
+    if not button or not button.healthBar then return end
     local power = button.healthBar:CreateFontString(nil, "OVERLAY")
     button.power = power
     power:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
@@ -12,7 +13,8 @@ Ether.Setup.CreatePowerText = function(button)
     return button
 end
 
-Ether.Setup.CreateHealthText = function(button)
+function Ether:SetupHealthText(button)
+    if not button or not button.healthBar then return end
     local health = button.healthBar:CreateFontString(nil, "OVERLAY")
     button.health = health
     health:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
@@ -21,47 +23,24 @@ Ether.Setup.CreateHealthText = function(button)
     return button
 end
 
-Ether.Setup.CreateNameText = function(button, number, number2)
-    local name = button.healthBar:CreateFontString(nil, 'ARTWORK', nil, -7)
+function Ether:SetupName(button, number, number2)
+    if not button or not button.healthBar then return end
+    local name = button.healthBar:CreateFontString(nil, "OVERLAY")
     button.name = name
-    name:SetFont(unpack(Ether.mediaPath.Font), number, 'OUTLINE')
-    name:SetPoint("RIGHT", button.healthBar, "RIGHT", 0, number2)
-    name:SetPoint("LEFT", button.healthBar, "LEFT", 0, number2)
+    name:SetFont(unpack(Ether.mediaPath.Font), number, "OUTLINE")
+    name:SetPoint("CENTER", button.healthBar, "CENTER", 0, number2)
     name:SetTextColor(1, 1, 1)
     return button
 end
 
-Ether.Setup.CreateBorder = function(button)
-    if not button then
-        return
-    end
-    local texture = button:CreateTexture(nil, "BORDER")
-    button.texture = texture
-    texture:SetPoint("TOPLEFT", -1, 1)
-    texture:SetPoint("TOPRIGHT", 1, 1)
-    texture:SetPoint("BOTTOMLEFT", -1, -1)
-    texture:SetPoint("BOTTOMRIGHT", 1, -1)
-    texture:SetColorTexture(0, 0, 0, 1)
-    texture:SetSize(1, 1)
-end
-
-Ether.Setup.CreateHighlight = function(button)
-    local highLight = button:CreateTexture(nil, "HIGHLIGHT")
-    highLight:SetPoint("TOPLEFT", -1, 1)
-    highLight:SetPoint("TOPRIGHT", 1, 1)
-    highLight:SetPoint("BOTTOMLEFT", -1, -1)
-    highLight:SetPoint("BOTTOMRIGHT", 1, -1)
-    highLight:SetColorTexture(1, 0.65, 0, .2)
-    highLight:SetSize(1, 1)
-end
-
-Ether.Setup.CreateHealthBar = function(button, orient)
+function Ether:SetupHealthBar(button, orient)
+    if not button then return end
     local healthBar = CreateFrame("StatusBar", nil, button)
     button.healthBar = healthBar
     healthBar:SetPoint("TOPLEFT")
     healthBar:SetSize(120, 40)
     healthBar:SetOrientation(orient)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.NewBar))
+    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.soloBar))
     healthBar:SetMinMaxValues(0, 100)
     healthBar:SetFrameLevel(button:GetFrameLevel() + 1)
     local healthDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
@@ -71,51 +50,54 @@ Ether.Setup.CreateHealthBar = function(button, orient)
     return button
 end
 
-Ether.Setup.CreatePowerBar = function(button)
+function Ether:SetupPowerBar(button)
+    if not button then return end
     local powerBar = CreateFrame('StatusBar', nil, button)
     button.powerBar = powerBar
     powerBar:SetPoint("BOTTOMLEFT")
     powerBar:SetSize(120, 10)
-    powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.OldBar))
+    powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
     powerBar:SetFrameLevel(button:GetFrameLevel() + 1)
     powerBar:SetMinMaxValues(0, 100)
     local powerDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
     button.powerDrop = powerDrop
     powerDrop:SetAllPoints()
-    powerDrop:SetColorTexture(0.1, 0.1, 0.1, 0.4)
+    powerDrop:SetColorTexture(0.1, 0.1, 0.1, 0.8)
     powerBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
     return button
 end
 
-Ether.Setup.CreatePrediction = function(button)
-    local playerPrediction = CreateFrame('StatusBar', nil, button.healthBar:GetParent())
-    button.playerPrediction = playerPrediction
-    playerPrediction:SetAllPoints(button.healthBar)
-    playerPrediction:SetFrameLevel(button:GetFrameLevel() + 0)
-    playerPrediction:SetStatusBarTexture(unpack(Ether.mediaPath.NewBar))
-    playerPrediction:SetStatusBarColor(0.70, 0.13, 0.13)
-    playerPrediction:SetMinMaxValues(0, 1)
-    playerPrediction:SetValue(1)
-    playerPrediction:Hide()
-    local otherPrediction = CreateFrame('StatusBar', nil, button.healthBar:GetParent())
-    button.otherPrediction = otherPrediction
-    otherPrediction:SetAllPoints(button.healthBar)
-    otherPrediction:SetFrameLevel(button:GetFrameLevel() - 0)
-    otherPrediction:SetStatusBarTexture(unpack(Ether.mediaPath.NewBar))
-    otherPrediction:SetStatusBarColor(0.80, 0.40, 1.00)
-    otherPrediction:SetMinMaxValues(0, 1)
-    otherPrediction:SetValue(1)
-    otherPrediction:Hide()
+function Ether:SetupPrediction(button)
+    if not button or not button.healthBar then return end
+    local player = CreateFrame('StatusBar', nil, button.healthBar:GetParent())
+    button.myPrediction = player
+    player:SetAllPoints(button.healthBar)
+    player:SetFrameLevel(button:GetFrameLevel() + 0)
+    player:SetStatusBarTexture(unpack(Ether.mediaPath.predictionBar))
+    player:SetStatusBarColor(0.70, 0.13, 0.13)
+    player:SetMinMaxValues(0, 1)
+    player:SetValue(1)
+    player:Hide()
+    local from = CreateFrame('StatusBar', nil, button.healthBar:GetParent())
+    button.otherPrediction = from
+    from:SetAllPoints(button.healthBar)
+    from:SetFrameLevel(button:GetFrameLevel() - 0)
+    from:SetStatusBarTexture(unpack(Ether.mediaPath.predictionBar))
+    from:SetStatusBarColor(0.80, 0.40, 1.00)
+    from:SetMinMaxValues(0, 1)
+    from:SetValue(1)
+    from:Hide()
     return button
 end
 
-Ether.Setup.CreateCastBar = function(button)
+function Ether:SetupCastBar(button)
+    if not button then return end
     local config = Ether.CastBar.Config
     local frame = CreateFrame("StatusBar", nil, button)
     button.castBar = frame
     frame:SetPoint("TOPLEFT", button.powerBar, "BOTTOMLEFT")
     frame:SetSize(220, 15)
-    frame:SetStatusBarTexture(unpack(Ether.mediaPath.StatusBar))
+    frame:SetStatusBarTexture(unpack(Ether.mediaPath.predictionBar))
     local drop = frame:CreateTexture(nil, "ARTWORK", nil, -7)
     frame.drop = drop
     drop:SetAllPoints()
@@ -135,7 +117,7 @@ Ether.Setup.CreateCastBar = function(button)
     icon:SetPoint("LEFT")
 
     local safeZone = frame:CreateTexture(nil, "OVERLAY")
-    safeZone:SetTexture(unpack(Ether.mediaPath.StatusBar))
+    safeZone:SetTexture(unpack(Ether.mediaPath.predictionBar))
     safeZone:SetVertexColor(0.70, 0.13, 0.13, 1)
     safeZone:SetBlendMode("ADD")
 
@@ -152,7 +134,7 @@ Ether.Setup.CreateCastBar = function(button)
     frame.timeToHold = 0.1
 end
 
-Ether.Setup.CreateTooltip = function(button, unit)
+function Ether:SetupTooltip(button, unit)
     button:SetScript('OnEnter', function()
         GameTooltip:SetOwner(button, 'ANCHOR_RIGHT')
         GameTooltip:SetUnit(unit)
@@ -164,13 +146,13 @@ Ether.Setup.CreateTooltip = function(button, unit)
     return button
 end
 
-function Ether.Setup:GetAttribute(button, unit)
+function Ether:SetupAttribute(button, unit)
     button:SetAttribute("unit", unit)
     button:SetAttribute("*type1", "target")
     button:SetAttribute("*type2", "togglemenu")
 end
 
-function Ether.Setup:CreateDrag(button)
+function Ether:SetupDrag(button)
     button:SetMovable(true)
     button:SetScript("OnMouseDown", function(self)
         if InCombatLockdown() or self.isMoving then
@@ -193,7 +175,7 @@ function Ether.Setup:CreateDrag(button)
 end
 
 local initialGrid = false
-function Ether.Setup:CreateGrid()
+function Ether:SetupGridFrame()
     if not initialGrid then
         initialGrid = true
         local frame = CreateFrame("Frame", nil, UIParent)
@@ -297,7 +279,7 @@ function Ether.Setup:CreateGrid()
     end
 end
 
-Ether.Setup.CreateDebugFrame = function()
+function Ether:SetupDebugFrame()
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     Ether.DebugFrame = frame
     frame:SetPoint("CENTER")
@@ -330,6 +312,9 @@ Ether.Setup.CreateDebugFrame = function()
     top:SetPoint("TOP", 0, -10)
     top:SetText("|cE600CCFFEther|r")
     frame:Hide()
+    local debug = Ether.RegisterPosition(Ether.DebugFrame)
+    debug:InitialPosition(339)
+    debug:InitialDrag(339)
 end
 
 local function AuraPosition(i)
@@ -365,7 +350,7 @@ local function SetupAuraCount(button)
     return count
 end
 
-Ether.Setup.SingleAuraSetup = function(button)
+function Ether:SingleAuraSetup(button)
     if (not button or not button.unit) then
         return
     end
@@ -392,12 +377,12 @@ Ether.Setup.SingleAuraSetup = function(button)
         frame.timer = SetupAuraTimer(frame, frame.icon)
 
         frame:SetScript("OnEnter",
-        function(self)
-            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-            GameTooltip:SetUnitAura(button.unit, i, "HELPFUL")
-            GameTooltip:Show()
-        end)
-         frame:SetScript("OnLeave", GameTooltip_Hide)
+                function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    GameTooltip:SetUnitAura(button.unit, i, "HELPFUL")
+                    GameTooltip:Show()
+                end)
+        frame:SetScript("OnLeave", GameTooltip_Hide)
         button.Aura.Buffs[i] = frame
     end
 
@@ -422,21 +407,22 @@ Ether.Setup.SingleAuraSetup = function(button)
         border:Hide()
 
         frame:SetScript("OnEnter",
-            function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetUnitAura(button.unit, i, "HARMFUL")
-                GameTooltip:Show()
-            end)
-         frame:SetScript("OnLeave", GameTooltip_Hide)
-         frame.border = border
+                function(self)
+                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+                    GameTooltip:SetUnitAura(button.unit, i, "HARMFUL")
+                    GameTooltip:Show()
+                end)
+        frame:SetScript("OnLeave", GameTooltip_Hide)
+        frame.border = border
 
         button.Aura.Debuffs[i] = frame
     end
 end
 
-local LPP = LibStub("LibPixelPerfect-1.0")
-
-function Ether.AddBlackBorder(button)
+function Ether:AddBlackBorder(button)
+    if not button then
+        return
+    end
     local top = button:CreateTexture(nil, "BORDER")
     top:SetColorTexture(0, 0, 0, .6)
     LPP.PHeight(top, 2)

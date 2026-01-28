@@ -94,76 +94,12 @@ local roster = {
         end
         ]]
 
-function Ether:RosterRegisterUnit(button, unit)
-    if not unit or not UnitExists(unit) then
-        return
-    end
-    local guid = UnitGUID(unit)
-    if not guid then
-        return
-    end
-
-    local oldUnit = roster.guids[guid]
-    if oldUnit and oldUnit ~= unit then
-        Ether:RosterUnregisterUnit(oldUnit)
-    end
-
-    local oldButtonUnit = button.unit
-    if oldButtonUnit and oldButtonUnit ~= unit then
-        if roster.buttons[oldButtonUnit] == button then
-            roster.buttons[oldButtonUnit] = nil
-            roster.units[oldButtonUnit] = nil
-        end
-    end
-
-    local name = UnitName(unit)
-    local class = select(2, UnitClass(unit))
-
-    roster.units[unit] = {
-        guid = guid,
-        name = name,
-        button = button,
-        class = class,
-    }
-
-    roster.guids[guid] = unit
-    roster.buttons[unit] = button
-    roster.names[unit] = name
-    roster.classes[unit] = class
-
-    button.unit = unit
-    button.unitGUID = guid
-
-    Ether.unitButtons.raid[unit] = button
-
-    return true
-end
-
-function Ether:RosterUnregisterUnit(unit)
-    if not unit then
-        return
-    end
-
-    local data = roster.units[unit]
-    if data then
-        local guid = data.guid
-
-        roster.units[unit] = nil
-        roster.buttons[unit] = nil
-        roster.names[unit] = nil
-        roster.classes[unit] = nil
-        if roster.guids[guid] == unit then
-            roster.guids[guid] = nil
-        end
-        Ether.unitButtons.raid[unit] = nil
-    end
-end
 
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
         if Ether.DB[1001][2] == 1 then
             C_After(0.05, function()
-                if UnitExists("target") then
+                if UnitExists("target")  then
                     Ether:SingleAuraUpdateBuff(Ether.unitButtons.solo["target"])
                     Ether:SingleAuraUpdateDebuff(Ether.unitButtons.solo["target"])
                 end
@@ -177,29 +113,16 @@ local function RosterChanged(_, event)
         C_After(0.1, function()
             Ether:UpdateIndicators()
         end)
-        C_After(0.1, function()
-            for i = 1, GetNumGroupMembers() do
-                local unit = "raid" .. i
-                if UnitExists(unit) then
-                    Ether:UpdateUnitAuras(unit)
-                    Ether:DispelAuraScan(unit)
-                end
-            end
-        end)
     end
-end
-
-local function WorldEnter(_, event)
-    if event == "PLAYER_JOINING_WORLD" then
-        C_After(0.1, function()
-            Ether:UpdateIndicators()
-        end)
-        if Ether.DB[1001][3] == 1 then
+    if Ether.DB[1001][3] == 1 then
+        if not IsInRaid() and not IsInGroup() then
             C_After(0.1, function()
-                for i = 1, GetNumGroupMembers() do
-                    local unit = "raid" .. i
+                Ether:CleanupAllRaidIcons()
+            end)
+            C_After(0.2, function()
+                for unit, button in pairs(Ether.unitButtons.raid) do
                     if UnitExists(unit) then
-                        Ether:UpdateUnitAuras(unit)
+                        Ether:UpdateRaidIsHelpful(unit)
                         Ether:DispelAuraScan(unit)
                     end
                 end
@@ -208,15 +131,43 @@ local function WorldEnter(_, event)
     end
 end
 
+local function WorldEnter(_, event)
+    if event == "PLAYER_JOINING_WORLD" then
+        C_After(0.1, function()
+            Ether:UpdateIndicators()
+        end)
+    end
+end
+
 local function WorldLeaved(_, event)
     if event == "PLAYER_LEAVING_WORLD" then
         C_After(0.1, function()
             Ether:UpdateIndicators()
         end)
-
-        wipe(Ether.rangeCache)
+        Ether:RangeDisable()
+        if Ether.DB[801][6] == 1 then
+            C_After(0.1, function()
+                Ether:RangeEnable()
+            end)
+        end
+        if Ether.DB[1001][3] == 1 then
+            if not IsInRaid() and not IsInGroup() then
+                C_After(0.1, function()
+                    Ether:CleanupAllRaidIcons()
+                end)
+                C_After(0.2, function()
+                    for unit, button in pairs(Ether.unitButtons.raid) do
+                        if UnitExists(unit) then
+                            Ether:UpdateRaidIsHelpful(unit)
+                            Ether:DispelAuraScan(unit)
+                        end
+                    end
+                end)
+            end
+        end
     end
 end
+
 local function Unghost(_, event)
     if event == "PLAYER_UNGHOST" then
         Ether:UpdateIndicators()
@@ -229,6 +180,7 @@ local function OnAfk(self)
     Ether:HealthDisable()
     Ether:PowerDisable()
     Ether:AuraDisable()
+    Ether:CleanupAllRaidIcons()
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether:RangeDisable()
@@ -243,6 +195,16 @@ local function NotAfk(self)
     Ether:HealthEnable()
     Ether:PowerEnable()
     Ether:AuraEnable()
+        if Ether.DB[1001][3] == 1 then
+            C_After(0.2, function()
+                for unit, button in pairs(Ether.unitButtons.raid) do
+                    if UnitExists(unit) then
+                        Ether:UpdateRaidIsHelpful(unit)
+                        Ether:DispelAuraScan(unit)
+                    end
+                end
+            end)
+        end
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether:RangeEnable()

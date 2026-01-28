@@ -72,16 +72,15 @@ local function ReturnMaxPower(self)
     return UnitPowerMax(self)
 end
 
-local function InitialPower(button)
+function Ether:InitialPower(button)
     if not button or not button.unit or not button.powerBar then
         return
     end
     button.powerBar:SetValue(ReturnPower(button.unit))
     button.powerBar:SetMinMaxValues(0, ReturnMaxPower(button.unit))
 end
-Ether.InitialPower = InitialPower
 
-local function UpdatePowerText(button)
+function Ether:UpdatePowerText(button)
     if not button or not button.unit or not button.power then
         return
     end
@@ -90,21 +89,19 @@ local function UpdatePowerText(button)
         return
     end
     if p >= 1000 then
-       button.power:SetText(string_format(fm, p / 1000))
+        button.power:SetText(string_format(fm, p / 1000))
     else
-       button.power:SetText(p)
+        button.power:SetText(p)
     end
 end
-Ether.UpdatePowerText = UpdatePowerText
 
-local function GetPowerColor(self)
+function Ether:GetPowerColor(self)
     local powerTypeID = UnitPowerType(self)
     local c = Power_Colors[powerTypeID] or Power_Colors[1]
     return c.r, c.g, c.b or false
 end
-Ether.GetPowerColor = GetPowerColor
 
-local function UpdatePowerAndMax(button)
+function Ether:UpdatePower(button)
     if not button or not button.unit or not button.powerBar then
         return
     end
@@ -113,13 +110,11 @@ local function UpdatePowerAndMax(button)
 
     button.powerBar:SetValue(p)
     button.powerBar:SetMinMaxValues(0, mp)
-    local r, g, b = GetPowerColor(button.unit)
+    local r, g, b = Ether:GetPowerColor(button.unit)
     button.powerBar:SetStatusBarColor(r, g, b)
-    button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
 end
-Ether.UpdatePowerAndMax = UpdatePowerAndMax
 
-local function UpdateSmoothPowerAndMax(button)
+function Ether:UpdateSmoothPower(button)
     if not button or not button.unit or not button.powerBar then
         return
     end
@@ -127,11 +122,9 @@ local function UpdateSmoothPowerAndMax(button)
     local mp = UnitPowerMax(button.unit)
     button.powerBar:SetMinMaxSmoothedValue(0, mp)
     button.powerBar:SetSmoothedValue(p)
-    local r, g, b = GetPowerColor(button.unit)
+    local r, g, b = Ether:GetPowerColor(button.unit)
     button.powerBar:SetStatusBarColor(r, g, b)
-    button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
 end
-Ether.UpdateSmoothPowerAndMa = UpdateSmoothPowerAndMax
 
 local function PowerChanged(_, event, unit)
     if (not unit) then
@@ -142,19 +135,19 @@ local function PowerChanged(_, event, unit)
             local s = Ether.unitButtons.solo[unit]
             if s then
                 if Ether.DB[801][4] == 1 then
-                    UpdateSmoothPowerAndMax(s)
+                    Ether:UpdateSmoothPower(s)
                 else
-                    UpdatePowerAndMax(s)
+                    Ether:UpdatePower(s)
                 end
                 if Ether.DB[701][2] == 1 then
-                    UpdatePowerText(s)
+                    Ether:UpdatePowerText(s)
                 end
             end
         end
         if Ether.DB[901]["raid"] and Ether.DB[701][4] == 1 then
             local r = Ether.unitButtons.raid[unit]
             if r then
-                UpdatePowerText(r)
+                Ether:UpdatePowerText(r)
             end
         end
     end

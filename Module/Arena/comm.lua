@@ -2,6 +2,8 @@ local _, Ether = ...
 local comm = {}
 Ether.comm = comm
 --[[
+--local prefix_Ether = "EtherCom"
+        --C_ChatInfo.RegisterAddonMessagePrefix(prefix_Ether)
 local arena1, arena2, arena3, arena4, arena5 = "", "", "", "", ""
 local validUser
 local playerName = UnitName("player")

@@ -2,16 +2,128 @@ local _, Ether = ...
 
 local anchor = CreateFrame("Frame", "EtherRaidGroupAnchor", UIParent, "SecureFrameTemplate")
 Ether.Anchor.raid = anchor
+if InCombatLockdown() then
+    print("User in combat lockdown - Reload interface")
+    return
+end
 local header = CreateFrame("Frame", "EtherRaidGroupHeader", anchor, "SecureGroupHeaderTemplate")
 Ether.Header.raid = header
 
 --local secureHandler = CreateFrame("Frame", nil, nil, "SecureHandlerBaseTemplate")
-
 --secureHandler:WrapScript(header, "OnAttributeChanged", [[
-
 --]])
 
-local __SECURE_INITIALIZE = [[
+
+local function OnEnter(self)
+    self.unit = self:GetAttribute("unit")
+    if GameTooltip then
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:SetUnit(self.unit)
+        GameTooltip:Show()
+    end
+end
+
+local function OnLeave(self)
+    self.unit = self:GetAttribute("unit")
+    if GameTooltip then
+        GameTooltip:Hide()
+    end
+end
+
+local function Update(self)
+    self.unit = self:GetAttribute("unit")
+    Ether:UpdateHealth(self)
+    Ether:UpdateName(self, true)
+    C_Timer.After(0.1, function()
+        Ether:InitialHealth(self)
+    end)
+end
+
+
+local function OnAttributeChanged(self, name, unit)
+    if name ~= "unit" or not unit then
+        return
+    end
+
+    local oldUnit = self.unit
+    local oldGUID = self.unitGUID
+    local newGUID = UnitGUID(unit)
+
+
+    if oldGUID and newGUID and oldGUID ~= newGUID then
+        self.top:SetColorTexture(0, 0, 0, .6)
+        self.right:SetColorTexture(0, 0, 0, .6)
+        self.left:SetColorTexture(0, 0, 0, .6)
+        self.bottom:SetColorTexture(0, 0, 0, .6)
+        Ether:CleanupIconsForGUID(oldGUID)
+    end
+
+    self.unit = unit
+    self.unitGUID = newGUID
+
+    if oldUnit and Ether.unitButtons.raid[oldUnit] == self then
+        Ether.unitButtons.raid[oldUnit] = nil
+    end
+    Ether.unitButtons.raid[unit] = self
+
+    C_Timer.After(0.1, function()
+        if self.unit == unit then
+            Ether:UpdateRaidIsHelpful(unit)
+            Ether:DispelAuraScan(unit)
+        end
+    end)
+    Update(self)
+end
+
+local function Show(self)
+    self:RegisterEvent("UNIT_NAME_UPDATE")
+    self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    Update(self)
+end
+
+local function Hide(self)
+    self:UnregisterEvent("UNIT_NAME_UPDATE")
+    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+end
+
+function header:CreateChildren(buttonName)
+    local button = _G[buttonName]
+    button.Indicators = {}
+    button.raidAuras = {}
+    button.raidIcons = {}
+    Ether:AddBlackBorder(button)
+    local healthBar = CreateFrame("StatusBar", nil, button)
+    button.healthBar = healthBar
+    healthBar:SetPoint("TOPLEFT")
+    healthBar:SetAllPoints(button)
+    healthBar:SetOrientation("VERTICAL")
+    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.statusBar))
+    healthBar:SetMinMaxValues(0, 100)
+    healthBar:SetFrameLevel(button:GetFrameLevel() + 1)
+    Mixin(healthBar, SmoothStatusBarMixin)
+    local healthDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
+    button.healthDrop = healthDrop
+    healthDrop:SetAllPoints(healthBar)
+    healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
+    Ether:SetupPrediction(button)
+    Ether:SetupName(button, 10, -5)
+    Ether:GetClassColor(button)
+    Ether:SetupPowerText(button)
+    Ether:SetupHealthText(button)
+    button:SetScript("OnShow", Show)
+    button:SetScript("OnHide", Hide)
+    button:SetScript("OnEnter", OnEnter)
+    button:SetScript("OnLeave", OnLeave)
+    button:HookScript("OnAttributeChanged", OnAttributeChanged)
+    button:RegisterForClicks("AnyUp")
+    return button
+end
+
+header:SetAllPoints(anchor)
+header:SetAttribute("template", "EtherUnitTemplate")
+header:SetAttribute("initial-unitWatch", true)
+header:SetAttribute("groupingFilter", "1,2,3,4,5,6,7,8")
+header:SetAttribute("initialConfigFunction", [[
     local header = self:GetParent()
     self:SetWidth(header:GetAttribute("ButtonWidth"))
     self:SetHeight(header:GetAttribute("ButtonHeight"))
@@ -19,143 +131,8 @@ local __SECURE_INITIALIZE = [[
     self:SetAttribute("*type2", "togglemenu")
     self:SetAttribute("isHeaderDriven", true)
     header:CallMethod("CreateChildren", self:GetName())
+   ]])
 
-   ]]
-
-local function OnEnter(self)
-    if not GameTooltip then
-        return
-    end
-    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-    GameTooltip:SetUnit(self.unit)
-    GameTooltip:Show()
-end
-Ether.OnEnter = OnEnter
-
-local function OnLeave()
-    if not GameTooltip then
-        return
-    end
-    GameTooltip:Hide()
-end
-Ether.OnLeave = OnLeave
-
--- if Ether.DB[701][3] == 1 then
--- Ether.UpdateHealthText(self)
--- end
---  if Ether.DB[701][4] == 1 then
---    Ether.UpdatePowerText(self)
---  end
-
-local function Update(self)
-    Ether.InitialHealth(self)
-    Ether.UpdateHealthAndMax(self)
-    Ether.UpdateRaidName(self)
-    C_Timer.After(0.05, function()
-        Ether:UpdateUnitAuras(self.unit)
-        Ether:DispelAuraScan(self.unit)
-    end)
-end
-Ether.updateRaid = Update
-
-local function CheckGUID(self)
-    local guid = self.unit and UnitGUID(self.unit)
-    if (guid ~= self.unitGUID) then
-        self.unitGUID = guid
-        if (guid) then
-            Update(self)
-        end
-    end
-end
-
-local function GetDB()
-    return Ether.DB and Ether.DB[1001] and Ether.DB[1001][3]
-end
-
-local function OnAttributeChanged(self, name, unit)
-    if name ~= "unit" or not unit then
-        return
-    end
-    self.unit = self:GetAttribute("unit")
-    Ether:RaidAuraCleanUp(self.unit)
-    C_Timer.After(0.05, function()
-        Ether:DispelAuraScan(self.unit)
-        Ether:UpdateUnitAuras(self.unit)
-    end)
-    Ether.unitButtons.raid[self.unit] = self
-    CheckGUID(self)
-end
-
-local function Event(self, event)
-    self.unit = self:GetAttribute("unit")
-    if event == "GROUP_ROSTER_UPDATE" then
-    elseif event == "UNIT_NAME_UPDATE" then
-
-    end
-end
-
-local function Show(self)
-    self.unit = self:GetAttribute("unit")
-    self:RegisterEvent("GROUP_ROSTER_UPDATE")
-    self:RegisterEvent("UNIT_NAME_UPDATE")
-    Update(self)
-end
-
-local function Hide(self)
-    self.unit = self:GetAttribute("unit")
-    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    self:UnregisterEvent("UNIT_NAME_UPDATE")
-    Ether:RaidAuraCleanUp(self.unit)
-end
-
-function header:CreateChildren(buttonName)
-    local b = _G[buttonName]
-    b.Indicators = {}
-    b.raidAuras = {}
-    b.raidIcons = {}
-    b:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
-    b:SetBackdropColor(0, 0, 0, 1)
-    Ether.AddBlackBorder(b)
-    local healthBar = CreateFrame("StatusBar", nil, b)
-    b.healthBar = healthBar
-    healthBar:SetPoint("TOPLEFT")
-    healthBar:SetAllPoints(b)
-    healthBar:SetOrientation("VERTICAL")
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.StatusBar))
-    healthBar:SetMinMaxValues(0, 100)
-    healthBar:SetFrameLevel(b:GetFrameLevel() + 1)
-    Mixin(healthBar, SmoothStatusBarMixin)
-    local healthDrop = b:CreateTexture(nil, "ARTWORK", nil, -7)
-    b.healthDrop = healthDrop
-    healthDrop:SetAllPoints(healthBar)
-    healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
-    Ether.Setup.CreatePrediction(b)
-    Ether.Setup.CreateNameText(b, 10, -5)
-    Ether.GetClassColor(b)
-    Ether.Setup.CreatePowerText(b)
-    Ether.Setup.CreateHealthText(b)
-    local highlight = b:CreateTexture(nil, "HIGHLIGHT")
-    b.highlight = highlight
-    highlight:SetAllPoints()
-    highlight:SetColorTexture(0.80, 0.40, 1.00, .2)
-    local background = b:CreateTexture(nil, "BACKGROUND")
-    background:SetAllPoints()
-    background:SetColorTexture(0, 0, 0, 1)
-    b:RegisterForClicks("AnyUp")
-    b:SetScript("OnShow", Show)
-    b:SetScript("OnHide", Hide)
-    b:SetScript("OnEnter", OnEnter)
-    b:SetScript("OnLeave", OnLeave)
-    b:SetScript("OnEvent", Event)
-    b:HookScript("OnAttributeChanged", OnAttributeChanged)
-    return b
-end
-
-header:SetAllPoints(anchor)
-header:SetAttribute("template", "EtherUnitTemplate")
-header:SetAttribute("initial-unitWatch", true)
-header:SetAttribute("groupingFilter", "1,2,3,4,5,6,7,8")
-header:SetAttribute("initialConfigFunction", __SECURE_INITIALIZE)
 header:SetAttribute("ButtonWidth", 55)
 header:SetAttribute("ButtonHeight", 55)
 header:SetAttribute("columnAnchorPoint", "LEFT")
@@ -175,20 +152,13 @@ header:Show()
 
 
 --[[
-
---> -->
 order = 'DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR',
 by = 'CLASS'
 order = 'TANK,HEALER,DAMAGER,NONE',
 by = 'ASSIGNEDROLE'
 order = '1,2,3,4,5,6,7,8',
 by = "GROUP"
-<-- <--
-
---> -->
 Header: SecureGroupHeaderTemplate, SecureGroupPetHeaderTemplate
-<-- <--
-
 useOwnerUnit = [BOOLEAN]
 filterOnPet = [BOOLEAN]
 showRaid = [BOOLEAN] -- true if the header should be shown while in a raid
@@ -217,5 +187,4 @@ unitsPerColumn = [NUMBER or nil] - maximum units that will be displayed in a sin
 startingIndex = [NUMBER] - the index in the final sorted unit list at which to start displaying units (Default: 1)
 columnSpacing = [NUMBER] - the amount of space between the rows/columns (Default: 0)
 columnAnchorPoint = [STRING] - the anchor point of each new column (ie. use LEFT for the columns to grow to the right)
-
 ]]

@@ -16,7 +16,7 @@ local classFriendly = {
     MAGE = 1459, -- Arcane intellect
     WARLOCK = 2970, -- Detect Invisibility
     HUNTER = 75, -- Auto Shot
-    ROUGE = 36554, -- Shadowstep
+    ROGUE = 36554, -- Shadowstep
 }
 
 local classHostile = {
@@ -60,6 +60,7 @@ function Ether:UpdateAlpha(button)
     end
     local inRange
     if UnitPhaseReason(button.unit) then
+        button:SetAlpha(0.45)
         return
     end
     if not UnitIsVisible(button.unit) then
@@ -71,7 +72,8 @@ function Ether:UpdateAlpha(button)
     else
         inRange = Ether:IsUnitInRange(button.unit)
     end
-    local value = Ether:IsUnitInRange(button.unit) and 1.0 or 0.45
+    inRange = Ether:IsUnitInRange(button.unit)
+    local value = inRange and 1.0 or 0.45
     button:SetAlpha(value)
 end
 
@@ -80,11 +82,6 @@ function Ether:UpdateTargetAlpha()
         Ether:UpdateAlpha(Ether.unitButtons.solo["target"])
     end
     if not UnitInAnyGroup("player") then
-        for _, button in pairs(Ether.unitButtons.raid) do
-            if button and button:IsVisible() then
-                button:SetAlpha(1.0)
-            end
-        end
         return
     end
     for _, button in pairs(Ether.unitButtons.raid) do
@@ -108,7 +105,6 @@ end
 local rangeTicker = nil
 
 function Ether:RangeEnable()
-
     if not rangeTicker then
         rangeTicker = C_Ticker(1.7, function()
             Ether:UpdateTargetAlpha()
@@ -122,4 +118,5 @@ function Ether:RangeDisable()
         rangeTicker = nil
     end
     RemoveAlpha()
+    wipe(Ether.rangeCache)
 end

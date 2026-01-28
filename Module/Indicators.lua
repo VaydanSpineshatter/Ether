@@ -277,6 +277,7 @@ end
 
 local function UpdateGroupRoleIcon(self, role)
     CreateIndicatorsTexture(self, "GroupRoleIcon", 12, "RIGHT")
+    self.Indicators.GroupLeaderIcon:SetTexture(roleIcon)
     if (role == "TANK") then
         self.Indicators.GroupRoleIcon:SetTexCoord(0, 19 / 64, 22 / 64, 41 / 64)
         self.Indicators.GroupRoleIcon:Show()

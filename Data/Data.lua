@@ -119,7 +119,6 @@ local string_char = string.char
 ---| smooth health Header 5
 ---| range checker  6
 
-
 ---@alias Update_901 boolean
 ---| Player
 ---| Target

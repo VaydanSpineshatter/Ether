@@ -154,7 +154,7 @@ function Ether.CreateSection(self)
     end
 
     local CreateCustom = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
-    CreateCustom:SetPoint("TOPLEFT", self.Content.Buttons.Create.A[7], "BOTTOMLEFT", 0, -40)
+    CreateCustom:SetPoint("TOPLEFT", self.Content.Buttons.Create.A[6], "BOTTOMLEFT", 0, -40)
     CreateCustom:GetFontString():SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     CreateCustom:SetText("Create Custom")
     CreateCustom:SetSize(100, 30)
@@ -661,6 +661,7 @@ local function CreateEditor(parent)
                 currentEditor.colorBtn.bg:SetColorTexture(r, g, b, a)
                 currentEditor.rgbText:SetText(string.format("RGB: %d, %d, %d", r * 255, g * 255, b * 255))
                 Ether.UpdateAuraList()
+                Ether.UpdatePreview()
             end
         end
 
@@ -694,7 +695,7 @@ local function CreateEditor(parent)
     preview.healthBar = healthBar
     healthBar:SetPoint("BOTTOMLEFT")
     healthBar:SetSize(55, 55)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.StatusBar))
+    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.statusBar))
 
     preview.indicator = preview:CreateTexture(nil, "OVERLAY")
     preview.indicator:SetSize(6, 6)
@@ -1019,7 +1020,8 @@ local function protoType(newId)
         offsetX = 0,
         offsetY = 0,
         enabled = true,
-        enabled = false
+        isBuff = true,
+        isDebuff = false
     }
     return obj
 end

@@ -2,24 +2,28 @@ local _, Ether = ...
 
 local ObjPos = {}
 
-function Ether.RegisterPosition(parent, name)
-    if type(parent) == "nil" or type(name) == "nil" then
-        error("ObjPos – " .. (parent or name) .. " element is nil")
+function Ether.RegisterPosition(parent)
+    if type(parent) == "nil" then
+        print("ObjPos – " .. parent .. " element is nil")
         return
     end
     local obj = {
         _parent = parent,
-        _pos = Ether.DB[5111][name],
+        _pos = Ether.DB[5111],
     }
     setmetatable(obj, {__index = ObjPos})
     return obj
 end
 
-function ObjPos:InitialPosition()
+function ObjPos:InitialPosition(number)
+    if type(number) ~= "number" then
+        print("ObjPos – element is not number")
+        return
+    end
     local success, msg = pcall(function()
         self._parent:SetClampedToScreen(true)
         self._parent:SetMovable(true)
-        local relTo = self._pos[2]
+        local relTo = self._pos[number][2]
         if type(relTo) == "number" then
             if relTo == 5133 then
                 relTo = UIParent
@@ -27,11 +31,11 @@ function ObjPos:InitialPosition()
                 relTo = _G[relTo] or 5133
             end
             self._parent:ClearAllPoints()
-            self._parent:SetPoint(self._pos[1], relTo, self._pos[3], self._pos[4], self._pos[5]);
-            self._parent:SetWidth(self._pos[6])
-            self._parent:SetHeight(self._pos[7])
-            self._parent:SetScale(self._pos[8])
-            self._parent:SetAlpha(self._pos[9])
+            self._parent:SetPoint(self._pos[number][1], relTo, self._pos[number][3], self._pos[number][4], self._pos[number][5]);
+            self._parent:SetWidth(self._pos[number][6])
+            self._parent:SetHeight(self._pos[number][7])
+            self._parent:SetScale(self._pos[number][8])
+            self._parent:SetAlpha(self._pos[number][9])
         end
     end)
     if not success then
@@ -43,7 +47,11 @@ function ObjPos:InitialPosition()
     end
 end
 
-function ObjPos:InitialDrag()
+function ObjPos:InitialDrag(number)
+    if type(number) ~= "number" then
+        print("ObjPos – element is not number")
+        return
+    end
     self._parent:EnableMouse(true)
     self._parent:RegisterForDrag("LeftButton")
     self._parent:SetScript("OnDragStart", function()
@@ -74,12 +82,12 @@ function ObjPos:InitialDrag()
         else
             relToName = 5133
         end
-        self._pos[1] = point
-        self._pos[2] = relToName
-        self._pos[3] = relPoint
-        self._pos[4] = x
-        self._pos[5] = y
+        self._pos[number][1] = point
+        self._pos[number][2] = relToName
+        self._pos[number][3] = relPoint
+        self._pos[number][4] = x
+        self._pos[number][5] = y
         local anchorRelTo = _G[relToName] or UIParent
-        self._parent:SetPoint(self._pos[1], anchorRelTo, self._pos[3], self._pos[4], self._pos[5])
+        self._parent:SetPoint(self._pos[number][1], anchorRelTo, self._pos[number][3], self._pos[number][4], self._pos[number][5])
     end)
 end

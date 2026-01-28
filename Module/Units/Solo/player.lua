@@ -1,21 +1,19 @@
 local _, Ether = ...
-
-local C_After = C_Timer.After
 local C_Ticker = C_Timer.NewTicker
 
 local function FullUpdate(self)
-    C_After(0.1, function()
-        Ether.InitialHealth(self)
-        Ether.InitialPower(self)
+    C_Timer.After(0.1, function()
+        Ether:InitialHealth(self)
+        Ether:InitialPower(self)
     end)
-    Ether.UpdateHealthAndMax(self)
-    Ether.UpdateSoloName(self)
+    Ether:UpdateHealth(self)
+    Ether:UpdateName(self)
     if Ether.DB[701][1] == 1 then
-        Ether.UpdateHealthText(self)
+        Ether:UpdateHealthText(self)
     end
-    Ether.UpdatePowerAndMax(self)
+    Ether:UpdatePower(self)
     if Ether.DB[701][2] == 1 then
-        Ether.UpdatePowerText(self)
+        Ether:UpdatePowerText(self)
     end
 end
 
@@ -30,24 +28,22 @@ local function AttributeChanged(self)
 end
 
 local function Show(self)
-   FullUpdate(self)
+    FullUpdate(self)
 end
 
 local function Update(_, event, unit)
-    if not Ether.DB[901]["targettarget"] then
-        return
-    end
+    if not Ether.DB[901]["targettarget"] then return end
     if event == "UNIT_HEAL_PREDICTION" then
-        Ether.UpdatePrediction(Ether.unitButtons.solo["targettarget"])
+        Ether:UpdatePrediction(Ether.unitButtons.solo["targettarget"])
     elseif event == "UNIT_MAXHEALTH" or event == "UNIT_HEALTH" then
-        Ether.UpdateHealthAndMax(Ether.unitButtons.solo["targettarget"])
+        Ether:UpdateHealth(Ether.unitButtons.solo["targettarget"])
         if Ether.DB[701][1] == 1 then
-            Ether.UpdateHealthText(Ether.unitButtons.solo["targettarget"])
+            Ether:UpdateHealthText(Ether.unitButtons.solo["targettarget"])
         end
     elseif event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
-        Ether.UpdatePowerAndMax(Ether.unitButtons.solo["targettarget"])
+        Ether:UpdatePower(Ether.unitButtons.solo["targettarget"])
         if Ether.DB[701][2] == 1 then
-            Ether.UpdatePowerText(Ether.unitButtons.solo["targettarget"])
+            Ether:UpdatePowerText(Ether.unitButtons.solo["targettarget"])
         end
     end
 end
@@ -59,23 +55,21 @@ function Ether:CreateUnitButtons(unit)
     if not Ether.unitButtons.solo[unit] then
         local button = CreateFrame("Button", "Ether_" .. unit .. "_UnitButton", Ether.Anchor[unit], "EtherUnitTemplate")
         button:SetAllPoints(Ether.Anchor[unit])
-        button:SetBackdrop({bgFile = "Interface\\ChatFrame\\ChatFrameBackground"})
-        button:SetBackdropColor(0, 0, 0, 1)
         button.unit = unit
         button:SetAttribute("unit", button.unit)
         button:RegisterForClicks("AnyUp")
         button:SetAttribute("*type1", "target")
         button:SetAttribute("*type2", "togglemenu")
         button:SetAttribute("type2", "togglemenu")
-        Ether.Setup.CreateTooltip(button, button.unit)
-        Ether.Setup.CreateHealthBar(button, "HORIZONTAL")
-        Ether.Setup.CreatePowerBar(button)
-        Ether.Setup.CreatePrediction(button)
-        Ether.AddBlackBorder(button)
-        Ether.Setup.CreateNameText(button, 10, 0)
-        Ether.GetClassColor(button)
-        Ether.Setup.CreatePowerText(button)
-        Ether.Setup.CreateHealthText(button)
+        Ether:SetupTooltip(button, button.unit)
+        Ether:SetupHealthBar(button, "HORIZONTAL")
+        Ether:SetupPowerBar(button)
+        Ether:SetupPrediction(button)
+        Ether:AddBlackBorder(button)
+        Ether:SetupName(button, 10, 0)
+        Ether:GetClassColor(button)
+        Ether:SetupPowerText(button)
+        Ether:SetupHealthText(button)
         Mixin(button.healthBar, SmoothStatusBarMixin)
         Mixin(button.powerBar, SmoothStatusBarMixin)
         if button.unit ~= "player" then
@@ -88,7 +82,6 @@ function Ether:CreateUnitButtons(unit)
         button:SetScript("OnShow", Show)
         FullUpdate(button, true)
         Ether.unitButtons.solo[button.unit] = button
-
         return button
     end
 end
@@ -183,21 +176,19 @@ function Ether.CreateCustomUnit()
             if not name and not unit then
                 return nil
             end
-
             custom.unit = unit
             custom:SetBackdrop({"Interface\\Tooltips\\UI-Tooltip-Background"})
             custom:SetBackdropColor(0, 0, 0, 1)
             custom:SetAttribute("unit", custom.unit)
-            Ether.Setup.CreateTooltip(custom, custom.unit)
-            Ether.Setup.CreateHealthBar(custom, "HORIZONTAL")
-            Ether.Setup.CreatePowerBar(custom)
-            Ether.Setup.CreateNameText(custom, 10)
-
+            Ether:SetupTooltip(custom, custom.unit)
+            Ether:SetupHealthBar(custom, "HORIZONTAL", 120, 40)
+            Ether:SetupPowerBar(custom)
+            Ether:SetupName(custom, 10)
             custom.name:SetText(name)
-            Ether.Setup:CreateDrag(custom)
+            Ether:SetupDrag(custom)
             custom.healthBar:SetStatusBarColor(0.18, 0.54, 0.34)
             custom.healthDrop:SetColorTexture(0.18 * 0.3, 0.54 * 0.3, 0.34 * 0.3, 0.8)
-            local r, g, b = Ether.GetPowerColor(custom.unit)
+            local r, g, b = Ether:GetPowerColor(custom.unit)
             custom.powerBar:SetStatusBarColor(r, g, b)
             custom.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.4)
             custom.powerBar:SetStatusBarColor(r, g, b)
@@ -217,7 +208,6 @@ function Ether.CreateCustomUnit()
         end
     end
 end
-
 
 function Ether.registerToTEvents()
     if Ether.unitButtons.solo["targettarget"] then
