@@ -351,9 +351,7 @@ local function SetupAuraCount(button)
 end
 
 function Ether:SingleAuraSetup(button)
-    if (not button or not button.unit) then
-        return
-    end
+    if not button or not button.unit then return end
     if not button.Aura then
         button.Aura = {
             Buffs = {},
@@ -420,9 +418,7 @@ function Ether:SingleAuraSetup(button)
 end
 
 function Ether:AddBlackBorder(button)
-    if not button then
-        return
-    end
+    if not button then return end
     local top = button:CreateTexture(nil, "BORDER")
     top:SetColorTexture(0, 0, 0, .6)
     LPP.PHeight(top, 2)

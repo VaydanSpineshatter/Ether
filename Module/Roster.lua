@@ -80,7 +80,7 @@ local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
         if Ether.DB[1001][2] == 1 then
             C_After(0.05, function()
-                if UnitExists("target")  then
+                if UnitExists("target") then
                     Ether:SingleAuraUpdateBuff(Ether.unitButtons.solo["target"])
                     Ether:SingleAuraUpdateDebuff(Ether.unitButtons.solo["target"])
                 end
@@ -125,12 +125,6 @@ local function WorldLeaved(_, event)
         C_After(0.1, function()
             Ether:UpdateIndicators()
         end)
-        Ether:RangeDisable()
-        if Ether.DB[801][6] == 1 then
-            C_After(0.1, function()
-                Ether:RangeEnable()
-            end)
-        end
         if Ether.DB[1001][3] == 1 then
             if not IsInRaid() and not IsInGroup() then
                 C_After(0.1, function()
@@ -176,16 +170,16 @@ local function NotAfk(self)
     Ether:HealthEnable()
     Ether:PowerEnable()
     Ether:AuraEnable()
-        if Ether.DB[1001][3] == 1 then
-            C_After(0.2, function()
-                for unit, button in pairs(Ether.unitButtons.raid) do
-                    if UnitExists(unit) then
-                        Ether:UpdateRaidIsHelpful(unit)
-                        Ether:DispelAuraScan(unit)
-                    end
+    if Ether.DB[1001][3] == 1 then
+        C_After(0.2, function()
+            for unit, button in pairs(Ether.unitButtons.raid) do
+                if UnitExists(unit) then
+                    Ether:UpdateRaidIsHelpful(unit)
+                    Ether:DispelAuraScan(unit)
                 end
-            end)
-        end
+            end
+        end)
+    end
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether:RangeEnable()

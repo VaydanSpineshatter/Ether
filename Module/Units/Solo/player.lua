@@ -32,6 +32,7 @@ local function Show(self)
 end
 
 local function Update(_, event, unit)
+    if not unit or not UnitExists("targettarget") then return end
     if not Ether.DB[901]["targettarget"] then return end
     if event == "UNIT_HEAL_PREDICTION" then
         Ether:UpdatePrediction(Ether.unitButtons.solo["targettarget"])

@@ -39,7 +39,6 @@ local function Update(self)
     end)
 end
 
-
 local function OnAttributeChanged(self, name, unit)
     if name ~= "unit" or not unit then
         return
@@ -48,7 +47,6 @@ local function OnAttributeChanged(self, name, unit)
     local oldUnit = self.unit
     local oldGUID = self.unitGUID
     local newGUID = UnitGUID(unit)
-
 
     if oldGUID and newGUID and oldGUID ~= newGUID then
         self.top:SetColorTexture(0, 0, 0, .6)

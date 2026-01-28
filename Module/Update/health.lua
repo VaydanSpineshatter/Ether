@@ -178,9 +178,7 @@ function Ether:UpdateHealthText(button)
 end
 
 function Ether:UpdatePrediction(button)
-    if not button or not button.unit or not button.myPrediction then
-        return
-    end
+    if not button or not button.unit or not button.myPrediction then return end
     local myHeal = UnitGetIncomingHeals(button.unit, "player") or 0
     local allIncomingHeal = UnitGetIncomingHeals(button.unit) or 0
     local otherHeal = 0
@@ -208,9 +206,7 @@ function Ether:UpdatePrediction(button)
 end
 
 function Ether:UpdateSmoothHealth(button)
-    if not button or not button.unit or not button.healthBar then
-        return
-    end
+    if not button or not button.unit or not button.healthBar then return end
     local h = UnitHealth(button.unit)
     local mh = UnitHealthMax(button.unit)
     local r, g, b = Ether:GetClassColor(button)
@@ -221,9 +217,7 @@ function Ether:UpdateSmoothHealth(button)
 end
 
 local function HealthChanged(_, event, unit)
-    if (not unit) then
-        return
-    end
+    if not unit then return end
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
         if Ether.DB[901][unit] then
             local s = Ether.unitButtons.solo[unit]
@@ -256,12 +250,8 @@ local function HealthChanged(_, event, unit)
 end
 
 local function PredictionChanged(_, event, unit)
-    if (not unit) then
-        return
-    end
-    if event ~= "UNIT_HEAL_PREDICTION" then
-        return
-    end
+    if not unit then return end
+    if event ~= "UNIT_HEAL_PREDICTION" then return end
     if Ether.DB[901][unit] then
         local s = Ether.unitButtons.solo[unit]
         if s then

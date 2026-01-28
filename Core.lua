@@ -321,8 +321,6 @@ function Ether.CreateMainSettings(self)
         RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")
         local btnX = CreateFrame("Button", nil, self.Frames["Main"], "GameMenuButtonTemplate")
         btnX:SetPoint("TOPRIGHT", -10, -10)
-        btnX:GetFontString():SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-        btnX:SetText("X")
         btnX:SetSize(28, 28)
         btnX:SetScript("OnClick", function()
             self.Frames["Main"]:Hide()
@@ -525,9 +523,7 @@ do
 
     local function OnClick(_, button)
         if button == "RightButton" then
-            if not panelIsCreated then
-                return
-            end
+            if not panelIsCreated then return end
             if Ether.DB[001].SHOW then
                 Ether.DB[001].SHOW = false
             else

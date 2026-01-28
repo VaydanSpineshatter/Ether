@@ -35,8 +35,7 @@ local _, playerClass = UnitClass("player")
 local friendly = classFriendly[playerClass] or 355
 local hostile = classHostile[playerClass] or 772
 
-local rangeCache = {}
-Ether.rangeCache = rangeCache
+
 function Ether:IsUnitInRange(unit)
     if not unit then
         return
@@ -82,6 +81,11 @@ function Ether:UpdateTargetAlpha()
         Ether:UpdateAlpha(Ether.unitButtons.solo["target"])
     end
     if not UnitInAnyGroup("player") then
+        for _, button in pairs(Ether.unitButtons.raid) do
+            if button and button:IsVisible() then
+                button:SetAlpha(1.0)
+            end
+        end
         return
     end
     for _, button in pairs(Ether.unitButtons.raid) do
