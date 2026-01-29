@@ -135,15 +135,16 @@ local function UpdateUnitFlagsIcon()
                 button.name:SetTextColor(1.00, 0.00, 0.00)
             elseif (IsGhost) then
                 button.Indicators.UnitFlagsIcon.texture:SetTexture(ghostIcon)
+                button.Indicators.UnitFlagsIcon.texture:Show()
                 unitIsDead(button)
             elseif (IsDead) then
                 button.Indicators.UnitFlagsIcon.texture:SetTexture(deadIcon)
+                button.Indicators.UnitFlagsIcon.texture:Show()
                 unitIsDead(button)
             else
                 button.name:SetTextColor(1, 1, 1)
                 if button.Indicators.UnitFlagsIcon then
-                    getTextureMethod:Release(button.Indicators.UnitFlagsIcon)
-                    button.Indicators.UnitFlagsIcon = nil
+                   button.Indicators.UnitFlagsIcon.texture:Hide()
                 end
             end
         end
@@ -162,15 +163,17 @@ local function UpdateReadyCheckIcon()
             if (status) then
                 if (status == "ready") then
                     button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Ready)
+                    button.Indicators.ReadyCheckIcon.texture:Show()
                 elseif (status == "notready") then
                     button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_NotReady)
+                    button.Indicators.ReadyCheckIcon.texture:Show()
                 elseif (status == "waiting") then
                     button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Waiting)
+                    button.Indicators.ReadyCheckIcon.texture:Show()
                 end
             else
                 if button.Indicators.ReadyCheckIcon then
-                    getTextureMethod:Release(button.Indicators.ReadyCheckIcon)
-                    button.Indicators.ReadyCheckIcon = nil
+                    button.Indicators.ReadyCheckIcon.texture:Hide()
                 end
             end
         end
@@ -184,8 +187,10 @@ local function UpdateConfirmIcon()
             local status = GetReadyCheckStatus(unit)
             if (status == "ready") then
                 button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Ready)
+                button.Indicators.ReadyCheckIcon.texture:Show()
             elseif (status == "notready") then
                 button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_NotReady)
+                button.Indicators.ReadyCheckIcon.texture:Show()
             end
         end
     end
@@ -212,8 +217,7 @@ local function UpdateGroupLeaderIcon()
             if (IsLeader) then
                 button.Indicators.GroupLeaderIcon.texture:SetTexture(leader)
             else
-                getTextureMethod:Release(button.Indicators.GroupLeaderIcon)
-                button.Indicators.GroupLeaderIcon = nil
+                button.Indicators.GroupLeaderIcon.texture:Hide()
             end
         end
     end
@@ -233,8 +237,7 @@ local function UpdateMasterLootIcon()
                 if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
                     button.Indicators.MasterLootIcon.texture:Show()
                 else
-                    getTextureMethod:Release(button.Indicators.MasterLootIcon)
-                    button.Indicators.MasterLootIcon = nil
+                    button.Indicators.MasterLootIcon.texture:Hide()
                 end
             end
         end
@@ -256,8 +259,7 @@ local function UpdatePlayerRolesIcon()
                     button.Indicators.MainTankIcon.texture:SetTexture(mainAssistIcon)
                     button.Indicators.MainTankIcon.texture:Show()
                 else
-                    getTextureMethod:Release(button.Indicators.MainTankIcon)
-                    button.Indicators.MainTankIcon = nil
+                    button.Indicators.MainTankIcon.texture:Hide()
                 end
             end
         end
@@ -273,10 +275,10 @@ local function UpdateConnectionIcon()
             local isConnected = UnitIsConnected(unit)
             if (not isConnected) then
                 button.Indicators.ConnectionIcon.texture:SetTexture(connectionIcon)
+                button.Indicators.ConnectionIcon.texture:Show()
                 button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
             else
-                getTextureMethod:Release(button.Indicators.ConnectionIcon)
-                button.Indicators.ConnectionIcon = nil
+                button.Indicators.ConnectionIcon.texture:Hide()
             end
         end
     end
@@ -291,10 +293,10 @@ local function UpdateRaidTargetIcon()
             local index = GetRaidTargetIndex(unit)
             if index then
                 button.Indicators.RaidTargetIcon.texture:SetTexture(target)
+                button.Indicators.RaidTargetIcon.texture:Show()
                 SetRaidTargetIconTexture(button.Indicators.RaidTargetIcon.texture, index)
             else
-                getTextureMethod:Release(button.Indicators.RaidTargetIcon)
-                button.Indicators.RaidTargetIcon = nil
+                button.Indicators.RaidTargetIcon.texture:Hide()
             end
         end
     end
@@ -309,9 +311,9 @@ local function UpdateResurrectionIcon()
             local Resurrection = UnitHasIncomingResurrection(unit)
             if (Resurrection) then
                 button.Indicators.ResurrectionIcon.texture:SetTexture(rezIcon)
+                button.Indicators.ResurrectionIcon.texture:Show()
             else
-                getTextureMethod:Release(button.Indicators.ResurrectionIcon)
-                button.Indicators.ResurrectionIcon = nil
+                button.Indicators.ResurrectionIcon.texture:Hide()
             end
         end
     end
@@ -327,11 +329,12 @@ local function UpdatePlayerFlagsString()
             local dnd = UnitIsDND(unit)
             if away then
                 button.Indicators.PlayerFlagsString.string:SetText(AFK)
+                button.Indicators.PlayerFlagsString.string:Show()
             elseif dnd then
                 button.Indicators.PlayerFlagsString.string:SetText(DND)
+                button.Indicators.PlayerFlagsString.string:Show()
             else
-                getStringMethod:Release(button.Indicators.PlayerFlagsString)
-                button.Indicators.PlayerFlagsString = nil
+                button.Indicators.PlayerFlagsString.string:Hide()
             end
         end
     end

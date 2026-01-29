@@ -750,7 +750,6 @@ local function OnInitialize(self, event, ...)
                     end
                 end
             end
-
             for arrayID, expectedLength in pairs(arraysLength) do
                 if profile[arrayID] and type(profile[arrayID]) == "table" then
                     if #profile[arrayID] ~= expectedLength then
