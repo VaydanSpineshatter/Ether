@@ -157,9 +157,7 @@ local function CreateGroupHeader(group)
     header:SetAttribute("showParty", false)
     header:SetAttribute("showPlayer", false)
     header:SetAttribute("showSolo", true)
-    header:SetAttribute("startingIndex", -4)
     header:Show()
-    header:SetAttribute("startingIndex", 1)
 end
 
 for i = 1, 8 do

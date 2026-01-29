@@ -8,14 +8,16 @@ local UnitName = UnitName
 local UnitClass = UnitClass
 local UnitIsPlayer = UnitIsPlayer
 local UnitReaction = UnitReaction
-local U_PVP = UnitIsPVP
-local U_PVP_A = UnitIsPVPFreeForAll
+local UnitExists = UnitExists
+local UnitIsPVP= UnitIsPVP
+local UnitIsPVPFreeForAll = UnitIsPVPFreeForAll
 local IsResting = IsResting
-local U_IU = UnitIsUnit
-local U_FG = UnitFactionGroup
-local U_AFK = UnitIsAFK
-local U_DND = UnitIsDND
+local UnitIsUnit = UnitIsUnit
+local UnitFactionGroup = UnitFactionGroup
+local UnitIsAFK = UnitIsAFK
+local UnitIsDND = UnitIsDND
 local GetTargetIndex = GetRaidTargetIndex
+local UnitGroupRolesAssigned = UnitGroupRolesAssigned
 local U_RACE = UnitRace
 local U_CREATURE = UnitCreatureType
 local AFK = [[|cffff00ffAFK|r]]
@@ -30,7 +32,7 @@ local fStr = " %s  |cff%02x%02x%02x%s|r"
 local cStr = "|cffffd700%s - %s|r"
 local aStr = " |cff%02x%02x%02x%s|r"
 local bStr = "|cff%02x%02x%02x%s|r "
-
+local string_format = string.format
 local tconcat = table.concat
 Tooltip.StringBuffer = (function()
     local bufferPool = {}
@@ -51,7 +53,7 @@ Tooltip.StringBuffer = (function()
             buffer[#buffer + 1] = str
         end,
         AddFormat = function(buffer, fmt, ...)
-            buffer[#buffer + 1] = string.format(fmt, ...)
+            buffer[#buffer + 1] = string_format(fmt, ...)
         end,
         Concat = function(buffer, sep)
             return tconcat(buffer, sep or "", 1, #buffer)
@@ -72,7 +74,7 @@ local function GetF_UnitClass(unit)
     local className, classFileName = UnitClass(unit)
     local color = RAID_CLASS_COLORS[classFileName]
     if color then
-        return string.format(aStr, color.r * 255, color.g * 255, color.b * 255, className)
+        return string_format(aStr, color.r * 255, color.g * 255, color.b * 255, className)
     end
     return ""
 end
@@ -86,7 +88,7 @@ local function GetCachedLevelColor(level)
             levelColorCache[level] = '? '
         else
             local diff = GetQuestDifficultyColor(level)
-            levelColorCache[level] = string.format(bStr, diff.r * 255, diff.g * 255, diff.b * 255, level)
+            levelColorCache[level] = string_format(bStr, diff.r * 255, diff.g * 255, diff.b * 255, level)
         end
     end
     return levelColorCache[level]
@@ -122,10 +124,10 @@ local function UpdateTooltip(self, unit)
 
     local targetName = UnitName(unit .. "target")
     if targetName then
-        local you = U_IU(unit .. "target", "player")
+        local you = UnitIsUnit(unit .. "target", "player")
         local color = raidColors[select(2, UnitClass(unit .. 'target'))] or raidColors["UNKNOWN"]
         self.target:SetText(you and L.TT_AIMING_YOU or
-                string.format(fStr, L.TT_AIMING, color.r * 255, color.g * 255, color.b * 255, targetName))
+                string_format(fStr, L.TT_AIMING, color.r * 255, color.g * 255, color.b * 255, targetName))
         self.target:Show()
     else
         self.target:Hide()
@@ -144,10 +146,10 @@ local function UpdateTooltip(self, unit)
 
     self.name:SetTextColor(nameColorR, nameColorG, nameColorB)
 
-    if DB[1] == 1 and U_AFK(unit) then
+    if DB[1] == 1 and UnitIsAFK(unit) then
         self.flags:SetText(AFK)
         self.flags:Show()
-    elseif DB[2] == 1 and U_DND(unit) then
+    elseif DB[2] == 1 and UnitIsDND(unit) then
         self.flags:SetText(DND)
         self.flags:Show()
     else
@@ -155,11 +157,11 @@ local function UpdateTooltip(self, unit)
     end
 
     if DB[3] == 1 then
-        if U_PVP_A(unit) then
+        if UnitIsPVPFreeForAll(unit) then
             self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-FFA")
             self.pvp:Show()
-        elseif U_FG(unit) and U_PVP(unit) then
-            self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-" .. U_FG(unit))
+        elseif UnitFactionGroup(unit) and UnitIsPVP(unit) then
+            self.pvp:SetTexture("Interface\\AddOns\\Ether\\Media\\Texture\\UI-PVP-" .. UnitFactionGroup(unit))
             self.pvp:Show()
         else
             self.pvp:Hide()
@@ -168,7 +170,7 @@ local function UpdateTooltip(self, unit)
         self.pvp:Hide()
     end
 
-    if DB[4] == 1 and (U_IU(unit, "player") and IsResting()) then
+    if DB[4] == 1 and (UnitIsUnit(unit, "player") and IsResting()) then
         self.resting:Show()
     else
         self.resting:Hide()
@@ -178,7 +180,7 @@ local function UpdateTooltip(self, unit)
         local realmRelation = UnitRealmRelationship(unit)
         local isDifferentRealm = (realmRelation and realmRelation ~= LE_REALM_RELATION_SAME)
         if isDifferentRealm then
-            self.name:SetText(string.format("%s - %s", name, RealmName()))
+            self.name:SetText(string_format("%s - %s", name, RealmName()))
         else
             self.name:SetText(name)
         end
@@ -197,7 +199,7 @@ local function UpdateTooltip(self, unit)
     if DB[8] == 1 and isPlayer then
         local guildName, guildRankName = GetG_Info(unit)
         if guildName then
-            self.guild:SetText(string.format(cStr, guildName, guildRankName or L.TT_UNKNOWN))
+            self.guild:SetText(string_format(cStr, guildName, guildRankName or L.TT_UNKNOWN))
             self.guild:Show()
         else
             self.guild:Hide()
