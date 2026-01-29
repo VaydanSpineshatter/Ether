@@ -65,16 +65,16 @@ function Ether:UpdateAlpha(button)
         button:SetAlpha(0.45)
         return
     end
-
+    if IsInGroup() then
+        inRange = UnitInRange(button.unit)
+    else
+        inRange = Ether:IsUnitInRange(button.unit)
+    end
     inRange = Ether:IsUnitInRange(button.unit)
     local value = inRange and 1.0 or 0.45
     button:SetAlpha(value)
 end
--- if IsInGroup() then
---nRange = UnitInRange(button.unit)
---  else
---   inRange = Ether:IsUnitInRange(button.unit)
---  end
+
 local function RemoveAlpha()
     for _, button in pairs(Ether.unitButtons.raid) do
         if button and button.unit and button:IsVisible() then

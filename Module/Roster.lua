@@ -109,19 +109,6 @@ local function RosterChanged(_, event)
     end
 end
 
-local function WorldJoined(_, event)
-    if event == "PLAYER_ENTERING_WORLD" then
-        Ether.getStringMethod:ReleaseAll()
-        Ether.getTextureMethod:ReleaseAll()
-    end
-end
-local function WorldLeaved(_, event)
-    if event == "PLAYER_LEAVING_WORLD" then
-        Ether.getStringMethod:ReleaseAll()
-        Ether.getTextureMethod:ReleaseAll()
-    end
-end
-
 local function OnAfk(self)
     self.isActive = true
     Ether.CastBar.DisableCastEvents()
@@ -189,8 +176,6 @@ function Ether:RosterEnable()
     RegisterRosterEvent("GROUP_ROSTER_UPDATE", RosterChanged)
     RegisterRosterEvent("PLAYER_TARGET_CHANGED", TargetChanged)
     RegisterRosterEvent("PLAYER_FLAGS_CHANGED", PlayerFlags)
-    RegisterRosterEvent("PLAYER_ENTERING_WORLD", WorldJoined)
-    RegisterRosterEvent("PLAYER_LEAVING_WORLD", WorldLeaved)
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether:RangeEnable()
@@ -201,8 +186,6 @@ end
 function Ether:RosterDisable()
     UnregisterRosterEvent("PLAYER_TARGET_CHANGED")
     UnregisterRosterEvent("GROUP_ROSTER_UPDATE")
-    UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
-    UnregisterRosterEvent("PLAYER_LEAVING_WORLD")
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether.Range:Disable()
