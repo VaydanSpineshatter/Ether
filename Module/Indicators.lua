@@ -99,7 +99,8 @@ end
 
 local getTextureMethod = Ether:CreateObjPool(TextureMethod)
 local getStringMethod = Ether:CreateObjPool(StringMethod)
-
+Ether.getStringMethod = getStringMethod
+Ether.getTextureMethod  = getTextureMethod
 function Ether:HideIndicators(hide, method)
     for _, button in pairs(Ether.unitButtons.raid) do
         if (button and button.Indicators and button.Indicators[hide]) then
@@ -130,21 +131,20 @@ local function UpdateUnitFlagsIcon()
             local IsCharmed = UnitIsCharmed(unit)
             local IsDead = UnitIsDead(unit)
             local IsGhost = UnitIsGhost(unit)
-
-            if (IsCharmed) then
-                button.name:SetTextColor(1.00, 0.00, 0.00)
-            elseif (IsGhost) then
-                button.Indicators.UnitFlagsIcon.texture:SetTexture(ghostIcon)
-                button.Indicators.UnitFlagsIcon.texture:Show()
-                unitIsDead(button)
-            elseif (IsDead) then
-                button.Indicators.UnitFlagsIcon.texture:SetTexture(deadIcon)
-                button.Indicators.UnitFlagsIcon.texture:Show()
-                unitIsDead(button)
-            else
-                button.name:SetTextColor(1, 1, 1)
-                if button.Indicators.UnitFlagsIcon then
-                   button.Indicators.UnitFlagsIcon.texture:Hide()
+            if button.Indicators.UnitFlagsIcon then
+                if (IsCharmed) then
+                    button.name:SetTextColor(1.00, 0.00, 0.00)
+                elseif (IsGhost) then
+                    button.Indicators.UnitFlagsIcon.texture:SetTexture(ghostIcon)
+                    button.Indicators.UnitFlagsIcon.texture:Show()
+                    unitIsDead(button)
+                elseif (IsDead) then
+                    button.Indicators.UnitFlagsIcon.texture:SetTexture(deadIcon)
+                    button.Indicators.UnitFlagsIcon.texture:Show()
+                    unitIsDead(button)
+                else
+                    button.name:SetTextColor(1, 1, 1)
+                    button.Indicators.UnitFlagsIcon.texture:Hide()
                 end
             end
         end
@@ -159,21 +159,23 @@ local function UpdateReadyCheckIcon()
             if not button.Indicators.ReadyCheckIcon then
                 button.Indicators.ReadyCheckIcon = getTextureMethod:Acquire(button.healthBar, 18, "TOP")
             end
-            local status = GetReadyCheckStatus(unit)
-            if (status) then
-                if (status == "ready") then
-                    button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Ready)
-                    button.Indicators.ReadyCheckIcon.texture:Show()
-                elseif (status == "notready") then
-                    button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_NotReady)
-                    button.Indicators.ReadyCheckIcon.texture:Show()
-                elseif (status == "waiting") then
-                    button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Waiting)
-                    button.Indicators.ReadyCheckIcon.texture:Show()
-                end
-            else
-                if button.Indicators.ReadyCheckIcon then
-                    button.Indicators.ReadyCheckIcon.texture:Hide()
+            if button.Indicators.ReadyCheckIcon then
+                local status = GetReadyCheckStatus(unit)
+                if (status) then
+                    if (status == "ready") then
+                        button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Ready)
+                        button.Indicators.ReadyCheckIcon.texture:Show()
+                    elseif (status == "notready") then
+                        button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_NotReady)
+                        button.Indicators.ReadyCheckIcon.texture:Show()
+                    elseif (status == "waiting") then
+                        button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Waiting)
+                        button.Indicators.ReadyCheckIcon.texture:Show()
+                    end
+                else
+                    if button.Indicators.ReadyCheckIcon then
+                        button.Indicators.ReadyCheckIcon.texture:Hide()
+                    end
                 end
             end
         end
@@ -183,7 +185,7 @@ end
 local function UpdateConfirmIcon()
     for unit, button in pairs(Ether.unitButtons.raid) do
         if button and unit then
-            if not button.Indicators.ReadyCheckIcon or not button.Indicators.ReadyCheckIcon.texture then return end
+            if not button.Indicators.ReadyCheckIcon then return end
             local status = GetReadyCheckStatus(unit)
             if (status == "ready") then
                 button.Indicators.ReadyCheckIcon.texture:SetTexture(ReadyCheck_Ready)
@@ -213,11 +215,13 @@ local function UpdateGroupLeaderIcon()
             if not button.Indicators.GroupLeaderIcon then
                 button.Indicators.GroupLeaderIcon = getTextureMethod:Acquire(button.healthBar, 12, "RIGHT")
             end
-            local IsLeader = UnitIsGroupLeader(unit)
-            if (IsLeader) then
-                button.Indicators.GroupLeaderIcon.texture:SetTexture(leader)
-            else
-                button.Indicators.GroupLeaderIcon.texture:Hide()
+            if button.Indicators.GroupLeaderIcon then
+                local IsLeader = UnitIsGroupLeader(unit)
+                if (IsLeader) then
+                    button.Indicators.GroupLeaderIcon.texture:SetTexture(leader)
+                else
+                    button.Indicators.GroupLeaderIcon.texture:Hide()
+                end
             end
         end
     end
@@ -229,15 +233,17 @@ local function UpdateMasterLootIcon()
             if not button.Indicators.MasterLootIcon then
                 button.Indicators.MasterLootIcon = getTextureMethod:Acquire(button.healthBar, 12, "BOTTOMRIGHT", 0, 12)
             end
-            button.Indicators.MasterLootIcon.texture:SetTexture(masterlootIcon)
-            button.Indicators.MasterLootIcon.texture:Hide()
-            local lootType, partyID, raidID = GetLoot()
-            if lootType == Enum.LootMethod.Masterlooter then
-                local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
-                if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
-                    button.Indicators.MasterLootIcon.texture:Show()
-                else
-                    button.Indicators.MasterLootIcon.texture:Hide()
+            if button.Indicators.MasterLootIcon then
+                button.Indicators.MasterLootIcon.texture:SetTexture(masterlootIcon)
+                button.Indicators.MasterLootIcon.texture:Hide()
+                local lootType, partyID, raidID = GetLoot()
+                if lootType == Enum.LootMethod.Masterlooter then
+                    local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
+                    if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
+                        button.Indicators.MasterLootIcon.texture:Show()
+                    else
+                        button.Indicators.MasterLootIcon.texture:Hide()
+                    end
                 end
             end
         end
@@ -252,14 +258,16 @@ local function UpdatePlayerRolesIcon()
             if not IsInRaid() and button.Indicators.MainTankIcon then
                 button.Indicators.MainTankIcon.texture:Hide()
             else
-                if (GetPartyAssignment("MAINTANK", unit)) then
-                    button.Indicators.MainTankIcon.texture:SetTexture(mainTankIcon)
-                    button.Indicators.MainTankIcon.texture:Show()
-                elseif (GetPartyAssignment("MAINASSIST", unit)) then
-                    button.Indicators.MainTankIcon.texture:SetTexture(mainAssistIcon)
-                    button.Indicators.MainTankIcon.texture:Show()
-                else
-                    button.Indicators.MainTankIcon.texture:Hide()
+                if button.Indicators.MainTankIcon then
+                    if (GetPartyAssignment("MAINTANK", unit)) then
+                        button.Indicators.MainTankIcon.texture:SetTexture(mainTankIcon)
+                        button.Indicators.MainTankIcon.texture:Show()
+                    elseif (GetPartyAssignment("MAINASSIST", unit)) then
+                        button.Indicators.MainTankIcon.texture:SetTexture(mainAssistIcon)
+                        button.Indicators.MainTankIcon.texture:Show()
+                    else
+                        button.Indicators.MainTankIcon.texture:Hide()
+                    end
                 end
             end
         end
@@ -272,13 +280,15 @@ local function UpdateConnectionIcon()
             if not button.Indicators.ConnectionIcon then
                 button.Indicators.ConnectionIcon = getTextureMethod:Acquire(button.healthBar, 24, "TOPLEFT")
             end
-            local isConnected = UnitIsConnected(unit)
-            if (not isConnected) then
-                button.Indicators.ConnectionIcon.texture:SetTexture(connectionIcon)
-                button.Indicators.ConnectionIcon.texture:Show()
-                button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
-            else
-                button.Indicators.ConnectionIcon.texture:Hide()
+            if button.Indicators.ConnectionIcon then
+                local isConnected = UnitIsConnected(unit)
+                if (not isConnected) then
+                    button.Indicators.ConnectionIcon.texture:SetTexture(connectionIcon)
+                    button.Indicators.ConnectionIcon.texture:Show()
+                    button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
+                else
+                    button.Indicators.ConnectionIcon.texture:Hide()
+                end
             end
         end
     end
@@ -290,13 +300,15 @@ local function UpdateRaidTargetIcon()
             if not button.Indicators.RaidTargetIcon then
                 button.Indicators.RaidTargetIcon = getTextureMethod:Acquire(button.healthBar, 12, "BOTTOM")
             end
-            local index = GetRaidTargetIndex(unit)
-            if index then
-                button.Indicators.RaidTargetIcon.texture:SetTexture(target)
-                button.Indicators.RaidTargetIcon.texture:Show()
-                SetRaidTargetIconTexture(button.Indicators.RaidTargetIcon.texture, index)
-            else
-                button.Indicators.RaidTargetIcon.texture:Hide()
+            if button.Indicators.RaidTargetIcon then
+                local index = GetRaidTargetIndex(unit)
+                if index then
+                    button.Indicators.RaidTargetIcon.texture:SetTexture(target)
+                    button.Indicators.RaidTargetIcon.texture:Show()
+                    SetRaidTargetIconTexture(button.Indicators.RaidTargetIcon.texture, index)
+                else
+                    button.Indicators.RaidTargetIcon.texture:Hide()
+                end
             end
         end
     end
@@ -308,12 +320,14 @@ local function UpdateResurrectionIcon()
             if not button.Indicators.ResurrectionIcon then
                 button.Indicators.ResurrectionIcon = getTextureMethod:Acquire(button.healthBar, 24, "CENTER")
             end
-            local Resurrection = UnitHasIncomingResurrection(unit)
-            if (Resurrection) then
-                button.Indicators.ResurrectionIcon.texture:SetTexture(rezIcon)
-                button.Indicators.ResurrectionIcon.texture:Show()
-            else
-                button.Indicators.ResurrectionIcon.texture:Hide()
+            if button.Indicators.ResurrectionIcon then
+                local Resurrection = UnitHasIncomingResurrection(unit)
+                if (Resurrection) then
+                    button.Indicators.ResurrectionIcon.texture:SetTexture(rezIcon)
+                    button.Indicators.ResurrectionIcon.texture:Show()
+                else
+                    button.Indicators.ResurrectionIcon.texture:Hide()
+                end
             end
         end
     end
@@ -325,16 +339,18 @@ local function UpdatePlayerFlagsString()
             if not button.Indicators.PlayerFlagsString then
                 button.Indicators.PlayerFlagsString = getStringMethod:Acquire(button.healthBar, "TOPLEFT")
             end
-            local away = UnitIsAFK(unit)
-            local dnd = UnitIsDND(unit)
-            if away then
-                button.Indicators.PlayerFlagsString.string:SetText(AFK)
-                button.Indicators.PlayerFlagsString.string:Show()
-            elseif dnd then
-                button.Indicators.PlayerFlagsString.string:SetText(DND)
-                button.Indicators.PlayerFlagsString.string:Show()
-            else
-                button.Indicators.PlayerFlagsString.string:Hide()
+            if button.Indicators.PlayerFlagsString then
+                local away = UnitIsAFK(unit)
+                local dnd = UnitIsDND(unit)
+                if away then
+                    button.Indicators.PlayerFlagsString.string:SetText(AFK)
+                    button.Indicators.PlayerFlagsString.string:Show()
+                elseif dnd then
+                    button.Indicators.PlayerFlagsString.string:SetText(DND)
+                    button.Indicators.PlayerFlagsString.string:Show()
+                else
+                    button.Indicators.PlayerFlagsString.string:Hide()
+                end
             end
         end
     end

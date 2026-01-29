@@ -459,7 +459,7 @@ function Ether:CreateObjPool(creatorFunc)
     return obj
 end
 function ObjPool:Acquire(...)
-    if self.activeCount >= 180 then
+    if self.activeCount >= 220 then
         return nil
     end
     local obj = table.remove(self.inactive)
