@@ -141,10 +141,10 @@ function Ether:DispelAuraScan(unit)
     end
     if not hasDispelDebuff then
         local button = Ether.unitButtons.raid[unit]
-        button.top:SetColorTexture(0, 0, 0, .6)
-        button.right:SetColorTexture(0, 0, 0, .6)
-        button.left:SetColorTexture(0, 0, 0, .6)
-        button.bottom:SetColorTexture(0, 0, 0, .6)
+        button.top:SetColorTexture(0, 0, 0, 1)
+        button.right:SetColorTexture(0, 0, 0, 1)
+        button.left:SetColorTexture(0, 0, 0, 1)
+        button.bottom:SetColorTexture(0, 0, 0, 1)
     end
 end
 

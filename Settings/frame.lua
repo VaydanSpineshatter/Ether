@@ -1037,27 +1037,24 @@ end
 
 function Ether.CreateRegisterSection(self)
     local parent = self.Content.Children["Register"]
+    local deadIcon = "Interface\\Icons\\Spell_Holy_TurnUndead"
+    local ghostIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
+    local ReadyCheck_Ready = "Interface\\RaidFrame\\ReadyCheck-Ready"
+    local ReadyCheck_NotReady = "Interface\\RaidFrame\\ReadyCheck-NotReady"
+    local ReadyCheck_Waiting = "Interface\\RaidFrame\\ReadyCheck-Waiting"
+    local mainTankIcon = "Interface\\GroupFrame\\UI-Group-MainTankIcon"
+    local mainAssistIcon = "Interface\\GroupFrame\\UI-Group-MainAssistIcon"
 
     local I_Register = {
-        [1] = {text = "Ready check, confirm and finished", texture = "Interface\\RaidFrame\\ReadyCheck-Ready"},
+        [1] = {text = "Ready check, confirm and finished", texture = ReadyCheck_Ready, texture2 = ReadyCheck_NotReady, texture3 = ReadyCheck_Waiting},
         [2] = {text = "Unit connection", texture = "Interface\\CharacterFrame\\Disconnect-Icon", size = 30},
-        [3] = {text = "Raid target update", texture = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", size = 14, cor = {0.75, 1, 0.25, 0.5}},
-        [4] = {text = "Incoming Resurrect changed", texture = "Interface\\RaidFrame\\Raid-Icon-Rez"},
+        [3] = {text = "Raid target update", texture = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", size = 14, coo = {0.75, 1, 0.25, 0.5}},
+        [4] = {text = "Incoming Resurrect changed", texture = "Interface\\RaidFrame\\Raid-Icon-Rez", size = 20},
         [5] = {text = "Party leader changed", texture = "Interface\\GroupFrame\\UI-Group-LeaderIcon"},
         [6] = {text = "Party loot method changed", texture = "Interface\\GroupFrame\\UI-Group-MasterLooter", size = 16},
-        [7] = {text = "|cffffa500Unit Flags|r"},
-        [8] = {text = "|cffCC66FFPlayer roles assigned|r"},
-        [9] = {text = "|cE600CCFFPlayer flags|r"}
-    }
-
-    local I_Enable = {
-        [1] = {text = "|cffffa500Status|r - Charmed - |cffff0000 Red Name|r", texture = "Interface\\Icons\\Spell_Shadow_Charm", size = 16},
-        [2] = {text = "|cffffa500Status|r - Dead", texture = "Interface\\Icons\\Spell_Holy_SenseUndead", size = 16},
-        [3] = {text = "|cffffa500Status|r - Ghost", texture = "Interface\\Icons\\Spell_Holy_GuardianSpirit", size = 16},
-        [4] = {text = "|cffCC66FFStatus|r - Group Role", texture = "Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES", cor = {0, 19 / 64, 22 / 64, 41 / 64}},
-        [5] = {text = "|cffCC66FFStatus|r - Maintank or mainassist", texture = "Interface\\GroupFrame\\UI-Group-MainTankIcon"},
-        [6] = {text = "|cE600CCFFStatus|r - |cffff0000AFK|r"},
-        [7] = {text = "|cE600CCFFStatus|r - |cffCC66FFDND|r"}
+        [7] = {text = "Unit Flags - |cffff0000Charmed|r, Dead & Ghost", texture = deadIcon, texture2 = ghostIcon},
+        [8] = {text = "Player roles assigned", texture = mainTankIcon, texture2 = mainAssistIcon},
+        [9] = {text = "Player flags - |cE600CCFFAFK|r & |cffCC66FFDND|r"}
     }
 
     local DB = Ether.DB
@@ -1081,61 +1078,35 @@ function Ether.CreateRegisterSection(self)
         btn.texture:SetSize(18, 18)
         btn.texture:SetPoint("LEFT", btn.label, "RIGHT", 10, 0)
         btn.texture:SetTexture(opt.texture)
+        btn.texture2 = btn:CreateTexture(nil, "OVERLAY")
+        btn.texture2:SetSize(18, 18)
+        btn.texture2:SetPoint("LEFT", btn.label, "RIGHT", 35, 0)
+        btn.texture2:SetTexture(opt.texture2)
+        btn.texture3 = btn:CreateTexture(nil, "OVERLAY")
+        btn.texture3:SetSize(18, 18)
+        btn.texture3:SetPoint("LEFT", btn.label, "RIGHT", 60, 0)
+        btn.texture3:SetTexture(opt.texture3)
         if opt.size then
             btn.texture:SetSize(opt.size, opt.size)
         end
-        if opt.cor then
-            btn.texture:SetTexCoord(unpack(opt.cor))
+        if opt.coo then
+            btn.texture:SetTexCoord(unpack(opt.coo))
+        end
+        if opt.coo2 then
+            btn.texture2:SetTexCoord(unpack(opt.coo2))
+        end
+        if opt.coo3 then
+            btn.texture3:SetTexCoord(unpack(opt.coo3))
         end
         btn:SetChecked(DB[501][i] == 1)
 
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
-            Ether.GetIndicatorRegisterStatus(i)
-            Ether:UpdateIndicators()
             Ether:IndicatorsToggle()
+            Ether:IndicatorsUpdate()
         end)
         self.Content.Buttons.Indicators.A[i] = btn
-    end
-
-    local iEnable = CreateFrame("Frame", nil, parent)
-    iEnable:SetSize(200, (#I_Enable * 30) + 60)
-
-    for i, opt in ipairs(I_Enable) do
-        local btn = CreateFrame("CheckButton", nil, iEnable, "InterfaceOptionsCheckButtonTemplate")
-
-        if i == 1 then
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Indicators.A[9], "BOTTOMLEFT", 80, -20)
-        else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Indicators.B[i - 1], "BOTTOMLEFT", 0, 0)
-        end
-
-        btn:SetSize(24, 24)
-
-        btn.label = GetFont(self, btn, opt.text, 12)
-        btn.label:SetPoint("LEFT", btn, 'RIGHT', 10, 0)
-        btn.texture = btn:CreateTexture(nil, "OVERLAY")
-        btn.texture:SetSize(18, 18)
-        btn.texture:SetPoint("LEFT", btn.label, "RIGHT", 10, 0)
-        btn.texture:SetTexture(opt.texture)
-
-        if opt.size then
-            btn.texture:SetSize(opt.size, opt.size)
-        end
-        if opt.cor then
-            btn.texture:SetTexCoord(unpack(opt.cor))
-        end
-
-        btn:SetChecked(Ether.DB[601][i] == 1)
-
-        btn:SetScript("OnClick", function(self)
-            local checked = self:GetChecked()
-            Ether.DB[601][i] = checked and 1 or 0
-            Ether.GetIndicatorEnabledStatus(i)
-        end)
-
-        self.Content.Buttons.Indicators.B[i] = btn
     end
 end
 

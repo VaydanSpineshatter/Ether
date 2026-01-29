@@ -417,31 +417,96 @@ function Ether:SingleAuraSetup(button)
     end
 end
 
-function Ether:AddBlackBorder(button)
+function Ether:AddBlackBorder(button, scale, r, g, b, a)
     if not button then return end
     local top = button:CreateTexture(nil, "BORDER")
-    top:SetColorTexture(0, 0, 0, .6)
-    LPP.PHeight(top, 2)
-    top:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-2), LPP.PScale(2))
-    top:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(2), LPP.PScale(2))
+    top:SetColorTexture(r, g, b, a)
+    LPP.PHeight(top, scale)
+    top:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-scale), LPP.PScale(scale))
+    top:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(scale), LPP.PScale(scale))
     local bottom = button:CreateTexture(nil, "BORDER")
-    bottom:SetColorTexture(0, 0, 0, .6)
-    LPP.PHeight(bottom, 2)
-    bottom:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-2), LPP.PScale(-2))
-    bottom:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(2), LPP.PScale(-2))
+    bottom:SetColorTexture(r, g, b, a)
+    LPP.PHeight(bottom, scale)
+    bottom:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-scale), LPP.PScale(-scale))
+    bottom:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(scale), LPP.PScale(-scale))
     local left = button:CreateTexture(nil, "BORDER")
-    left:SetColorTexture(0, 0, 0, .6)
-    LPP.PWidth(left, 2)
-    left:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-2), LPP.PScale(2))
-    left:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-2), LPP.PScale(-2))
+    left:SetColorTexture(r, g, b, a)
+    LPP.PWidth(left, scale)
+    left:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-scale), LPP.PScale(scale))
+    left:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-scale), LPP.PScale(-scale))
     local right = button:CreateTexture(nil, "BORDER")
-    right:SetColorTexture(0, 0, 0, .6)
-    LPP.PWidth(right, 2)
-    right:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(2), LPP.PScale(2))
-    right:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(2), LPP.PScale(-2))
+    right:SetColorTexture(r, g, b, a)
+    LPP.PWidth(right, scale)
+    right:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(scale), LPP.PScale(scale))
+    right:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(scale), LPP.PScale(-scale))
     button.top = top
     button.left = left
     button.right = right
     button.bottom = bottom
-    return {top = top, bottom = bottom, left = left, right = right}
+    return button
+end
+
+local ObjPool = {}
+function Ether:CreateObjPool(creatorFunc)
+    local obj = {
+        create = creatorFunc,
+        active = {},
+        inactive = {},
+        temp = {},
+        activeCount = 0,
+    }
+    setmetatable(obj, {__index = ObjPool})
+    return obj
+end
+function ObjPool:Acquire(...)
+    if self.activeCount >= 180 then
+        return nil
+    end
+    local obj = table.remove(self.inactive)
+    if not obj then
+        obj = self.create()
+    end
+    self.activeCount = self.activeCount + 1
+    self.active[self.activeCount] = obj
+    obj._poolIndex = self.activeCount
+    if obj.Setup then
+        obj:Setup(...)
+    end
+    return obj
+end
+function ObjPool:Release(obj)
+    if not obj or not obj._poolIndex then
+        return
+    end
+    local index = obj._poolIndex
+    if index <= 0 or index > self.activeCount then
+        return
+    end
+    local last = self.active[self.activeCount]
+    self.active[index] = last
+    self.active[self.activeCount] = nil
+    if last and last ~= obj then
+        last._poolIndex = index
+    end
+    obj._poolIndex = -1
+    self.activeCount = self.activeCount - 1
+    if obj.Reset then
+        obj:Reset()
+    end
+    if #self.inactive < 150 then
+        self.inactive[#self.inactive + 1] = obj
+    end
+end
+function ObjPool:ReleaseAll()
+    for i = 1, self.activeCount do
+        self.temp[i] = self.active[i]
+    end
+
+    for i = 1, #self.temp do
+        self:Release(self.temp[i])
+    end
+
+    for i = 1, #self.temp do
+        self.temp[i] = nil
+    end
 end

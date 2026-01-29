@@ -96,15 +96,6 @@ local string_char = string.char
 ---| PLAYER_ROLES_ASSIGNED 8
 ---| PLAYER_FLAGS_CHANGED 9
 
----@alias IndicatorStatus_601 number
----| Unit Is Charmed 1
----| Unit Is Dead 2
----| Unit Is Ghost 3
----| Group Role 4
----| Main Tank and Main Assist 5
----| AFK String 6
----| DND String 7
-
 ---@alias UpdateText_701 number
 ---| Solo Health 1
 ---| Solo Power 2
@@ -150,7 +141,6 @@ local Default = {
     [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     [401] = {1, 0, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [601] = {1, 1, 1, 0, 1, 1, 1},
     [701] = {0, 0, 0, 0},
     [801] = {1, 1, 0, 0, 0, 0},
     [901] = {

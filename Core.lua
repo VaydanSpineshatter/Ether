@@ -86,7 +86,7 @@ local Construct = {
             [1] = {"Module", "Slash"},
             [2] = {"Hide", "Create", "Updates"},
             [3] = {"Aura Settings", "Aura Custom"},
-            [4] = {"Register"},
+            [4] = {"Register", "Position"},
             [5] = {"Comm", "Setup"},
             [6] = {"Layout", "Tooltip", "Config", "Profile"}
         },
@@ -344,12 +344,12 @@ function Ether.CreateMainSettings(self)
         self.Frames["Content"]:SetPoint("BOTTOM", self.Frames["Bottom"], "TOP")
         self.Frames["Content"]:SetPoint("LEFT", self.Frames["Left"], "RIGHT")
         self.Frames["Content"]:SetPoint("RIGHT", self.Frames["Right"], "LEFT")
-        local top = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
+        local top = self.Frames["Content"]:CreateTexture(nil, "BORDER")
         top:SetColorTexture(1, 1, 1, 1)
         top:SetPoint("TOPLEFT", -2, 2)
         top:SetPoint("TOPRIGHT", 2, 2)
         top:SetHeight(1)
-        local bottom = self.Frames["Content"]:CreateTexture(nil, 'BORDER')
+        local bottom = self.Frames["Content"]:CreateTexture(nil, "BORDER")
         bottom:SetColorTexture(1, 1, 1, 1)
         bottom:SetPoint("BOTTOMLEFT", -2, -2)
         bottom:SetPoint("BOTTOMRIGHT", 2, -2)
@@ -611,15 +611,6 @@ function Ether:RefreshAllSettings()
         end
     end
 
-    if Construct.Content.Buttons.Indicators and Construct.Content.Buttons.Indicators.B then
-        for i = 1, #Ether.DB[601] do
-            local checkbox = Construct.Content.Buttons.Indicators.B[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[601][i] == 1)
-            end
-        end
-    end
-
     if Construct.Content.Buttons.Update and Construct.Content.Buttons.Update.A then
         for i = 1, #Ether.DB[701] do
             local checkbox = Construct.Content.Buttons.Update.A[i]
@@ -693,7 +684,7 @@ end
 
 local arraysLength = {
     [101] = 12, [201] = 6, [301] = 13, [401] = 3,
-    [501] = 9, [601] = 7, [701] = 4, [801] = 6,
+    [501] = 9, [701] = 4, [801] = 6,
     [1001] = 3, [1101] = 3
 }
 
@@ -889,23 +880,10 @@ local function OnInitialize(self, event, ...)
 
         ToggleSettings(Construct)
 
-        if not InCombatLockdown() then
-            if Ether.Header and Ether.Header.raid then
-                local header = Ether.Header.raid
-                local name = header:GetName() .. "UnitButton"
-                local index = 1
-                local child = _G[name .. index]
-                while (child) do
-                    child:ClearAllPoints()
-                    index = index + 1
-                    child = _G[name .. index]
-                end
-                if header:IsShown() then
-                    header:Hide()
-                    header:Show()
-                end
-            end
-        end
+        Ether:RepositionHeaders()
+        C_Timer.After(0.1, function()
+           Ether.Fire("RESET_HEADER")
+        end)
 
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
