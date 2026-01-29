@@ -75,8 +75,10 @@ local function OnAttributeChanged(self, name, unit)
     C_Timer.After(0.1, function()
         if self.unit == unit then
             Ether:IndicatorsUpdate()
-            Ether:UpdateRaidIsHelpful(unit)
-            Ether:DispelAuraScan(unit)
+            if Ether.DB[1001][4] == 1 then
+                Ether:UpdateRaidIsHelpful(unit)
+                Ether:DispelAuraScan(unit)
+            end
         end
     end)
     Update(self)

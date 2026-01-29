@@ -66,7 +66,6 @@ end
 local function ReturnPower(self)
     return UnitPower(self)
 end
-Ether.ReturnPower = ReturnPower
 
 local function ReturnMaxPower(self)
     return UnitPowerMax(self)

@@ -352,6 +352,7 @@ end
 
 function Ether:SingleAuraSetup(button)
     if not button or not button.unit then return end
+    if Ether.DB[1001][1] ~= 1 and Ether.DB[1001][2] ~= 1 and Ether.DB[1001][3] ~= 1 then return end
     if not button.Aura then
         button.Aura = {
             Buffs = {},
@@ -374,13 +375,14 @@ function Ether:SingleAuraSetup(button)
         frame.count = SetupAuraCount(frame)
         frame.timer = SetupAuraTimer(frame, frame.icon)
 
-        frame:SetScript("OnEnter",
-                function(self)
-                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                    GameTooltip:SetUnitAura(button.unit, i, "HELPFUL")
-                    GameTooltip:Show()
-                end)
-        frame:SetScript("OnLeave", GameTooltip_Hide)
+        frame:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetUnitAura(button.unit, i, "HELPFUL")
+            GameTooltip:Show()
+        end)
+        frame:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
         button.Aura.Buffs[i] = frame
     end
 
@@ -403,14 +405,14 @@ function Ether:SingleAuraSetup(button)
         border:SetPoint("TOPLEFT", -1, 1)
         border:SetPoint("BOTTOMRIGHT", 1, -1)
         border:Hide()
-
-        frame:SetScript("OnEnter",
-                function(self)
-                    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                    GameTooltip:SetUnitAura(button.unit, i, "HARMFUL")
-                    GameTooltip:Show()
-                end)
-        frame:SetScript("OnLeave", GameTooltip_Hide)
+        frame:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetUnitAura(button.unit, i, "HARMFUL")
+            GameTooltip:Show()
+        end)
+        frame:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
         frame.border = border
 
         button.Aura.Debuffs[i] = frame

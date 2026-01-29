@@ -395,7 +395,7 @@ local function DisablePlayerFlags()
     Ether:HideIndicators("PlayerFlagsString", "string")
 end
 
-local IndicatorsHandlers = {
+local indicatorsHandlers = {
     [1] = {EnableReadyCheck, DisableReadyCheck},
     [2] = {EnableConnection, DisableConnection, UpdateConnectionIcon},
     [3] = {EnableRaidTarget, DisableRaidTarget, UpdateRaidTargetIcon},
@@ -406,11 +406,10 @@ local IndicatorsHandlers = {
     [8] = {EnablePlayerRoles, DisablePlayerRoles, UpdatePlayerRolesIcon},
     [9] = {EnablePlayerFlags, DisablePlayerFlags, UpdatePlayerFlagsString},
 }
-Ether.IndicatorHandlers = IndicatorsHandlers
 
 function Ether:IndicatorsToggle()
     local I = Ether.DB[501]
-    for index, handlers in ipairs(IndicatorsHandlers) do
+    for index, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 then
             handlers[1]()
         end
@@ -422,7 +421,7 @@ end
 
 function Ether:IndicatorsEnable()
     local I = Ether.DB[501]
-    for index, handlers in ipairs(IndicatorsHandlers) do
+    for index, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 then
             handlers[1]()
         end
@@ -430,7 +429,7 @@ function Ether:IndicatorsEnable()
 end
 
 function Ether:IndicatorsDisable()
-    for index, handlers in ipairs(IndicatorsHandlers) do
+    for index, handlers in ipairs(indicatorsHandlers) do
         if index ~= 9 then
             handlers[2]()
         end
@@ -439,7 +438,7 @@ end
 
 function Ether:IndicatorsUpdate()
     local I = Ether.DB[501]
-    for index, handlers in ipairs(IndicatorsHandlers) do
+    for index, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 and handlers[3] then
             handlers[3]()
         end

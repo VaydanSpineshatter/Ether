@@ -149,7 +149,7 @@ function Ether:DispelAuraScan(unit)
 end
 
 local function raidAuraUpdate(unit, updateInfo)
-    if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then
+    if not Ether.unitButtons.raid[unit] or Ether.DB[1001][4] ~= 1 then
         return
     end
 
@@ -162,7 +162,7 @@ local function raidAuraUpdate(unit, updateInfo)
     local auraAdded, auraDispel = false, false
 
     if updateInfo.addedAuras then
-        for _, aura in next, updateInfo.addedAuras do
+        for _, aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful and config[aura.spellId] then
                 auraAdded = true
                 raidAurasAdded[aura.auraInstanceID] = {
@@ -178,7 +178,7 @@ local function raidAuraUpdate(unit, updateInfo)
     end
 
     if updateInfo.removedAuraInstanceIDs then
-        for _, auraInstanceID in next, updateInfo.removedAuraInstanceIDs do
+        for _, auraInstanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
             if raidDispel[auraInstanceID] then
                 auraDispel = true
                 raidDispel[auraInstanceID] = nil
@@ -190,7 +190,6 @@ local function raidAuraUpdate(unit, updateInfo)
                 if raidIcons[auraGuid] and raidIcons[auraGuid][spellId] then
                     raidIcons[auraGuid][spellId]:Hide()
                 end
-
                 raidAurasAdded[auraInstanceID] = nil
             end
         end
@@ -247,7 +246,6 @@ function Ether:SingleAuraUpdateBuff(button)
     if not button or not button.unit or not button.Aura then
         return
     end
-
     local unit = button.unit
     local auras = button.Aura
 
@@ -315,7 +313,6 @@ function Ether:SingleAuraUpdateDebuff(button)
     if not button or not button.unit or not button.Aura then
         return
     end
-
     local unit = button.unit
     local auras = button.Aura
 
@@ -394,19 +391,18 @@ function Ether:SingleAuraFullInitial(self)
     Ether:SingleAuraUpdateDebuff(self)
 end
 
-local playerBuffs = {}
-local playerDebuffs = {}
+local soloBuffs = {}
+local soloDebuffs = {}
 
-local function auraUpdatePlayer(unit, info)
-    local button = Ether.unitButtons.solo[unit]
-    if not button or not button.unit or not button.Aura then
+local function soloAuraUpdate(unit, updateInfo)
+    if not Ether.unitButtons.solo["player"] or not Ether.unitButtons.solo["target"] and not Ether.unitButtons.solo["pet"]:IsVisible() then
         return
     end
-
+    local button = Ether.unitButtons.solo[unit]
     local needsBuffUpdate = false
     local needsDebuffUpdate = false
-    if info.addedAuras then
-        for _, aura in ipairs(info.addedAuras) do
+    if updateInfo.addedAuras then
+        for _, aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful then
                 needsBuffUpdate = true
             end
@@ -415,48 +411,11 @@ local function auraUpdatePlayer(unit, info)
             end
         end
     end
-    if info.removedAuraInstanceIDs then
+    if updateInfo.removedAuraInstanceIDs then
         needsBuffUpdate = true
         needsDebuffUpdate = true
     end
-    if info.updatedAuraInstanceIDs then
-        needsBuffUpdate = true
-        needsDebuffUpdate = true
-    end
-    if needsBuffUpdate then
-        Ether:SingleAuraUpdateBuff(button)
-    end
-    if needsDebuffUpdate then
-        Ether:SingleAuraUpdateDebuff(button)
-    end
-end
-
-local targetBuffs = {}
-local targetDebuffs = {}
-
-local function auraUpdateTarget(unit, info)
-    local button = Ether.unitButtons.solo[unit]
-    if not button or not button.unit or not button.Aura then
-        return
-    end
-
-    local needsBuffUpdate = false
-    local needsDebuffUpdate = false
-    if info.addedAuras then
-        for _, aura in ipairs(info.addedAuras) do
-            if aura.isHelpful then
-                needsBuffUpdate = true
-            end
-            if aura.isHarmful then
-                needsDebuffUpdate = true
-            end
-        end
-    end
-    if info.removedAuraInstanceIDs then
-        needsBuffUpdate = true
-        needsDebuffUpdate = true
-    end
-    if info.updatedAuraInstanceIDs then
+    if updateInfo.updatedAuraInstanceIDs then
         needsBuffUpdate = true
         needsDebuffUpdate = true
     end
@@ -476,18 +435,11 @@ do
             frame = CreateFrame("Frame")
             frame:SetScript("OnEvent", function(_, event, arg1, ...)
                 if event == "UNIT_AURA" then
-                    if Ether.DB[1001][3] == 1 then
-                        raidAuraUpdate(arg1, ...)
-                    end
-                    if Ether.DB[1001][1] == 1 then
-                        if arg1 == "player" then
-                            auraUpdatePlayer(arg1, ...)
-                        end
-                    end
-                    if Ether.DB[1001][2] == 1 then
-                        if arg1 == "target" then
-                            auraUpdateTarget(arg1, ...)
-                        end
+                    if not arg1 or not UnitExists(arg1) then return end
+                    local updateInfo = ...
+                    if updateInfo then
+                        raidAuraUpdate(arg1, updateInfo)
+                        soloAuraUpdate(arg1, updateInfo)
                     end
                 end
             end)
@@ -504,10 +456,8 @@ do
 end
 
 local function AuraWipe()
-    wipe(playerBuffs)
-    wipe(playerDebuffs)
-    wipe(targetBuffs)
-    wipe(targetDebuffs)
+    wipe(soloBuffs)
+    wipe(soloDebuffs)
     wipe(raidAurasAdded)
     wipe(raidDispel)
     wipe(raidDebuffAdded)
@@ -518,6 +468,7 @@ function Ether:AuraEnable()
 end
 
 function Ether:AuraDisable()
+    AuraWipe()
     DisableAuras()
 end
 

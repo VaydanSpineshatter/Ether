@@ -268,12 +268,14 @@ function Ether.CreateUpdateSection(self)
         self.Content.Buttons.Update.B[i] = btn
     end
 end
+
 function Ether.CreateAuraSettingsSection(self)
     local parent = self.Content.Children["Aura Settings"]
     local CreateAura = {
         [1] = {text = "Player Auras"},
-        [2] = {text = "Target Auras"},
-        [3] = {text = "Header Auras"}
+        [2] = {text = "Pet Auras"},
+        [3] = {text = "Target Auras"},
+        [4] = {text = "Header Auras"}
     }
     local CreateAuras = GetFont(self, parent, "|cffffff00Update Auras|r", 15)
     CreateAuras:SetPoint("TOPLEFT", 30, -10)
@@ -302,6 +304,13 @@ function Ether.CreateAuraSettingsSection(self)
                 end
             elseif i == 2 then
                 if Ether.DB[1001][2] == 1 then
+                    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
+                    ShowHideSingleAura(Ether.unitButtons.solo["pet"], true)
+                else
+                    ShowHideSingleAura(Ether.unitButtons.solo["pet"], false)
+                end
+           elseif i == 3 then
+                if Ether.DB[1001][3] == 1 then
                     Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
                     ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
                 else

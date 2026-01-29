@@ -685,7 +685,7 @@ end
 local arraysLength = {
     [101] = 12, [201] = 6, [301] = 13, [401] = 3,
     [501] = 9, [701] = 4, [801] = 6,
-    [1001] = 3, [1101] = 3
+    [1001] = 4, [1101] = 3
 }
 
 local function OnInitialize(self, event, ...)
@@ -865,6 +865,9 @@ local function OnInitialize(self, event, ...)
             Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
         end
         if Ether.DB[1001][2] == 1 then
+            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
+        end
+        if Ether.DB[1001][3] == 1 then
             Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
         end
         Ether.registerToTEvents()

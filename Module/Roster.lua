@@ -78,21 +78,21 @@ end
 
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
-        if Ether.DB[1001][2] == 1 then
+         if Ether.DB[1001][3] == 1 then
             C_After(0.05, function()
                 if UnitExists("target") then
                     Ether:SingleAuraUpdateBuff(Ether.unitButtons.solo["target"])
                     Ether:SingleAuraUpdateDebuff(Ether.unitButtons.solo["target"])
                 end
             end)
-        end
+         end
     end
 end
 
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
         if not IsInRaid() and not IsInGroup() then return end
-        if Ether.DB[1001][3] == 1 then
+        if Ether.DB[1001][4] == 1 then
             C_After(0.1, function()
                 Ether:CleanupAllRaidIcons()
                 Ether:IndicatorsUpdate()
@@ -135,7 +135,7 @@ local function NotAfk(self)
     Ether:AuraEnable()
     Ether:IndicatorsEnable()
     Ether:IndicatorsUpdate()
-    if Ether.DB[1001][3] == 1 then
+    if Ether.DB[1001][4] == 1 then
         C_After(0.2, function()
             for unit, button in pairs(Ether.unitButtons.raid) do
                 if UnitExists(unit) then
