@@ -1,7 +1,6 @@
 local _, Ether = ...
 local CastBar = {}
 Ether.CastBar = CastBar
-
 local GetNetStats = GetNetStats
 local GetTime = GetTime
 local UnitCast = UnitCastingInfo
@@ -10,10 +9,6 @@ local timeStr = "%.1f|cffff0000-%.1f|r"
 local tStr = "%.1f"
 
 local Config = {
-    showIcon = true,
-    showTime = true,
-    showName = true,
-    showSafeZone = true,
     texture = {"Interface\\Icons\\INV_Misc_QuestionMark"},
     colors = {
         casting = {0.2, 0.6, 1.0, 0.8},
@@ -23,7 +18,6 @@ local Config = {
         trading = {1.00, 0.84, 0.00, 1}
     }
 }
-Ether.CastBar.Config = Config
 
 local function OnUpdate(self, elapsed)
     if (self.casting) then
@@ -33,7 +27,7 @@ local function OnUpdate(self, elapsed)
             self:Hide()
             return
         end
-        if (self.time) then
+        if (Ether.DB[801][8] == 1 and self.time) then
             if (self.delay ~= 0) then
                 self.time:SetFormattedText(timeStr, duration, self.delay)
             else
@@ -49,7 +43,7 @@ local function OnUpdate(self, elapsed)
             self:Hide()
             return
         end
-        if (self.time) then
+        if (Ether.DB[801][8] == 1 and self.time) then
             if (self.delay ~= 0) then
                 self.time:SetFormattedText(timeStr, duration, self.delay)
             else
@@ -125,6 +119,7 @@ local function updateSafeZone(self)
 end
 
 local function isTrade(self, data)
+    if Ether.DB[801][11] ~= 1 then return end
     local trade = Config.colors.trading
     local cast = Config.colors.casting
     data = data and trade or cast
@@ -155,15 +150,15 @@ local function CastStart(_, event, unit)
         bar:SetMinMaxValues(0, max)
         bar:SetValue(0)
         bar:SetStatusBarColor(unpack(Config.colors.casting))
-        if (bar.icon) then
+        if (Ether.DB[801][7] == 1 and bar.icon) then
             bar.icon:SetTexture(texture or unpack(Config.texture))
         end
-        if (bar.text) then
+        if (Ether.DB[801][9] == 1 and bar.text) then
             bar.spellName = name
             bar.text:SetText(text)
         end
         isTrade(bar, isTradeSkill)
-        if (bar.safeZone) then
+        if (Ether.DB[801][10] == 1 and bar.safeZone) then
             bar.safeZone:ClearAllPoints()
             bar.safeZone:SetPoint(bar:GetReverseFill() and "LEFT" or "RIGHT")
             bar.safeZone:SetPoint("TOP")
@@ -184,7 +179,7 @@ local function CastFailed(_, event, unit, castID)
             return
         end
         bar:SetStatusBarColor(unpack(Config.colors.fail))
-        if (bar.text) then
+        if (Ether.DB[801][9] == 1 and bar.text) then
             bar.text:SetText("Cast - " .. (bar.spellName or "Failed"))
         end
         bar.casting = nil
@@ -203,7 +198,7 @@ local function CastInterrupted(_, event, unit, castID)
             return
         end
         bar:SetStatusBarColor(unpack(Config.colors.interrupted))
-        if (bar.text) then
+        if (Ether.DB[801][9] == 1 and bar.text) then
             bar.text:SetText("Cast - " .. (bar.spellName or "Interrupted"))
         end
         bar.casting = nil
@@ -273,13 +268,13 @@ local function ChannelStart(_, event, unit, _, spellID)
         bar:SetMinMaxValues(0, max)
         bar:SetValue(duration)
         bar:SetStatusBarColor(unpack(Config.colors.channeling))
-        if (bar.icon) then
+        if (Ether.DB[801][7] == 1 and bar.icon) then
             bar.icon:SetTexture(textureID or unpack(Config.texture))
         end
-        if (bar.text) then
+        if (Ether.DB[801][9] == 1 and bar.text) then
             bar.text:SetText(text)
         end
-        if (bar.safeZone) then
+        if (Ether.DB[801][10] == 1 and bar.safeZone) then
             bar.safeZone:ClearAllPoints()
             bar.safeZone:SetPoint(bar:GetReverseFill() and "LEFT" or "RIGHT")
             bar.safeZone:SetPoint("TOP")

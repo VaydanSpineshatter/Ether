@@ -105,27 +105,27 @@ function Ether:SetupCastBar(button)
     frame:SetStatusBarColor(r, g, b)
     drop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
     local text = frame:CreateFontString(nil, "OVERLAY")
+    frame.text = text
     text:SetFont(unpack(Ether.mediaPath.Font), 12, 'OUTLINE')
     text:SetPoint("LEFT", 31, 0)
 
     local time = frame:CreateFontString(nil, "OVERLAY")
+    frame.time = time
     time:SetFont(unpack(Ether.mediaPath.Font), 12, 'OUTLINE')
     time:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
 
-    local icon = frame:CreateTexture(nil, 'OVERLAY')
+    local icon = frame:CreateTexture(nil, "OVERLAY")
+    frame.icon = icon
     icon:SetSize(15, 15)
     icon:SetPoint("LEFT")
 
     local safeZone = frame:CreateTexture(nil, "OVERLAY")
+    frame.safeZone = safeZone
     safeZone:SetTexture(unpack(Ether.mediaPath.predictionBar))
     safeZone:SetVertexColor(0.70, 0.13, 0.13, 1)
     safeZone:SetBlendMode("ADD")
 
     frame:Hide()
-    frame.text = config.showName and text or nil
-    frame.time = config.showTime and time or nil
-    frame.icon = config.showIcon and icon or nil
-    frame.safeZone = config.showSafeZone and safeZone or nil
     frame.casting = nil
     frame.channeling = nil
     frame.duration = 0

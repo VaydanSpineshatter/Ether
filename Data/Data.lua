@@ -109,6 +109,11 @@ local string_char = string.char
 ---| smooth Power Solo 4
 ---| smooth health Header 5
 ---| range checker  6
+---| icon CastBar  7
+---| time CastBar  8
+---| name CastBar  9
+---| SafeZone CastBar  10
+---| isTradeSkill CastBar  11
 
 ---@alias Update_901 boolean
 ---| Player
@@ -121,13 +126,10 @@ local string_char = string.char
 
 ---@alias AuraEnable_1001 number
 ---| Player 1
----| Target 2
----| Header 3
+---| Pet 2
+---| Target 3
+---| Header 4
 
----@alias AuraEnable_1101 number
----| arena 1
----| arena 2
----| arena 3
 
 local Default = {
     [001] = {
@@ -142,7 +144,7 @@ local Default = {
     [401] = {1, 0, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0},
+    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
     [901] = {
         player = true,
         target = true,

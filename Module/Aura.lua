@@ -145,6 +145,7 @@ function Ether:DispelAuraScan(unit)
                 button.right:SetColorTexture(unpack(c))
                 button.left:SetColorTexture(unpack(c))
                 button.bottom:SetColorTexture(unpack(c))
+                if not auraData.icon then return end
                 button.dispelIcon:SetTexture(auraData.icon)
                 button.dispelBorder:SetColorTexture(unpack(c))
                 Ether.StartBlink(button.iconFrame, auraData.duration, 0.3)

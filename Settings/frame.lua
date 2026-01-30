@@ -1128,6 +1128,12 @@ function Ether.CreateLayoutSection(self)
         [4] = {text = "Smooth Bar Solo Power"},
         [5] = {text = "Smooth Bar Header"},
         [6] = {text = "Range check"},
+        [7] = {text = "CastBar - Icon"},
+        [8] = {text = "CastBar - Time"},
+        [9] = {text = "CastBar - Name"},
+        [10] = {text = "CastBar - SafeZone"},
+        [11] = {text = "CastBar - IsTradeSkill"}
+
     }
 
     local layout = CreateFrame("Frame", nil, parent)

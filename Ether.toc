@@ -23,7 +23,6 @@ Module/Aura.lua
 Module/Tooltip.lua
 Module/Effects.lua
 Module/Range.lua
-Module/CastBar.lua
 Module/Update/health.lua
 Module/Update/name.lua
 Module/Update/power.lua
@@ -33,4 +32,5 @@ Settings/frame.lua
 Module/Units/Solo/player.lua
 Module/Units/Solo/hunter.lua
 Module/Units/Header/frame.lua
+Module/CastBar.lua
 
