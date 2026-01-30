@@ -147,7 +147,7 @@ function Ether:DispelAuraScan(unit)
                 button.bottom:SetColorTexture(unpack(c))
                 button.dispelIcon:SetTexture(auraData.icon)
                 button.dispelBorder:SetColorTexture(unpack(c))
-                Ether.StartBlink(button.dispelIcon, auraData.duration, 0.3)
+                Ether.StartBlink(button.iconFrame, auraData.duration, 0.3)
             end
         end
         index = index + 1
@@ -158,7 +158,7 @@ function Ether:DispelAuraScan(unit)
         button.right:SetColorTexture(0, 0, 0, 1)
         button.left:SetColorTexture(0, 0, 0, 1)
         button.bottom:SetColorTexture(0, 0, 0, 1)
-        Ether.StopBlink(button.dispelIcon)
+        Ether.StopBlink(button.iconFrame)
     end
 end
 
