@@ -884,7 +884,7 @@ local function OnInitialize(self, event, ...)
 
         Ether:RepositionHeaders()
         C_Timer.After(0.1, function()
-           Ether.Fire("RESET_HEADER")
+            Ether.Fire("RESET_HEADER")
         end)
 
     elseif (event == "GROUP_ROSTER_UPDATE") then

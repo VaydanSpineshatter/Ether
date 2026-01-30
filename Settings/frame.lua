@@ -309,7 +309,7 @@ function Ether.CreateAuraSettingsSection(self)
                 else
                     ShowHideSingleAura(Ether.unitButtons.solo["pet"], false)
                 end
-           elseif i == 3 then
+            elseif i == 3 then
                 if Ether.DB[1001][3] == 1 then
                     Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
                     ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
@@ -1029,7 +1029,6 @@ local function protoType(newId)
         offsetX = 0,
         offsetY = 0,
         enabled = true,
-        isBuff = true,
         isDebuff = false
     }
     return obj

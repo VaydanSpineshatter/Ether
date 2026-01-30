@@ -52,15 +52,15 @@ do
         end
         if event == "UNIT_NAME_UPDATE" then
             if Ether.DB[901]["raid"] then
-                local r = Ether.unitButtons.raid[unit]
-                if r then
-                    Ether:UpdateName(r, true)
+                local button = Ether.unitButtons.raid[unit]
+                if button and button:IsVisible() then
+                    Ether:UpdateName(button, true)
                 end
             end
             if Ether.DB[901][unit] then
-                local s = Ether.unitButtons.solo[unit]
-                if s then
-                    Ether:UpdateName(s)
+                local button = Ether.unitButtons.solo[unit]
+                if button and button:IsVisible() then
+                    Ether:UpdateName(button)
                 end
             end
         end

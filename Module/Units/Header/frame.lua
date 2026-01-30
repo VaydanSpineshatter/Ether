@@ -61,6 +61,7 @@ local function OnAttributeChanged(self, name, unit)
         self.right:SetColorTexture(0, 0, 0, 1)
         self.left:SetColorTexture(0, 0, 0, 1)
         self.bottom:SetColorTexture(0, 0, 0, 1)
+        Ether.StopBlink(self.dispelIcon)
         Ether:CleanupIconsForGUID(oldGUID)
     end
 
@@ -114,6 +115,16 @@ local function CreateChildren(headerName, buttonName)
     button.healthDrop = healthDrop
     healthDrop:SetAllPoints(healthBar)
     healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
+    local dispelIcon = button:CreateTexture(nil, "OVERLAY")
+    button.dispelIcon = dispelIcon
+    dispelIcon:SetSize(12, 12)
+    dispelIcon:SetPoint("CENTER", 0, 10)
+    dispelIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    local border = button:CreateTexture(nil, "BORDER")
+    button.dispelBorder = border
+    border:SetColorTexture(0, 0, 0, 1)
+    border:SetPoint("TOPLEFT", dispelIcon, "TOPLEFT", -2, 2)
+    border:SetPoint("BOTTOMRIGHT", dispelIcon, "BOTTOMRIGHT", 2, -2)
     Ether:SetupPrediction(button)
     Ether:SetupName(button, 10, -5)
     Ether:GetClassColor(button)

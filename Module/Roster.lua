@@ -78,14 +78,14 @@ end
 
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
-         if Ether.DB[1001][3] == 1 then
+        if Ether.DB[1001][3] == 1 then
             C_After(0.05, function()
                 if UnitExists("target") then
                     Ether:SingleAuraUpdateBuff(Ether.unitButtons.solo["target"])
                     Ether:SingleAuraUpdateDebuff(Ether.unitButtons.solo["target"])
                 end
             end)
-         end
+        end
     end
 end
 

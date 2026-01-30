@@ -220,29 +220,28 @@ local function HealthChanged(_, event, unit)
     if not unit then return end
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
         if Ether.DB[901][unit] then
-            local s = Ether.unitButtons.solo[unit]
-            if s then
+            local button = Ether.unitButtons.solo[unit]
+            if button and button:IsVisible() then
                 if Ether.DB[801][3] == 1 then
-                    Ether:UpdateSmoothHealth(s)
+                    Ether:UpdateSmoothHealth(button)
                 else
-                    Ether:UpdateHealth(s)
+                    Ether:UpdateHealth(button)
                     if Ether.DB[701][1] == 1 then
-                        Ether:UpdateHealthText(s)
+                        Ether:UpdateHealthText(button)
                     end
                 end
             end
         end
         if Ether.DB[901]["raid"] then
             local button = Ether.unitButtons.raid[unit]
-            if not button then
-                return
-            end
-            if Ether.DB[801][5] == 1 then
-                Ether:UpdateSmoothHealth(button)
-            else
-                Ether:UpdateHealth(button)
-                if Ether.DB[701][3] == 1 then
-                    Ether:UpdateHealthText(button)
+            if button and button:IsVisible() then
+                if Ether.DB[801][5] == 1 then
+                    Ether:UpdateSmoothHealth(button)
+                else
+                    Ether:UpdateHealth(button)
+                    if Ether.DB[701][3] == 1 then
+                        Ether:UpdateHealthText(button)
+                    end
                 end
             end
         end
@@ -253,14 +252,14 @@ local function PredictionChanged(_, event, unit)
     if not unit then return end
     if event ~= "UNIT_HEAL_PREDICTION" then return end
     if Ether.DB[901][unit] then
-        local s = Ether.unitButtons.solo[unit]
-        if s then
-            Ether:UpdatePrediction(s)
+        local button = Ether.unitButtons.solo[unit]
+        if button and button:IsVisible() then
+            Ether:UpdatePrediction(button)
         end
     end
     if Ether.DB[901]["raid"] then
         local button = Ether.unitButtons.raid[unit]
-        if button then
+        if button and button:IsVisible() then
             Ether:UpdatePrediction(button)
         end
     end

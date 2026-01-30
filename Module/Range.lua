@@ -75,26 +75,17 @@ function Ether:UpdateAlpha(button)
     button:SetAlpha(value)
 end
 
-local function RemoveAlpha()
-    for _, button in pairs(Ether.unitButtons.raid) do
-        if button and button.unit and button:IsVisible() then
-            button:SetAlpha(1.0)
-        end
+local function UpdateTargetAlpha()
+    if Ether.unitButtons.solo["target"] and Ether.unitButtons.solo["target"]:IsVisible() then
+        Ether:UpdateAlpha(Ether.unitButtons.solo["target"])
     end
 end
 
-function Ether:UpdateTargetAlpha()
-    if Ether.unitButtons.solo["target"] then
-        Ether:UpdateAlpha(Ether.unitButtons.solo["target"])
-    end
-    if UnitInAnyGroup("player") then
-        for _, button in pairs(Ether.unitButtons.raid) do
-            if button and button.unit and button:IsVisible() then
-                Ether:UpdateAlpha(button)
-            end
+local function UpdateRaidAlpha()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            Ether:UpdateAlpha(button)
         end
-    else
-        RemoveAlpha()
     end
 end
 
@@ -103,7 +94,8 @@ local rangeTicker = nil
 function Ether:RangeEnable()
     if not rangeTicker then
         rangeTicker = C_Ticker(1.3, function()
-            Ether:UpdateTargetAlpha()
+            UpdateTargetAlpha()
+            UpdateRaidAlpha()
         end)
     end
 end
@@ -116,5 +108,9 @@ function Ether:RangeDisable()
     if Ether.unitButtons.solo["target"] then
         Ether.unitButtons.solo["target"]:SetAlpha(1)
     end
-    RemoveAlpha()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button then
+            button:SetAlpha(1.0)
+        end
+    end
 end

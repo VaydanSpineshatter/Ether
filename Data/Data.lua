@@ -534,7 +534,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [27681] = {
             name = "Prayer of Spirit: Rank 1",
@@ -544,7 +544,7 @@ Ether.AuraTemplates = {
             offsetX = 6,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [27683] = {
             name = "Prayer of Shadow Protection",
@@ -554,7 +554,7 @@ Ether.AuraTemplates = {
             offsetX = 12,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [10901] = {
             name = "Power Word: Shield",
@@ -564,7 +564,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [25315] = {
             name = "Renew",
@@ -574,17 +574,17 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [6346] = {
             name = "Fear Ward",
             color = {1, 0.2, 0.5, 1},
             size = 6,
-            position = "TOP",
+            position = "BOTTOM",
             offsetX = 0,
-            offsetY = -6,
+            offsetY = 6,
             enabled = true,
-            debuff = false
+            isDebuff = false
         }
     },
     ["Paladin - Buffs"] = {
@@ -596,7 +596,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [6940] = {
             name = "BoS",
@@ -606,7 +606,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [1044] = {
             name = "BoF",
@@ -616,7 +616,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [53563] = {
             name = "Beacon",
@@ -626,7 +626,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         }
     },
     ["Druid - Buffs"] = {
@@ -648,7 +648,7 @@ Ether.AuraTemplates = {
             offsetX = 8,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
     },
     ["Druid - HoTs"] = {
@@ -660,7 +660,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [9858] = {
             name = "Regrowth",
@@ -680,7 +680,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [33763] = {
             name = "Lifebloom",
@@ -690,7 +690,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         }
     },
     ["Shaman - Buffs"] = {
@@ -712,7 +712,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         }
     },
     ["Tank - Cooldowns"] = {
@@ -724,7 +724,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [48792] = {
             name = "IBF",
@@ -734,7 +734,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [22812] = {
             name = "Barkskin",
@@ -744,7 +744,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [13007] = {
             name = "Divine Prot",
@@ -754,7 +754,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         }
     },
     ["Mage - Cooldowns"] = {
@@ -766,7 +766,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
         [23028] = {
             name = "Arcane Brilliance: Rank 1",
@@ -776,7 +776,7 @@ Ether.AuraTemplates = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false
         },
     }
 }

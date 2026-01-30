@@ -399,7 +399,6 @@ function Ether:SingleAuraSetup(button)
         frame.icon = SetupAuraIcon(frame)
         frame.count = SetupAuraCount(frame)
         frame.timer = SetupAuraTimer(frame, frame.icon)
-
         local border = frame:CreateTexture(nil, "BORDER")
         border:SetColorTexture(1, 0, 0, 1)
         border:SetPoint("TOPLEFT", -1, 1)

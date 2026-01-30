@@ -82,7 +82,7 @@ end
 function Ether:HideIndicators(hide)
     for _, button in pairs(Ether.unitButtons.raid) do
         if (button and button.Indicators and button.Indicators[hide]) then
-             button.Indicators[hide]:Hide()
+            button.Indicators[hide]:Hide()
         end
     end
 end
@@ -98,7 +98,7 @@ local function UpdateUnitFlagsIcon()
     for unit, button in pairs(Ether.unitButtons.raid) do
         if button and unit then
             if not button.Indicators.UnitFlagsIcon then
-                button.Indicators.UnitFlagsIcon = TextureMethod(button, 12,"TOP")
+                button.Indicators.UnitFlagsIcon = TextureMethod(button, 12, "TOP")
             end
             local IsCharmed = UnitIsCharmed(unit)
             local IsDead = UnitIsDead(unit)
@@ -127,7 +127,7 @@ local function UpdateReadyCheckIcon()
     for unit, button in pairs(Ether.unitButtons.raid) do
         if button and unit then
             if not button.Indicators.ReadyCheckIcon then
-              button.Indicators.ReadyCheckIcon  =  TextureMethod(button, 18, "TOP")
+                button.Indicators.ReadyCheckIcon = TextureMethod(button, 18, "TOP")
             end
             local status = GetReadyCheckStatus(unit)
             if (status) then

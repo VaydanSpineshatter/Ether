@@ -323,7 +323,7 @@ local function ChannelStop(_, event, unit)
 end
 
 local function EnableCastEvents()
-    if Ether.DB[801][1]  == 1 or Ether.DB[801][2] == 1 then
+    if Ether.DB[801][1] == 1 or Ether.DB[801][2] == 1 then
         RegisterCastBarEvent("UNIT_SPELLCAST_START", CastStart)
         RegisterCastBarEvent("UNIT_SPELLCAST_STOP", CastStop)
         RegisterCastBarEvent("UNIT_SPELLCAST_FAILED", CastFailed)
