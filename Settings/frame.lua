@@ -13,7 +13,7 @@ function Ether.CreateModuleSection(self)
     local parent = self.Content.Children["Module"]
     local modulesValue = {
         [1] = {name = "Icon"},
-        [2] = {name = "Chat Msg Whisper"},
+        [2] = {name = "Chat Bn & Msg Whisper"},
         [3] = {name = "Tooltip"}
     }
     local mod = CreateFrame("Frame", nil, parent)
@@ -1400,43 +1400,6 @@ function Ether.CreateConfigSection(self)
     CreateFrameDropdown()
     CreatePointDropdown(dropdowns.point, 1)
     CreatePointDropdown(dropdowns.relative, 3)
-
-    Ether.RegisterCallback("FRAME_UPDATE", "FrameGroups", function(frameGroup)
-        if not frameGroup or not DB[5111] or not DB[5111][frameGroup] or not FRAME_GROUPS[frameGroup] then
-            return
-        end
-
-        local frameData = FRAME_GROUPS[frameGroup]
-        local pos = DB[5111][frameGroup]
-
-        for i, default in ipairs({"CENTER", 5133, "CENTER", 0, 0, 100, 100, 1, 1}) do
-            pos[i] = pos[i] or default
-        end
-        pos[4] = pos[4] and math.floor(pos[4] + 0.5) or 0
-        pos[5] = pos[5] and math.floor(pos[5] + 0.5) or 0
-
-        local relTo
-        if pos[2] == 5133 then
-            relTo = UIParent
-        else
-            relTo = FRAME_GROUPS[pos[2]] and FRAME_GROUPS[pos[2]].frame or UIParent
-            if not relTo or not relTo.GetCenter then
-                relTo = UIParent
-            end
-        end
-        local frame = frameData.frame
-        if frame and frame.SetPoint then
-            frame:ClearAllPoints()
-            frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
-            frame:SetSize(pos[6], pos[7])
-            frame:SetScale(pos[8])
-            frame:SetAlpha(pos[9])
-        end
-
-        if frameGroup == DB[001].SELECTED then
-            UpdateValue()
-        end
-    end)
 
     Ether.RegisterCallback("FRAME_UPDATE", "FrameGroups", function(frameGroup)
         if not frameGroup or not DB[5111] or not DB[5111][frameGroup] or not FRAME_GROUPS[frameGroup] then

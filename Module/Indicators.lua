@@ -186,6 +186,7 @@ local function UpdateGroupLeaderIcon()
             local IsLeader = UnitIsGroupLeader(unit)
             if (IsLeader) then
                 button.Indicators.GroupLeaderIcon:SetTexture(leader)
+                button.Indicators.GroupLeaderIcon:Show()
             else
                 button.Indicators.GroupLeaderIcon:Hide()
             end

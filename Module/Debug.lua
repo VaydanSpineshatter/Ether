@@ -44,24 +44,23 @@ do
         msgEvent = CreateFrame("Frame")
     end
     local function Whisper(_, event, ...)
-        if event ~= "CHAT_MSG_WHISPER" then
-            return
+        if event == "CHAT_MSG_WHISPER" or event == "CHAT_MSG_BN_WHISPER" then
+            local text, _, _, _, playerName2  = ...
+            Ether.DebugOutput(string.format("|cffcc66ffFrom %s:|r %s", playerName2, text))
         end
-        local msg, sender = ...
-        local senderName = select(1, string.split("-", sender))
-        Ether.DebugOutput(string.format("|cffcc66ffFrom %s:|r %s", senderName, msg))
     end
     function enableWhisper()
         if not msgEvent:GetScript("OnEvent") then
             msgEvent:SetScript("OnEvent", Whisper)
             msgEvent:RegisterEvent("CHAT_MSG_WHISPER")
+            msgEvent:RegisterEvent("CHAT_MSG_BN_WHISPER")
             Ether.DB[401][2] = 1
         end
     end
     function disableWhisper()
         if msgEvent:GetScript("OnEvent") then
             msgEvent:SetScript("OnEvent", nil)
-            msgEvent:UnregisterEvent("CHAT_MSG_WHISPER")
+            msgEvent:UnregisterAllEvents()
             Ether.DB[401][2] = 0
         end
     end

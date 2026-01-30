@@ -91,6 +91,7 @@ end
 
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
+        Ether:IndicatorsUpdate()
         if not IsInRaid() and not IsInGroup() then return end
         if Ether.DB[1001][4] == 1 then
             C_After(0.1, function()

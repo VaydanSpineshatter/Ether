@@ -30,7 +30,6 @@ function ObjPos:InitialPosition(number)
             else
                 relTo = _G[relTo] or 5133
             end
-            self._parent:ClearAllPoints()
             self._parent:SetPoint(self._pos[number][1], relTo, self._pos[number][3], self._pos[number][4], self._pos[number][5]);
             self._parent:SetWidth(self._pos[number][6])
             self._parent:SetHeight(self._pos[number][7])

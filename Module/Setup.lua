@@ -1,7 +1,6 @@
 local _, Ether = ...
 local math_floor = math.floor
 local tinsert = table.insert
-local LPP = LibStub("LibPixelPerfect-1.0")
 
 function Ether:SetupPowerText(button)
     if not button or not button.healthBar then return end
@@ -92,7 +91,6 @@ end
 
 function Ether:SetupCastBar(button)
     if not button then return end
-    local config = Ether.CastBar.Config
     local frame = CreateFrame("StatusBar", nil, button)
     button.castBar = frame
     frame:SetPoint("TOPLEFT", button.powerBar, "BOTTOMLEFT")
@@ -422,24 +420,20 @@ function Ether:AddBlackBorder(button, scale, r, g, b, a)
     if not button then return end
     local top = button:CreateTexture(nil, "BORDER")
     top:SetColorTexture(r, g, b, a)
-    LPP.PHeight(top, scale)
-    top:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-scale), LPP.PScale(scale))
-    top:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(scale), LPP.PScale(scale))
+    top:SetPoint("TOPLEFT", button, "TOPLEFT", -scale, scale)
+    top:SetPoint("TOPRIGHT", button, "TOPRIGHT", scale, scale)
     local bottom = button:CreateTexture(nil, "BORDER")
     bottom:SetColorTexture(r, g, b, a)
-    LPP.PHeight(bottom, scale)
-    bottom:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-scale), LPP.PScale(-scale))
-    bottom:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(scale), LPP.PScale(-scale))
+    bottom:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", -scale, -scale)
+    bottom:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", scale, -scale)
     local left = button:CreateTexture(nil, "BORDER")
     left:SetColorTexture(r, g, b, a)
-    LPP.PWidth(left, scale)
-    left:SetPoint("TOPLEFT", button, "TOPLEFT", LPP.PScale(-scale), LPP.PScale(scale))
-    left:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", LPP.PScale(-scale), LPP.PScale(-scale))
+    left:SetPoint("TOPLEFT", button, "TOPLEFT", -scale, scale)
+    left:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", -scale, -scale)
     local right = button:CreateTexture(nil, "BORDER")
     right:SetColorTexture(r, g, b, a)
-    LPP.PWidth(right, scale)
-    right:SetPoint("TOPRIGHT", button, "TOPRIGHT", LPP.PScale(scale), LPP.PScale(scale))
-    right:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", LPP.PScale(scale), LPP.PScale(-scale))
+    right:SetPoint("TOPRIGHT", button, "TOPRIGHT", scale, scale)
+    right:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", scale, -scale)
     button.top = top
     button.left = left
     button.right = right
