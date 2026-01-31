@@ -48,15 +48,24 @@ local function Update(_, event, unit)
         end
     end
 end
+local pos_Frames = {}
+local token = {
+    ["player"] = 332,
+    ["target"] = 333,
+    ["targettarget"] = 334,
+    ["pet"] = 335,
+    ["pettarget"] = 336,
+    ["focus"] = 337
+}
 
 function Ether:CreateUnitButtons(unit)
     if InCombatLockdown() then
         return
     end
     if not Ether.unitButtons.solo[unit] then
-        local button = CreateFrame("Button", "Ether_" .. unit .. "_UnitButton", Ether.Anchor[unit], "EtherUnitTemplate")
-        button:SetAllPoints(Ether.Anchor[unit])
+        local button = CreateFrame("Button", "Ether_" .. unit .. "_UnitButton", UIParent, "EtherUnitTemplate")
         button.unit = unit
+        button:SetSize(120, 50)
         button:SetAttribute("unit", button.unit)
         button:RegisterForClicks("AnyUp")
         button:SetAttribute("*type1", "target")
@@ -82,6 +91,8 @@ function Ether:CreateUnitButtons(unit)
         button:SetScript("OnAttributeChanged", AttributeChanged)
         button:SetScript("OnShow", Show)
         FullUpdate(button, true)
+        pos_Frames["pos_" .. unit] = Ether.RegisterPosition(button)
+        pos_Frames["pos_" .. unit]:InitialPosition(token[unit])
         Ether.unitButtons.solo[button.unit] = button
         return button
     end

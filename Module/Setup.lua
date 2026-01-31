@@ -281,6 +281,7 @@ function Ether:SetupDebugFrame()
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     Ether.DebugFrame = frame
     frame:SetPoint("CENTER")
+    frame:SetSize(320, 200)
     frame:SetBackdrop({
         bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",

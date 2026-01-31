@@ -44,6 +44,7 @@ local function BuildContent(self)
         Ether.CreateAuraSettingsSection(self)
         Ether.CreateAuraCustomSection(self)
         Ether.CreateRegisterSection(self)
+        Ether.CreatePositionSection(self)
         Ether.CreateLayoutSection(self)
         Ether.CreateTooltipSection(self)
         Ether.CreateConfigSection(self)
@@ -258,7 +259,7 @@ local function InitializeSettings(self)
                 for _, itemName in ipairs(self.Menu["LEFT"][layer]) do
                     local btn = CreateSettingsButtons(self, itemName, self.Frames["Left"], layer, function(_, btnLayer)
                         local firstTabName = self.Menu["TOP"][btnLayer][1]
-                        Ether.DB[001].LAST_TAB = firstTabName
+                        Ether.DB[111].LAST_TAB = firstTabName
                         for _, layers in pairs(self.MenuButtons) do
                             for _, topBtn in pairs(layers) do
                                 topBtn:Hide()
@@ -300,7 +301,8 @@ end
 function Ether.CreateMainSettings(self)
     if not self.IsCreated then
         self.Frames["Main"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
-        self.Frames["Main"]:SetFrameLevel(400)
+        self.Frames["Main"]:SetFrameLevel(500)
+        self.Frames["Main"]:SetSize(640, 480)
         self.Frames["Main"]:SetBackdrop({
             bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
             edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -313,7 +315,7 @@ function Ether.CreateMainSettings(self)
         self.Frames["Main"]:SetBackdropBorderColor(0, 0.8, 1, .7)
         self.Frames["Main"]:Hide()
         self.Frames["Main"]:SetScript("OnHide", function()
-            Ether.DB[001].SHOW = false
+            Ether.DB[111].SHOW = false
         end)
         tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
         RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")
@@ -390,8 +392,8 @@ local function ToggleSettings(self)
     if not self.IsSuccess then
         return
     end
-    self.Frames["Main"]:SetShown(Ether.DB[001].SHOW)
-    local category = Ether.DB[001].LAST_TAB
+    self.Frames["Main"]:SetShown(Ether.DB[111].SHOW)
+    local category = Ether.DB[111].LAST_TAB
 
     if self.Content.Children[category] then
         Ether.ShowCategory(self, category)
@@ -507,9 +509,9 @@ Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
     end
     local theirVersion = tonumber(message)
     local myVersion = tonumber(Ether.version)
-    local lastCheck = Ether.DB[001].LAST_UPDATE_CHECK or 0
+    local lastCheck = Ether.DB[111].LAST_UPDATE_CHECK or 0
     if (time() - lastCheck >= 9200) and theirVersion and myVersion and myVersion < theirVersion then
-        Ether.DB[001].LAST_UPDATE_CHECK = time()
+        Ether.DB[111].LAST_UPDATE_CHECK = time()
         local msg = string_format("New version found (%d). Please visit %s to get the latest version.", theirVersion, "|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
         if Ether.DebugOutput then
             Ether.DebugOutput(msg)
@@ -533,10 +535,10 @@ do
 
     local function OnClick(_, button)
         if button == "RightButton" then
-            if Ether.DB[001].SHOW then
-                Ether.DB[001].SHOW = false
+            if Ether.DB[111].SHOW then
+                Ether.DB[111].SHOW = false
             else
-                Ether.DB[001].SHOW = true
+                Ether.DB[111].SHOW = true
             end
             ToggleSettings(Construct)
         elseif button == "LeftButton" then
@@ -648,12 +650,12 @@ function Ether:RefreshFramePositions()
 
     local frames = {
         [331] = Ether.Anchor.tooltip,
-        [332] = Ether.Anchor.player,
-        [333] = Ether.Anchor.target,
-        [334] = Ether.Anchor.targettarget,
-        [335] = Ether.Anchor.pet,
-        [336] = Ether.Anchor.pettarget,
-        [337] = Ether.Anchor.focus,
+        [332] = _G["Ether_player_UnitButton"],
+        [333] = _G["Ether_target_UnitButton"],
+        [334] = _G["Ether_targettarget_UnitButton"],
+        [335] = _G["Ether_pet_UnitButton"],
+        [336] = _G["Ether_pettarget_UnitButton"],
+        [337] = _G["Ether_focus_UnitButton"],
         [338] = Ether.Anchor.raid,
         [339] = Ether.DebugFrame,
         [340] = Construct.Frames["Main"]
@@ -672,7 +674,6 @@ function Ether:RefreshFramePositions()
             if frame.SetPoint then
                 frame:ClearAllPoints()
                 frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
-                frame:SetSize(pos[6], pos[7])
                 frame:SetScale(pos[8])
                 frame:SetAlpha(pos[9])
 
@@ -726,10 +727,10 @@ local function OnInitialize(self, event, ...)
                     profile[key] = Ether.CopyTable(value)
                 end
             end
-            if profile[001] then
-                for subkey in pairs(Ether.DataDefault[001]) do
-                    if profile[001][subkey] == nil then
-                        profile[001] = Ether.CopyTable(Ether.DataDefault[001])
+            if profile[111] then
+                for subkey in pairs(Ether.DataDefault[111]) do
+                    if profile[111][subkey] == nil then
+                        profile[111] = Ether.CopyTable(Ether.DataDefault[111])
                         break
                     end
                 end
@@ -738,6 +739,14 @@ local function OnInitialize(self, event, ...)
                 for subkey in pairs(Ether.DataDefault[901]) do
                     if profile[901][subkey] == nil then
                         profile[901] = Ether.CopyTable(Ether.DataDefault[901])
+                        break
+                    end
+                end
+            end
+            if profile[1002] then
+                for subkey in pairs(Ether.DataDefault[1002]) do
+                    if profile[1002][subkey] == nil then
+                        profile[1002] = Ether.CopyTable(Ether.DataDefault[1002])
                         break
                     end
                 end
@@ -772,10 +781,10 @@ local function OnInitialize(self, event, ...)
             input = string.lower(input or "")
             rest = string.lower(rest or "")
             if input == "settings" then
-                if Ether.DB[001].SHOW then
-                    Ether.DB[001].SHOW = false
+                if Ether.DB[111].SHOW then
+                    Ether.DB[111].SHOW = false
                 else
-                    Ether.DB[001].SHOW = true
+                    Ether.DB[111].SHOW = true
                 end
                 ToggleSettings(Construct)
             elseif input == "debug" then
@@ -820,26 +829,16 @@ local function OnInitialize(self, event, ...)
 
         local r = Ether.RegisterPosition(Ether.Anchor.raid)
         r:InitialPosition(338)
+        Ether.Anchor.raid:SetWidth(1)
+        Ether.Anchor.raid:SetHeight(1)
+
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(400)
+        tooltip:SetSize(640, 480)
         Ether.Anchor.tooltip = tooltip
-        local token = {
-            [1] = 332,
-            [2] = 333,
-            [3] = 334,
-            [4] = 335,
-            [5] = 336,
-            [6] = 337
-        }
-        local pos_Frames = {}
-        for i, key in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus"}) do
-            if not Ether.Anchor[key] then
-                Ether.Anchor[key] = CreateFrame("Frame", "Ether_" .. key .. "_Anchor", UIParent, "SecureFrameTemplate")
-                pos_Frames["pos_" .. key] = Ether.RegisterPosition(Ether.Anchor[key])
-                pos_Frames["pos_" .. key]:InitialPosition(token[i])
-            end
-        end
+
         Ether.CreateMainSettings(Construct)
+
         if Ether.DB[201][1] == 1 then
             Ether:CreateUnitButtons("player")
         end
@@ -882,9 +881,8 @@ local function OnInitialize(self, event, ...)
 
         ToggleSettings(Construct)
 
-        Ether:RepositionHeaders()
-        C_Timer.After(0.1, function()
-            Ether.Fire("RESET_HEADER")
+        C_Timer.After(0.3, function()
+            Ether:RepositionHeaders()
         end)
 
     elseif (event == "GROUP_ROSTER_UPDATE") then

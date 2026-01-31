@@ -22,7 +22,6 @@ function ObjPos:InitialPosition(number)
     end
     local success, msg = pcall(function()
         self._parent:SetClampedToScreen(true)
-        self._parent:SetMovable(true)
         local relTo = self._pos[number][2]
         if type(relTo) == "number" then
             if relTo == 5133 then
@@ -31,10 +30,6 @@ function ObjPos:InitialPosition(number)
                 relTo = _G[relTo] or 5133
             end
             self._parent:SetPoint(self._pos[number][1], relTo, self._pos[number][3], self._pos[number][4], self._pos[number][5]);
-            self._parent:SetWidth(self._pos[number][6])
-            self._parent:SetHeight(self._pos[number][7])
-            self._parent:SetScale(self._pos[number][8])
-            self._parent:SetAlpha(self._pos[number][9])
         end
     end)
     if not success then
@@ -52,6 +47,7 @@ function ObjPos:InitialDrag(number)
         return
     end
     self._parent:EnableMouse(true)
+    self._parent:SetMovable(true)
     self._parent:RegisterForDrag("LeftButton")
     self._parent:SetScript("OnDragStart", function()
         if InCombatLockdown() or self._parent.isMoving then

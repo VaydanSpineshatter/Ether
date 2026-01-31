@@ -132,7 +132,7 @@ local string_char = string.char
 
 
 local Default = {
-    [001] = {
+    [111] = {
         LAST_UPDATE_CHECK = 0,
         SHOW = true,
         LAST_TAB = "Module",
@@ -155,10 +155,21 @@ local Default = {
         raid = true,
     },
     [1001] = {1, 1, 1, 1},
+    [1002] = {
+        [1] = {12, "TOP", 0, 0},
+        [2] = {12, "TOPLEFT", 0, 0},
+        [3] = {12, "BOTTOM", 0, 0},
+        [4] = {12, "CENTER", 0, 6},
+        [5] = {12, "RIGHT", 0, 0},
+        [6] = {12, "BOTTOMRIGHT", 0, 12},
+        [7] = {12, "TOP", 0, 0},
+        [8] = {12, "LEFT", 0, 0},
+        [9] = {12, "TOPLEFT", 0, 0},
+    },
     [1003] = {},
     [1101] = {1, 1, 1},
     [5111] = {
-        [331] = {"BOTTOMRIGHT", 5133, "BOTTOMRIGHT", -220, 220, 180, 100, 1.0, 1.0},
+        [331] = {"BOTTOMRIGHT", 5133, "BOTTOMRIGHT", -220, 220, 1, 1, 1.0, 1.0},
         [332] = {"CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0},
         [333] = {"CENTER", 5133, "CENTER", 250, -250, 120, 50, 1.0, 1.0},
         [334] = {"CENTER", 5133, "CENTER", 0, -300, 120, 50, 1.0, 1.0},

@@ -45,7 +45,7 @@ do
     end
     local function Whisper(_, event, ...)
         if event == "CHAT_MSG_WHISPER" or event == "CHAT_MSG_BN_WHISPER" then
-            local text, _, _, _, playerName2  = ...
+            local text, _, _, _, playerName2 = ...
             Ether.DebugOutput(string.format("|cffcc66ffFrom %s:|r %s", playerName2, text))
         end
     end
