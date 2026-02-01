@@ -7,7 +7,7 @@ local math_max = math.max
 local math_min = math.min
 local UnitGetIncomingHeals = UnitGetIncomingHeals
 local string_format = string.format
-local math_floor = math.floor
+local fm = "%.1f"
 
 local FACTION_COLORS = {
     [0] = {r = 1.0, g = 0, b = 0}, -- 255/255=1.0
@@ -79,12 +79,6 @@ local RAID_COLORS = {
     }
 }
 Ether.RAID_COLORS = RAID_COLORS
-
-local HealthColors = {
-    {0.0, 'ff0000'},
-    {0.5, 'ffff00'},
-    {1.0, '00ff00'},
-}
 
 local RegisterHEvent, UnregisterHEvent
 do
@@ -168,70 +162,18 @@ function Ether:UpdateHealth(button)
     button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
 end
 
-function Ether:UpdateHealth(button)
-    if not button or not button.unit or not button.healthBar then
+function Ether:UpdateHealthText(button)
+    if not button or not button.unit or not button.health then
         return
     end
     local h = UnitHealth(button.unit)
-    local mh = UnitHealthMax(button.unit)
-
-    button.healthBar:SetValue(h)
-    button.healthBar:SetMinMaxValues(0, mh)
-
-    local r, g, b = Ether:GetClassColor(button)
-    button.healthBar:SetStatusBarColor(r, g, b)
-    button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
-end
-
-local HealthGradient = Ether:BuildGradientTable(HealthColors)
-
-local healthCache = {}
-local healthCacheHeader = {}
-
-function Ether:UpdateHealthText(button)
-    if not button or not button.unit or not button.health then return end
-
-    local h, maxH = UnitHealth(button.unit), UnitHealthMax(button.unit)
-
-    local roundedPct = maxH > 0 and math_floor((h / maxH) * 100 + 0.5) or 0
-
-    if healthCache[button.unit] == roundedPct then
+    if h <= 0 then
         return
     end
-    healthCache[button.unit] = roundedPct
-
-    if maxH > 0 and roundedPct > 0 then
-        button.health:SetText(string_format("%s%d%%|r", HealthGradient[roundedPct], roundedPct))
-    end
-end
-
-function Ether:UpdateHealthTextHeader(button)
-    if not button or not button.unit or not button.health then return end
-
-    local h, maxH = UnitHealth(button.unit), UnitHealthMax(button.unit)
-
-    local roundedPct = maxH > 0 and math_floor((h / maxH) * 100 + 0.5) or 0
-
-    if healthCacheHeader[button.unit] == roundedPct then
-        return
-    end
-    healthCacheHeader[button.unit] = roundedPct
-
-    if maxH > 0 and roundedPct > 0 then
-        button.health:SetText(string_format("%s%d%%|r", HealthGradient[roundedPct], roundedPct))
-    end
-end
-
-function Ether:InitialHealthText(button)
-    if not button or not button.unit or not button.health then return end
-
-    local unit = button.unit
-    local h, maxH = UnitHealth(unit), UnitHealthMax(unit)
-
-    local roundedPct = maxH > 0 and math_floor((h / maxH) * 100 + 0.5) or 0
-
-    if maxH > 0 and roundedPct > 0 then
-        button.health:SetText(string_format("%s%d%%|r", HealthGradient[roundedPct], roundedPct))
+    if h >= 1000 then
+        button.health:SetText(string_format(fm, h / 1000))
+    else
+        button.health:SetText(h)
     end
 end
 
@@ -297,9 +239,9 @@ local function HealthChanged(_, event, unit)
                     Ether:UpdateSmoothHealth(button)
                 else
                     Ether:UpdateHealth(button)
-                end
-                if Ether.DB[701][3] == 1 then
-                    Ether:UpdateHealthTextHeader(button)
+                    if Ether.DB[701][3] == 1 then
+                        Ether:UpdateHealthText(button)
+                    end
                 end
             end
         end
@@ -333,6 +275,4 @@ function Ether:HealthDisable()
     UnregisterHEvent("UNIT_HEAL_PREDICTION")
     UnregisterHEvent("UNIT_HEALTH")
     UnregisterHEvent("UNIT_MAXHEALTH")
-    wipe(healthCache)
-    wipe(healthCacheHeader)
 end

@@ -126,28 +126,17 @@ end
 
 local function WorldEnter(_, event)
     if event == "PLAYER_ENTERING_WORLD" then
+        UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
         Ether:RepositionHeaders()
-        C_Timer.After(0.1, function()
-            for unit, button in pairs(Ether.unitButtons.raid) do
-                if unit then
-                    if Ether.DB[701][3] == 1 then
-                        Ether:InitialHealthText(button)
-                    end
-                    if Ether.DB[701][4] == 1 then
-                        Ether:InitialPowerText(button)
-                    end
-                end
+        C_After(0.2, function()
+             Ether.Fire("RESET_CHILDREN")
+        end)
+        C_After(0.3, function()
+            if not _G["EtherPetGroupHeader"] then
+                Ether:InitializePetHeader()
             end
         end)
     end
-    C_Timer.After(0.2, function()
-        Ether.Fire("RESET_CHILDREN")
-    end)
-    C_Timer.After(0.3, function()
-        if not _G["EtherPetGroupHeader"] then
-            Ether:InitializePetHeader()
-        end
-    end)
 end
 
 local function UnGhost(_, event)

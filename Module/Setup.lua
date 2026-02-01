@@ -451,6 +451,7 @@ function Ether:DispelIconSetup(button)
     return button
 end
 
+--[[
 local function HexToRGB(hex)
     hex = hex:gsub('#', '')
     local r = tonumber(hex:sub(1, 2), 16) / 255
@@ -490,7 +491,6 @@ function Ether:BuildGradientTable(colorDef)
     return steps
 end
 
---[[
 local ObjPool = {}
 function Ether:CreateObjPool(creatorFunc)
     local obj = {

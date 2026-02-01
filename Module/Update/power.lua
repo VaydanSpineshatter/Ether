@@ -4,7 +4,7 @@ local UnitPowerType = UnitPowerType
 local UnitPower = UnitPower
 local UnitPowerMax = UnitPowerMax
 local string_format = string.format
-local math_floor = math.floor
+local fm = "%.1f"
 
 local Power_Colors = {
     [0] = {
@@ -27,12 +27,6 @@ local Power_Colors = {
         g = 0.96,
         b = 0.41
     }
-}
-
-local PowerColors = {
-    {0.0, 'ff0000'},
-    {0.5, 'ffff00'},
-    {1.0, '1a75ff'},
 }
 
 local RegisterPEvent, UnregisterPEvent
@@ -85,63 +79,18 @@ function Ether:InitialPower(button)
     button.powerBar:SetMinMaxValues(0, ReturnMaxPower(button.unit))
 end
 
-function Ether:InitialPower(button)
-    if not button or not button.unit or not button.powerBar then
-        return
-    end
-    button.powerBar:SetValue(ReturnPower(button.unit))
-    button.powerBar:SetMinMaxValues(0, ReturnMaxPower(button.unit))
-end
-
-local PowerGradient = Ether:BuildGradientTable(PowerColors)
-
-local powerCache = {}
-local powerCacheHeader = {}
-
 function Ether:UpdatePowerText(button)
-    if not button or not button.unit or not button.power then return end
-
-    local pw, maxPw = UnitPower(button.unit), UnitPowerMax(button.unit)
-
-    local roundedPct = maxPw > 0 and math_floor((pw / maxPw) * 100 + 0.5) or 0
-
-    if powerCache[button.unit] == roundedPct then
+    if not button or not button.unit or not button.power then
         return
     end
-    powerCache[button.unit] = roundedPct
-
-    if maxPw > 0 and roundedPct > 0 then
-        button.power:SetText(string_format("%s%d%%|r", PowerGradient[roundedPct], roundedPct))
-    end
-end
-
-function Ether:UpdatePowerTextHeader(button)
-    if not button or not button.unit or not button.power then return end
-
-    local pw, maxPw = UnitPower(button.unit), UnitPowerMax(button.unit)
-
-    local roundedPct = maxPw > 0 and math_floor((pw / maxPw) * 100 + 0.5) or 0
-
-    if powerCacheHeader[button.unit] == roundedPct then
+    local p = UnitPower(button.unit)
+    if p <= 0 then
         return
     end
-     powerCacheHeader[button.unit] = roundedPct
-
-    if maxPw > 0 and roundedPct > 0 then
-        button.power:SetText(string_format("%s%d%%|r", PowerGradient[roundedPct], roundedPct))
-    end
-end
-
-function Ether:InitialPowerText(button)
-    if not button or not button.unit or not button.power then return end
-
-    local unit = button.unit
-    local pw, maxPw = ReturnPower(unit), ReturnMaxPower(unit)
-
-    local roundedPct = maxPw > 0 and math_floor((pw / maxPw) * 100 + 0.5) or 0
-
-    if maxPw > 0 and roundedPct > 0 then
-        button.power:SetText(string_format("%s%d%%|r", PowerGradient[roundedPct], roundedPct))
+    if p >= 1000 then
+        button.power:SetText(string_format(fm, p / 1000))
+    else
+        button.power:SetText(p)
     end
 end
 
@@ -197,7 +146,7 @@ local function PowerChanged(_, event, unit)
         if Ether.DB[901]["raid"] and Ether.DB[701][4] == 1 then
             local button = Ether.unitButtons.raid[unit]
             if button and button:IsVisible() then
-                 Ether:UpdatePowerTextHeader(button)
+                Ether:UpdatePowerText(button)
             end
         end
     end
@@ -213,6 +162,4 @@ function Ether:PowerDisable()
     UnregisterPEvent("UNIT_POWER_UPDATE")
     UnregisterPEvent("UNIT_MAXPOWER")
     UnregisterPEvent("UNIT_DISPLAYPOWER")
-    wipe(powerCache)
-    wipe(powerCacheHeader)
 end
