@@ -9,6 +9,59 @@ local type = type
 local math_floor = math.floor
 local string_char = string.char
 
+local Default = {
+    [111] = {
+        LAST_UPDATE_CHECK = 0,
+        SHOW = true,
+        LAST_TAB = "Module",
+        SELECTED = 331,
+    },
+    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [201] = {1, 1, 1, 1, 1, 1},
+    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [401] = {1, 0, 1, 1},
+    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [701] = {0, 0, 0, 0},
+    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+    [901] = {
+        player = true,
+        target = true,
+        targettarget = true,
+        pet = true,
+        pettarget = true,
+        focus = true,
+        raid = true,
+    },
+    [1001] = {1, 1, 1, 1},
+    [1002] = {
+        [1] = {12, "TOP", 0, 0},
+        [2] = {12, "TOPLEFT", 0, 0},
+        [3] = {12, "BOTTOM", 0, 0},
+        [4] = {12, "CENTER", 0, 6},
+        [5] = {12, "RIGHT", 0, 0},
+        [6] = {12, "BOTTOMRIGHT", 0, 12},
+        [7] = {12, "TOP", 0, 0},
+        [8] = {12, "LEFT", 0, 0},
+        [9] = {12, "TOPLEFT", 0, 0},
+    },
+    [1003] = {},
+    [1101] = {1, 1, 1},
+    [5111] = {
+        [331] = {"BOTTOMRIGHT", 5133, "BOTTOMRIGHT", -400, 300, 1, 1, 1.0, 1.0},
+        [332] = {"CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0},
+        [333] = {"CENTER", 5133, "CENTER", 250, -250, 120, 50, 1.0, 1.0},
+        [334] = {"CENTER", 5133, "CENTER", 0, -300, 120, 50, 1.0, 1.0},
+        [335] = {"CENTER", 5133, "CENTER", -350, -100, 120, 50, 1.0, 1.0},
+        [336] = {"CENTER", 5133, "CENTER", -270, -20, 120, 50, 1.0, 1.0},
+        [337] = {"LEFT", 5133, "LEFT", 500, 100, 120, 50, 1.0, 1.0},
+        [338] = {"LEFT", 5133, "LEFT", 50, 0, 1, 1, 1.0, 1.0},
+        [339] = {"TOP", 5133, "TOP", 80, -80, 320, 200, 1.0, 1.0},
+        [340] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
+        [341] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
+    }
+}
+Ether.DataDefault = Default
+
 ---@alias Menu number
 ---| Data 001
 ---| Hide 101
@@ -35,12 +88,11 @@ local string_char = string.char
 ---| 339 Debug
 ---| 340 Settings
 
----@alias Data_001 table
----| Version 1
----| LastVersion 2
----| ShowSettings 3
----| LastTab 4
----| SelectedFrame 5
+---@alias Data_111 table
+---| LastVersion 1
+---| ShowSettings 2
+---| LastTab 3
+---| SelectedFrame 4
 
 ---@alias HideBlizzard_101 number
 ---| Player 1
@@ -84,6 +136,7 @@ local string_char = string.char
 ---| Icon 1
 ---| Whisper 2
 ---| Tooltip 3
+---| Idle mode 4
 
 ---@alias IndicatorRegister_501 number
 ---| READY_CHECK READY_CHECK_CONFIRM READY_FINISHED 1
@@ -130,59 +183,16 @@ local string_char = string.char
 ---| Target 3
 ---| Header 4
 
-
-local Default = {
-    [111] = {
-        LAST_UPDATE_CHECK = 0,
-        SHOW = true,
-        LAST_TAB = "Module",
-        SELECTED = 331,
-    },
-    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [201] = {1, 1, 1, 1, 1, 1},
-    [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 0, 1},
-    [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
-    [901] = {
-        player = true,
-        target = true,
-        targettarget = true,
-        pet = true,
-        pettarget = true,
-        focus = true,
-        raid = true,
-    },
-    [1001] = {1, 1, 1, 1},
-    [1002] = {
-        [1] = {12, "TOP", 0, 0},
-        [2] = {12, "TOPLEFT", 0, 0},
-        [3] = {12, "BOTTOM", 0, 0},
-        [4] = {12, "CENTER", 0, 6},
-        [5] = {12, "RIGHT", 0, 0},
-        [6] = {12, "BOTTOMRIGHT", 0, 12},
-        [7] = {12, "TOP", 0, 0},
-        [8] = {12, "LEFT", 0, 0},
-        [9] = {12, "TOPLEFT", 0, 0},
-    },
-    [1003] = {},
-    [1101] = {1, 1, 1},
-    [5111] = {
-        [331] = {"BOTTOMRIGHT", 5133, "BOTTOMRIGHT", -220, 220, 1, 1, 1.0, 1.0},
-        [332] = {"CENTER", 5133, "CENTER", -250, -250, 120, 50, 1.0, 1.0},
-        [333] = {"CENTER", 5133, "CENTER", 250, -250, 120, 50, 1.0, 1.0},
-        [334] = {"CENTER", 5133, "CENTER", 0, -300, 120, 50, 1.0, 1.0},
-        [335] = {"CENTER", 5133, "CENTER", -350, -100, 120, 50, 1.0, 1.0},
-        [336] = {"CENTER", 5133, "CENTER", -270, -20, 120, 50, 1.0, 1.0},
-        [337] = {"LEFT", 5133, "LEFT", 500, 100, 120, 50, 1.0, 1.0},
-        [338] = {"LEFT", 5133, "LEFT", 50, 0, 1, 1, 1.0, 1.0},
-        [339] = {"TOP", 5133, "TOP", 80, -80, 320, 200, 1.0, 1.0},
-        [340] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
-        [341] = {"TOPLEFT", 5133, "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
-    }
-}
-Ether.DataDefault = Default
+---@alias IndicatorsPosition_1002 number
+---| READY_CHECK READY_CHECK_CONFIRM READY_FINISHED 1
+---| UNIT_CONNECTION 2
+---| RAID_TARGET_UPDATE 3
+---| INCOMING_RESURRECT_CHANGED 4
+---| PARTY_LEADER_CHANGED 5
+---| PARTY_LOOT_METHOD_CHANGED 6
+---| UNIT_FLAGS 7
+---| PLAYER_ROLES_ASSIGNED 8
+---| PLAYER_FLAGS_CHANGED 9
 
 function Ether.DataEnableAll(t)
     for i = 1, #t do

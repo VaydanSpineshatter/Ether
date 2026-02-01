@@ -14,12 +14,13 @@ function Ether.CreateModuleSection(self)
     local modulesValue = {
         [1] = {name = "Icon"},
         [2] = {name = "Chat Bn & Msg Whisper"},
-        [3] = {name = "Tooltip"}
+        [3] = {name = "Tooltip"},
+        [4] = {name = "Idle mode"}
     }
     local mod = CreateFrame("Frame", nil, parent)
     mod:SetSize(200, (#modulesValue * 30) + 60)
     for i, opt in ipairs(modulesValue) do
-        local btn = CreateFrame('CheckButton', nil, mod, 'OptionsBaseCheckButtonTemplate')
+        local btn = CreateFrame("CheckButton", nil, mod, "OptionsBaseCheckButtonTemplate")
 
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, 20, -20)
@@ -43,24 +44,29 @@ function Ether.CreateModuleSection(self)
                     ETHER_ICON.hide = true
                 end
             elseif i == 2 then
-                if Ether.DB[401][2] == 1 or Ether.DB[401][2] == 0 then
-                    Ether.EnableMsgEvents()
-                end
+                Ether.EnableMsgEvents()
             end
         end)
         self.Content.Buttons.Module.A[i] = btn
     end
 end
-function Ether.CreateSlashSection(self)
-    local slash = GetFont(self, self.Content.Children["Slash"], "|cffffff00Slash Commands|r", 15)
+
+function Ether.CreateInformationSection(self)
+    local parent = self.Content.Children["Information"]
+    local slash = GetFont(self, parent, "|cffffff00Slash Commands|r", 15)
     slash:SetPoint("TOP", 0, -20)
     local lastY = -20
     for _, entry in ipairs(Ether.SlashInfo) do
-        local fs = GetFont(self, self.Content.Children["Slash"], string.format("%s  –  %s", entry.cmd, entry.desc), 12)
+        local fs = GetFont(self, parent, string.format("%s  –  %s", entry.cmd, entry.desc), 12)
         fs:SetPoint("TOP", slash, "BOTTOM", 0, lastY)
         lastY = lastY - 18
     end
+    local idle = GetFont(self, parent, "|cffffff00What happens in idle mode?|r", 15)
+    idle:SetPoint("TOP", 0, -180)
+    local idleInfo = GetFont(self, parent, "When the user is not at the keyboard,\nEther deregisters all events and OnUpdate functions.", 12)
+    idleInfo:SetPoint("TOP", 0, -220)
 end
+
 function Ether.CreateHideSection(self)
     local parent = self.Content.Children["Hide"]
     local HideValue = {
@@ -99,6 +105,7 @@ function Ether.CreateHideSection(self)
         self.Content.Buttons.Hide.A[i] = btn
     end
 end
+
 function Ether.CreateSection(self)
     local parent = self.Content.Children["Create"]
     local CreateUnits = {
@@ -207,6 +214,7 @@ local function resetHealthPowerText(value)
         GetTblText(Ether.unitButtons["raid"], "power")
     end
 end
+
 function Ether.CreateUpdateSection(self)
     local parent = self.Content.Children["Updates"]
     local UpdateValue = {
@@ -1051,14 +1059,14 @@ function Ether.CreateRegisterSection(self)
     local parent = self.Content.Children["Register"]
 
     local I_Register = {
-        [1] = {text = "Ready check, confirm and finished", texture = "Interface\\RaidFrame\\ReadyCheck-Ready", texture2 = "Interface\\RaidFrame\\ReadyCheck-NotReady", texture3 = "Interface\\RaidFrame\\ReadyCheck-Waiting"},
-        [2] = {text = "Unit connection", texture = "Interface\\CharacterFrame\\Disconnect-Icon", size = 30},
+        [1] = {text = "Ready check", texture = "Interface\\RaidFrame\\ReadyCheck-Ready", texture2 = "Interface\\RaidFrame\\ReadyCheck-NotReady", texture3 = "Interface\\RaidFrame\\ReadyCheck-Waiting"},
+        [2] = {text = "Connection", texture = "Interface\\CharacterFrame\\Disconnect-Icon", size = 30},
         [3] = {text = "Raid target update", texture = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", size = 14, coo = {0.75, 1, 0.25, 0.5}},
-        [4] = {text = "Incoming Resurrect changed", texture = "Interface\\RaidFrame\\Raid-Icon-Rez", size = 20},
-        [5] = {text = "Party leader changed", texture = "Interface\\GroupFrame\\UI-Group-LeaderIcon"},
-        [6] = {text = "Party loot method changed", texture = "Interface\\GroupFrame\\UI-Group-MasterLooter", size = 16},
+        [4] = {text = "Resurrection", texture = "Interface\\RaidFrame\\Raid-Icon-Rez", size = 20},
+        [5] = {text = "Leader", texture = "Interface\\GroupFrame\\UI-Group-LeaderIcon"},
+        [6] = {text = "Loot method", texture = "Interface\\GroupFrame\\UI-Group-MasterLooter", size = 16},
         [7] = {text = "Unit Flags - |cffff0000Charmed|r, Dead & Ghost", texture = "Interface\\Icons\\Spell_Holy_TurnUndead", texture2 = "Interface\\Icons\\Spell_Holy_GuardianSpirit"},
-        [8] = {text = "Player roles assigned", texture = "Interface\\GroupFrame\\UI-Group-MainTankIcon", texture2 = "Interface\\GroupFrame\\UI-Group-MainAssistIcon"},
+        [8] = {text = "Maintank and Mainassist", texture = "Interface\\GroupFrame\\UI-Group-MainTankIcon", texture2 = "Interface\\GroupFrame\\UI-Group-MainAssistIcon"},
         [9] = {text = "Player flags - |cE600CCFFAFK|r & |cffCC66FFDND|r"}
     }
 
@@ -1316,7 +1324,7 @@ function Ether.CreatePositionSection(self)
     offsetXBG:SetDrawLayer("BACKGROUND", -1)
 
     local offsetXValue = parent:CreateFontString(nil, "OVERLAY")
-    Indicator.offsetXValue = offsetXValue  -- Wichtig: Speichere in Indicator
+    Indicator.offsetXValue = offsetXValue
     offsetXValue:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     offsetXValue:SetPoint("TOP", offsetXSlider, "BOTTOM")
     offsetXValue:SetText("0")
@@ -1546,7 +1554,7 @@ function Ether.CreateConfigSection(self)
         [335] = {name = "Pet", frame = _G["Ether_pet_UnitButton"]},
         [336] = {name = "Pet Target", frame = _G["Ether_pettarget_UnitButton"]},
         [337] = {name = "Focus", frame = _G["Ether_focus_UnitButton"]},
-        [338] = {name = "Raid", frame = Ether.Anchor.raid},
+        [338] = {name = "Raid", frame = _G["EtherRaidGroupAnchor"]},
         [339] = {name = "Debug", frame = Ether.DebugFrame},
     }
 
@@ -2281,7 +2289,7 @@ end
 
 function Ether.ResetProfile()
     ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DataDefault)
-    Ether.DB = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile])
+    Ether.DB = Ether.CopyTable(Ether.DataDefault)
     wipe(Ether.DB[1003])
     Ether.UpdateAuraList()
     selectedSpellId = nil

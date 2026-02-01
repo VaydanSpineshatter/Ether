@@ -80,7 +80,7 @@ end
 
 function Ether:HideIndicators(hide)
     for _, button in pairs(Ether.unitButtons.raid) do
-        if (button and button.Indicators and button.Indicators[hide]) then
+        if button and button.Indicators and button.Indicators[hide] then
             button.Indicators[hide]:Hide()
         end
     end
@@ -165,7 +165,7 @@ end
 local function UpdateConnectionIcon()
     for unit, button in pairs(Ether.unitButtons.raid) do
         if button and unit then
-           resetIndicator(button, "ConnectionIcon", 2)
+            resetIndicator(button, "ConnectionIcon", 2)
             local isConnected = UnitIsConnected(unit)
             if (not isConnected) then
                 button.Indicators.ConnectionIcon:SetTexture(connectionIcon)
@@ -429,7 +429,7 @@ end
 
 function Ether:IndicatorsDisable()
     for index, handlers in ipairs(indicatorsHandlers) do
-        if index ~= 9 then
+        if handlers[2] and index ~= 9 then
             handlers[2]()
         end
     end

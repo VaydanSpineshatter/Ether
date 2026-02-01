@@ -110,6 +110,59 @@ local function RosterChanged(_, event)
     end
 end
 
+local function WorldLeft(_, event)
+    if event == "PLAYER_LEAVING_WORLD" then
+        C_After(1, function()
+            for unit, button in pairs(Ether.unitButtons.raid) do
+                if UnitExists(unit) then
+                    Ether:UpdateRaidIsHelpful(unit)
+                    Ether:DispelAuraScan(unit)
+                    Ether:IndicatorsUpdate()
+                end
+            end
+        end)
+    end
+end
+
+local function WorldEnter(_, event)
+    if event == "PLAYER_ENTERING_WORLD" then
+        Ether:RepositionHeaders()
+        C_Timer.After(0.1, function()
+            for unit, button in pairs(Ether.unitButtons.raid) do
+                if unit then
+                    if Ether.DB[701][3] == 1 then
+                        Ether:InitialHealthText(button)
+                    end
+                    if Ether.DB[701][4] == 1 then
+                        Ether:InitialPowerText(button)
+                    end
+                end
+            end
+        end)
+    end
+    C_Timer.After(0.2, function()
+        Ether.Fire("RESET_CHILDREN")
+    end)
+    C_Timer.After(0.3, function()
+        if not _G["EtherPetGroupHeader"] then
+            Ether:InitializePetHeader()
+        end
+    end)
+end
+
+local function UnGhost(_, event)
+    if event == "PLAYER_UNGHOST" then
+        C_After(0.5, function()
+            for unit, button in pairs(Ether.unitButtons.raid) do
+                if UnitExists(unit) then
+                    Ether:UpdateRaidIsHelpful(unit)
+                    Ether:DispelAuraScan(unit)
+                end
+            end
+        end)
+    end
+end
+
 local function OnAfk(self)
     self.isActive = true
     Ether.CastBar.DisableCastEvents()
@@ -118,7 +171,6 @@ local function OnAfk(self)
     Ether:PowerDisable()
     Ether:AuraDisable()
     Ether:IndicatorsDisable()
-    -- Ether:IndicatorsUpdate()
     Ether:CleanupAllRaidIcons()
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
@@ -154,7 +206,7 @@ local function NotAfk(self)
 end
 
 local function PlayerFlags(self, event, unit)
-    if event == "PLAYER_FLAGS_CHANGED" and unit == "player" then
+    if Ether.DB[401][4] == 1 and event == "PLAYER_FLAGS_CHANGED" and unit == "player" then
         if UnitIsAFK(unit) then
             if not self.isActive then
                 OnAfk(self)
@@ -167,34 +219,6 @@ local function PlayerFlags(self, event, unit)
     end
 end
 
-local function WorldLeft(_, event)
-    if event == "PLAYER_LEAVING_WORLD" then
-        C_After(1, function()
-            for unit, button in pairs(Ether.unitButtons.raid) do
-                if UnitExists(unit) then
-                    Ether:UpdateRaidIsHelpful(unit)
-                    Ether:DispelAuraScan(unit)
-                    Ether:IndicatorsUpdate()
-                end
-            end
-        end)
-    end
-end
-
-local function UnGhost(_, event)
-    if event == "PLAYER_UNGHOST" then
-        C_After(0.5, function()
-            for unit, button in pairs(Ether.unitButtons.raid) do
-                if UnitExists(unit) then
-                    Ether:UpdateRaidIsHelpful(unit)
-                    Ether:DispelAuraScan(unit)
-                    Ether:IndicatorsUpdate()
-                end
-            end
-        end)
-    end
-end
-
 function Ether:RosterEnable()
     Ether:AuraEnable()
     Ether:IndicatorsEnable()
@@ -202,12 +226,12 @@ function Ether:RosterEnable()
     Ether:NameEnable()
     Ether:HealthEnable()
     Ether:PowerEnable()
+    RegisterRosterEvent("PLAYER_FLAGS_CHANGED", PlayerFlags)
     RegisterRosterEvent("PLAYER_LEAVING_WORLD", WorldLeft)
+    RegisterRosterEvent("PLAYER_ENTERING_WORLD", WorldEnter)
     RegisterRosterEvent("GROUP_ROSTER_UPDATE", RosterChanged)
     RegisterRosterEvent("PLAYER_TARGET_CHANGED", TargetChanged)
-    RegisterRosterEvent("PLAYER_FLAGS_CHANGED", PlayerFlags)
     RegisterRosterEvent("PLAYER_UNGHOST", UnGhost)
-
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether:RangeEnable()
@@ -218,11 +242,14 @@ end
 function Ether:RosterDisable()
     UnregisterRosterEvent("PLAYER_TARGET_CHANGED")
     UnregisterRosterEvent("PLAYER_LEAVING_WORLD")
+    UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
     UnregisterRosterEvent("GROUP_ROSTER_UPDATE")
     UnregisterRosterEvent("PLAYER_UNGHOST")
+    UnregisterRosterEvent("PLAYER_FLAGS_CHANGED")
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether.Range:Disable()
         end)
     end
 end
+

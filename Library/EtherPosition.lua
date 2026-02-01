@@ -50,21 +50,13 @@ function ObjPos:InitialDrag(number)
     self._parent:SetMovable(true)
     self._parent:RegisterForDrag("LeftButton")
     self._parent:SetScript("OnDragStart", function()
-        if InCombatLockdown() or self._parent.isMoving then
-            return
-        end
         if self._parent:IsMovable() then
             self._parent:StartMoving()
-            self._parent.isMoving = true
         end
     end)
     self._parent:SetScript("OnDragStop", function()
-        if InCombatLockdown() or not self._parent.isMoving then
-            return
-        end
         if self._parent:IsMovable() then
             self._parent:StopMovingOrSizing()
-            self._parent.isMoving = false
         end
         local point, relTo, relPoint, x, y = self._parent:GetPoint(1)
         local relToName

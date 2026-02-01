@@ -1,24 +1,15 @@
 local _, Ether = ...
 local math_floor = math.floor
 local tinsert = table.insert
+local string_format = string.format
 
-function Ether:SetupPowerText(button)
+function Ether:SetupUpdateText(button, tbl, p)
     if not button or not button.healthBar then return end
-    local power = button.healthBar:CreateFontString(nil, "OVERLAY")
-    button.power = power
-    power:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
-    power:SetPoint("BOTTOMRIGHT", 0, 1)
-    power:SetTextColor(1, 1, 1)
-    return button
-end
-
-function Ether:SetupHealthText(button)
-    if not button or not button.healthBar then return end
-    local health = button.healthBar:CreateFontString(nil, "OVERLAY")
-    button.health = health
-    health:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
-    health:SetPoint("BOTTOMRIGHT", 0, 10)
-    health:SetTextColor(1, 1, 1)
+    local text = button.healthBar:CreateFontString(nil, "OVERLAY")
+    button[tbl] = text
+    text:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
+    text:SetPoint("BOTTOMRIGHT", button.healthBar, "BOTTOMRIGHT", 0, p and 1 or 10)
+    text:SetTextColor(1, 1, 1)
     return button
 end
 
@@ -442,6 +433,64 @@ function Ether:AddBlackBorder(button, scale, r, g, b, a)
     return button
 end
 
+function Ether:DispelIconSetup(button)
+    local iconFrame = CreateFrame("Frame", nil, button)
+    button.iconFrame = iconFrame
+    iconFrame:SetSize(12, 12)
+    iconFrame:SetPoint("CENTER", 0, 10)
+    iconFrame:Hide()
+    local dispelIcon = iconFrame:CreateTexture(nil, "OVERLAY")
+    button.dispelIcon = dispelIcon
+    dispelIcon:SetAllPoints()
+    dispelIcon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+    local dispelBorder = iconFrame:CreateTexture(nil, "BORDER")
+    button.dispelBorder = dispelBorder
+    dispelBorder:SetColorTexture(0, 0, 0, 1)
+    dispelBorder:SetPoint("TOPLEFT", -1, 1)
+    dispelBorder:SetPoint("BOTTOMRIGHT", 1, -1)
+    return button
+end
+
+local function HexToRGB(hex)
+    hex = hex:gsub('#', '')
+    local r = tonumber(hex:sub(1, 2), 16) / 255
+    local g = tonumber(hex:sub(3, 4), 16) / 255
+    local b = tonumber(hex:sub(5, 6), 16) / 255
+    return r, g, b
+end
+
+local function LeapColor(r1, g1, b1, r2, g2, b2, t)
+    return r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t
+end
+
+local cFF = "|cff%02x%02x%02x"
+function Ether:BuildGradientTable(colorDef)
+    local steps = {}
+    for i = 0, 100 do
+        local pct = i / 100
+        local prev, nextC
+        for idx = 1, #colorDef - 1 do
+            if pct >= colorDef[idx][1] and pct <= colorDef[idx + 1][1] then
+                prev = colorDef[idx]
+                nextC = colorDef[idx + 1]
+                break
+            end
+        end
+        if not prev then
+            prev, nextC = colorDef[#colorDef - 1], colorDef[#colorDef]
+        end
+        local pr, pg, pb = HexToRGB(prev[2])
+        local nr, ng, nb = HexToRGB(nextC[2])
+        local range = (nextC[1] - prev[1])
+        local t = range > 0 and (pct - prev[1]) / range or 0
+
+        local r, g, b = LeapColor(pr, pg, pb, nr, ng, nb, t)
+        steps[i] = string_format(cFF, r * 255, g * 255, b * 255)
+    end
+    return steps
+end
+
+--[[
 local ObjPool = {}
 function Ether:CreateObjPool(creatorFunc)
     local obj = {
@@ -506,3 +555,4 @@ function ObjPool:ReleaseAll()
         self.temp[i] = nil
     end
 end
+]]

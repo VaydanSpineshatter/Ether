@@ -37,7 +37,7 @@ Ether.unitButtons = {
 local function BuildContent(self)
     local success, msg = pcall(function()
         Ether.CreateModuleSection(self)
-        Ether.CreateSlashSection(self)
+        Ether.CreateInformationSection(self)
         Ether.CreateHideSection(self)
         Ether.CreateSection(self)
         Ether.CreateUpdateSection(self)
@@ -84,7 +84,7 @@ local Construct = {
     },
     Menu = {
         ["TOP"] = {
-            [1] = {"Module", "Slash"},
+            [1] = {"Module", "Information"},
             [2] = {"Hide", "Create", "Updates"},
             [3] = {"Aura Settings", "Aura Custom"},
             [4] = {"Register", "Position"},
@@ -523,9 +523,7 @@ end)
 
 local dataBroker
 do
-    if (not LibStub or not LibStub("LibDataBroker-1.1")) then
-        return
-    end
+    if not LibStub or not LibStub("LibDataBroker-1.1") then return end
     local LDB = LibStub("LibDataBroker-1.1", true)
 
     dataBroker = LDB:NewDataObject("EtherIcon", {
@@ -656,7 +654,7 @@ function Ether:RefreshFramePositions()
         [335] = _G["Ether_pet_UnitButton"],
         [336] = _G["Ether_pettarget_UnitButton"],
         [337] = _G["Ether_focus_UnitButton"],
-        [338] = Ether.Anchor.raid,
+        [338] = _G["EtherRaidGroupAnchor"],
         [339] = Ether.DebugFrame,
         [340] = Construct.Frames["Main"]
     }
@@ -684,7 +682,7 @@ function Ether:RefreshFramePositions()
 end
 
 local arraysLength = {
-    [101] = 12, [201] = 6, [301] = 13, [401] = 3,
+    [101] = 12, [201] = 6, [301] = 13, [401] = 4,
     [501] = 9, [701] = 4, [801] = 11,
     [1001] = 4, [1101] = 3
 }
@@ -834,7 +832,7 @@ local function OnInitialize(self, event, ...)
 
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(400)
-        tooltip:SetSize(640, 480)
+        tooltip:SetSize(1,1)
         Ether.Anchor.tooltip = tooltip
 
         Ether.CreateMainSettings(Construct)
@@ -881,11 +879,7 @@ local function OnInitialize(self, event, ...)
 
         ToggleSettings(Construct)
 
-        C_Timer.After(0.3, function()
-            Ether:RepositionHeaders()
-        end)
-
-    elseif (event == "GROUP_ROSTER_UPDATE") then
+     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if IsInGroup() and Ether.updatedChannel ~= true then
             Ether.updatedChannel = true
