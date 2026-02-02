@@ -1,5 +1,4 @@
 local _, Ether = ...
-local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitIsAFK = UnitIsAFK
 local UnitIsDND = UnitIsDND
 local UnitIsConnected = UnitIsConnected

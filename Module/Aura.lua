@@ -201,7 +201,10 @@ local function raidAuraUpdate(unit, updateInfo)
         for _, aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful and config[aura.spellId] and not config.isDebuff then
                 auraAdded = true
-                raidAurasAdded[aura.auraInstanceID] = aura
+                raidAurasAdded[aura.auraInstanceID] = {
+                    spellId = aura.spellId,
+                    guid = guid
+                }
             end
             if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                 auraDispel = true
@@ -217,11 +220,17 @@ local function raidAuraUpdate(unit, updateInfo)
                 raidDispel[auraInstanceID] = nil
             end
             if raidAurasAdded[auraInstanceID] then
-                auraAdded = true
+                local auraData = raidAurasAdded[auraInstanceID]
+                local auraGuid = auraData.guid
+                local spellId = auraData.spellId
+                if raidIcons[auraGuid] and raidIcons[auraGuid][spellId] then
+                    raidIcons[auraGuid][spellId]:Hide()
+                end
                 raidAurasAdded[auraInstanceID] = nil
             end
         end
     end
+
 
     if auraAdded then
         Ether:UpdateRaidIsHelpful(unit)

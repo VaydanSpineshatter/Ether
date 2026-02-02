@@ -88,8 +88,8 @@ local function WorldEnter(_, event)
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")
         end)
-        C_After(0.3, function()
-             if not UnitInAnyGroup("player") then
+        C_After(1, function()
+            if not UnitInAnyGroup("player") then
                 ValidUnits.player = true
                 ValidUnits.raid = false
                 ValidUnits.party = false
@@ -97,7 +97,7 @@ local function WorldEnter(_, event)
                 ValidUnits.player = false
                 ValidUnits.party = false
                 ValidUnits.raid = true
-            elseif UnitInParty("player") and not UnitInRaid("player") then
+            elseif UnitInParty("player") then
                 ValidUnits.player = true
                 ValidUnits.party = true
                 ValidUnits.raid = false
@@ -105,21 +105,32 @@ local function WorldEnter(_, event)
         end)
     end
 end
+
+local status = false
+local function ifValidUnits()
+    if not status then
+        status = true
+        C_After(8, function()
+            if not UnitInAnyGroup("player") then
+                ValidUnits.player = true
+                ValidUnits.raid = false
+                ValidUnits.party = false
+            elseif UnitInRaid("player") then
+                ValidUnits.player = false
+                ValidUnits.party = false
+                ValidUnits.raid = true
+            elseif UnitInParty("player") then
+                ValidUnits.player = true
+                ValidUnits.party = true
+                ValidUnits.raid = false
+            end
+            status = false
+        end)
+    end
+end
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
-        if not UnitInAnyGroup("player") then
-            ValidUnits.player = true
-            ValidUnits.raid = false
-            ValidUnits.party = false
-        elseif UnitInRaid("player") then
-            ValidUnits.player = false
-            ValidUnits.party = false
-            ValidUnits.raid = true
-        elseif UnitInParty("player") and not UnitInRaid("player") then
-            ValidUnits.player = true
-            ValidUnits.party = true
-            ValidUnits.raid = false
-        end
+        ifValidUnits()
     end
 end
 --[[
