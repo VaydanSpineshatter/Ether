@@ -444,14 +444,14 @@ end
 
 local indicatorsHandlers = {
     [1] = {EnableReadyCheck, DisableReadyCheck},
-    [2] = {EnableConnection, DisableConnection},
+    [2] = {EnableConnection, DisableConnection, UpdateConnection},
     [3] = {EnableRaidTarget, DisableRaidTarget, UpdateRaidTarget},
     [4] = {EnableResurrection, DisableResurrection},
-    [5] = {EnableGroupLeader, DisableGroupLeader},
-    [6] = {EnableMasterLoot, DisableMasterLoot},
-    [7] = {EnableUnitFlags, DisableUnitFlags},
-    [8] = {EnablePlayerRoles, DisablePlayerRoles},
-    [9] = {EnablePlayerFlags, DisablePlayerFlags}
+    [5] = {EnableGroupLeader, DisableGroupLeader, UpdateGroupLeader},
+    [6] = {EnableMasterLoot, DisableMasterLoot, UpdateMasterLoot},
+    [7] = {EnableUnitFlags, DisableUnitFlags, UpdateUnitFlags},
+    [8] = {EnablePlayerRoles, DisablePlayerRoles, UpdatePlayerRoles},
+    [9] = {EnablePlayerFlags, DisablePlayerFlags, UpdatePlayerFlags},
 }
 
 function Ether:IndicatorsToggle()
@@ -488,6 +488,17 @@ function Ether:UpdateIndex(index)
     for _, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 and handlers[3] then
             handlers[3](_, "RAID_TARGET_UPDATE")
+        end
+    end
+end
+
+function Ether:FullUpdateIndicators()
+    local I = Ether.DB[501]
+    for index, handlers in ipairs(indicatorsHandlers) do
+        if I[index] == 1 and handlers[3] then
+            for data in pairs(Events) do
+                handlers[3](_, data)
+            end
         end
     end
 end
