@@ -331,7 +331,6 @@ function Ether.CreateAuraSettingsSection(self)
 end
 
 local selectedSpellId = nil
-
 local AuraList
 local AuraButtons = {}
 
@@ -348,8 +347,8 @@ local function CreateAuraList(parent)
     UIDropDownMenu_SetText(templateDropdown, "Select Template...")
 
     local loadBtn = CreateFrame("Button", nil, parent)
-    loadBtn:SetSize(80, 25)
-    loadBtn:SetPoint("TOP", 45, -10)
+    loadBtn:SetSize(60, 25)
+    loadBtn:SetPoint("TOP", 30, -10)
     loadBtn.bg = loadBtn:CreateTexture(nil, "BACKGROUND")
     loadBtn.bg:SetAllPoints()
     loadBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
@@ -426,10 +425,31 @@ local function CreateAuraList(parent)
         self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     end)
 
+    local confirm = CreateFrame("Button", nil, frame)
+    confirm:SetSize(80, 25)
+    confirm:SetPoint("LEFT", addBtn, "RIGHT", 10, 0)
+    confirm.bg = confirm:CreateTexture(nil, "BACKGROUND")
+    confirm.bg:SetAllPoints()
+    confirm.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    confirm.text = confirm:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    confirm.text:SetPoint("CENTER")
+    confirm.text:SetText("Confirm")
+    confirm:SetScript("OnClick", function(self)
+        if selectedSpellId then
+            Ether.SaveAuraPos(selectedSpellId)
+        end
+    end)
+    confirm:SetScript("OnEnter", function(self)
+        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
+    end)
+    confirm:SetScript("OnLeave", function(self)
+        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    end)
+
     return frame
 end
 
-function Ether:AddTemplateAuras(templateName, replaceAll)
+function Ether:AddTemplateAuras(templateName)
     local template = Ether.AuraTemplates[templateName]
     if not template then
         return
@@ -576,12 +596,11 @@ end
 local function CreateEditor(parent)
     local frame = CreateFrame("Frame", nil, parent)
     Editor = frame
-    frame:SetPoint("TOPRIGHT", 80, -50)
+    frame:SetPoint("TOPRIGHT", 70, -50)
     frame:SetSize(320, 300)
 
-    local name = frame:CreateFontString(nil, "OVERLAY")
+    local name = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
     frame.nameLabel = name
-    name:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     name:SetPoint("TOPLEFT", 15, -5)
     name:SetText("Name")
     name:SetAlpha(.6)
@@ -597,9 +616,8 @@ local function CreateEditor(parent)
         self:ClearFocus()
     end)
 
-    local spellID = frame:CreateFontString(nil, "OVERLAY")
+    local spellID = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
     frame.spellIdLabel = spellID
-    spellID:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     spellID:SetPoint("TOPLEFT", nameInput, "BOTTOMLEFT", 0, -10)
     spellID:SetText("Spell ID")
     spellID:SetAlpha(.6)
@@ -621,9 +639,8 @@ local function CreateEditor(parent)
         self:ClearFocus()
     end)
 
-    local sizeLabel = frame:CreateFontString(nil, "OVERLAY")
+    local sizeLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
     frame.sizeLabel = sizeLabel
-    sizeLabel:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     sizeLabel:SetPoint("TOPLEFT", spellIdInput, "BOTTOMLEFT", 0, -100)
     sizeLabel:SetText("Size")
 
@@ -649,9 +666,8 @@ local function CreateEditor(parent)
     sizeSliderBG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     sizeSliderBG:SetDrawLayer("BACKGROUND", -1)
 
-    local sizeValue = frame:CreateFontString(nil, "OVERLAY")
+    local sizeValue = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
     frame.sizeValue = sizeValue
-    sizeValue:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     sizeValue:SetPoint("TOP", sizeSlider, "BOTTOM", 0, -5)
     sizeValue:SetText("6 px")
 
@@ -713,6 +729,7 @@ local function CreateEditor(parent)
     healthBar:SetPoint("BOTTOMLEFT")
     healthBar:SetSize(55, 55)
     healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.statusBar))
+
     local pName = healthBar:CreateFontString(nil, "OVERLAY")
     pName:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     pName:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
@@ -856,6 +873,20 @@ function Ether.CreateAuraCustomSection(self)
     end
 end
 
+local function protoType(newId)
+    local obj = {
+        name = "New Aura " .. newId,
+        color = {1, 1, 0, 1},
+        size = 6,
+        position = "TOP",
+        offsetX = 0,
+        offsetY = 0,
+        enabled = true,
+        isDebuff = false
+    }
+    return obj
+end
+
 function Ether.UpdateAuraList()
 
     for _, btn in ipairs(AuraButtons) do
@@ -949,28 +980,12 @@ end
 
 function Ether.UpdateEditor()
     if not selectedSpellId or not Ether.DB[1003][selectedSpellId] then
-        Editor.nameInput:SetText("")
-        Editor.nameInput:Disable()
-        Editor.spellIdInput:SetText("")
-        Editor.spellIdInput:Disable()
-        Editor.colorBtn:Disable()
-        Editor.sizeSlider:Disable()
-        Editor.offsetXSlider:Disable()
-        Editor.offsetYSlider:Disable()
-        for _, btn in pairs(Editor.posButtons) do
-            btn:Disable()
-        end
         return
     end
     local data = Ether.DB[1003][selectedSpellId]
     Editor.nameInput:SetText(data.name or "")
     Editor.nameInput:Enable()
     Editor.spellIdInput:SetText(tostring(selectedSpellId))
-    Editor.spellIdInput:Enable()
-    Editor.colorBtn:Enable()
-    Editor.sizeSlider:Enable()
-    Editor.offsetXSlider:Enable()
-    Editor.offsetYSlider:Enable()
     Editor.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
     Editor.rgbText:SetText(string.format("RGB: %d, %d, %d",
             data.color[1] * 255, data.color[2] * 255, data.color[3] * 255))
@@ -1009,15 +1024,15 @@ function Ether.UpdatePreview()
     indicator:ClearAllPoints()
 
     local posMap = {
-        TOPLEFT = {"TOPLEFT", data.offsetX, -data.offsetY},
+        TOPLEFT = {"TOPLEFT", data.offsetX, data.offsetY},
         TOP = {"TOP", data.offsetX, data.offsetY},
-        TOPRIGHT = {"TOPRIGHT", data.offsetX, -data.offsetY},
+        TOPRIGHT = {"TOPRIGHT", data.offsetX, data.offsetY},
         LEFT = {"LEFT", data.offsetX, -data.offsetY},
         CENTER = {"CENTER", data.offsetX, -data.offsetY},
         RIGHT = {"RIGHT", data.offsetX, -data.offsetY},
-        BOTTOMLEFT = {"BOTTOMLEFT", data.offsetX, -data.offsetY},
+        BOTTOMLEFT = {"BOTTOMLEFT", data.offsetX, data.offsetY},
         BOTTOM = {"BOTTOM", data.offsetX, data.offsetY},
-        BOTTOMRIGHT = {"BOTTOMRIGHT", data.offsetX, -data.offsetY}
+        BOTTOMRIGHT = {"BOTTOMRIGHT", data.offsetX, data.offsetY}
     }
 
     local pos = posMap[data.position]
@@ -1030,20 +1045,6 @@ function Ether.SelectAura(spellId)
     selectedSpellId = spellId
     Ether.UpdateAuraList()
     Ether.UpdateEditor()
-end
-
-local function protoType(newId)
-    local obj = {
-        name = "New Aura " .. newId,
-        color = {1, 1, 0, 1},
-        size = 6,
-        position = "TOP",
-        offsetX = 0,
-        offsetY = 0,
-        enabled = true,
-        isDebuff = false
-    }
-    return obj
 end
 
 function Ether:AddNewAura()
@@ -1065,9 +1066,9 @@ function Ether.CreateRegisterSection(self)
         [4] = {text = "Resurrection", texture = "Interface\\RaidFrame\\Raid-Icon-Rez", size = 20},
         [5] = {text = "Leader", texture = "Interface\\GroupFrame\\UI-Group-LeaderIcon"},
         [6] = {text = "Loot method", texture = "Interface\\GroupFrame\\UI-Group-MasterLooter", size = 16},
-        [7] = {text = "Unit Flags - |cffff0000Charmed|r, Dead & Ghost", texture = "Interface\\Icons\\Spell_Holy_TurnUndead", texture2 = "Interface\\Icons\\Spell_Holy_GuardianSpirit"},
+        [7] = {text = "Unit Flags |cffff0000 Red Name|r  &", texture = "Interface\\Icons\\Spell_Holy_GuardianSpirit"},
         [8] = {text = "Maintank and Mainassist", texture = "Interface\\GroupFrame\\UI-Group-MainTankIcon", texture2 = "Interface\\GroupFrame\\UI-Group-MainAssistIcon"},
-        [9] = {text = "Player flags - |cE600CCFFAFK|r & |cffCC66FFDND|r"}
+        [9] = {text = "Player flags  |cE600CCFFAFK|r & |cffCC66FFDND|r"}
     }
 
     local DB = Ether.DB
@@ -1089,7 +1090,7 @@ function Ether.CreateRegisterSection(self)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn.texture = btn:CreateTexture(nil, "OVERLAY")
         btn.texture:SetSize(18, 18)
-        btn.texture:SetPoint("LEFT", btn.label, "RIGHT", 10, 0)
+        btn.texture:SetPoint("LEFT", btn.label, "RIGHT", 8, 0)
         btn.texture:SetTexture(opt.texture)
         btn.texture2 = btn:CreateTexture(nil, "OVERLAY")
         btn.texture2:SetSize(18, 18)
@@ -1117,17 +1118,18 @@ function Ether.CreateRegisterSection(self)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
             Ether:IndicatorsToggle()
-            Ether:IndicatorsUpdate()
+            Ether:UpdateIndex(i)
         end)
         self.Content.Buttons.Indicators.A[i] = btn
     end
 end
 
-local number = 0
+local number = nil
 local iconTexture = ""
 local Indicator
 local coordinates = ""
 local indicatorType = ""
+local currentIndicator = nil
 function Ether.CreatePositionSection(self)
     local parent = self.Content.Children["Position"]
     local frame = CreateFrame("Frame", nil, parent)
@@ -1148,15 +1150,15 @@ function Ether.CreatePositionSection(self)
     UIDropDownMenu_SetText(templateDropdown, "...")
 
     local indicators = {
-        [1] = {name = "Ready Check", icon = "Interface\\RaidFrame\\ReadyCheck-Ready", type = "texture"},
-        [2] = {name = "Unit Connection", icon = "Interface\\CharacterFrame\\Disconnect-Icon", type = "texture"},
-        [3] = {name = "Raid Target", icon = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", coordinates = {0.75, 1, 0.25, 0.5}, type = "texture"},
-        [4] = {name = "Incoming Resurrect", icon = "Interface\\RaidFrame\\Raid-Icon-Rez", type = "texture"},
-        [5] = {name = "Party Leader", icon = "Interface\\GroupFrame\\UI-Group-LeaderIcon", type = "texture"},
-        [6] = {name = "Party Loot Method", icon = "Interface\\GroupFrame\\UI-Group-MasterLooter", type = "texture"},
-        [7] = {name = "Unit Flags", icon = "Interface\\Icons\\Spell_Holy_TurnUndead", type = "texture"},
-        [8] = {name = "Player Roles", icon = "Interface\\GroupFrame\\UI-Group-MainTankIcon", type = "texture"},
-        [9] = {name = "Player Flags", type = "string", text = "AFK"},
+        [1] = {name = "ReadyCheck", icon = "Interface\\RaidFrame\\ReadyCheck-Ready", type = "texture"},
+        [2] = {name = "Connection", icon = "Interface\\CharacterFrame\\Disconnect-Icon", type = "texture"},
+        [3] = {name = "RaidTarget", icon = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", coordinates = {0.75, 1, 0.25, 0.5}, type = "texture"},
+        [4] = {name = "Resurrection", icon = "Interface\\RaidFrame\\Raid-Icon-Rez", type = "texture"},
+        [5] = {name = "GroupLeader", icon = "Interface\\GroupFrame\\UI-Group-LeaderIcon", type = "texture"},
+        [6] = {name = "MasterLoo0t", icon = "Interface\\GroupFrame\\UI-Group-MasterLooter", type = "texture"},
+        [7] = {name = "UnitFlags", icon = "Interface\\Icons\\Spell_Holy_GuardianSpirit", type = "texture"},
+        [8] = {name = "PlayerRoles", icon = "Interface\\GroupFrame\\UI-Group-MainTankIcon", type = "texture"},
+        [9] = {name = "PlayerFlags", type = "string"},
     }
 
     UIDropDownMenu_Initialize(templateDropdown, function()
@@ -1170,8 +1172,12 @@ function Ether.CreatePositionSection(self)
                     indicatorType = indicators[id].type
                     iconTexture = indicators[id].icon
                     coordinates = indicators[id].coordinates
-                elseif data.type == "string" then
+                    currentIndicator = indicators[id].name
+                end
+                if data.type == "string" then
                     indicatorType = indicators[id].type
+                    coordinates = indicators[id].coordinates
+                    currentIndicator = indicators[id].name
                 end
                 UIDropDownMenu_SetSelectedValue(templateDropdown, id)
                 UIDropDownMenu_SetText(templateDropdown, data.name)
@@ -1182,7 +1188,7 @@ function Ether.CreatePositionSection(self)
     end)
 
     local preview = CreateFrame("Frame", nil, parent)
-    preview:SetPoint("TOPLEFT", selectLabel, "BOTTOMLEFT", 100, -100)
+    preview:SetPoint("TOPLEFT", selectLabel, "BOTTOMLEFT", 80, -100)
     preview:SetSize(55, 55)
 
     local healthBar = CreateFrame("StatusBar", nil, preview)
@@ -1204,8 +1210,8 @@ function Ether.CreatePositionSection(self)
     icon:SetTexture(iconTexture)
 
     local textIndicator = healthBar:CreateFontString(nil, "OVERLAY")
-    Indicator.textIndicator = textIndicator
-    textIndicator:SetFont(unpack(Ether.mediaPath.Font), 12, "OUTLINE")
+    textIndicator:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    Indicator.text = textIndicator
     textIndicator:SetPoint("TOP", healthBar, "TOP", 0, 0)
     textIndicator:Hide()
 
@@ -1263,6 +1269,27 @@ function Ether.CreatePositionSection(self)
     sizeLabel:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
     sizeLabel:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 40, -50)
     sizeLabel:SetText("Size")
+
+    local confirm = CreateFrame("Button", nil, preview)
+    confirm:SetSize(80, 25)
+    confirm:SetPoint("TOPLEFT", preview, "TOPRIGHT", 160, 0)
+    confirm.bg = confirm:CreateTexture(nil, "BACKGROUND")
+    confirm.bg:SetAllPoints()
+    confirm.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    confirm.text = confirm:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    confirm.text:SetPoint("CENTER")
+    confirm.text:SetText("Confirm")
+    confirm:SetScript("OnClick", function(self)
+        if currentIndicator and number then
+            Ether.SaveIndicatorsPos(currentIndicator, number)
+        end
+    end)
+    confirm:SetScript("OnEnter", function(self)
+        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
+    end)
+    confirm:SetScript("OnLeave", function(self)
+        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    end)
 
     local sizeSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
     Indicator.sizeSlider = sizeSlider
@@ -1371,7 +1398,7 @@ function Ether.UpdateIndicatorsValue()
     if not data then return end
 
     Indicator.icon:Hide()
-    Indicator.textIndicator:Hide()
+    Indicator.text:Hide()
 
     if indicatorType == "texture" then
         Indicator.icon:SetTexture(iconTexture)
@@ -1381,8 +1408,8 @@ function Ether.UpdateIndicatorsValue()
             Indicator.icon:SetTexCoord(unpack(coordinates))
         end
     elseif indicatorType == "string" then
-        Indicator.textIndicator:Show()
-        Indicator.textIndicator:SetText([[|cE600CCFFAFK|r]])
+        Indicator.text:Show()
+        Indicator.text:SetText([[|cE600CCFFAFK|r]])
     end
 
     Indicator.sizeSlider:SetValue(data[1])
@@ -1422,9 +1449,9 @@ function Ether.UpdateIndicators()
         Indicator.icon:ClearAllPoints()
         Indicator.icon:SetPoint(data[2], Indicator.healthBar, data[2], data[3], data[4])
     elseif indicatorType == "string" then
-        Indicator.textIndicator:SetFont(unpack(Ether.mediaPath.Font), data[1], "OUTLINE")
-        Indicator.textIndicator:ClearAllPoints()
-        Indicator.textIndicator:SetPoint(data[2], Indicator.healthBar, data[2], data[3], data[4])
+        Indicator.text:SetSize(data[1], data[1])
+        Indicator.text:ClearAllPoints()
+        Indicator.text:SetPoint(data[2], Indicator.healthBar, data[2], data[3], data[4])
     end
 end
 
@@ -1548,13 +1575,13 @@ function Ether.CreateConfigSection(self)
 
     local FRAME_GROUPS = {
         [331] = {name = "Tooltip", frame = Ether.Anchor.tooltip},
-        [332] = {name = "Player", frame = _G["Ether_player_UnitButton"]},
-        [333] = {name = "Target", frame = _G["Ether_target_UnitButton"]},
-        [334] = {name = "TargetTarget", frame = _G["Ether_targettarget_UnitButton"]},
-        [335] = {name = "Pet", frame = _G["Ether_pet_UnitButton"]},
-        [336] = {name = "Pet Target", frame = _G["Ether_pettarget_UnitButton"]},
-        [337] = {name = "Focus", frame = _G["Ether_focus_UnitButton"]},
-        [338] = {name = "Raid", frame = _G["EtherRaidGroupAnchor"]},
+        [332] = {name = "Player", frame = Ether.unitButtons.solo["player"]},
+        [333] = {name = "Target", frame = Ether.unitButtons.solo["target"]},
+        [334] = {name = "TargetTarget", frame = Ether.unitButtons.solo["targettarget"]},
+        [335] = {name = "Pet", frame = Ether.unitButtons.solo["pet"]},
+        [336] = {name = "Pet Target", frame = Ether.unitButtons.solo["pettarget"]},
+        [337] = {name = "Focus", frame = Ether.unitButtons.solo["focus"]},
+        [338] = {name = "Raid", frame = Ether.Anchor.raid},
         [339] = {name = "Debug", frame = Ether.DebugFrame},
     }
 

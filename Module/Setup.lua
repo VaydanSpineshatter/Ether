@@ -268,6 +268,47 @@ function Ether:SetupGridFrame()
     end
 end
 
+local function OnDrag(self)
+    if self:IsMovable() then
+        self:StartMoving()
+    end
+end
+
+local function StopDrag(self)
+    if self:IsMovable() then
+        self:StopMovingOrSizing()
+    end
+
+    local point, relTo, relPoint, x, y = self:GetPoint(1)
+    local relToName = "UIParent"
+
+    if relTo then
+        if relTo.GetName and relTo:GetName() then
+            relToName = relTo:GetName()
+        elseif relTo == UIParent then
+            relToName = "UIParent"
+        else
+            relToName = "UIParent"
+        end
+    end
+
+    Ether.DB[5111][339][1] = point
+    Ether.DB[5111][339][2] = relToName
+    Ether.DB[5111][339][3] = relPoint
+    Ether.DB[5111][339][4] = x
+    Ether.DB[5111][339][5] = y
+
+    local anchorRelTo = _G[relToName] or UIParent
+    self:ClearAllPoints()
+    self:SetPoint(
+        Ether.DB[5111][339][1],
+        anchorRelTo,
+        Ether.DB[5111][339][3],
+        Ether.DB[5111][339][4],
+        Ether.DB[5111][339][5]
+    )
+end
+
 function Ether:SetupDebugFrame()
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     Ether.DebugFrame = frame
@@ -302,9 +343,12 @@ function Ether:SetupDebugFrame()
     top:SetPoint("TOP", 0, -10)
     top:SetText("|cE600CCFFEther|r")
     frame:Hide()
-    local debug = Ether.RegisterPosition(Ether.DebugFrame)
-    debug:InitialPosition(339)
-    debug:InitialDrag(339)
+    Ether:FramePosition(339)
+    frame:EnableMouse(true)
+    frame:SetMovable(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", OnDrag)
+    frame:SetScript("OnDragStop", StopDrag)
 end
 
 local function AuraPosition(i)

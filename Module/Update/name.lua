@@ -47,9 +47,7 @@ local Name, Event
 do
     Name = CreateFrame("Frame")
     function Event(_, event, unit)
-        if (not unit) then
-            return
-        end
+        if not unit then return end
         if event == "UNIT_NAME_UPDATE" then
             if Ether.DB[901]["raid"] then
                 local button = Ether.unitButtons.raid[unit]

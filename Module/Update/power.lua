@@ -126,9 +126,7 @@ function Ether:UpdateSmoothPower(button)
 end
 
 local function PowerChanged(_, event, unit)
-    if (not unit) then
-        return
-    end
+    if not unit then return end
     if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
         if Ether.DB[901][unit] then
             local button = Ether.unitButtons.solo[unit]

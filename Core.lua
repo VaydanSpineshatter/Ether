@@ -88,16 +88,14 @@ local Construct = {
             [2] = {"Hide", "Create", "Updates"},
             [3] = {"Aura Settings", "Aura Custom"},
             [4] = {"Register", "Position"},
-            [5] = {"Comm", "Setup"},
-            [6] = {"Layout", "Tooltip", "Config", "Profile"}
+            [5] = {"Layout", "Tooltip", "Config", "Profile"}
         },
         ["LEFT"] = {
             [1] = {"Info"},
             [2] = {"Units"},
             [3] = {"Auras"},
             [4] = {"Indicators"},
-            [5] = {"Arena"},
-            [6] = {"Interface"}
+            [5] = {"Interface"}
         },
     },
 }
@@ -298,6 +296,47 @@ local function InitializeSettings(self)
     end
 end
 
+local function OnDrag(self)
+    if self:IsMovable() then
+        self:StartMoving()
+    end
+end
+
+local function StopDrag(self)
+    if self:IsMovable() then
+        self:StopMovingOrSizing()
+    end
+
+    local point, relTo, relPoint, x, y = self:GetPoint(1)
+    local relToName = "UIParent"
+
+    if relTo then
+        if relTo.GetName and relTo:GetName() then
+            relToName = relTo:GetName()
+        elseif relTo == UIParent then
+            relToName = "UIParent"
+        else
+            relToName = "UIParent"
+        end
+    end
+
+    Ether.DB[5111][340][1] = point
+    Ether.DB[5111][340][2] = relToName
+    Ether.DB[5111][340][3] = relPoint
+    Ether.DB[5111][340][4] = x
+    Ether.DB[5111][340][5] = y
+
+    local anchorRelTo = _G[relToName] or UIParent
+    self:ClearAllPoints()
+    self:SetPoint(
+            Ether.DB[5111][340][1],
+            anchorRelTo,
+            Ether.DB[5111][340][3],
+            Ether.DB[5111][340][4],
+            Ether.DB[5111][340][5]
+    )
+end
+
 function Ether.CreateMainSettings(self)
     if not self.IsCreated then
         self.Frames["Main"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
@@ -378,9 +417,12 @@ function Ether.CreateMainSettings(self)
         name:SetFont(unpack(Ether.mediaPath.Font), 20, "OUTLINE")
         name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
         name:SetText("|cffcc66ffEther|r")
-        local settings = Ether.RegisterPosition(Construct.Frames["Main"])
-        settings:InitialPosition(340)
-        settings:InitialDrag(340)
+        Ether:FramePosition(340)
+        self.Frames["Main"]:EnableMouse(true)
+        self.Frames["Main"]:SetMovable(true)
+        self.Frames["Main"]:RegisterForDrag("LeftButton")
+        self.Frames["Main"]:SetScript("OnDragStart", OnDrag)
+        self.Frames["Main"]:SetScript("OnDragStop", StopDrag)
         self.IsCreated = true
     end
 end
@@ -645,16 +687,15 @@ function Ether:RefreshAllSettings()
 end
 
 function Ether:RefreshFramePositions()
-
     local frames = {
         [331] = Ether.Anchor.tooltip,
-        [332] = _G["Ether_player_UnitButton"],
-        [333] = _G["Ether_target_UnitButton"],
-        [334] = _G["Ether_targettarget_UnitButton"],
-        [335] = _G["Ether_pet_UnitButton"],
-        [336] = _G["Ether_pettarget_UnitButton"],
-        [337] = _G["Ether_focus_UnitButton"],
-        [338] = _G["EtherRaidGroupAnchor"],
+        [332] = Ether.unitButtons.solo["player"],
+        [333] = Ether.unitButtons.solo["target"],
+        [334] = Ether.unitButtons.solo["targettarget"],
+        [335] = Ether.unitButtons.solo["pet"],
+        [336] = Ether.unitButtons.solo["pettarget"],
+        [337] = Ether.unitButtons.solo["focus"],
+        [338] = Ether.Anchor.raid,
         [339] = Ether.DebugFrame,
         [340] = Construct.Frames["Main"]
     }
@@ -662,19 +703,12 @@ function Ether:RefreshFramePositions()
     for frameID, frame in pairs(frames) do
         if frame and Ether.DB[5111][frameID] then
             local pos = Ether.DB[5111][frameID]
-
-            for i, default in ipairs({"CENTER", 5133, "CENTER", 0, 0, 100, 100, 1, 1}) do
-                pos[i] = pos[i] or default
-            end
-
-            local relTo = (pos[2] == 5133) and UIParent or frames[pos[2]] or UIParent
-
+            local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
             if frame.SetPoint then
                 frame:ClearAllPoints()
                 frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
                 frame:SetScale(pos[8])
                 frame:SetAlpha(pos[9])
-
                 Ether.Fire("FRAME_UPDATED", frameID)
             end
         end
@@ -686,6 +720,32 @@ local arraysLength = {
     [501] = 9, [701] = 4, [801] = 11,
     [1001] = 4, [1101] = 3
 }
+
+function Ether:FramePosition(frameID)
+    local frames = {
+        [331] = Ether.Anchor.tooltip,
+        [332] = Ether.unitButtons.solo["player"],
+        [333] = Ether.unitButtons.solo["target"],
+        [334] = Ether.unitButtons.solo["targettarget"],
+        [335] = Ether.unitButtons.solo["pet"],
+        [336] = Ether.unitButtons.solo["pettarget"],
+        [337] = Ether.unitButtons.solo["focus"],
+        [338] = Ether.Anchor.raid,
+        [339] = Ether.DebugFrame,
+        [340] = Construct.Frames["Main"]
+    }
+    local frame = frames[frameID]
+    if frame and Ether.DB[5111][frameID] then
+        local pos = Ether.DB[5111][frameID]
+        local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
+        if frame.SetPoint then
+            frame:ClearAllPoints()
+            frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
+            frame:SetScale(pos[8])
+            frame:SetAlpha(pos[9])
+        end
+    end
+end
 
 local function OnInitialize(self, event, ...)
     if (event == "ADDON_LOADED") then
@@ -825,14 +885,12 @@ local function OnInitialize(self, event, ...)
             Ether.EnableMsgEvents()
         end
 
-        local r = Ether.RegisterPosition(Ether.Anchor.raid)
-        r:InitialPosition(338)
-        Ether.Anchor.raid:SetWidth(1)
-        Ether.Anchor.raid:SetHeight(1)
+        Ether.Anchor.raid:SetSize(1, 1)
+        Ether:FramePosition(338)
 
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(400)
-        tooltip:SetSize(1,1)
+        tooltip:SetSize(1, 1)
         Ether.Anchor.tooltip = tooltip
 
         Ether.CreateMainSettings(Construct)
@@ -875,11 +933,14 @@ local function OnInitialize(self, event, ...)
             Ether.CastBar.Enable("target")
         end
 
+        for index, value in ipairs({332, 333, 334, 335, 336, 337}) do
+            Ether:FramePosition(value)
+        end
         Ether.Tooltip:Initialize()
 
         ToggleSettings(Construct)
 
-     elseif (event == "GROUP_ROSTER_UPDATE") then
+    elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if IsInGroup() and Ether.updatedChannel ~= true then
             Ether.updatedChannel = true

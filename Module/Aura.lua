@@ -62,6 +62,25 @@ function Ether:CleanupAllRaidIcons()
     end
 end
 
+function Ether.SaveAuraPos(spellId)
+    local spellConfig = Ether.DB[1003][spellId]
+    if not spellConfig then return end
+    for guid, _ in pairs(raidIcons) do
+        if raidIcons[guid] and raidIcons[guid][spellId] then
+            raidIcons[guid][spellId].IsActive = raidIcons[guid][spellId]:IsShown()
+            raidIcons[guid][spellId]:Hide()
+            raidIcons[guid][spellId]:ClearAllPoints()
+            raidIcons[guid][spellId]:SetColorTexture(unpack(spellConfig.color))
+            raidIcons[guid][spellId]:SetSize(spellConfig.size, spellConfig.size)
+            raidIcons[guid][spellId]:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
+            if raidIcons[guid][spellId].IsActive then
+                raidIcons[guid][spellId]:Show()
+                raidIcons[guid][spellId].IsActive = nil
+            end
+        end
+    end
+end
+
 function Ether:UpdateRaidIsHelpful(unit)
     if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then
         return
@@ -164,11 +183,12 @@ function Ether:DispelAuraScan(unit)
 end
 
 local function raidAuraUpdate(unit, updateInfo)
+    if not Ether:IsValidUnitForAuras(unit) then return end
     if not Ether.unitButtons.raid[unit] or Ether.DB[1001][4] ~= 1 then
         return
     end
     local button = Ether.unitButtons.raid[unit]
-    if not button or not button:IsVisible() then return end
+    if not button then return end
     local guid = UnitGUID(unit)
     if not guid then
         return
@@ -181,10 +201,7 @@ local function raidAuraUpdate(unit, updateInfo)
         for _, aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful and config[aura.spellId] and not config.isDebuff then
                 auraAdded = true
-                raidAurasAdded[aura.auraInstanceID] = {
-                    spellId = aura.spellId,
-                    guid = guid
-                }
+                raidAurasAdded[aura.auraInstanceID] = aura
             end
             if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                 auraDispel = true
@@ -200,12 +217,7 @@ local function raidAuraUpdate(unit, updateInfo)
                 raidDispel[auraInstanceID] = nil
             end
             if raidAurasAdded[auraInstanceID] then
-                local auraData = raidAurasAdded[auraInstanceID]
-                local auraGuid = auraData.guid
-                local spellId = auraData.spellId
-                if raidIcons[auraGuid] and raidIcons[auraGuid][spellId] then
-                    raidIcons[auraGuid][spellId]:Hide()
-                end
+                auraAdded = true
                 raidAurasAdded[auraInstanceID] = nil
             end
         end

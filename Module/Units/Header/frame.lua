@@ -31,8 +31,7 @@ local function OnEnter(self)
     end
 end
 
-local function OnLeave(self)
-    self.unit = self:GetAttribute("unit")
+local function OnLeave()
     if GameTooltip then
         GameTooltip:Hide()
     end
@@ -73,15 +72,12 @@ local function OnAttributeChanged(self, name, unit)
     end
     Ether.unitButtons.raid[unit] = self
 
-    C_Timer.After(0.1, function()
-        if self.unit == unit then
-            Ether:IndicatorsUpdate()
-            if Ether.DB[1001][4] == 1 then
-                Ether:UpdateRaidIsHelpful(unit)
-                Ether:DispelAuraScan(unit)
-            end
+    if self.unit == unit and UnitExists(unit) then
+        if Ether.DB and Ether.DB[1001] and Ether.DB[1001][4] == 1 then
+            Ether:UpdateRaidIsHelpful(unit)
+            Ether:DispelAuraScan(unit)
         end
-    end)
+    end
     Update(self)
 end
 
@@ -96,9 +92,9 @@ local function Hide(self)
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
 end
 
+local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 local function CreateChildren(headerName, buttonName)
     local button = _G[buttonName]
-    button.Indicators = {}
     button.raidAuras = {}
     button.raidIcons = {}
     Ether:AddBlackBorder(button, 1, 0, 0, 0, 1)
@@ -119,10 +115,21 @@ local function CreateChildren(headerName, buttonName)
     Ether:SetupPrediction(button)
     Ether:SetupName(button, 10, -5)
     Ether:GetClassColor(button)
-    if headerName:GetAttribute("raidHeader") then
-        Ether:SetupUpdateText(button, "health")
-        Ether:SetupUpdateText(button, "power", true)
-    end
+    button.Indicators = {}
+    Ether:SetupUpdateText(button, "health")
+    Ether:SetupUpdateText(button, "power", true)
+    button.Indicators.PlayerFlags = healthBar:CreateFontString(nil, "OVERLAY")
+    button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    button.Indicators.UnitFlags = healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.UnitFlags:SetTexture(deadIcon)
+    button.Indicators.UnitFlags:Hide()
+    button.Indicators.ReadyCheck = healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.Connection = healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.Resurrection = healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.RaidTarget = healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.Masterloot = healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.GroupLeader = healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.MainTank = healthBar:CreateTexture(nil, "OVERLAY")
     button:SetScript("OnShow", Show)
     button:SetScript("OnHide", Hide)
     button:SetScript("OnEnter", OnEnter)
@@ -159,8 +166,8 @@ local function CreateGroupHeader(group)
     header:SetAttribute("maxColumns", 1)
     header:SetAttribute("raidHeader", true)
     header:SetAttribute("showRaid", true)
-    header:SetAttribute("showParty", false)
-    header:SetAttribute("showPlayer", false)
+    header:SetAttribute("showParty", true)
+    header:SetAttribute("showPlayer", true)
     header:SetAttribute("showSolo", true)
     header:Show()
 end
@@ -180,7 +187,7 @@ function Ether:InitializePetHeader()
         raidpet:SetAttribute("ButtonHeight", 55)
         raidpet:SetAttribute("ButtonWidth", 55)
         raidpet:SetAttribute("showRaid", true)
-        raidpet:SetAttribute("showParty", false)
+        raidpet:SetAttribute("showParty", true)
         raidpet:SetAttribute("showPlayer", true)
         raidpet:SetAttribute("showSolo", true)
         raidpet:SetAttribute("point", "LEFT")
@@ -191,9 +198,7 @@ function Ether:InitializePetHeader()
         raidpet:SetAttribute("filterOnPet", true)
         raidpet:SetAttribute("unitsPerColumn", 8)
         raidpet:SetAttribute("maxColumns", 1)
-        raidpet:SetAttribute("startingIndex", -7)
         raidpet:Show()
-        raidpet:SetAttribute("startingIndex", 1)
     end
 end
 

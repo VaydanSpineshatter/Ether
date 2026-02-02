@@ -154,6 +154,18 @@ function Ether:UpdateHealth(button)
     local h = UnitHealth(button.unit)
     local mh = UnitHealthMax(button.unit)
 
+    if h <= 1 then
+        if button.Indicators and button.Indicators.UnitFlags then
+            button.Indicators.UnitFlags:Show()
+            button.healthBar:SetValue(0)
+        end
+        return
+    else
+        if button.Indicators and button.Indicators.UnitFlags then
+            button.Indicators.UnitFlags:Hide()
+        end
+    end
+
     button.healthBar:SetValue(h)
     button.healthBar:SetMinMaxValues(0, mh)
 
