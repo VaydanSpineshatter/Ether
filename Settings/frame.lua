@@ -1118,7 +1118,7 @@ function Ether.CreateRegisterSection(self)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
             Ether:IndicatorsToggle()
-            Ether:UpdateIndex(i)
+            Ether:UpdateIndicatorsIndex(i)
         end)
         self.Content.Buttons.Indicators.A[i] = btn
     end

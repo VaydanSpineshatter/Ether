@@ -434,7 +434,7 @@ end
 
 local function DisablePlayerRoles()
     UnregisterIndicatorEvent("PLAYER_ROLES_ASSIGNED")
-    Ether:HideIndicators("MainTank")
+    Ether:HideIndicators("PlayerRoles")
 end
 
 local function DisablePlayerFlags()
@@ -482,12 +482,13 @@ function Ether:IndicatorsDisable()
         end
     end
 end
-
-function Ether:UpdateIndex(index)
+function Ether:UpdateIndicatorsIndex(index)
     local I = Ether.DB[501]
     for _, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 and handlers[3] then
-            handlers[3](_, "RAID_TARGET_UPDATE")
+            for data in pairs(Events) do
+                handlers[3](_, data)
+            end
         end
     end
 end
