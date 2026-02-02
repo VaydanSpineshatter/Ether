@@ -213,9 +213,7 @@ function Ether:UpdatePrediction(button)
             button.myPrediction:Hide()
         end
     end
-    if not button.otherPrediction then
-        return
-    end
+    if not button.otherPrediction then return end
     if button.otherPrediction then
         if otherHeal > 0 then
             button.otherPrediction:Show()

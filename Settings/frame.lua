@@ -1155,7 +1155,7 @@ function Ether.CreatePositionSection(self)
         [3] = {name = "RaidTarget", icon = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", coordinates = {0.75, 1, 0.25, 0.5}, type = "texture"},
         [4] = {name = "Resurrection", icon = "Interface\\RaidFrame\\Raid-Icon-Rez", type = "texture"},
         [5] = {name = "GroupLeader", icon = "Interface\\GroupFrame\\UI-Group-LeaderIcon", type = "texture"},
-        [6] = {name = "MasterLoo0t", icon = "Interface\\GroupFrame\\UI-Group-MasterLooter", type = "texture"},
+        [6] = {name = "MasterLoot", icon = "Interface\\GroupFrame\\UI-Group-MasterLooter", type = "texture"},
         [7] = {name = "UnitFlags", icon = "Interface\\Icons\\Spell_Holy_GuardianSpirit", type = "texture"},
         [8] = {name = "PlayerRoles", icon = "Interface\\GroupFrame\\UI-Group-MainTankIcon", type = "texture"},
         [9] = {name = "PlayerFlags", type = "string"},

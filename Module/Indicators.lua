@@ -111,7 +111,7 @@ end
 local function UpdateReadyCheck(_, event)
     if event == "READY_CHECK" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and unit and button.Indicators.ReadyCheck then
+            if button and unit then
                 local status = GetReadyCheckStatus(unit)
                 if (status) then
                     if (status == "ready") then
@@ -135,7 +135,6 @@ end
 local function UpdateConfirm(_, event)
     if event == "READY_CHECK_CONFIRM" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if not button.Indicators.ReadyCheck then return end
             if button and unit then
                 local status = GetReadyCheckStatus(unit)
                 if (status == "ready") then
@@ -150,13 +149,24 @@ local function UpdateConfirm(_, event)
     end
 end
 
+local updater = nil
 local function HideReadyCheckIcons()
-    Ether:HideIndicators("ReadyCheckIcon")
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button.Indicators and button.Indicators.ReadyCheck then
+            button.Indicators.ReadyCheck:Hide()
+        end
+    end
+    if updater then
+        updater:Cancel()
+        updater = nil
+    end
 end
 
 local function UpdateFinish(_, event)
     if event == "READY_CHECK_FINISHED" then
-        C_Timer.After(10, HideReadyCheckIcons)
+        if not updater then
+            updater = C_Timer.After(5, HideReadyCheckIcons)
+        end
     end
 end
 
@@ -179,8 +189,7 @@ end
 local function UpdateRaidTarget(_, event)
     if event == "RAID_TARGET_UPDATE" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if not button or not button.Indicators.RaidTarget then return end
-            if button.Indicators.RaidTarget and UnitExists(unit) then
+            if button and UnitExists(unit) then
                 local index = GetRaidTargetIndex(unit)
                 if index then
                     button.Indicators.RaidTarget:SetTexture(targetIcon)
@@ -198,7 +207,7 @@ local function UpdateResurrection(_, event, unit)
     if not unit then return end
     if event == "INCOMING_RESURRECT_CHANGED" then
         local button = Ether.unitButtons.raid[unit]
-        if not button.Indicators.Resurrection then return end
+        if not button or not button.Indicators.Resurrection then return end
         local Resurrection = UnitHasIncomingResurrection(unit)
         if (Resurrection) then
             button.Indicators.Resurrection:SetTexture(rezIcon)
@@ -212,13 +221,14 @@ end
 local function UpdateGroupLeader(_, event)
     if event == "PARTY_LEADER_CHANGED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if not button.Indicators.GroupLeader then return end
-            local IsLeader = UnitIsGroupLeader(unit)
-            if (IsLeader) then
-                button.Indicators.GroupLeader:SetTexture(leaderIcon)
-                button.Indicators.GroupLeader:Show()
-            else
-                button.Indicators.GroupLeader:Hide()
+            if button and unit then
+                local IsLeader = UnitIsGroupLeader(unit)
+                if (IsLeader) then
+                    button.Indicators.GroupLeader:SetTexture(leaderIcon)
+                    button.Indicators.GroupLeader:Show()
+                else
+                    button.Indicators.GroupLeader:Hide()
+                end
             end
         end
     end
@@ -227,16 +237,17 @@ end
 local function UpdateMasterLoot(_, event)
     if event == "PARTY_LOOT_METHOD_CHANGED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if not button.Indicators.MasterLoot then return end
-            button.Indicators.MasterLoot:SetTexture(masterlootIcon)
-            button.Indicators.MasterLoot:Hide()
-            local lootType, partyID, raidID = GetLoot()
-            if lootType == Enum.LootMethod.Masterlooter then
-                local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
-                if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
-                    button.Indicators.MasterLoot:Show()
-                else
-                    button.Indicators.MasterLoot:Hide()
+            if button and unit then
+                button.Indicators.MasterLoot:SetTexture(masterlootIcon)
+                button.Indicators.MasterLoot:Hide()
+                local lootType, partyID, raidID = GetLoot()
+                if lootType == Enum.LootMethod.Masterlooter then
+                    local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
+                    if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
+                        button.Indicators.MasterLoot:Show()
+                    else
+                        button.Indicators.MasterLoot:Hide()
+                    end
                 end
             end
         end
@@ -259,18 +270,19 @@ end
 local function UpdatePlayerRoles(_, event)
     if event == "PLAYER_ROLES_ASSIGNED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if not button.Indicators.MainTank then return end
-            if not IsInRaid() and button.Indicators.MainTankIcon then
-                button.Indicators.MainTank:Hide()
-            else
-                if (GetPartyAssignment("MAINTANK", unit)) then
-                    button.Indicators.MainTank:SetTexture(mainTankIcon)
-                    button.Indicators.MainTank:Show()
-                elseif (GetPartyAssignment("MAINASSIST", unit)) then
-                    button.Indicators.MainTank:SetTexture(mainAssistIcon)
-                    button.Indicators.MainTank:Show()
+            if button and unit then
+                if not IsInRaid() then
+                    button.Indicators.PlayerRoles:Hide()
                 else
-                    button.Indicators.MainTank:Hide()
+                    if (GetPartyAssignment("MAINTANK", unit)) then
+                        button.Indicators.PlayerRoles:SetTexture(mainTankIcon)
+                        button.Indicators.PlayerRoles:Show()
+                    elseif (GetPartyAssignment("MAINASSIST", unit)) then
+                        button.Indicators.PlayerRoles:SetTexture(mainAssistIcon)
+                        button.Indicators.PlayerRoles:Show()
+                    else
+                        button.Indicators.PlayerRoles:Hide()
+                    end
                 end
             end
         end

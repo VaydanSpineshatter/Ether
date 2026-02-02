@@ -83,11 +83,6 @@ end
 
 local function WorldEnter(_, event)
     if event == "PLAYER_ENTERING_WORLD" then
-        UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
-        C_After(0.3, function()
-            Ether:RepositionHeaders()
-            Ether.Fire("RESET_CHILDREN")
-        end)
         C_After(1, function()
             if not UnitInAnyGroup("player") then
                 ValidUnits.player = true
@@ -110,7 +105,7 @@ local status = false
 local function ifValidUnits()
     if not status then
         status = true
-        C_After(8, function()
+        C_After(4, function()
             if not UnitInAnyGroup("player") then
                 ValidUnits.player = true
                 ValidUnits.raid = false

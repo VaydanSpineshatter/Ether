@@ -4,7 +4,7 @@ local L = Ether.L
 local pairs, ipairs = pairs, ipairs
 Ether.version = ""
 Ether.charKey = "Unknown-Unknown"
-Ether.updatedChannel = false
+local updatedChannel = false
 Ether.debug = false
 Ether.Header = {}
 Ether.Anchor = {}
@@ -833,6 +833,9 @@ local function OnInitialize(self, event, ...)
         Ether.version = version
         HideBlizzard()
 
+        self:RegisterEvent("GROUP_ROSTER_UPDATE")
+        self:RegisterEvent("PLAYER_ENTERING_WORLD")
+
         SLASH_ETHER1 = "/ether"
         SlashCmdList["ETHER"] = function(msg)
             local input, rest = msg:match("^(%S*)%s*(.-)$")
@@ -942,11 +945,17 @@ local function OnInitialize(self, event, ...)
 
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-        if IsInGroup() and Ether.updatedChannel ~= true then
-            Ether.updatedChannel = true
+        if IsInGroup() and updatedChannel ~= true then
+            updatedChannel = true
             UpdateSendChannel()
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, sendChannel, nil, "NORMAL")
         end
+    elseif (event == "PLAYER_ENTERING_WORLD") then
+       self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+       C_Timer.After(0.3, function()
+            Ether:RepositionHeaders()
+            Ether.Fire("RESET_CHILDREN")
+        end)
     elseif (event == "PLAYER_LOGOUT") then
         local charKey = Ether.GetCharacterKey()
         if charKey then
