@@ -231,7 +231,6 @@ local function raidAuraUpdate(unit, updateInfo)
         end
     end
 
-
     if auraAdded then
         Ether:UpdateRaidIsHelpful(unit)
     end

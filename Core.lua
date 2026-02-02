@@ -747,6 +747,7 @@ function Ether:FramePosition(frameID)
     end
 end
 
+local currentVersion = nil
 local function OnInitialize(self, event, ...)
     if (event == "ADDON_LOADED") then
         local loadedAddon = ...
@@ -762,6 +763,10 @@ local function OnInitialize(self, event, ...)
             _G.ETHER_DATABASE_DX_AA = {}
         end
 
+        if type(_G.ETHER_DATABASE_DX_AA[101]) ~= "number" then
+            _G.ETHER_DATABASE_DX_AA[101] = 0
+        end
+
         self:RegisterEvent("PLAYER_LOGOUT")
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
@@ -769,7 +774,24 @@ local function OnInitialize(self, event, ...)
         if not charKey then
             charKey = Ether.charKey
         end
-        if not ETHER_DATABASE_DX_AA.profiles then
+
+        local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
+        Ether.version = version
+
+        local REQUIREMENT_VERSION = 20222
+        Ether.REQUIREMENT_VERSION = 20222
+        local CURRENT_VERSION = ETHER_DATABASE_DX_AA[101]
+
+        if CURRENT_VERSION < REQUIREMENT_VERSION then
+            ETHER_DATABASE_DX_AA = {
+                profiles = {
+                    [charKey] = Ether.CopyTable(Ether.DataDefault)
+                },
+                currentProfile = charKey
+            }
+            ETHER_DATABASE_DX_AA[101] = REQUIREMENT_VERSION
+            currentVersion = "The database is too old and will be reset.\nReload Interface."
+        elseif not ETHER_DATABASE_DX_AA.profiles then
             ETHER_DATABASE_DX_AA = {
                 profiles = {
                     [charKey] = Ether.CopyTable(Ether.DataDefault)
@@ -825,14 +847,12 @@ local function OnInitialize(self, event, ...)
                 end
             end
         end
+
         ETHER_DATABASE_DX_AA.currentProfile = charKey
         Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
 
-        local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
-
-        Ether.version = version
         HideBlizzard()
-
+        Ether:RosterEnable()
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
 
@@ -883,11 +903,26 @@ local function OnInitialize(self, event, ...)
             Ether:SetupDebugFrame()
         end
 
-        Ether:RosterEnable()
         if Ether.DB[401][2] == 1 then
             Ether.EnableMsgEvents()
         end
-
+        if type(currentVersion) ~= "nil" then
+            StaticPopupDialogs["ETHER_RELOAD_UI"] = {
+                text = currentVersion,
+                button1 = "Yes",
+                button2 = "No",
+                OnAccept = function(self, spellId)
+                   if not InCombatLockdown() then
+                        ReloadUI()
+                   end
+                end,
+                timeout = 0,
+                whileDead = true,
+                hideOnEscape = true,
+                preferredIndex = 3,
+            }
+              StaticPopup_Show("ETHER_RELOAD_UI")
+        end
         Ether.Anchor.raid:SetSize(1, 1)
         Ether:FramePosition(338)
 
@@ -951,8 +986,9 @@ local function OnInitialize(self, event, ...)
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, sendChannel, nil, "NORMAL")
         end
     elseif (event == "PLAYER_ENTERING_WORLD") then
-       self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-       C_Timer.After(0.3, function()
+        self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+
+        C_Timer.After(0.3, function()
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")
         end)

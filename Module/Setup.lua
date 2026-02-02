@@ -301,11 +301,11 @@ local function StopDrag(self)
     local anchorRelTo = _G[relToName] or UIParent
     self:ClearAllPoints()
     self:SetPoint(
-        Ether.DB[5111][339][1],
-        anchorRelTo,
-        Ether.DB[5111][339][3],
-        Ether.DB[5111][339][4],
-        Ether.DB[5111][339][5]
+            Ether.DB[5111][339][1],
+            anchorRelTo,
+            Ether.DB[5111][339][3],
+            Ether.DB[5111][339][4],
+            Ether.DB[5111][339][5]
     )
 end
 

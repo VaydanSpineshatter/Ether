@@ -10,6 +10,7 @@ local math_floor = math.floor
 local string_char = string.char
 
 local Default = {
+    [101] = 0,
     [111] = {
         LAST_UPDATE_CHECK = 0,
         SHOW = true,

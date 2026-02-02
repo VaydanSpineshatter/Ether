@@ -2141,6 +2141,9 @@ function Ether.ExportCurrentProfile()
 end
 
 function Ether.ImportProfile(encodedString)
+    if ETHER_DATABASE_DX_AA[101] < Ether.REQUIREMENT_VERSION then
+        return false, "The import data is too old"
+    end
     if not encodedString or encodedString == "" then
         return false, "Empty import string"
     end
