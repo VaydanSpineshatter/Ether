@@ -147,6 +147,13 @@ function Ether:InitialHealth(button)
     button.healthBar:SetMinMaxValues(0, ReturnMaxHealth(button.unit))
 end
 
+local function unitIsDead(button)
+    button.top:SetColorTexture(0, 0, 0, 1)
+    button.right:SetColorTexture(0, 0, 0, 1)
+    button.left:SetColorTexture(0, 0, 0, 1)
+    button.bottom:SetColorTexture(0, 0, 0, 1)
+end
+
 function Ether:UpdateHealth(button)
     if not button or not button.unit or not button.healthBar then
         return
@@ -158,6 +165,7 @@ function Ether:UpdateHealth(button)
         if button.Indicators and button.Indicators.UnitFlags then
             button.Indicators.UnitFlags:Show()
             button.healthBar:SetValue(0)
+            unitIsDead(button)
         end
         return
     else

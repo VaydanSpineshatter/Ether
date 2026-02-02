@@ -65,13 +65,6 @@ function Ether:HideIndicators(hide)
     end
 end
 
-local function unitIsDead(button)
-    button.top:SetColorTexture(0, 0, 0, 1)
-    button.right:SetColorTexture(0, 0, 0, 1)
-    button.left:SetColorTexture(0, 0, 0, 1)
-    button.bottom:SetColorTexture(0, 0, 0, 1)
-end
-
 function Ether.SaveIndicatorsPos(icon, number)
     for _, button in pairs(Ether.unitButtons.raid) do
         if button and button.Indicators[icon] then
@@ -171,7 +164,7 @@ local function UpdateConnection(_, event, unit)
     if not unit then return end
     if event == "UNIT_CONNECTION" then
         local button = Ether.unitButtons.raid[unit]
-        if not button.Indicators.Connection then return end
+        if not button or not button.Indicators.Connection then return end
         local isConnected = UnitIsConnected(unit)
         if (not isConnected) then
             button.Indicators.Connection:SetTexture(connectionIcon)
