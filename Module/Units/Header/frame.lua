@@ -50,7 +50,6 @@ local function OnAttributeChanged(self, name, unit)
     if name ~= "unit" or not unit then
         return
     end
-    print(unit)
     local oldUnit = self.unit
     local oldGUID = self.unitGUID
     local newGUID = UnitGUID(unit)
@@ -111,7 +110,6 @@ local function CreateChildren(headerName, buttonName)
     Ether:SetupPrediction(button)
     Ether:SetupName(button, 10, -5)
     Ether:GetClassColor(button)
-
     if headerName:GetAttribute("TypePet") then
         button.TypePet = true
     else

@@ -75,6 +75,7 @@ function Ether.SaveIndicatorsPos(icon, number)
             button.Indicators[icon]:Show()
         end
     end
+    Ether:UpdateIndicatorsByIndex(number)
 end
 
 local IndicatorMap = {
@@ -494,7 +495,8 @@ function Ether:IndicatorsDisable()
         end
     end
 end
-function Ether:UpdateIndicatorsIndex(index)
+
+function Ether:UpdateIndicatorsByIndex(index)
     local I = Ether.DB[501]
     for _, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 and handlers[3] then

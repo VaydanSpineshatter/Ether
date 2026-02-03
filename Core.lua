@@ -778,17 +778,12 @@ function Ether:FramePosition(frameID)
         [340] = Construct.Frames["Main"]
     }
     local frame = frames[frameID]
-    if frame and Ether.DB[5111][frameID] then
-        local pos = Ether.DB[5111][frameID]
-        local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
-        local s = frame:GetEffectiveScale()
-        local x, y = pos[4] / s, pos[5] / s
-        if frame then
-            frame:ClearAllPoints()
-            frame:SetPoint(pos[1], relTo, pos[3], x, y)
-            frame:SetScale(pos[8])
-            frame:SetAlpha(pos[9])
-        end
+    local position = Ether.DB[5111][frameID]
+    if frame and position then
+        frame:ClearAllPoints()
+        frame:SetPoint(position[1], UIParent, position[3], position[4], position[5])
+        frame:SetScale(position[8])
+        frame:SetAlpha(position[9])
     end
 end
 
@@ -897,7 +892,7 @@ local function OnInitialize(self, event, ...)
         Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
 
         HideBlizzard()
-        Ether:RosterEnable()
+
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
 
@@ -1022,7 +1017,7 @@ local function OnInitialize(self, event, ...)
         Ether.Tooltip:Initialize()
 
         ToggleSettings(Construct)
-
+        Ether:RosterEnable()
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if IsInGroup() and updatedChannel ~= true then

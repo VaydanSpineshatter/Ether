@@ -436,7 +436,11 @@ local function CreateAuraList(parent)
     confirm.text:SetText("Confirm")
     confirm:SetScript("OnClick", function(self)
         if selectedSpellId then
-            Ether.SaveAuraPos(selectedSpellId)
+            if Ether.DB[1003][selectedSpellId].isDebuff then
+                Ether.SaveAuraPos(selectedSpellId, true)
+            else
+                Ether.SaveAuraPos(selectedSpellId)
+            end
         end
     end)
     confirm:SetScript("OnEnter", function(self)
@@ -593,6 +597,52 @@ local function OnCancel(prevValues)
     end
 end
 
+local function UpdateIsDebuff(button, spellId)
+    if not button or not spellId then return end
+    local debuff = Ether.DB[1003][spellId].isDebuff
+    if debuff then
+        debuff = true
+        button:SetColorTexture(0.80, 0.40, 1.00, 0.4)
+    else
+        debuff = false
+        button:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    end
+end
+
+local function CreateToggle(parent, name, dbTable, dbKey, func)
+    local toggle = CreateFrame('CheckButton', nil, parent, 'InterfaceOptionsCheckButtonTemplate')
+    toggle:SetPoint('TOPLEFT', 10, 0)
+    toggle:SetSize(24, 24)
+
+    if dbTable and dbKey then
+        toggle:SetChecked(dbTable[dbKey] or false)
+    else
+        toggle:SetChecked(false)
+    end
+
+    toggle:SetScript('OnClick', function(self)
+        local checked = self:GetChecked()
+
+        if dbTable and dbKey then
+            dbTable[dbKey] = checked
+        end
+
+        if func then
+            func(checked)
+        end
+    end)
+
+    toggle.label = toggle:CreateFontString(nil, 'OVERLAY')
+    toggle.label:SetFont([[Interface\AddOns\Ether\Media\Font\expressway.ttf]], 12, 'OUTLINE')
+    toggle.label:SetTextColor(1, 1, 1)
+    toggle.label:SetShadowColor(0, 0, 0, 0.8)
+    toggle.label:SetShadowOffset(1, -1)
+    toggle.label:SetText(name)
+    toggle.label:SetPoint('LEFT', toggle, 'RIGHT', 8, 1)
+
+    return toggle
+end
+
 local function CreateEditor(parent)
     local frame = CreateFrame("Frame", nil, parent)
     Editor = frame
@@ -638,6 +688,28 @@ local function CreateEditor(parent)
         end
         self:ClearFocus()
     end)
+
+    local isDebuff = CreateFrame("Button", nil, frame)
+    frame.isDebuff = isDebuff
+    isDebuff:SetSize(80, 25)
+    isDebuff:SetPoint("LEFT", spellIdInput, "RIGHT", 10, 0)
+    isDebuff.bg = isDebuff:CreateTexture(nil, "BACKGROUND")
+    isDebuff.bg:SetAllPoints()
+    isDebuff.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    isDebuff.text = isDebuff:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    isDebuff.text:SetPoint("CENTER")
+    isDebuff.text:SetText("Debuff")
+
+    isDebuff:SetScript("OnClick", function(self)
+        if selectedSpellId then
+            Ether.DB[1003][selectedSpellId].isDebuff = not Ether.DB[1003][selectedSpellId].isDebuff
+            UpdateIsDebuff(Editor.isDebuff.bg, selectedSpellId)
+        end
+    end)
+
+    isDebuff.Highlight = isDebuff:CreateTexture(nil, "HIGHLIGHT")
+    isDebuff.Highlight:SetAllPoints()
+    isDebuff.Highlight:SetColorTexture(1, 1, 1, .4)
 
     local sizeLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
     frame.sizeLabel = sizeLabel
@@ -921,6 +993,7 @@ function Ether.UpdateAuraList()
 
         btn:SetScript("OnClick", function()
             Ether.SelectAura(spellId)
+            UpdateIsDebuff(Editor.isDebuff.bg, spellId)
         end)
 
         btn.name = btn:CreateFontString(nil, "OVERLAY")
