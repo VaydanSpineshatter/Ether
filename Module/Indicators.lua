@@ -325,6 +325,7 @@ local function NotAfk(self)
     Ether:PowerEnable()
     Ether:AuraEnable()
     Ether:IndicatorsEnable()
+    Ether:FullUpdateIndicators()
     if Ether.DB[1001][4] == 1 then
         for unit in pairs(Ether.unitButtons.raid) do
             if UnitExists(unit) then
@@ -356,8 +357,8 @@ local function UpdatePlayerFlags(self, event, unit)
             button.Indicators.PlayerFlags:Hide()
         end
     end
-    if Ether.DB[401][4] == 1 and unit == "player" then
-        if UnitIsAFK(unit) then
+    if Ether.DB[401][4] == 1 then
+        if UnitIsAFK("player") then
             if not self.isActive then
                 OnAfk(self)
             end
