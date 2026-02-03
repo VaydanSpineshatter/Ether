@@ -39,7 +39,7 @@ local raidDebuffAdded = {}
 local foundSpells = {}
 local dispelCache = {}
 
-local function CleanupTimerCache()
+function Ether:CleanupTimerCache()
     local currentTime = GetTime()
     for guid, data in pairs(dispelCache) do
         if (currentTime - data.timestamp) > 5 then
@@ -214,7 +214,7 @@ function Ether:CleanupAllRaidIcons()
     for guid, _ in pairs(raidIcons) do
         Ether:CleanupAuras(guid)
     end
-    CleanupTimerCache()
+    Ether:CleanupTimerCache()
 end
 
 local function UpdateButtonDispel(button)

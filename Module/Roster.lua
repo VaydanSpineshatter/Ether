@@ -87,6 +87,9 @@ local function TargetChanged(_, event)
                 end
             end
         end
+        if Ether.DB[1001][4] == 1 then
+            Ether:CleanupTimerCache()
+        end
     end
 end
 
@@ -124,6 +127,9 @@ end
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
         ifValidUnits()
+        if Ether.DB[1001][4] == 1 then
+            Ether:CleanupTimerCache()
+        end
     end
 end
 --[[
