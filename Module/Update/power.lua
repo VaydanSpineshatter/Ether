@@ -100,27 +100,20 @@ function Ether:GetPowerColor(self)
     return c.r, c.g, c.b or false
 end
 
-function Ether:UpdatePower(button)
+function Ether:UpdatePower(button, smooth)
     if not button or not button.unit or not button.powerBar then
         return
     end
     local p = UnitPower(button.unit)
     local mp = UnitPowerMax(button.unit)
 
-    button.powerBar:SetValue(p)
-    button.powerBar:SetMinMaxValues(0, mp)
-    local r, g, b = Ether:GetPowerColor(button.unit)
-    button.powerBar:SetStatusBarColor(r, g, b)
-end
-
-function Ether:UpdateSmoothPower(button)
-    if not button or not button.unit or not button.powerBar then
-        return
+    if smooth then
+        button.powerBar:SetMinMaxSmoothedValue(0, mp)
+        button.powerBar:SetSmoothedValue(p)
+    else
+        button.powerBar:SetValue(p)
+        button.powerBar:SetMinMaxValues(0, mp)
     end
-    local p = UnitPower(button.unit)
-    local mp = UnitPowerMax(button.unit)
-    button.powerBar:SetMinMaxSmoothedValue(0, mp)
-    button.powerBar:SetSmoothedValue(p)
     local r, g, b = Ether:GetPowerColor(button.unit)
     button.powerBar:SetStatusBarColor(r, g, b)
 end
@@ -132,7 +125,7 @@ local function PowerChanged(_, event, unit)
             local button = Ether.unitButtons.solo[unit]
             if button and button:IsVisible() then
                 if Ether.DB[801][4] == 1 then
-                    Ether:UpdateSmoothPower(button)
+                    Ether:UpdatePower(button, true)
                 else
                     Ether:UpdatePower(button)
                 end
@@ -141,9 +134,9 @@ local function PowerChanged(_, event, unit)
                 end
             end
         end
-        if Ether.DB[901]["raid"] and Ether.DB[701][4] == 1 then
+        if Ether.DB[701][4] == 1 then
             local button = Ether.unitButtons.raid[unit]
-            if button and button:IsVisible() then
+            if button then
                 Ether:UpdatePowerText(button)
             end
         end

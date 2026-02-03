@@ -91,7 +91,6 @@ local function Hide(self)
     end
 end
 
-local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 local function CreateChildren(headerName, buttonName)
     local button = _G[buttonName]
     Ether:AddBlackBorder(button, 1, 0, 0, 0, 1)
@@ -121,7 +120,6 @@ local function CreateChildren(headerName, buttonName)
         button.Indicators.PlayerFlags = healthBar:CreateFontString(nil, "OVERLAY")
         button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
         button.Indicators.UnitFlags = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.UnitFlags:SetTexture(deadIcon)
         button.Indicators.UnitFlags:Hide()
         button.Indicators.ReadyCheck = healthBar:CreateTexture(nil, "OVERLAY")
         button.Indicators.Connection = healthBar:CreateTexture(nil, "OVERLAY")
@@ -143,6 +141,7 @@ local function CreateChildren(headerName, buttonName)
 end
 
 local groupHeaders = {}
+
 local function CreateGroupHeader(group)
     local headerName = "EtherRaidGroupHeader" .. group
     local header = CreateFrame("Frame", headerName, raidAnchor, "SecureGroupHeaderTemplate")
@@ -161,8 +160,8 @@ local function CreateGroupHeader(group)
     header:SetAttribute("groupBy", "GROUP")
     header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset", 0)
-    header:SetAttribute("yOffset", -1)
-    header:SetAttribute("columnSpacing", 1)
+    header:SetAttribute("yOffset", -2)
+    header:SetAttribute("columnSpacing", 2)
     header:SetAttribute("unitsPerColumn", 5)
     header:SetAttribute("maxColumns", 1)
     header:SetAttribute("raidHeader", true)
@@ -202,10 +201,20 @@ function Ether:InitializePetHeader()
         raidpet:Show()
     end
 end
-
+local background
 function Ether:RepositionHeaders()
     if InCombatLockdown() then return end
     local spacing = Ether.Header.raid:GetAttribute("columnSpacing")
+    local xOff = Ether.Header.raid:GetAttribute("xOffset")
+    local yOff = Ether.Header.raid:GetAttribute("yOffset")
+    local btnW = Ether.Header.raid:GetAttribute("ButtonWidth") + 1
+    local btnH = Ether.Header.raid:GetAttribute("ButtonHeight") + 4.5
+    background = Ether.Header.raid:CreateTexture(nil, "BACKGROUND")
+    background:SetColorTexture(0, 0, 0, .6)
+    background:SetPoint("TOPLEFT", groupHeaders[1], "TOPLEFT", -3, 3)
+    background:SetWidth(8 * (btnW + xOff) - xOff + spacing * 7)
+    background:SetHeight(5 * (btnH + yOff) - yOff)
+    background:Hide()
     local lastHeader = nil
     for i = 1, 8 do
         if not lastHeader then
@@ -217,6 +226,11 @@ function Ether:RepositionHeaders()
         end
         lastHeader = groupHeaders[i]
     end
+end
+
+function Ether:HeaderBackground(state)
+    if type(state) ~= "boolean" then return end
+    background:SetShown(state)
 end
 
 local function ResetChildren()

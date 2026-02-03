@@ -23,7 +23,7 @@ local Default = {
     [401] = {1, 0, 1, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
     [901] = {
         player = true,
         target = true,
@@ -168,6 +168,7 @@ Ether.DataDefault = Default
 ---| name CastBar  9
 ---| SafeZone CastBar  10
 ---| isTradeSkill CastBar  11
+---| header Background 12
 
 ---@alias Update_901 boolean
 ---| Player
@@ -549,7 +550,7 @@ end
 ]]
 
 Ether.AuraTemplates = {
-    ["Priest - Buffs"] = {
+    ["Priest - Group Buffs"] = {
         [21564] = {
             name = "Prayer of Fortitude: Rank 2",
             color = {0.93, 0.91, 0.67, 1},
@@ -580,6 +581,8 @@ Ether.AuraTemplates = {
             enabled = true,
             isDebuff = false
         },
+    },
+    ["Priest - Helpful"] = {
         [10901] = {
             name = "Power Word: Shield",
             color = {0.93, 0.91, 0.67, 1},
@@ -609,51 +612,9 @@ Ether.AuraTemplates = {
             offsetY = 6,
             enabled = true,
             isDebuff = false
-        }
+        },
     },
-    ["Paladin - Buffs"] = {
-        [1022] = {
-            name = "BoP",
-            color = {1, 0.8, 0.2, 1},
-            size = 6,
-            position = "TOPLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [6940] = {
-            name = "BoS",
-            color = {1, 0.4, 0.4, 1},
-            size = 6,
-            position = "TOP",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [1044] = {
-            name = "BoF",
-            color = {0.4, 0.8, 1, 1},
-            size = 6,
-            position = "TOPRIGHT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [53563] = {
-            name = "Beacon",
-            color = {1, 1, 0.2, 1},
-            size = 6,
-            position = "LEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        }
-    },
-    ["Druid - Buffs"] = {
+    ["Druid - Group Buffs"] = {
         [9885] = {
             name = "Mark of the Wild: Rank 7",
             color = {1, 0.4, 1, 1},
@@ -675,113 +636,7 @@ Ether.AuraTemplates = {
             isDebuff = false
         },
     },
-    ["Druid - HoTs"] = {
-        [25299] = {
-            name = "Rejuvenation",
-            color = {1, 0.4, 1, 1},
-            size = 6,
-            position = "TOPLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [9858] = {
-            name = "Regrowth",
-            color = {0.2, 1, 0.2, 1},
-            size = 6,
-            position = "TOP",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            debuff = false
-        },
-        [34161] = {
-            name = "Wild Growth",
-            color = {0.4, 1, 0.4, 1},
-            size = 6,
-            position = "TOPRIGHT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [33763] = {
-            name = "Lifebloom",
-            color = {1, 0.8, 0, 1},
-            size = 6,
-            position = "LEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        }
-    },
-    ["Shaman - Buffs"] = {
-        [32593] = {
-            name = "Earth Shield",
-            color = {0.6, 0.4, 0.2, 1},
-            size = 8,
-            position = "TOPLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            debuff = false
-        },
-        [61295] = {
-            name = "Riptide",
-            color = {0.2, 0.8, 1, 1},
-            size = 8,
-            position = "TOP",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        }
-    },
-    ["Tank - Cooldowns"] = {
-        [871] = {
-            name = "Shield Wall",
-            color = {0.8, 0.2, 0.2, 1},
-            size = 10,
-            position = "CENTER",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [48792] = {
-            name = "IBF",
-            color = {0.4, 0.8, 1, 1},
-            size = 10,
-            position = "CENTER",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [22812] = {
-            name = "Barkskin",
-            color = {0.6, 0.4, 0.2, 1},
-            size = 10,
-            position = "CENTER",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [13007] = {
-            name = "Divine Prot",
-            color = {1, 0.8, 0.2, 1},
-            size = 10,
-            position = "CENTER",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        }
-    },
-    ["Mage - Cooldowns"] = {
+    ["Mage - Group Buffs"] = {
         [10157] = {
             name = "Arcane Intellect: Rank 5",
             color = {1, 1, 0.4, 1},

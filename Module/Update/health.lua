@@ -147,36 +147,20 @@ function Ether:InitialHealth(button)
     button.healthBar:SetMinMaxValues(0, ReturnMaxHealth(button.unit))
 end
 
-local function unitIsDead(button)
-    button.top:SetColorTexture(0, 0, 0, 1)
-    button.right:SetColorTexture(0, 0, 0, 1)
-    button.left:SetColorTexture(0, 0, 0, 1)
-    button.bottom:SetColorTexture(0, 0, 0, 1)
-end
-
-function Ether:UpdateHealth(button)
+function Ether:UpdateHealth(button, smooth)
     if not button or not button.unit or not button.healthBar then
         return
     end
     local h = UnitHealth(button.unit)
     local mh = UnitHealthMax(button.unit)
 
-    if h <= 1 then
-        if button.Indicators and button.Indicators.UnitFlags then
-            button.Indicators.UnitFlags:Show()
-            button.healthBar:SetValue(0)
-            unitIsDead(button)
-        end
-        return
+    if smooth then
+        button.healthBar:SetMinMaxSmoothedValue(0, mh)
+        button.healthBar:SetSmoothedValue(h)
     else
-        if button.Indicators and button.Indicators.UnitFlags then
-            button.Indicators.UnitFlags:Hide()
-        end
+        button.healthBar:SetValue(h)
+        button.healthBar:SetMinMaxValues(0, mh)
     end
-
-    button.healthBar:SetValue(h)
-    button.healthBar:SetMinMaxValues(0, mh)
-
     local r, g, b = Ether:GetClassColor(button)
     button.healthBar:SetStatusBarColor(r, g, b)
     button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
@@ -186,7 +170,8 @@ function Ether:UpdateHealthText(button)
     if not button or not button.unit or not button.health then
         return
     end
-    local h = UnitHealth(button.unit)
+    local unit = button.unit
+    local h = UnitHealth(unit)
     if h <= 0 then
         return
     end
@@ -198,13 +183,13 @@ function Ether:UpdateHealthText(button)
 end
 
 function Ether:UpdatePrediction(button)
-    if not button or not button.unit or not button.myPrediction then return end
+    if not button or not button.unit or not button.myPrediction or not button.otherPrediction then return end
     local myHeal = UnitGetIncomingHeals(button.unit, "player") or 0
-    local allIncomingHeal = UnitGetIncomingHeals(button.unit) or 0
-    local otherHeal = 0
-    if allIncomingHeal > 0 then
-        otherHeal = math_max(0, allIncomingHeal - myHeal)
-        myHeal = math_min(myHeal, allIncomingHeal)
+    local otherHeal = UnitGetIncomingHeals(button.unit) or 0
+    local other = 0
+    if otherHeal > 0 then
+        other = math_max(0, otherHeal - myHeal)
+        myHeal = math_min(myHeal, otherHeal)
     end
     if button.myPrediction then
         if myHeal > 0 then
@@ -213,25 +198,13 @@ function Ether:UpdatePrediction(button)
             button.myPrediction:Hide()
         end
     end
-    if not button.otherPrediction then return end
     if button.otherPrediction then
-        if otherHeal > 0 then
+        if other > 0 then
             button.otherPrediction:Show()
         else
             button.otherPrediction:Hide()
         end
     end
-end
-
-function Ether:UpdateSmoothHealth(button)
-    if not button or not button.unit or not button.healthBar then return end
-    local h = UnitHealth(button.unit)
-    local mh = UnitHealthMax(button.unit)
-    local r, g, b = Ether:GetClassColor(button)
-    button.healthBar:SetStatusBarColor(r, g, b)
-    button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
-    button.healthBar:SetMinMaxSmoothedValue(0, mh)
-    button.healthBar:SetSmoothedValue(h)
 end
 
 local function HealthChanged(_, event, unit)
@@ -241,12 +214,12 @@ local function HealthChanged(_, event, unit)
             local button = Ether.unitButtons.solo[unit]
             if button and button:IsVisible() then
                 if Ether.DB[801][3] == 1 then
-                    Ether:UpdateSmoothHealth(button)
+                    Ether:UpdateHealth(button, true)
                 else
                     Ether:UpdateHealth(button)
-                    if Ether.DB[701][1] == 1 then
-                        Ether:UpdateHealthText(button)
-                    end
+                end
+                if Ether.DB[701][1] == 1 then
+                    Ether:UpdateHealthText(button)
                 end
             end
         end
@@ -254,12 +227,12 @@ local function HealthChanged(_, event, unit)
             local button = Ether.unitButtons.raid[unit]
             if button and button:IsVisible() then
                 if Ether.DB[801][5] == 1 then
-                    Ether:UpdateSmoothHealth(button)
+                    Ether:UpdateHealth(button, true)
                 else
                     Ether:UpdateHealth(button)
-                    if Ether.DB[701][3] == 1 then
-                        Ether:UpdateHealthText(button)
-                    end
+                end
+                if Ether.DB[701][3] == 1 then
+                    Ether:UpdateHealthText(button)
                 end
             end
         end

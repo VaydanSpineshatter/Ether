@@ -760,7 +760,7 @@ end
 
 local arraysLength = {
     [101] = 12, [201] = 6, [301] = 13, [401] = 4,
-    [501] = 9, [701] = 4, [801] = 11,
+    [501] = 9, [701] = 4, [801] = 12,
     [1001] = 4, [1101] = 3
 }
 
@@ -939,6 +939,9 @@ local function OnInitialize(self, event, ...)
             local LDI = LibStub("LibDBIcon-1.0", true)
             LDI:Register("EtherIcon", Ether.dataBroker, ETHER_ICON)
         end
+
+        Ether:RosterEnable()
+
         if not Ether.DebugFrame then
             Ether:SetupDebugFrame()
         end
@@ -1017,7 +1020,7 @@ local function OnInitialize(self, event, ...)
         Ether.Tooltip:Initialize()
 
         ToggleSettings(Construct)
-        Ether:RosterEnable()
+
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if IsInGroup() and updatedChannel ~= true then
@@ -1027,10 +1030,22 @@ local function OnInitialize(self, event, ...)
         end
     elseif (event == "PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-        C_Timer.After(0.3, function()
+        C_Timer.After(0.8, function()
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")
             Ether:InitializePetHeader()
+            for _, button in pairs(Ether.unitButtons.raid) do
+                if Ether.DB[701][3] == 1 then
+                    Ether:UpdateHealthText(button)
+                end
+                if Ether.DB[701][4] == 1 then
+                    Ether:UpdatePowerText(button)
+                end
+            end
+            if Ether.DB[801][12] == 1 then
+                Ether:HeaderBackground(true)
+            end
+
         end)
     elseif (event == "PLAYER_LOGOUT") then
         local charKey = Ether.GetCharacterKey()

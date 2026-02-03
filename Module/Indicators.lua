@@ -10,7 +10,10 @@ local GetLoot = C_PartyInfo.GetLootMethod
 local pairs, ipairs = pairs, ipairs
 local UnitIsGroupLeader = UnitIsGroupLeader
 local UnitIsCharmed = UnitIsCharmed
+local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitIsUnit = UnitIsUnit
+local connectionIcon = "Interface\\CharacterFrame\\Disconnect-Icon"
+local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 local ReadyCheck_Ready = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local ReadyCheck_NotReady = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 local ReadyCheck_Waiting = "Interface\\RaidFrame\\ReadyCheck-Waiting"
@@ -18,9 +21,9 @@ local leaderIcon = "Interface\\GroupFrame\\UI-Group-LeaderIcon"
 local targetIcon = "Interface\\TargetingFrame\\UI-RaidTargetingIcons"
 local mainTankIcon = "Interface\\GroupFrame\\UI-Group-MainTankIcon"
 local mainAssistIcon = "Interface\\GroupFrame\\UI-Group-MainAssistIcon"
-local connectionIcon = "Interface\\CharacterFrame\\Disconnect-Icon"
 local rezIcon = "Interface\\RaidFrame\\Raid-Icon-Rez"
 local masterlootIcon = "Interface\\GroupFrame\\UI-Group-MasterLooter"
+local charmedIcon = "Interface\\Icons\\Spell_Shadow_Charm"
 local AFK = [[|cE600CCFFAFK|r]]
 local DND = [[|cffCC66FFDND|r]]
 local Events = {}
@@ -67,7 +70,7 @@ end
 
 function Ether.SaveIndicatorsPos(icon, number)
     for _, button in pairs(Ether.unitButtons.raid) do
-        if button and button.Indicators[icon] then
+        if button and button.Indicators and button.Indicators[icon] then
             button.Indicators[icon]:Hide()
             button.Indicators[icon]:ClearAllPoints()
             button.Indicators[icon]:SetPoint(Ether.DB[1002][number][2], button.healthBar, Ether.DB[1002][number][2], Ether.DB[1002][number][3], Ether.DB[1002][number][4])
@@ -177,9 +180,9 @@ local function UpdateConnection(_, event, unit)
         local button = Ether.unitButtons.raid[unit]
         if not button or not button.Indicators or not button.Indicators.Connection then return end
         local isConnected = UnitIsConnected(unit)
-        if (not isConnected) then
-            button.Indicators.Connection:SetTexture(connectionIcon)
+        if not isConnected then
             button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
+            button.Indicators.Connection:SetTexture(connectionIcon)
             button.Indicators.Connection:Show()
         else
             button.Indicators.Connection:Hide()
@@ -266,15 +269,32 @@ local function UpdateMasterLoot(_, event)
         end
     end
 end
+
+local function unitIsDead(button)
+    button.top:SetColorTexture(0, 0, 0, 1)
+    button.right:SetColorTexture(0, 0, 0, 1)
+    button.left:SetColorTexture(0, 0, 0, 1)
+    button.bottom:SetColorTexture(0, 0, 0, 1)
+end
+
 local function UpdateUnitFlags(_, event, unit)
     if not unit then return end
     if event == "UNIT_FLAGS" then
         local button = Ether.unitButtons.raid[unit]
         if not button or not button.Indicators or not button.Indicators.UnitFlags then return end
+        local dead = UnitIsDeadOrGhost(unit)
         local charmed = UnitIsCharmed(unit)
         if charmed then
             button.name:SetTextColor(1.00, 0.00, 0.00)
+            button.Indicators.UnitFlags:SetTexture(charmedIcon)
+            button.Indicators.UnitFlags:Show()
+        elseif dead then
+            button.Indicators.UnitFlags:SetTexture(deadIcon)
+            button.healthBar:SetValue(0)
+            unitIsDead(button)
+            button.Indicators.UnitFlags:Show()
         else
+            button.Indicators.UnitFlags:Hide()
             button.name:SetTextColor(1, 1, 1)
         end
     end

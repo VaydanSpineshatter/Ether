@@ -115,6 +115,17 @@ local function ifValidUnits()
     end
 end
 
+local timer = false
+local function clearTimerCache()
+    if not timer then
+        timer = true
+        C_After(10, function()
+            Ether:CleanupTimerCache()
+            timer = false
+        end)
+    end
+end
+
 local function WorldEnter(_, event)
     if event == "PLAYER_ENTERING_WORLD" then
         ifValidUnits()
@@ -125,8 +136,13 @@ local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
         ifValidUnits()
         if Ether.DB[1001][4] == 1 then
-            Ether:CleanupTimerCache()
+            clearTimerCache()
         end
+    end
+end
+local function PlayerAlive(_, event)
+    if event == "PLAYER_ALIVE" then
+        Ether:UpdateIndicatorsByIndex(7)
     end
 end
 --[[
@@ -147,6 +163,7 @@ function Ether:RosterEnable()
     Ether:PowerEnable()
     RegisterRosterEvent("PLAYER_ENTERING_WORLD", WorldEnter)
     RegisterRosterEvent("PLAYER_TARGET_CHANGED", TargetChanged)
+    RegisterRosterEvent("PLAYER_ALIVE", PlayerAlive)
     RegisterRosterEvent("GROUP_ROSTER_UPDATE", RosterChanged)
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
@@ -159,6 +176,7 @@ function Ether:RosterDisable()
     UnregisterRosterEvent("PLAYER_TARGET_CHANGED")
     UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
     UnregisterRosterEvent("GROUP_ROSTER_UPDATE")
+    UnregisterRosterEvent("PLAYER_ALIVE")
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether.Range:Disable()

@@ -81,55 +81,6 @@ function Ether.SaveAuraPos(spellId, debuff)
     end
 end
 
-
---[[
-local function AuraScanDispel(unit)
-    if not Ether.unitButtons.raid[unit] or not UnitExists(unit) then
-        return
-    end
-    local dispel, priority = nil, 0
-    local index = 1
-    local hasDispelDebuff = false
-    local guid = UnitGUID(unit)
-    if not guid then
-        return
-    end
-
-    while true do
-        local auraData = GetDebuffDataByIndex(unit, index)
-        if not auraData then break end
-        if dispelByPlayer[auraData.dispelName] then
-            local sort = dispelPriority[auraData.dispelName] or 0
-            if sort > priority then
-                priority = sort
-                dispel = auraData.dispelName
-            end
-            if dispelColors[auraData.dispelName] then
-                local button = Ether.unitButtons.raid[unit]
-                hasDispelDebuff = true
-                local c = dispelColors[auraData.dispelName]
-                button.top:SetColorTexture(unpack(c))
-                button.right:SetColorTexture(unpack(c))
-                button.left:SetColorTexture(unpack(c))
-                button.bottom:SetColorTexture(unpack(c))
-                if not auraData.icon then return end
-                button.dispelIcon:SetTexture(auraData.icon)
-                button.dispelBorder:SetColorTexture(unpack(c))
-                Ether.StartBlink(button.iconFrame, auraData.duration, 0.3)
-            end
-        end
-        index = index + 1
-    end
-    if not hasDispelDebuff then
-        local button = Ether.unitButtons.raid[unit]
-        button.top:SetColorTexture(0, 0, 0, 1)
-        button.right:SetColorTexture(0, 0, 0, 1)
-        button.left:SetColorTexture(0, 0, 0, 1)
-        button.bottom:SetColorTexture(0, 0, 0, 1)
-        Ether.StopBlink(button.iconFrame)
-    end
-end
-]]
 local function ScanUnitAuras(unit)
     if not UnitExists(unit) then
         return nil, {}
@@ -167,7 +118,7 @@ local function GetCachedDispel(unit)
     if not guid then return nil end
 
     local cached = dispelCache[guid]
-    if cached and (GetTime() - cached.timestamp) < 1 then
+    if cached and (GetTime() - cached.timestamp) < 2 then
         return cached.dispel
     end
 
@@ -715,4 +666,3 @@ function Ether:AuraDisable()
     Ether:AuraWipe()
     DisableAuras()
 end
-

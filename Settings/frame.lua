@@ -139,12 +139,17 @@ function Ether.CreateSection(self)
             [5] = "pettarget",
             [6] = "focus"
         }
-        local function unitFactory(index)
-            if index > 6 then
+        local function unitIndex(index)
+            if index == 7 then
                 return
             end
             if Ether.DB[201][index] == 1 then
                 Ether:CreateUnitButtons(unitKeys[index])
+                for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
+                    if key == index then
+                        Ether:FramePosition(value)
+                    end
+                end
                 if index == 3 then
                     Ether.registerToTEvents()
                 end
@@ -155,7 +160,7 @@ function Ether.CreateSection(self)
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[201][i] = checked and 1 or 0
-            unitFactory(i)
+            unitIndex(i)
         end)
         self.Content.Buttons.Create.A[i] = btn
     end
@@ -1139,7 +1144,7 @@ function Ether.CreateRegisterSection(self)
         [4] = {text = "Resurrection", texture = "Interface\\RaidFrame\\Raid-Icon-Rez", size = 20},
         [5] = {text = "Leader", texture = "Interface\\GroupFrame\\UI-Group-LeaderIcon"},
         [6] = {text = "Loot method", texture = "Interface\\GroupFrame\\UI-Group-MasterLooter", size = 16},
-        [7] = {text = "Unit Flags |cffff0000 Red Name|r  &", texture = "Interface\\Icons\\Spell_Holy_GuardianSpirit"},
+        [7] = {text = "Unit Flags |cffff0000 Red Name|r  &", texture = "Interface\\Icons\\Spell_Shadow_Charm", texture2 = "Interface\\Icons\\Spell_Holy_GuardianSpirit"},
         [8] = {text = "Maintank and Mainassist", texture = "Interface\\GroupFrame\\UI-Group-MainTankIcon", texture2 = "Interface\\GroupFrame\\UI-Group-MainAssistIcon"},
         [9] = {text = "Player flags  |cE600CCFFAFK|r & |cffCC66FFDND|r"}
     }
@@ -1542,7 +1547,8 @@ function Ether.CreateLayoutSection(self)
         [8] = {text = "CastBar - Time"},
         [9] = {text = "CastBar - Name"},
         [10] = {text = "CastBar - SafeZone"},
-        [11] = {text = "CastBar - IsTradeSkill"}
+        [11] = {text = "CastBar - IsTradeSkill"},
+        [12] = {text = "Header - Background"}
     }
 
     local layout = CreateFrame("Frame", nil, parent)
@@ -1586,6 +1592,12 @@ function Ether.CreateLayoutSection(self)
                     Ether:RangeEnable()
                 else
                     Ether:RangeDisable()
+                end
+            elseif i == 12 then
+                if Ether.DB[801][12] == 1 then
+                    Ether:HeaderBackground(true)
+                else
+                    Ether:HeaderBackground(false)
                 end
             end
         end)
