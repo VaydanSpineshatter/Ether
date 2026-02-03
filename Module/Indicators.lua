@@ -174,7 +174,7 @@ local function UpdateConnection(_, event, unit)
     if not unit then return end
     if event == "UNIT_CONNECTION" then
         local button = Ether.unitButtons.raid[unit]
-        if not button or not button.Indicators.Connection then return end
+        if not button or not button.Indicators or not button.Indicators.Connection then return end
         local isConnected = UnitIsConnected(unit)
         if (not isConnected) then
             button.Indicators.Connection:SetTexture(connectionIcon)
@@ -189,14 +189,26 @@ end
 local function UpdateRaidTarget(_, event)
     if event == "RAID_TARGET_UPDATE" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and UnitExists(unit) then
+            if button and button.Indicators and UnitExists(unit) then
                 local index = GetRaidTargetIndex(unit)
                 if index then
                     button.Indicators.RaidTarget:SetTexture(targetIcon)
-                    button.Indicators.RaidTarget:Show()
                     SetRaidTargetIconTexture(button.Indicators.RaidTarget, index)
+                    button.Indicators.RaidTarget:Show()
                 else
                     button.Indicators.RaidTarget:Hide()
+                end
+            end
+        end
+        for unit, button in pairs(Ether.unitButtons.solo) do
+            if button and button.RaidTarget and UnitExists(unit) then
+                local index = GetRaidTargetIndex(unit)
+                if index then
+                    button.RaidTarget:SetTexture(targetIcon)
+                    SetRaidTargetIconTexture(button.RaidTarget, index)
+                    button.RaidTarget:Show()
+                else
+                    button.RaidTarget:Hide()
                 end
             end
         end
@@ -207,7 +219,7 @@ local function UpdateResurrection(_, event, unit)
     if not unit then return end
     if event == "INCOMING_RESURRECT_CHANGED" then
         local button = Ether.unitButtons.raid[unit]
-        if not button or not button.Indicators.Resurrection then return end
+        if not button or not button.Indicators or not button.Indicators.Resurrection then return end
         local Resurrection = UnitHasIncomingResurrection(unit)
         if (Resurrection) then
             button.Indicators.Resurrection:SetTexture(rezIcon)
@@ -221,7 +233,7 @@ end
 local function UpdateGroupLeader(_, event)
     if event == "PARTY_LEADER_CHANGED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and unit then
+            if button and button.Indicators and unit then
                 local IsLeader = UnitIsGroupLeader(unit)
                 if (IsLeader) then
                     button.Indicators.GroupLeader:SetTexture(leaderIcon)
@@ -237,7 +249,7 @@ end
 local function UpdateMasterLoot(_, event)
     if event == "PARTY_LOOT_METHOD_CHANGED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and unit then
+            if button and button.Indicators and unit then
                 button.Indicators.MasterLoot:SetTexture(masterlootIcon)
                 button.Indicators.MasterLoot:Hide()
                 local lootType, partyID, raidID = GetLoot()
@@ -257,7 +269,7 @@ local function UpdateUnitFlags(_, event, unit)
     if not unit then return end
     if event == "UNIT_FLAGS" then
         local button = Ether.unitButtons.raid[unit]
-        if not button or not button.Indicators.UnitFlags then return end
+        if not button or not button.Indicators or not button.Indicators.UnitFlags then return end
         local charmed = UnitIsCharmed(unit)
         if charmed then
             button.name:SetTextColor(1.00, 0.00, 0.00)
@@ -270,7 +282,7 @@ end
 local function UpdatePlayerRoles(_, event)
     if event == "PLAYER_ROLES_ASSIGNED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and unit then
+            if button and button.Indicators and unit then
                 if not IsInRaid() then
                     button.Indicators.PlayerRoles:Hide()
                 else
@@ -317,7 +329,6 @@ local function NotAfk(self)
         for unit in pairs(Ether.unitButtons.raid) do
             if UnitExists(unit) then
                 Ether:UpdateRaidIsHelpful(unit)
-                Ether:DispelAuraScan(unit)
             end
         end
     end
@@ -332,7 +343,7 @@ local function UpdatePlayerFlags(self, event, unit)
     if not unit then return end
     if event == "PLAYER_FLAGS_CHANGED" then
         local button = Ether.unitButtons.raid[unit]
-        if not button or not button.Indicators.PlayerFlags then return end
+        if not button or not button.Indicators or not button.Indicators.PlayerFlags then return end
         local away = UnitIsAFK(unit)
         local dnd = UnitIsDND(unit)
         if away then

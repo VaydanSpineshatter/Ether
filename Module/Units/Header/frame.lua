@@ -50,18 +50,13 @@ local function OnAttributeChanged(self, name, unit)
     if name ~= "unit" or not unit then
         return
     end
-
+    print(unit)
     local oldUnit = self.unit
     local oldGUID = self.unitGUID
     local newGUID = UnitGUID(unit)
 
     if oldGUID and newGUID and oldGUID ~= newGUID then
-        self.top:SetColorTexture(0, 0, 0, 1)
-        self.right:SetColorTexture(0, 0, 0, 1)
-        self.left:SetColorTexture(0, 0, 0, 1)
-        self.bottom:SetColorTexture(0, 0, 0, 1)
-        Ether.StopBlink(self.iconFrame)
-        Ether:CleanupIconsForGUID(oldGUID)
+        Ether:CleanupAuras(oldGUID, oldUnit)
     end
 
     self.unit = unit
@@ -75,7 +70,6 @@ local function OnAttributeChanged(self, name, unit)
     if self.unit == unit and UnitExists(unit) then
         if Ether.DB and Ether.DB[1001] and Ether.DB[1001][4] == 1 then
             Ether:UpdateRaidIsHelpful(unit)
-            Ether:DispelAuraScan(unit)
         end
     end
     Update(self)
@@ -84,19 +78,23 @@ end
 local function Show(self)
     self:RegisterEvent("UNIT_NAME_UPDATE")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
+    if self.TypePet then
+        self:RegisterEvent("UNIT_PET")
+    end
     Update(self)
 end
 
 local function Hide(self)
     self:UnregisterEvent("UNIT_NAME_UPDATE")
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
+    if self.TypePet then
+        self:UnregisterEvent("UNIT_PET")
+    end
 end
 
 local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 local function CreateChildren(headerName, buttonName)
     local button = _G[buttonName]
-    button.raidAuras = {}
-    button.raidIcons = {}
     Ether:AddBlackBorder(button, 1, 0, 0, 0, 1)
     local healthBar = CreateFrame("StatusBar", nil, button)
     button.healthBar = healthBar
@@ -106,30 +104,35 @@ local function CreateChildren(headerName, buttonName)
     healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.statusBar))
     healthBar:SetMinMaxValues(0, 100)
     healthBar:SetFrameLevel(button:GetFrameLevel() + 1)
-    Mixin(healthBar, SmoothStatusBarMixin)
     local healthDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
     button.healthDrop = healthDrop
     healthDrop:SetAllPoints(healthBar)
     healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
-    Ether:DispelIconSetup(button)
     Ether:SetupPrediction(button)
     Ether:SetupName(button, 10, -5)
     Ether:GetClassColor(button)
-    button.Indicators = {}
-    Ether:SetupUpdateText(button, "health")
-    Ether:SetupUpdateText(button, "power", true)
-    button.Indicators.PlayerFlags = healthBar:CreateFontString(nil, "OVERLAY")
-    button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-    button.Indicators.UnitFlags = healthBar:CreateTexture(nil, "OVERLAY")
-    button.Indicators.UnitFlags:SetTexture(deadIcon)
-    button.Indicators.UnitFlags:Hide()
-    button.Indicators.ReadyCheck = healthBar:CreateTexture(nil, "OVERLAY")
-    button.Indicators.Connection = healthBar:CreateTexture(nil, "OVERLAY")
-    button.Indicators.Resurrection = healthBar:CreateTexture(nil, "OVERLAY")
-    button.Indicators.RaidTarget = healthBar:CreateTexture(nil, "OVERLAY")
-    button.Indicators.MasterLoot = healthBar:CreateTexture(nil, "OVERLAY")
-    button.Indicators.GroupLeader = healthBar:CreateTexture(nil, "OVERLAY")
-    button.Indicators.PlayerRoles = healthBar:CreateTexture(nil, "OVERLAY")
+
+    if headerName:GetAttribute("TypePet") then
+        button.TypePet = true
+    else
+        Ether:SetupUpdateText(button, "health")
+        Ether:SetupUpdateText(button, "power", true)
+        Ether:DispelIconSetup(button)
+        Mixin(healthBar, SmoothStatusBarMixin)
+        button.Indicators = {}
+        button.Indicators.PlayerFlags = healthBar:CreateFontString(nil, "OVERLAY")
+        button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+        button.Indicators.UnitFlags = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.UnitFlags:SetTexture(deadIcon)
+        button.Indicators.UnitFlags:Hide()
+        button.Indicators.ReadyCheck = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.Connection = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.Resurrection = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.RaidTarget = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.MasterLoot = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.GroupLeader = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.PlayerRoles = healthBar:CreateTexture(nil, "OVERLAY")
+    end
     button:SetScript("OnShow", Show)
     button:SetScript("OnHide", Hide)
     button:SetScript("OnEnter", OnEnter)
@@ -180,23 +183,23 @@ function Ether:InitializePetHeader()
     if _G["EtherRaidGroupHeader1"] and not InCombatLockdown() then
         local raidpet = CreateFrame("Frame", "EtherPetGroupHeader", raidAnchor, "SecureGroupPetHeaderTemplate")
         Ether.Header.raidpet = raidpet
-        raidpet:SetPoint("BOTTOMLEFT", "EtherRaidGroupHeader1", "TOPLEFT", 0, 10)
+        raidpet:SetPoint("BOTTOMLEFT", groupHeaders[1], "TOPLEFT", 0, 10)
         raidpet:SetAttribute("template", "EtherUnitTemplate")
         raidpet:SetAttribute("initialConfigFunction", initialConfigFunction)
         raidpet.CreateChildren = CreateChildren
-        raidpet:SetAttribute("ButtonHeight", 55)
-        raidpet:SetAttribute("ButtonWidth", 55)
+        raidpet:SetAttribute("TypePet", true)
+        raidpet:SetAttribute("ButtonHeight", 50)
+        raidpet:SetAttribute("ButtonWidth", 50)
+        raidpet:SetAttribute("xOffset", -2)
         raidpet:SetAttribute("showRaid", true)
         raidpet:SetAttribute("showParty", true)
         raidpet:SetAttribute("showPlayer", true)
         raidpet:SetAttribute("showSolo", true)
-        raidpet:SetAttribute("point", "LEFT")
-        raidpet:SetAttribute("columnAnchorPoint", "RIGHT")
-        raidpet:SetAttribute("xOffset", 1)
-        raidpet:SetAttribute("yOffset", -1)
+        raidpet:SetAttribute("columnAnchorPoint", "LEFT")
+        raidpet:SetAttribute("point", "RIGHT")
         raidpet:SetAttribute("useOwnerUnit", false)
         raidpet:SetAttribute("filterOnPet", true)
-        raidpet:SetAttribute("unitsPerColumn", 8)
+        raidpet:SetAttribute("unitsPerColumn", 10)
         raidpet:SetAttribute("maxColumns", 1)
         raidpet:Show()
     end

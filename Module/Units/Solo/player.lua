@@ -73,6 +73,12 @@ function Ether:CreateUnitButtons(unit)
         Ether:SetupUpdateText(button, "power", true)
         Mixin(button.healthBar, SmoothStatusBarMixin)
         Mixin(button.powerBar, SmoothStatusBarMixin)
+        if button.unit ~= "targettarget" then
+            button.RaidTarget = button.healthBar:CreateTexture(nil, "OVERLAY")
+            button.RaidTarget:SetSize(18, 18)
+            button.RaidTarget:SetPoint("LEFT", button.healthBar, "LEFT", 5, 0)
+        end
+
         if button.unit ~= "player" then
             RegisterUnitWatch(button)
         end

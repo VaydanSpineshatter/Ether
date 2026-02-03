@@ -74,30 +74,19 @@ local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
         if Ether.DB[1001][3] == 1 then
             if UnitExists("target") then
-                Ether:SingleAuraUpdateBuff(Ether.unitButtons.solo["target"])
-                Ether:SingleAuraUpdateDebuff(Ether.unitButtons.solo["target"])
+                local button = Ether.unitButtons.solo["target"]
+                Ether:SingleAuraUpdateBuff(button)
+                Ether:SingleAuraUpdateDebuff(button)
+                local index = GetRaidTargetIndex("target")
+                if index then
+                    button.RaidTarget:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+                    SetRaidTargetIconTexture(button.RaidTarget, index)
+                    button.RaidTarget:Show()
+                else
+                    Ether.unitButtons.solo["target"].RaidTarget:Hide()
+                end
             end
         end
-    end
-end
-
-local function WorldEnter(_, event)
-    if event == "PLAYER_ENTERING_WORLD" then
-        C_After(1, function()
-            if not UnitInAnyGroup("player") then
-                ValidUnits.player = true
-                ValidUnits.raid = false
-                ValidUnits.party = false
-            elseif UnitInRaid("player") then
-                ValidUnits.player = false
-                ValidUnits.party = false
-                ValidUnits.raid = true
-            elseif UnitInParty("player") then
-                ValidUnits.player = true
-                ValidUnits.party = true
-                ValidUnits.raid = false
-            end
-        end)
     end
 end
 
@@ -107,6 +96,8 @@ local function ifValidUnits()
         status = true
         C_After(4, function()
             if not UnitInAnyGroup("player") then
+                Ether:FullUpdateIndicators()
+                Ether:AuraWipe()
                 ValidUnits.player = true
                 ValidUnits.raid = false
                 ValidUnits.party = false
@@ -123,6 +114,13 @@ local function ifValidUnits()
         end)
     end
 end
+
+local function WorldEnter(_, event)
+    if event == "PLAYER_ENTERING_WORLD" then
+        ifValidUnits()
+    end
+end
+
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
         ifValidUnits()

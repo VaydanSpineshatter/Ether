@@ -702,16 +702,59 @@ function Ether:RefreshFramePositions()
 
     for frameID, frame in pairs(frames) do
         if frame and Ether.DB[5111][frameID] then
-            local pos = Ether.DB[5111][frameID]
-            local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
-            if frame.SetPoint then
-                frame:ClearAllPoints()
-                frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
-                frame:SetScale(pos[8])
-                frame:SetAlpha(pos[9])
-                Ether.Fire("FRAME_UPDATED", frameID)
-            end
+            Ether:ApplyFramePosition(frameID, frame)
         end
+    end
+end
+
+function Ether:ApplyFramePosition(frameID, frame)
+    local pos = Ether.DB[5111][frameID]
+    if not pos or not frame then return end
+
+    local frames = {
+        [331] = Ether.Anchor.tooltip,
+        [332] = Ether.unitButtons.solo["player"],
+        [333] = Ether.unitButtons.solo["target"],
+        [334] = Ether.unitButtons.solo["targettarget"],
+        [335] = Ether.unitButtons.solo["pet"],
+        [336] = Ether.unitButtons.solo["pettarget"],
+        [337] = Ether.unitButtons.solo["focus"],
+        [338] = Ether.Anchor.raid,
+        [339] = Ether.DebugFrame,
+        [340] = Construct.Frames["Main"]
+    }
+
+    local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
+
+    local s = frame:GetEffectiveScale()
+    local x, y = pos[4] / s, pos[5] / s
+
+    if frame.SetPoint then
+        frame:ClearAllPoints()
+        frame:SetPoint(pos[1], relTo, pos[3], x, y)
+        frame:SetScale(pos[8])
+        frame:SetAlpha(pos[9])
+        Ether.Fire("FRAME_UPDATED", frameID)
+    end
+end
+
+function Ether:FramePosition(frameID)
+    local frames = {
+        [331] = Ether.Anchor.tooltip,
+        [332] = Ether.unitButtons.solo["player"],
+        [333] = Ether.unitButtons.solo["target"],
+        [334] = Ether.unitButtons.solo["targettarget"],
+        [335] = Ether.unitButtons.solo["pet"],
+        [336] = Ether.unitButtons.solo["pettarget"],
+        [337] = Ether.unitButtons.solo["focus"],
+        [338] = Ether.Anchor.raid,
+        [339] = Ether.DebugFrame,
+        [340] = Construct.Frames["Main"]
+    }
+
+    local frame = frames[frameID]
+    if frame then
+        Ether:ApplyFramePosition(frameID, frame)
     end
 end
 
@@ -738,9 +781,11 @@ function Ether:FramePosition(frameID)
     if frame and Ether.DB[5111][frameID] then
         local pos = Ether.DB[5111][frameID]
         local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
-        if frame.SetPoint then
+        local s = frame:GetEffectiveScale()
+        local x, y = pos[4] / s, pos[5] / s
+        if frame then
             frame:ClearAllPoints()
-            frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
+            frame:SetPoint(pos[1], relTo, pos[3], x, y)
             frame:SetScale(pos[8])
             frame:SetAlpha(pos[9])
         end
@@ -912,16 +957,16 @@ local function OnInitialize(self, event, ...)
                 button1 = "Yes",
                 button2 = "No",
                 OnAccept = function(self, spellId)
-                   if not InCombatLockdown() then
+                    if not InCombatLockdown() then
                         ReloadUI()
-                   end
+                    end
                 end,
                 timeout = 0,
                 whileDead = true,
                 hideOnEscape = true,
                 preferredIndex = 3,
             }
-              StaticPopup_Show("ETHER_RELOAD_UI")
+            StaticPopup_Show("ETHER_RELOAD_UI")
         end
         Ether.Anchor.raid:SetSize(1, 1)
         Ether:FramePosition(338)
@@ -987,10 +1032,10 @@ local function OnInitialize(self, event, ...)
         end
     elseif (event == "PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-
         C_Timer.After(0.3, function()
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")
+            Ether:InitializePetHeader()
         end)
     elseif (event == "PLAYER_LOGOUT") then
         local charKey = Ether.GetCharacterKey()
