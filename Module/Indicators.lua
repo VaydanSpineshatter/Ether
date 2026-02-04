@@ -115,7 +115,7 @@ end
 local function UpdateReadyCheck(_, event)
     if event == "READY_CHECK" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and unit then
+           if button and button.Indicators and unit then
                 local status = GetReadyCheckStatus(unit)
                 if (status) then
                     if (status == "ready") then
@@ -139,7 +139,7 @@ end
 local function UpdateConfirm(_, event)
     if event == "READY_CHECK_CONFIRM" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and unit then
+            if button and button.Indicators and unit then
                 local status = GetReadyCheckStatus(unit)
                 if (status == "ready") then
                     button.Indicators.ReadyCheck:SetTexture(ReadyCheck_Ready)

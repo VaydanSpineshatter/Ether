@@ -98,7 +98,8 @@ local function ifValidUnits()
         C_After(4, function()
             if not UnitInAnyGroup("player") then
                 Ether:FullUpdateIndicators()
-                Ether:AuraWipe()
+                Ether:AuraDisable()
+                Ether:AuraEnable()
                 if Ether.DB[801][12] == 1 then
                     Ether:HeaderBackground(true)
                 end
@@ -171,7 +172,6 @@ function Ether:RosterEnable()
     Ether:AuraEnable()
     Ether:IndicatorsEnable()
     Ether:InitialIndicatorsPos()
-    Ether:FullUpdateIndicators()
     Ether:NameEnable()
     Ether:HealthEnable()
     Ether:PowerEnable()
@@ -184,6 +184,7 @@ function Ether:RosterEnable()
             Ether:RangeEnable()
         end)
     end
+    Ether:FullUpdateIndicators()
 end
 
 function Ether:RosterDisable()

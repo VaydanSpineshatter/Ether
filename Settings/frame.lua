@@ -2179,6 +2179,15 @@ function Ether.CreateProfileSection(self)
 end
 
 function Ether.ExportCurrentProfile()
+    local charKey = Ether.GetCharacterKey()
+    if charKey then
+        ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
+    end
+    if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
+        ETHER_DATABASE_DX_AA.currentProfile = charKey
+    end
+    Ether.UpdateAuraList()
+    Ether.UpdateEditor()
     local profileName = ETHER_DATABASE_DX_AA.currentProfile
     local profileData = ETHER_DATABASE_DX_AA.profiles[profileName]
     if not profileData then
@@ -2189,7 +2198,7 @@ function Ether.ExportCurrentProfile()
         addon = "Ether",
         timestamp = time(),
         profileName = profileName,
-        data = Ether.CopyTable(profileData)
+        data = Ether.CopyTable(profileData),
     }
     local serialized = Ether.TblToString(exportData)
     local encoded = Ether.Base64Encode(serialized)
@@ -2240,9 +2249,11 @@ function Ether.ImportProfile(encodedString)
     ETHER_DATABASE_DX_AA.profiles[importedName] = Ether.CopyTable(importedData.data)
 
     ETHER_DATABASE_DX_AA.currentProfile = importedName
-    Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
+
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
+    Ether.UpdateAuraList()
+    Ether.UpdateEditor()
     return true, "Successfully imported as: " .. importedName
 end
 
@@ -2292,7 +2303,8 @@ function Ether.SwitchProfile(name)
 
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
-
+    Ether.UpdateAuraList()
+    Ether.UpdateEditor()
     if Ether.ConfigFrame and Ether.ConfigFrame:IsShown() then
         Ether.ConfigFrame:Hide()
         Ether.ConfigFrame:Show()

@@ -117,6 +117,7 @@ local function CreateChildren(headerName, buttonName)
         Ether:DispelIconSetup(button)
         Mixin(healthBar, SmoothStatusBarMixin)
         button.Indicators = {}
+        button.Smooth = true
         button.Indicators.PlayerFlags = healthBar:CreateFontString(nil, "OVERLAY")
         button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
         button.Indicators.UnitFlags = healthBar:CreateTexture(nil, "OVERLAY")

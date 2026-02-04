@@ -80,6 +80,7 @@ function Ether:CreateUnitButtons(index)
         Ether:SetupUpdateText(button, "power", true)
         Mixin(button.healthBar, SmoothStatusBarMixin)
         Mixin(button.powerBar, SmoothStatusBarMixin)
+        button.Smooth = true
         if button.unit ~= "targettarget" then
             button.RaidTarget = button.healthBar:CreateTexture(nil, "OVERLAY")
             button.RaidTarget:SetSize(18, 18)

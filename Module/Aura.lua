@@ -658,11 +658,14 @@ function Ether:AuraWipe()
 end
 
 function Ether:AuraEnable()
-    Ether:AuraWipe()
     InitializeAuras()
+    C_Timer.After(1, function()
+           Ether:UpdateRaidIsHelpful("player")
+    end)
 end
 
 function Ether:AuraDisable()
+    Ether:CleanupAllRaidIcons()
     Ether:AuraWipe()
     DisableAuras()
 end

@@ -154,7 +154,7 @@ function Ether:UpdateHealth(button, smooth)
     local h = UnitHealth(button.unit)
     local mh = UnitHealthMax(button.unit)
 
-    if smooth then
+    if smooth and button.Smooth then
         button.healthBar:SetMinMaxSmoothedValue(0, mh)
         button.healthBar:SetSmoothedValue(h)
     else
