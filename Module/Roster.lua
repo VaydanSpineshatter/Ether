@@ -99,16 +99,25 @@ local function ifValidUnits()
             if not UnitInAnyGroup("player") then
                 Ether:FullUpdateIndicators()
                 Ether:AuraWipe()
+                if Ether.DB[801][12] == 1 then
+                    Ether:HeaderBackground(true)
+                end
                 ValidUnits.player = true
                 ValidUnits.raid = false
                 ValidUnits.party = false
             elseif UnitInRaid("player") then
+                if Ether.DB[801][12] == 1 then
+                    Ether:HeaderBackground(true)
+                end
                 ValidUnits.player = false
                 ValidUnits.party = false
                 ValidUnits.partypet = false
                 ValidUnits.raid = true
                 ValidUnits.raidpet = true
             elseif UnitInParty("player") then
+                if Ether.DB[801][12] == 1 then
+                    Ether:HeaderBackground(true)
+                end
                 ValidUnits.player = true
                 ValidUnits.party = true
                 ValidUnits.partypet = true

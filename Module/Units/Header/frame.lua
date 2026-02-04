@@ -120,7 +120,6 @@ local function CreateChildren(headerName, buttonName)
         button.Indicators.PlayerFlags = healthBar:CreateFontString(nil, "OVERLAY")
         button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
         button.Indicators.UnitFlags = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.UnitFlags:Hide()
         button.Indicators.ReadyCheck = healthBar:CreateTexture(nil, "OVERLAY")
         button.Indicators.Connection = healthBar:CreateTexture(nil, "OVERLAY")
         button.Indicators.Resurrection = healthBar:CreateTexture(nil, "OVERLAY")
@@ -141,12 +140,12 @@ local function CreateChildren(headerName, buttonName)
 end
 
 local groupHeaders = {}
-
+local background = {}
 local function CreateGroupHeader(group)
     local headerName = "EtherRaidGroupHeader" .. group
     local header = CreateFrame("Frame", headerName, raidAnchor, "SecureGroupHeaderTemplate")
-    Ether.Header.raid = header
     groupHeaders[group] = header
+    Ether.Header.raid = header
     header:SetAllPoints(raidAnchor)
     header:SetAttribute("template", "EtherUnitTemplate")
     header:SetAttribute("initial-unitWatch", true)
@@ -170,9 +169,40 @@ local function CreateGroupHeader(group)
     header:SetAttribute("showPlayer", true)
     header:SetAttribute("showSolo", true)
     header:Show()
+    background[group] = Ether.Header.raid:CreateTexture(nil, "BACKGROUND")
+    background[group]:SetColorTexture(0, 0, 0, .6)
+    background[group]:SetPoint("TOPLEFT", header, "TOPLEFT", -3, 3)
+    background[group]:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 3, -3)
+    background[group]:Hide()
+end
+
+function Ether:HeaderBackground(state)
+    if InCombatLockdown() then return end
+    if type(state) ~= "boolean" then return end
+    if state then
+        for i = 1, 8 do
+            background[i]:Hide()
+        end
+        if UnitInRaid("player") then
+            for index = 1, GetNumGroupMembers() do
+                local _, _, subgroup = GetRaidRosterInfo(index)
+                for i = 1, subgroup do
+                    background[i]:Show()
+                end
+            end
+        elseif UnitInParty("player") or not UnitInAnyGroup("player") then
+            background[1]:Show()
+        end
+    else
+        for i = 1, 8 do
+            background[i]:Hide()
+        end
+    end
 end
 
 function Ether:CreateSplitGroupHeader(number)
+    if InCombatLockdown() then return end
+    if type(number) ~= "number" then return end
     for i = 1, number do
         CreateGroupHeader(i)
     end
@@ -203,7 +233,7 @@ function Ether:InitializePetHeader()
         raidpet:Show()
     end
 end
-local background = nil
+
 function Ether:RepositionHeaders()
     if InCombatLockdown() then return end
     local spacing = Ether.Header.raid:GetAttribute("columnSpacing")
@@ -218,26 +248,6 @@ function Ether:RepositionHeaders()
         end
         lastHeader = groupHeaders[i]
     end
-end
-
-function Ether:InitializeHeaderBackground()
-    if InCombatLockdown() or type(background) ~= "nil" then return end
-    local spacing = Ether.Header.raid:GetAttribute("columnSpacing")
-    local xOff = Ether.Header.raid:GetAttribute("xOffset")
-    local yOff = Ether.Header.raid:GetAttribute("yOffset")
-    local btnW = Ether.Header.raid:GetAttribute("ButtonWidth") + 1
-    local btnH = Ether.Header.raid:GetAttribute("ButtonHeight") + 4.5
-    background = Ether.Header.raid:CreateTexture(nil, "BACKGROUND")
-    background:SetColorTexture(0, 0, 0, .6)
-    background:SetPoint("TOPLEFT", groupHeaders[1], "TOPLEFT", -3, 3)
-    background:SetWidth(8 * (btnW + xOff) - xOff + spacing * 7)
-    background:SetHeight(5 * (btnH + yOff) - yOff)
-    background:Hide()
-end
-
-function Ether:HeaderBackground(state)
-    if type(state) ~= "boolean" then return end
-    background:SetShown(state)
 end
 
 local function ResetChildren()

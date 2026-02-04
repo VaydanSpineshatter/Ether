@@ -10,7 +10,7 @@ local GetLoot = C_PartyInfo.GetLootMethod
 local pairs, ipairs = pairs, ipairs
 local UnitIsGroupLeader = UnitIsGroupLeader
 local UnitIsCharmed = UnitIsCharmed
-local UnitIsDeadOrGhost = UnitIsDeadOrGhost
+local UnitIsDead = UnitIsDead
 local UnitIsUnit = UnitIsUnit
 local connectionIcon = "Interface\\CharacterFrame\\Disconnect-Icon"
 local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
@@ -282,7 +282,7 @@ local function UpdateUnitFlags(_, event, unit)
     if event == "UNIT_FLAGS" then
         local button = Ether.unitButtons.raid[unit]
         if not button or not button.Indicators or not button.Indicators.UnitFlags then return end
-        local dead = UnitIsDeadOrGhost(unit)
+        local dead = UnitIsDead(unit)
         local charmed = UnitIsCharmed(unit)
         if charmed then
             button.name:SetTextColor(1.00, 0.00, 0.00)
@@ -291,8 +291,8 @@ local function UpdateUnitFlags(_, event, unit)
         elseif dead then
             button.Indicators.UnitFlags:SetTexture(deadIcon)
             button.healthBar:SetValue(0)
-            unitIsDead(button)
             button.Indicators.UnitFlags:Show()
+            unitIsDead(button)
         else
             button.Indicators.UnitFlags:Hide()
             button.name:SetTextColor(1, 1, 1)
@@ -325,7 +325,7 @@ end
 local function OnAfk(self)
     self.isActive = true
     if Ether.DB[801][1] == 1 then
-         Ether:CastBarDisable("player")
+        Ether:CastBarDisable("player")
     end
     if Ether.DB[801][2] == 1 then
         Ether:CastBarDisable("target")
@@ -345,9 +345,9 @@ end
 
 local function NotAfk(self)
     self.isActive = false
-     if Ether.DB[801][1] == 1 then
-         Ether:CastBarEnable("player")
-     end
+    if Ether.DB[801][1] == 1 then
+        Ether:CastBarEnable("player")
+    end
     if Ether.DB[801][2] == 1 then
         Ether:CastBarEnable("target")
     end

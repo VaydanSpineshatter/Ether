@@ -1000,7 +1000,6 @@ local function OnInitialize(self, event, ...)
         C_Timer.After(0.8, function()
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")
-            Ether:InitializeHeaderBackground()
             Ether:InitializePetHeader()
             for _, button in pairs(Ether.unitButtons.raid) do
                 if Ether.DB[701][3] == 1 then

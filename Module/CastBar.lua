@@ -63,14 +63,15 @@ do
     local IsEventValid = C_EventUtils.IsEventValid
     local eventFrame
     local Events, Updates = {}, {}
-    local bar = Ether.unitButtons.solo
     function RegisterCastBarEvent(castEvent, func)
         if not eventFrame then
             eventFrame = CreateFrame("Frame")
             eventFrame:SetScript("OnEvent", function(self, event, unit, ...)
-                 if not bar[unit] then return end
-                 self.unit = bar[unit]:GetAttribute("unit")
-                 Events[event](bar[self.unit], event, unit, ...)
+                local bar = Ether.unitButtons.solo[unit]
+                if bar then
+                    self.unit = bar:GetAttribute("unit")
+                    Events[event](bar, event, unit, ...)
+                end
             end)
         end
         if not Events[castEvent] then
@@ -131,7 +132,6 @@ local function isTrade(self, data)
     return self:SetStatusBarColor(unpack(data))
 end
 
-local button = Ether.unitButtons.solo
 local function CastStart(self, event, unit)
     if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_START" then
@@ -279,7 +279,7 @@ local function ChannelUpdate(self, event, unit)
     if event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
         local bar = self.castBar
         local name, _, _, startTimeMS, endTimeMS = UnitChannel(unit)
-        if (not bar or not name or not bar:IsShown()) then
+        if (not bar or not name) then
             return
         end
         local duration = (endTimeMS / 1000) - GetTime()
@@ -316,18 +316,18 @@ local handler = {CastStart, CastStop, CastFailed, CastInterrupted, CastDelayed, 
 
 local function castBarEvents(status)
     if status then
-        for index = 1, 7 do
-            RegisterCastBarEvent(event[index], handler[index])
+        for index, info in ipairs(event) do
+            RegisterCastBarEvent(info, handler[index])
         end
     else
-        for index = 1, 7 do
-            UnregisterCastBarEvent(event[index])
+        for _, info in ipairs(event) do
+            UnregisterCastBarEvent(info)
         end
     end
 end
 
 function Ether:CastBarEnable(unit)
-    local bar = button[unit]
+    local bar = Ether.unitButtons.solo[unit]
     if not bar then return
     elseif not bar.castBar then
         Ether:SetupCastBar(bar)
@@ -337,7 +337,7 @@ function Ether:CastBarEnable(unit)
 end
 
 function Ether:CastBarDisable(unit)
-    local bar = button[unit]
+    local bar = Ether.unitButtons.solo[unit]
     if not bar then return
     elseif bar.castBar then
         bar.castBar:Hide()
