@@ -49,19 +49,26 @@ local function Update(_, event, unit)
     end
 end
 
-function Ether:CreateUnitButtons(unit)
-    if InCombatLockdown() then
+local units = {
+    [1] = "player",
+    [2] = "target",
+    [3] = "targettarget",
+    [4] = "pet",
+    [5] = "pettarget",
+    [6] = "focus"
+}
+function Ether:CreateUnitButtons(index)
+    if InCombatLockdown() or type(index) ~= "number" then
         return
     end
-    if not Ether.unitButtons.solo[unit] then
-        local button = CreateFrame("Button", "Ether_" .. unit .. "_UnitButton", UIParent, "EtherUnitTemplate")
-        button.unit = unit
+    if not Ether.unitButtons.solo[units[index]] then
+        local button = CreateFrame("Button", "Ether_" .. units[index] .. "_UnitButton", UIParent, "EtherUnitTemplate")
+        button.unit = units[index]
         button:SetSize(120, 50)
         button:SetAttribute("unit", button.unit)
         button:RegisterForClicks("AnyUp")
         button:SetAttribute("*type1", "target")
         button:SetAttribute("*type2", "togglemenu")
-        button:SetAttribute("type2", "togglemenu")
         Ether:SetupTooltip(button, button.unit)
         Ether:SetupHealthBar(button, "HORIZONTAL")
         Ether:SetupPowerBar(button)
@@ -78,24 +85,63 @@ function Ether:CreateUnitButtons(unit)
             button.RaidTarget:SetSize(18, 18)
             button.RaidTarget:SetPoint("LEFT", button.healthBar, "LEFT", 5, 0)
         end
-
         if button.unit ~= "player" then
             RegisterUnitWatch(button)
         end
         if button.unit == "targettarget" then
+            for _, key in ipairs({"UNIT_HEALTH", "UNIT_MAXHEALTH", "UNIT_POWER_UPDATE", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER", "UNIT_HEAL_PREDICTION"}) do
+                button:RegisterUnitEvent(key, "targettarget")
+            end
             button:SetScript("OnEvent", Update)
         end
         button:SetScript("OnAttributeChanged", AttributeChanged)
         button:SetScript("OnShow", Show)
+
         FullUpdate(button, true)
         Ether.unitButtons.solo[button.unit] = button
+
+        if button.unit == "player" then
+            if Ether.DB[801][1] == 1 then
+                Ether:CastBarEnable("player")
+            end
+            if Ether.DB[1001][1] == 1 then
+                Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
+            end
+        end
+        if button.unit == "target" then
+            if Ether.DB[801][2] == 1 then
+                Ether:CastBarEnable("target")
+            end
+            if Ether.DB[1001][2] == 1 then
+
+                Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
+            end
+        end
+        if button.unit == "pet" then
+            if Ether.DB[1001][3] == 1 then
+                Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
+                Ether:PetCondition(Ether.unitButtons.solo["pet"])
+            end
+        end
+        for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
+            if Ether.DB[201][key] == 1 then
+                Ether:FramePosition(value)
+            end
+        end
         return button
     end
 end
 
-function Ether:DestroyUnitButtons(unit)
-    if Ether.unitButtons.solo[unit] then
-        local button = Ether.unitButtons.solo[unit]
+function Ether:DestroyUnitButtons(index)
+    if Ether.unitButtons.solo[units[index]] then
+        local button = Ether.unitButtons.solo[units[index]]
+        button.unit = units[index]
+        if button.unit == "player" then
+            Ether:CastBarDisable("player")
+        end
+        if button.unit == "target" then
+            Ether:CastBarDisable("target")
+        end
         button:Hide()
         button:ClearAllPoints()
         button:SetAttribute("unit", nil)
@@ -104,11 +150,12 @@ function Ether:DestroyUnitButtons(unit)
             UnregisterUnitWatch(button)
         end
         if button.unit == "targettarget" then
+            button:UnregisterAllEvents()
             button:SetScript("OnEvent", nil)
         end
         button:SetScript("OnAttributeChanged", nil)
         button:SetScript("OnShow", nil)
-        Ether.unitButtons.solo[unit] = nil
+        Ether.unitButtons.solo[button.unit] = nil
     end
 end
 
@@ -212,14 +259,6 @@ function Ether.CreateCustomUnit()
                 updateFunc(custom, custom.unit)
                 enabled = true
             end
-        end
-    end
-end
-
-function Ether.registerToTEvents()
-    if Ether.unitButtons.solo["targettarget"] then
-        for _, key in ipairs({"UNIT_HEALTH", "UNIT_MAXHEALTH", "UNIT_POWER_UPDATE", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER", "UNIT_HEAL_PREDICTION"}) do
-            Ether.unitButtons.solo["targettarget"]:RegisterUnitEvent(key, "targettarget")
         end
     end
 end

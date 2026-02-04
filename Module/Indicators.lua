@@ -324,7 +324,12 @@ end
 
 local function OnAfk(self)
     self.isActive = true
-    Ether.CastBar.DisableCastEvents()
+    if Ether.DB[801][1] == 1 then
+         Ether:CastBarDisable("player")
+    end
+    if Ether.DB[801][2] == 1 then
+        Ether:CastBarDisable("target")
+    end
     Ether:NameDisable()
     Ether:HealthDisable()
     Ether:PowerDisable()
@@ -340,7 +345,12 @@ end
 
 local function NotAfk(self)
     self.isActive = false
-    Ether.CastBar.EnableCastEvents()
+     if Ether.DB[801][1] == 1 then
+         Ether:CastBarEnable("player")
+     end
+    if Ether.DB[801][2] == 1 then
+        Ether:CastBarEnable("target")
+    end
     Ether:NameEnable()
     Ether:HealthEnable()
     Ether:PowerEnable()

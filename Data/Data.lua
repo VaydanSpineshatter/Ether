@@ -116,7 +116,6 @@ Ether.DataDefault = Default
 ---| Pet 4
 ---| Pet Target 5
 ---| Focus 6
----| Raid 7
 
 ---@alias Tooltip_301 number
 ---| AFK 1

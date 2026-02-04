@@ -75,6 +75,7 @@ local function TargetChanged(_, event)
         if Ether.DB[1001][3] == 1 then
             if UnitExists("target") then
                 local button = Ether.unitButtons.solo["target"]
+                if not button then return end
                 Ether:SingleAuraUpdateBuff(button)
                 Ether:SingleAuraUpdateDebuff(button)
                 local index = GetRaidTargetIndex("target")
@@ -83,7 +84,7 @@ local function TargetChanged(_, event)
                     SetRaidTargetIconTexture(button.RaidTarget, index)
                     button.RaidTarget:Show()
                 else
-                    Ether.unitButtons.solo["target"].RaidTarget:Hide()
+                    button.RaidTarget:Hide()
                 end
             end
         end
@@ -104,11 +105,15 @@ local function ifValidUnits()
             elseif UnitInRaid("player") then
                 ValidUnits.player = false
                 ValidUnits.party = false
+                ValidUnits.partypet = false
                 ValidUnits.raid = true
+                ValidUnits.raidpet = true
             elseif UnitInParty("player") then
                 ValidUnits.player = true
                 ValidUnits.party = true
+                ValidUnits.partypet = true
                 ValidUnits.raid = false
+                ValidUnits.raidpet = false
             end
             status = false
         end)
@@ -140,9 +145,9 @@ local function RosterChanged(_, event)
         end
     end
 end
-local function PlayerAlive(_, event)
-    if event == "PLAYER_ALIVE" then
-        Ether:UpdateIndicatorsByIndex(7)
+local function PlayerUnghost(_, event)
+    if event == "PLAYER_UNGHOST" then
+        Ether:FullUpdateIndicators()
     end
 end
 --[[
@@ -163,7 +168,7 @@ function Ether:RosterEnable()
     Ether:PowerEnable()
     RegisterRosterEvent("PLAYER_ENTERING_WORLD", WorldEnter)
     RegisterRosterEvent("PLAYER_TARGET_CHANGED", TargetChanged)
-    RegisterRosterEvent("PLAYER_ALIVE", PlayerAlive)
+    RegisterRosterEvent("PLAYER_UNGHOST", PlayerUnghost)
     RegisterRosterEvent("GROUP_ROSTER_UPDATE", RosterChanged)
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
@@ -176,7 +181,7 @@ function Ether:RosterDisable()
     UnregisterRosterEvent("PLAYER_TARGET_CHANGED")
     UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
     UnregisterRosterEvent("GROUP_ROSTER_UPDATE")
-    UnregisterRosterEvent("PLAYER_ALIVE")
+    UnregisterRosterEvent("PLAYER_UNGHOST")
     if Ether.DB[801][6] == 1 then
         C_After(0.1, function()
             Ether.Range:Disable()

@@ -1,6 +1,4 @@
 local _, Ether = ...
-local CastBar = {}
-Ether.CastBar = CastBar
 local GetNetStats = GetNetStats
 local GetTime = GetTime
 local UnitCast = UnitCastingInfo
@@ -59,17 +57,20 @@ local function OnUpdate(self, elapsed)
     end
 end
 
-local RegisterUpdateFrame, UnregisterUpdateFrame
+local RegisterUpdateFrame, UnregisterUpdateFrame, UpdateFrameInfo
 local RegisterCastBarEvent, UnregisterCastBarEvent
 do
     local IsEventValid = C_EventUtils.IsEventValid
     local eventFrame
     local Events, Updates = {}, {}
+    local bar = Ether.unitButtons.solo
     function RegisterCastBarEvent(castEvent, func)
         if not eventFrame then
             eventFrame = CreateFrame("Frame")
             eventFrame:SetScript("OnEvent", function(self, event, unit, ...)
-                Events[event](self, event, unit, ...)
+                 if not bar[unit] then return end
+                 self.unit = bar[unit]:GetAttribute("unit")
+                 Events[event](bar[self.unit], event, unit, ...)
             end)
         end
         if not Events[castEvent] then
@@ -92,7 +93,6 @@ do
             end
         end
     end
-
     function RegisterUpdateFrame(onUpdate)
         if not Updates[onUpdate] then
             Updates[onUpdate] = onUpdate
@@ -103,6 +103,11 @@ do
         if Updates[onUpdate] then
             Updates[onUpdate]:SetScript("OnUpdate", nil)
             Updates[onUpdate] = nil
+        end
+    end
+    function UpdateFrameInfo()
+        if #Updates > 0 then
+            return true
         end
     end
 end
@@ -126,16 +131,13 @@ local function isTrade(self, data)
     return self:SetStatusBarColor(unpack(data))
 end
 
-local function CastStart(_, event, unit)
-    if not unit or (unit ~= "player" and unit ~= "target") then
-        return
-    end
+local button = Ether.unitButtons.solo
+local function CastStart(self, event, unit)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_START" then
-        local bar = Ether.unitButtons.solo[unit].castBar
+        local bar = self.castBar
         local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellID = UnitCast(unit)
-        if (not name or not bar) then
-            return
-        end
+        if not bar or not name then return end
         endTimeMS = endTimeMS / 1e3
         startTimeMS = startTimeMS / 1e3
         local max = endTimeMS - startTimeMS
@@ -169,13 +171,11 @@ local function CastStart(_, event, unit)
     end
 end
 
-local function CastFailed(_, event, unit, castID)
-    if unit ~= "player" and unit ~= "target" then
-        return
-    end
+local function CastFailed(self, event, unit, castID)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_FAILED" then
-        local bar = Ether.unitButtons.solo[unit].castBar
-        if (bar.castID ~= castID) then
+        local bar = self.castBar
+        if (not bar or bar.castID ~= castID) then
             return
         end
         bar:SetStatusBarColor(unpack(Config.colors.fail))
@@ -188,12 +188,10 @@ local function CastFailed(_, event, unit, castID)
     end
 end
 
-local function CastInterrupted(_, event, unit, castID)
-    if unit ~= "player" and unit ~= "target" then
-        return
-    end
+local function CastInterrupted(self, event, unit, castID)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_INTERRUPTED" then
-        local bar = Ether.unitButtons.solo[unit].castBar
+        local bar = self.castBar
         if (not bar or bar.castID ~= castID) then
             return
         end
@@ -207,14 +205,12 @@ local function CastInterrupted(_, event, unit, castID)
     end
 end
 
-local function CastDelayed(_, event, unit)
-    if unit ~= "player" and unit ~= "target" then
-        return
-    end
+local function CastDelayed(self, event, unit)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_DELAYED" then
-        local bar = Ether.unitButtons.solo[unit].castBar
+        local bar = self.castBar
         local _, _, _, startTime = UnitCast(unit)
-        if (not startTime or not bar:IsShown()) then
+        if (not bar or not startTime or not bar:IsShown()) then
             return
         end
         local duration = GetTime() - (startTime / 1000)
@@ -227,12 +223,10 @@ local function CastDelayed(_, event, unit)
     end
 end
 
-local function CastStop(_, event, unit, castID)
-    if unit ~= "player" and unit ~= "target" then
-        return
-    end
+local function CastStop(self, event, unit, castID)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_STOP" then
-        local bar = Ether.unitButtons.solo[unit].castBar
+        local bar = self.castBar
         if (not bar or bar.castID ~= castID) then
             return
         end
@@ -241,16 +235,12 @@ local function CastStop(_, event, unit, castID)
     end
 end
 
-local function ChannelStart(_, event, unit, _, spellID)
-    if unit ~= "player" and unit ~= "target" then
-        return
-    end
+local function ChannelStart(self, event, unit, _, spellID)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_CHANNEL_START" then
-        local bar = Ether.unitButtons.solo[unit].castBar
+        local bar = self.castBar
         local name, text, textureID, startTimeMS, endTimeMS, _, notInterruptible = UnitChannel(unit)
-        if (not name or not bar) then
-            return
-        end
+        if not bar or not name then return end
         endTimeMS = endTimeMS / 1e3
         startTimeMS = startTimeMS / 1e3
         local max = endTimeMS - startTimeMS
@@ -264,7 +254,6 @@ local function ChannelStart(_, event, unit, _, spellID)
         bar.spellID = spellID
         bar.casting = nil
         bar.castID = nil
-
         bar:SetMinMaxValues(0, max)
         bar:SetValue(duration)
         bar:SetStatusBarColor(unpack(Config.colors.channeling))
@@ -285,14 +274,12 @@ local function ChannelStart(_, event, unit, _, spellID)
     end
 end
 
-local function ChannelUpdate(_, event, unit)
-    if unit ~= "player" and unit ~= "target" then
-        return
-    end
+local function ChannelUpdate(self, event, unit)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
-        local bar = Ether.unitButtons.solo[unit].castBar
+        local bar = self.castBar
         local name, _, _, startTimeMS, endTimeMS = UnitChannel(unit)
-        if (not name or not bar:IsShown()) then
+        if (not bar or not name or not bar:IsShown()) then
             return
         end
         local duration = (endTimeMS / 1000) - GetTime()
@@ -304,12 +291,10 @@ local function ChannelUpdate(_, event, unit)
     end
 end
 
-local function ChannelStop(_, event, unit)
-    if unit ~= "player" and unit ~= "target" then
-        return
-    end
+local function ChannelStop(self, event, unit)
+    if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_CHANNEL_STOP" then
-        local bar = Ether.unitButtons.solo[unit].castBar
+        local bar = self.castBar
         if (bar:IsShown()) then
             bar.channeling = nil
             bar.notInterruptible = nil
@@ -317,60 +302,52 @@ local function ChannelStop(_, event, unit)
     end
 end
 
-local function EnableCastEvents()
-    if Ether.DB[801][1] == 1 or Ether.DB[801][2] == 1 then
-        RegisterCastBarEvent("UNIT_SPELLCAST_START", CastStart)
-        RegisterCastBarEvent("UNIT_SPELLCAST_STOP", CastStop)
-        RegisterCastBarEvent("UNIT_SPELLCAST_FAILED", CastFailed)
-        RegisterCastBarEvent("UNIT_SPELLCAST_INTERRUPTED", CastInterrupted)
-        RegisterCastBarEvent("UNIT_SPELLCAST_DELAYED", CastDelayed)
-        RegisterCastBarEvent("UNIT_SPELLCAST_CHANNEL_START", ChannelStart)
-        RegisterCastBarEvent("UNIT_SPELLCAST_CHANNEL_UPDATE", ChannelUpdate)
-        RegisterCastBarEvent("UNIT_SPELLCAST_CHANNEL_STOP", ChannelStop)
+local event = {
+    "UNIT_SPELLCAST_START",
+    "UNIT_SPELLCAST_STOP",
+    "UNIT_SPELLCAST_FAILED",
+    "UNIT_SPELLCAST_INTERRUPTED",
+    "UNIT_SPELLCAST_DELAYED",
+    "UNIT_SPELLCAST_CHANNEL_START",
+    "UNIT_SPELLCAST_CHANNEL_UPDATE",
+    "UNIT_SPELLCAST_CHANNEL_STOP"
+}
+local handler = {CastStart, CastStop, CastFailed, CastInterrupted, CastDelayed, ChannelStart, ChannelUpdate, ChannelStop}
+
+local function castBarEvents(status)
+    if status then
+        for index = 1, 7 do
+            RegisterCastBarEvent(event[index], handler[index])
+        end
+    else
+        for index = 1, 7 do
+            UnregisterCastBarEvent(event[index])
+        end
     end
 end
 
-local function Enable(unit)
-    if not Ether.unitButtons.solo[unit] then
-        return
+function Ether:CastBarEnable(unit)
+    local bar = button[unit]
+    if not bar then return
+    elseif not bar.castBar then
+        Ether:SetupCastBar(bar)
+        RegisterUpdateFrame(bar.castBar)
     end
-    if not Ether.unitButtons.solo[unit].castBar then
-        Ether:SetupCastBar(Ether.unitButtons.solo[unit])
-        RegisterUpdateFrame(Ether.unitButtons.solo[unit].castBar)
-    end
-    EnableCastEvents()
+    castBarEvents(true)
 end
 
-local function Disable(unit)
-    if not Ether.unitButtons.solo[unit] then
-        return
+function Ether:CastBarDisable(unit)
+    local bar = button[unit]
+    if not bar then return
+    elseif bar.castBar then
+        bar.castBar:Hide()
+        UnregisterUpdateFrame(bar.castBar)
+        bar.castBar:ClearAllPoints()
+        bar.castBar:SetParent(nil)
+        bar.castBar = nil
     end
-    if Ether.unitButtons.solo[unit].castBar then
-        UnregisterUpdateFrame(Ether.unitButtons.solo[unit].castBar)
-    end
-    if (Ether.unitButtons.solo[unit].castBar) then
-        Ether.unitButtons.solo[unit].castBar:Hide()
-        Ether.unitButtons.solo[unit].castBar:ClearAllPoints()
-        Ether.unitButtons.solo[unit].castBar:SetParent(nil)
-        Ether.unitButtons.solo[unit].castBar = nil
+    if UpdateFrameInfo() then
+        castBarEvents(false)
     end
 end
 
-local function DisableCastEvents()
-    UnregisterCastBarEvent("UNIT_SPELLCAST_START")
-    UnregisterCastBarEvent("UNIT_SPELLCAST_STOP")
-    UnregisterCastBarEvent("UNIT_SPELLCAST_FAILED")
-    UnregisterCastBarEvent("UNIT_SPELLCAST_INTERRUPTED")
-    UnregisterCastBarEvent("UNIT_SPELLCAST_DELAYED")
-    UnregisterCastBarEvent("UNIT_SPELLCAST_CHANNEL_START")
-    UnregisterCastBarEvent("UNIT_SPELLCAST_CHANNEL_UPDATE")
-    UnregisterCastBarEvent("UNIT_SPELLCAST_CHANNEL_STOP")
-end
-
-Ether.CastBar.Enable = Enable
-Ether.CastBar.Disable = Disable
-Ether.CastBar.EnableCastEvents = EnableCastEvents
-Ether.CastBar.DisableCastEvents = DisableCastEvents
-Ether.CastBar.DisableCastEvents = DisableCastEvents
-Ether.CastBar.RegisterUpdateFrame = RegisterUpdateFrame
-Ether.CastBar.UnregisterUpdateFrame = UnregisterUpdateFrame

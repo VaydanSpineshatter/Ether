@@ -810,6 +810,8 @@ local function OnInitialize(self, event, ...)
         self:RegisterEvent("PLAYER_LOGOUT")
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
+        Ether:CreateSplitGroupHeader(8)
+
         local charKey = Ether.GetCharacterKey()
         if not charKey then
             charKey = Ether.charKey
@@ -976,47 +978,12 @@ local function OnInitialize(self, event, ...)
 
         Ether.CreateMainSettings(Construct)
 
-        if Ether.DB[201][1] == 1 then
-            Ether:CreateUnitButtons("player")
-        end
-        if Ether.DB[201][2] == 1 then
-            Ether:CreateUnitButtons("target")
-        end
-        if Ether.DB[201][3] == 1 then
-            Ether:CreateUnitButtons("targettarget")
-        end
-        if Ether.DB[201][4] == 1 then
-            Ether:CreateUnitButtons("pet")
-        end
-        if Ether.unitButtons.solo["pet"] then
-            Ether:PetCondition(Ether.unitButtons.solo["pet"])
-        end
-        if Ether.DB[201][5] == 1 then
-            Ether:CreateUnitButtons("pettarget")
-        end
-        if Ether.DB[201][6] == 1 then
-            Ether:CreateUnitButtons("focus")
-        end
-        if Ether.DB[1001][1] == 1 then
-            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
-        end
-        if Ether.DB[1001][2] == 1 then
-            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
-        end
-        if Ether.DB[1001][3] == 1 then
-            Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
-        end
-        Ether.registerToTEvents()
-        if Ether.DB[801][1] == 1 then
-            Ether.CastBar.Enable("player")
-        end
-        if Ether.DB[801][2] == 1 then
-            Ether.CastBar.Enable("target")
+        for index = 1, 7 do
+            if Ether.DB[201][index] == 1 then
+                Ether:CreateUnitButtons(index)
+            end
         end
 
-        for index, value in ipairs({332, 333, 334, 335, 336, 337}) do
-            Ether:FramePosition(value)
-        end
         Ether.Tooltip:Initialize()
 
         ToggleSettings(Construct)
@@ -1033,6 +1000,7 @@ local function OnInitialize(self, event, ...)
         C_Timer.After(0.8, function()
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")
+            Ether:InitializeHeaderBackground()
             Ether:InitializePetHeader()
             for _, button in pairs(Ether.unitButtons.raid) do
                 if Ether.DB[701][3] == 1 then
@@ -1045,8 +1013,8 @@ local function OnInitialize(self, event, ...)
             if Ether.DB[801][12] == 1 then
                 Ether:HeaderBackground(true)
             end
-
         end)
+
     elseif (event == "PLAYER_LOGOUT") then
         local charKey = Ether.GetCharacterKey()
         if charKey then

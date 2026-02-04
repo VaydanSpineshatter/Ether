@@ -172,8 +172,10 @@ local function CreateGroupHeader(group)
     header:Show()
 end
 
-for i = 1, 8 do
-    CreateGroupHeader(i)
+function Ether:CreateSplitGroupHeader(number)
+    for i = 1, number do
+        CreateGroupHeader(i)
+    end
 end
 
 function Ether:InitializePetHeader()
@@ -201,20 +203,10 @@ function Ether:InitializePetHeader()
         raidpet:Show()
     end
 end
-local background
+local background = nil
 function Ether:RepositionHeaders()
     if InCombatLockdown() then return end
     local spacing = Ether.Header.raid:GetAttribute("columnSpacing")
-    local xOff = Ether.Header.raid:GetAttribute("xOffset")
-    local yOff = Ether.Header.raid:GetAttribute("yOffset")
-    local btnW = Ether.Header.raid:GetAttribute("ButtonWidth") + 1
-    local btnH = Ether.Header.raid:GetAttribute("ButtonHeight") + 4.5
-    background = Ether.Header.raid:CreateTexture(nil, "BACKGROUND")
-    background:SetColorTexture(0, 0, 0, .6)
-    background:SetPoint("TOPLEFT", groupHeaders[1], "TOPLEFT", -3, 3)
-    background:SetWidth(8 * (btnW + xOff) - xOff + spacing * 7)
-    background:SetHeight(5 * (btnH + yOff) - yOff)
-    background:Hide()
     local lastHeader = nil
     for i = 1, 8 do
         if not lastHeader then
@@ -226,6 +218,21 @@ function Ether:RepositionHeaders()
         end
         lastHeader = groupHeaders[i]
     end
+end
+
+function Ether:InitializeHeaderBackground()
+    if InCombatLockdown() or type(background) ~= "nil" then return end
+    local spacing = Ether.Header.raid:GetAttribute("columnSpacing")
+    local xOff = Ether.Header.raid:GetAttribute("xOffset")
+    local yOff = Ether.Header.raid:GetAttribute("yOffset")
+    local btnW = Ether.Header.raid:GetAttribute("ButtonWidth") + 1
+    local btnH = Ether.Header.raid:GetAttribute("ButtonHeight") + 4.5
+    background = Ether.Header.raid:CreateTexture(nil, "BACKGROUND")
+    background:SetColorTexture(0, 0, 0, .6)
+    background:SetPoint("TOPLEFT", groupHeaders[1], "TOPLEFT", -3, 3)
+    background:SetWidth(8 * (btnW + xOff) - xOff + spacing * 7)
+    background:SetHeight(5 * (btnH + yOff) - yOff)
+    background:Hide()
 end
 
 function Ether:HeaderBackground(state)

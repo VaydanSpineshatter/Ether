@@ -109,13 +109,14 @@ end
 function Ether.CreateSection(self)
     local parent = self.Content.Children["Create"]
     local CreateUnits = {
-        [1] = {name = "|cffCC66FFPlayer|r", value = "PLAYER"},
-        [2] = {name = "|cE600CCFFTarget|r", value = "TARGET"},
-        [3] = {name = "Target of Target", value = "TARGETTARGET"},
-        [4] = {name = "|cffCC66FFPlayer's Pet|r", value = "PET"},
-        [5] = {name = "|cffCC66FFPlayers Pet Target|r", value = "PETTARGET"},
-        [6] = {name = "|cff3399FFFocus|r", value = "FOCUS"},
+        [1] = {name = "|cffCC66FFPlayer|r"},
+        [2] = {name = "|cE600CCFFTarget|r"},
+        [3] = {name = "Target of Target"},
+        [4] = {name = "|cffCC66FFPet|r"},
+        [5] = {name = "|cffCC66FFPetTarget|r"},
+        [6] = {name = "|cff3399FFFocus|r"},
     }
+
     local CreateAndBars = GetFont(self, parent, "|cffffff00Create/Delete Units|r", 15)
     CreateAndBars:SetPoint("TOPLEFT", 10, -10)
     local uF = CreateFrame('Frame', nil, parent)
@@ -131,36 +132,14 @@ function Ether.CreateSection(self)
         btn.label = GetFont(self, btn, opt.name, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 8, 1)
         btn:SetChecked(Ether.DB[201][i] == 1)
-        local unitKeys = {
-            [1] = "player",
-            [2] = "target",
-            [3] = "targettarget",
-            [4] = "pet",
-            [5] = "pettarget",
-            [6] = "focus"
-        }
-        local function unitIndex(index)
-            if index == 7 then
-                return
-            end
-            if Ether.DB[201][index] == 1 then
-                Ether:CreateUnitButtons(unitKeys[index])
-                for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
-                    if key == index then
-                        Ether:FramePosition(value)
-                    end
-                end
-                if index == 3 then
-                    Ether.registerToTEvents()
-                end
-            elseif Ether.DB[201][index] == 0 then
-                Ether:DestroyUnitButtons(unitKeys[index])
-            end
-        end
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[201][i] = checked and 1 or 0
-            unitIndex(i)
+            if Ether.DB[201][i] == 1 then
+                Ether:CreateUnitButtons(i)
+            else
+                Ether:DestroyUnitButtons(i)
+            end
         end)
         self.Content.Buttons.Create.A[i] = btn
     end
@@ -1571,21 +1550,15 @@ function Ether.CreateLayoutSection(self)
             Ether.DB[801][i] = checked and 1 or 0
             if i == 1 then
                 if Ether.DB[801][1] == 1 then
-                    Ether.CastBar.Enable("player")
+                    Ether:CastBarEnable("player")
                 else
-                    Ether.CastBar.Disable("player")
+                    Ether:CastBarDisable("player")
                 end
             elseif i == 2 then
                 if Ether.DB[801][2] == 1 then
-                    Ether.CastBar.Enable("target")
+                    Ether:CastBarEnable("target")
                 else
-                    Ether.CastBar.Disable("target")
-                end
-            elseif i == 2 then
-                if Ether.DB[801][2] == 1 then
-                    Ether.CastBar.Enable("target")
-                else
-                    Ether.CastBar.Disable("target")
+                    Ether:CastBarDisable("target")
                 end
             elseif i == 6 then
                 if Ether.DB[801][6] == 1 then
