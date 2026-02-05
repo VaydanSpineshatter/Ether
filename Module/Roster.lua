@@ -38,7 +38,6 @@ end
 
 local ValidUnits = {
     player = true,
-    pet = true,
     party = false,
     partypet = false,
     raid = true,
@@ -100,18 +99,15 @@ local function ifValidUnits()
             if not UnitInAnyGroup("player") then
                 Ether:FullUpdateIndicators()
                 Ether:HeaderBackground()
-                ValidUnits.player = true
                 ValidUnits.raid = false
                 ValidUnits.party = false
             elseif UnitInRaid("player") then
-                ValidUnits.player = false
                 ValidUnits.party = false
                 ValidUnits.partypet = false
                 ValidUnits.raid = true
                 ValidUnits.raidpet = true
                 Ether:HeaderBackground()
             elseif UnitInParty("player") then
-                ValidUnits.player = true
                 ValidUnits.party = true
                 ValidUnits.partypet = true
                 ValidUnits.raid = false

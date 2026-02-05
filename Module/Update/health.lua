@@ -173,6 +173,9 @@ function Ether:UpdateHealth(button, smooth)
     end
     local h = UnitHealth(button.unit)
     local mh = UnitHealthMax(button.unit)
+    if button.Indicators and button.Indicators.UnitFlags then
+        button.Indicators.UnitFlags:Hide()
+    end
     if h <= 1 then
         if button.Indicators and button.Indicators.UnitFlags then
             button.Indicators.UnitFlags:SetTexture(deadIcon)
@@ -181,10 +184,9 @@ function Ether:UpdateHealth(button, smooth)
         if button.top then
             unitIsDead(button)
         end
-    else
-        if button.Indicators and button.Indicators.UnitFlags then
-            button.Indicators.UnitFlags:Hide()
-        end
+        button.healthBar:SetValue(0)
+        button.healthBar:SetMinMaxValues(0, 0)
+        return
     end
 
     if smooth and button.Smooth then
