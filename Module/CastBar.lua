@@ -107,8 +107,10 @@ do
         end
     end
     function UpdateFrameInfo()
-        if #Updates > 0 then
-            return true
+        for info in pairs(Updates) do
+            if info then
+                return true
+            end
         end
     end
 end
@@ -333,7 +335,9 @@ function Ether:CastBarEnable(unit)
         Ether:SetupCastBar(bar)
         RegisterUpdateFrame(bar.castBar)
     end
-    castBarEvents(true)
+    if UpdateFrameInfo() then
+        castBarEvents(true)
+    end
 end
 
 function Ether:CastBarDisable(unit)
@@ -346,7 +350,7 @@ function Ether:CastBarDisable(unit)
         bar.castBar:SetParent(nil)
         bar.castBar = nil
     end
-    if UpdateFrameInfo() then
+    if not UpdateFrameInfo() then
         castBarEvents(false)
     end
 end

@@ -2342,6 +2342,8 @@ function Ether.DeleteProfile(name)
     ETHER_DATABASE_DX_AA.profiles[name] = nil
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
+    Ether.UpdateAuraList()
+    Ether.UpdateEditor()
     return true, "Profile deleted"
 end
 
@@ -2369,6 +2371,8 @@ function Ether.CreateProfile(name)
     ETHER_DATABASE_DX_AA.profiles[name] = Ether.CopyTable(Ether.DataDefault)
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
+    Ether.UpdateAuraList()
+    Ether.UpdateEditor()
     return true, "Profile created"
 end
 

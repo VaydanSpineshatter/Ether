@@ -10,7 +10,7 @@ local GetLoot = C_PartyInfo.GetLootMethod
 local pairs, ipairs = pairs, ipairs
 local UnitIsGroupLeader = UnitIsGroupLeader
 local UnitIsCharmed = UnitIsCharmed
-local UnitIsDead = UnitIsDead
+local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitIsUnit = UnitIsUnit
 local connectionIcon = "Interface\\CharacterFrame\\Disconnect-Icon"
 local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
@@ -115,7 +115,7 @@ end
 local function UpdateReadyCheck(_, event)
     if event == "READY_CHECK" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-           if button and button.Indicators and unit then
+            if button and button.Indicators and unit then
                 local status = GetReadyCheckStatus(unit)
                 if (status) then
                     if (status == "ready") then
@@ -282,20 +282,21 @@ local function UpdateUnitFlags(_, event, unit)
     if event == "UNIT_FLAGS" then
         local button = Ether.unitButtons.raid[unit]
         if not button or not button.Indicators or not button.Indicators.UnitFlags then return end
-        local dead = UnitIsDead(unit)
-        local charmed = UnitIsCharmed(unit)
-        if charmed then
-            button.name:SetTextColor(1.00, 0.00, 0.00)
-            button.Indicators.UnitFlags:SetTexture(charmedIcon)
-            button.Indicators.UnitFlags:Show()
-        elseif dead then
-            button.Indicators.UnitFlags:SetTexture(deadIcon)
-            button.healthBar:SetValue(0)
-            button.Indicators.UnitFlags:Show()
-            unitIsDead(button)
-        else
-            button.Indicators.UnitFlags:Hide()
-            button.name:SetTextColor(1, 1, 1)
+        if button.unit == unit and UnitExists(unit) then
+            local dead = UnitIsDeadOrGhost(unit)
+            local charmed = UnitIsCharmed(unit)
+            if charmed then
+                button.name:SetTextColor(1.00, 0.00, 0.00)
+                button.Indicators.UnitFlags:SetTexture(charmedIcon)
+                button.Indicators.UnitFlags:Show()
+            elseif dead then
+                button.Indicators.UnitFlags:SetTexture(deadIcon)
+                button.Indicators.UnitFlags:Show()
+                unitIsDead(button)
+            else
+                button.Indicators.UnitFlags:Hide()
+                button.name:SetTextColor(1, 1, 1)
+            end
         end
     end
 end
@@ -356,7 +357,6 @@ local function NotAfk(self)
     Ether:PowerEnable()
     Ether:AuraEnable()
     Ether:IndicatorsEnable()
-    Ether:FullUpdateIndicators()
     if Ether.DB[1001][4] == 1 then
         for unit in pairs(Ether.unitButtons.raid) do
             if UnitExists(unit) then
@@ -369,6 +369,7 @@ local function NotAfk(self)
             Ether:RangeEnable()
         end)
     end
+    Ether:FullUpdateIndicators()
 end
 
 local function UpdatePlayerFlags(self, event, unit)
@@ -502,8 +503,7 @@ function Ether:IndicatorsToggle()
     for index, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 then
             handlers[1]()
-        end
-        if I[index] == 0 then
+        elseif I[index] == 0 then
             handlers[2]()
         end
     end
