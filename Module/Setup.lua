@@ -1,36 +1,38 @@
 local _, Ether = ...
 local math_floor = math.floor
 local tinsert = table.insert
-local string_format = string.format
+local LSM = LibStub("LibSharedMedia-3.0")
 
 function Ether:SetupUpdateText(button, tbl, p)
     if not button or not button.healthBar then return end
     local text = button.healthBar:CreateFontString(nil, "OVERLAY")
     button[tbl] = text
-    text:SetFont(unpack(Ether.mediaPath.Font), 9, "OUTLINE")
+    text:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
     text:SetPoint("BOTTOMRIGHT", button.healthBar, "BOTTOMRIGHT", 0, p and 1 or 10)
     text:SetTextColor(1, 1, 1)
     return button
 end
 
-function Ether:SetupName(button, number, number2)
+function Ether:SetupName(button, number)
     if not button or not button.healthBar then return end
+    local font = LSM:Fetch("font", "Expressway")
     local name = button.healthBar:CreateFontString(nil, "OVERLAY")
     button.name = name
-    name:SetFont(unpack(Ether.mediaPath.Font), number, "OUTLINE")
-    name:SetPoint("CENTER", button.healthBar, "CENTER", 0, number2)
+    name:SetFont(font, 12, "OUTLINE")
+    name:SetPoint("CENTER", button.healthBar, "CENTER", 0, number)
     name:SetTextColor(1, 1, 1)
     return button
 end
 
-function Ether:SetupHealthBar(button, orient)
+function Ether:SetupHealthBar(button, orient, w, h)
     if not button then return end
     local healthBar = CreateFrame("StatusBar", nil, button)
     button.healthBar = healthBar
     healthBar:SetPoint("TOPLEFT")
-    healthBar:SetSize(120, 40)
+    healthBar:SetWidth(w)
+    healthBar:SetHeight(h)
     healthBar:SetOrientation(orient)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.soloBar))
+    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     healthBar:SetMinMaxValues(0, 100)
     healthBar:SetFrameLevel(button:GetFrameLevel() + 1)
     local healthDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
@@ -45,7 +47,7 @@ function Ether:SetupPowerBar(button)
     local powerBar = CreateFrame('StatusBar', nil, button)
     button.powerBar = powerBar
     powerBar:SetPoint("BOTTOMLEFT")
-    powerBar:SetSize(120, 10)
+    powerBar:SetSize(120, 8)
     powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
     powerBar:SetFrameLevel(button:GetFrameLevel() + 1)
     powerBar:SetMinMaxValues(0, 100)
@@ -63,7 +65,7 @@ function Ether:SetupPrediction(button)
     button.myPrediction = player
     player:SetAllPoints(button.healthBar)
     player:SetFrameLevel(button:GetFrameLevel() + 0)
-    player:SetStatusBarTexture(unpack(Ether.mediaPath.predictionBar))
+    player:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     player:SetStatusBarColor(0.70, 0.13, 0.13)
     player:SetMinMaxValues(0, 1)
     player:SetValue(1)
@@ -72,7 +74,7 @@ function Ether:SetupPrediction(button)
     button.otherPrediction = from
     from:SetAllPoints(button.healthBar)
     from:SetFrameLevel(button:GetFrameLevel() - 0)
-    from:SetStatusBarTexture(unpack(Ether.mediaPath.predictionBar))
+    from:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     from:SetStatusBarColor(0.80, 0.40, 1.00)
     from:SetMinMaxValues(0, 1)
     from:SetValue(1)
@@ -84,9 +86,9 @@ function Ether:SetupCastBar(button)
     if not button then return end
     local frame = CreateFrame("StatusBar", nil, button)
     button.castBar = frame
-    frame:SetPoint("TOPLEFT", button.powerBar, "BOTTOMLEFT")
+    frame:SetPoint("TOPLEFT", button.powerBar, "BOTTOMLEFT", -2, -2)
     frame:SetSize(220, 15)
-    frame:SetStatusBarTexture(unpack(Ether.mediaPath.predictionBar))
+    frame:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     local drop = frame:CreateTexture(nil, "ARTWORK", nil, -7)
     frame.drop = drop
     drop:SetAllPoints()
@@ -95,12 +97,12 @@ function Ether:SetupCastBar(button)
     drop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
     local text = frame:CreateFontString(nil, "OVERLAY")
     frame.text = text
-    text:SetFont(unpack(Ether.mediaPath.Font), 12, 'OUTLINE')
+    text:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
     text:SetPoint("LEFT", 31, 0)
 
     local time = frame:CreateFontString(nil, "OVERLAY")
     frame.time = time
-    time:SetFont(unpack(Ether.mediaPath.Font), 12, 'OUTLINE')
+    time:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
     time:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
 
     local icon = frame:CreateTexture(nil, "OVERLAY")
@@ -110,7 +112,7 @@ function Ether:SetupCastBar(button)
 
     local safeZone = frame:CreateTexture(nil, "OVERLAY")
     frame.safeZone = safeZone
-    safeZone:SetTexture(unpack(Ether.mediaPath.predictionBar))
+    safeZone:SetTexture(unpack(Ether.mediaPath.blankBar))
     safeZone:SetVertexColor(0.70, 0.13, 0.13, 1)
     safeZone:SetBlendMode("ADD")
 
@@ -124,41 +126,34 @@ function Ether:SetupCastBar(button)
 end
 
 function Ether:SetupTooltip(button, unit)
-    button:SetScript('OnEnter', function()
-        GameTooltip:SetOwner(button, 'ANCHOR_RIGHT')
+    button:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
         GameTooltip:SetUnit(unit)
         GameTooltip:Show()
     end)
-    button:SetScript('OnLeave', function()
+    button:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
-    return button
 end
 
 function Ether:SetupAttribute(button, unit)
+    button:RegisterForClicks("AnyUp")
     button:SetAttribute("unit", unit)
     button:SetAttribute("*type1", "target")
     button:SetAttribute("*type2", "togglemenu")
 end
 
 function Ether:SetupDrag(button)
+    button:RegisterForDrag("LeftButton")
     button:SetMovable(true)
-    button:SetScript("OnMouseDown", function(self)
-        if InCombatLockdown() or self.isMoving then
-            return
-        end
+    button:SetScript("OnDragStart", function(self)
         if self:IsMovable() then
             self:StartMoving()
-            self.isMoving = true
         end
     end)
-    button:SetScript("OnMouseUp", function(self)
-        if InCombatLockdown() or not self.isMoving then
-            return
-        end
+    button:SetScript("OnDragStop", function(self)
         if self:IsMovable() then
             self:StopMovingOrSizing()
-            self.isMoving = false
         end
     end)
 end
@@ -301,11 +296,11 @@ local function StopDrag(self)
     local anchorRelTo = _G[relToName] or UIParent
     self:ClearAllPoints()
     self:SetPoint(
-            Ether.DB[5111][339][1],
-            anchorRelTo,
-            Ether.DB[5111][339][3],
-            Ether.DB[5111][339][4],
-            Ether.DB[5111][339][5]
+                  Ether.DB[5111][339][1],
+                  anchorRelTo,
+                  Ether.DB[5111][339][3],
+                  Ether.DB[5111][339][4],
+                  Ether.DB[5111][339][5]
     )
 end
 
@@ -334,16 +329,16 @@ function Ether:SetupDebugFrame()
     sF:SetScrollChild(cF)
     local txt = cF:CreateFontString(nil, "OVERLAY")
     Ether.DebugText = txt
-    txt:SetFont(unpack(Ether.mediaPath.Font), 12, 'OUTLINE')
+    txt:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
     txt:SetPoint("TOPLEFT")
     txt:SetWidth(290)
     txt:SetJustifyH("LEFT")
     local top = frame:CreateFontString(nil, "OVERLAY")
-    top:SetFont(unpack(Ether.mediaPath.Font), 12, "OUTLINE")
+    top:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     top:SetPoint("TOP", 0, -10)
     top:SetText("|cE600CCFFEther|r")
     frame:Hide()
-    Ether:FramePosition(339)
+    Ether:ApplyFramePosition(339)
     frame:EnableMouse(true)
     frame:SetMovable(true)
     frame:RegisterForDrag("LeftButton")
@@ -378,7 +373,7 @@ end
 
 local function SetupAuraCount(button)
     local count = button:CreateFontString(nil, "OVERLAY")
-    count:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
+    count:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     count:SetPoint('LEFT')
     count:Hide()
     return count
@@ -386,7 +381,9 @@ end
 
 function Ether:SingleAuraSetup(button)
     if not button or not button.unit then return end
-    if Ether.DB[1001][1] ~= 1 and Ether.DB[1001][2] ~= 1 and Ether.DB[1001][3] ~= 1 then return end
+    for i = 1, 3 do
+        if Ether.DB[1001][i] ~= 1 then return end
+    end
     if not button.Aura then
         button.Aura = {
             Buffs = {},
@@ -423,10 +420,6 @@ function Ether:SingleAuraSetup(button)
     for i = 1, 16 do
         local frame = CreateFrame("Frame", nil, button)
         frame:SetSize(14, 14)
-
-        local xOffset, yOffset = AuraPosition(i)
-
-        frame:SetPoint("BOTTOMLEFT", button, "TOPLEFT", xOffset - 1, yOffset + 2)
 
         frame:SetShown(false)
 

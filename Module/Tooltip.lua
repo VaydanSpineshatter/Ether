@@ -127,7 +127,7 @@ local function UpdateTooltip(self, unit)
         local you = UnitIsUnit(unit .. "target", "player")
         local color = raidColors[select(2, UnitClass(unit .. 'target'))] or raidColors["UNKNOWN"]
         self.target:SetText(you and L.TT_AIMING_YOU or
-                string_format(fStr, L.TT_AIMING, color.r * 255, color.g * 255, color.b * 255, targetName))
+                      string_format(fStr, L.TT_AIMING, color.r * 255, color.g * 255, color.b * 255, targetName))
         self.target:Show()
     else
         self.target:Hide()
@@ -252,7 +252,7 @@ local function SetupToolFrame(parent)
     frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.7)
     local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     frame.name = name
-    name:SetFont(unpack(Ether.mediaPath.Font), 14, "OUTLINE")
+    name:SetFont(unpack(Ether.mediaPath.expressway), 14, "OUTLINE")
     name:SetPoint("TOPLEFT", 12, -12)
     name:SetJustifyH("LEFT")
     name:SetTextColor(1, 0.9, 0.5, 1)
@@ -267,12 +267,12 @@ local function SetupToolFrame(parent)
     guildIcon:SetPoint("TOPLEFT", nameLine, "BOTTOMLEFT", 0, -8)
     local guild = frame:CreateFontString(nil, "OVERLAY")
     frame.guild = guild
-    guild:SetFont(unpack(Ether.mediaPath.Font), 11, "OUTLINE")
+    guild:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
     guild:SetPoint("LEFT", guildIcon, "RIGHT", 4, 0)
     guild:SetTextColor(0.7, 0.7, 1, 1)
     local info = frame:CreateFontString(nil, "OVERLAY")
     frame.info = info
-    info:SetFont(unpack(Ether.mediaPath.Font), 11, "OUTLINE")
+    info:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
     info:SetPoint("TOPLEFT", guildIcon, "BOTTOMLEFT", 0, -8)
     info:SetTextColor(0.8, 0.8, 0.8, 1)
     local targetIcon = frame:CreateTexture(nil, "OVERLAY")
@@ -281,13 +281,13 @@ local function SetupToolFrame(parent)
     targetIcon:SetPoint("TOPLEFT", info, "BOTTOMLEFT", 0, -8)
     local target = frame:CreateFontString(nil, "OVERLAY")
     frame.target = target
-    target:SetFont(unpack(Ether.mediaPath.Font), 11, "OUTLINE")
+    target:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
     target:SetPoint("LEFT", targetIcon, "RIGHT", 4, 0)
     target:SetJustifyH("LEFT")
     target:SetTextColor(1, 0.5, 0.5, 1)
     local flags = frame:CreateFontString(nil, "OVERLAY")
     frame.flags = flags
-    flags:SetFont(unpack(Ether.mediaPath.Font), 12, "OUTLINE")
+    flags:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     flags:SetPoint("BOTTOMRIGHT", frame, -10, 10)
     flags:SetJustifyH("RIGHT")
     flags:SetTextColor(0.6, 0.6, 0.6, 1)
@@ -354,6 +354,6 @@ local function SetupHooks()
 end
 
 function Tooltip:Initialize()
-    Ether:FramePosition(331)
+    Ether:ApplyFramePosition(331)
     SetupHooks()
 end

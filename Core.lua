@@ -8,15 +8,13 @@ local updatedChannel = false
 Ether.debug = false
 Ether.Header = {}
 Ether.Anchor = {}
+local soundsRegistered = false
 
 Ether.mediaPath = {
-    Icon = {"Interface\\AddOns\\Ether\\Media\\Texture\\Icon.blp"},
-    Font = {"Interface\\AddOns\\Ether\\Media\\Font\\expressway.ttf"},
-    statusBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\UfBar.blp"},
-    soloBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\striped.tga"},
-    powerBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\otravi.tga"},
-    headerBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\header.tga"},
-    predictionBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
+    etherIcon = {"Interface\\AddOns\\Ether\\Media\\Texture\\icon.blp"},
+    expressway = {"Interface\\AddOns\\Ether\\Media\\Font\\expressway.ttf"},
+    blankBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
+    powerBar = {"Interface\\AddOns\\Ether\\Media\\StatusBar\\otravi.tga"}
 }
 
 Ether.SlashInfo = {
@@ -329,11 +327,11 @@ local function StopDrag(self)
     local anchorRelTo = _G[relToName] or UIParent
     self:ClearAllPoints()
     self:SetPoint(
-            Ether.DB[5111][340][1],
-            anchorRelTo,
-            Ether.DB[5111][340][3],
-            Ether.DB[5111][340][4],
-            Ether.DB[5111][340][5]
+                  Ether.DB[5111][340][1],
+                  anchorRelTo,
+                  Ether.DB[5111][340][3],
+                  Ether.DB[5111][340][4],
+                  Ether.DB[5111][340][5]
     )
 end
 
@@ -406,18 +404,18 @@ function Ether.CreateMainSettings(self)
         right:SetPoint("BOTTOMRIGHT", 2, -2)
         right:SetWidth(1)
         local version = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
-        version:SetFont(unpack(Ether.mediaPath.Font), 15, "OUTLINE")
+        version:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
         version:SetPoint("BOTTOMRIGHT", -10, 3)
         version:SetText("Beta Build |cE600CCFF" .. Ether.version .. "|r")
         local menuIcon = self.Frames["Bottom"]:CreateTexture(nil, "ARTWORK")
         menuIcon:SetSize(32, 32)
-        menuIcon:SetTexture(unpack(Ether.mediaPath.Icon))
+        menuIcon:SetTexture(unpack(Ether.mediaPath.etherIcon))
         menuIcon:SetPoint("BOTTOMLEFT", 0, 5)
         local name = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
-        name:SetFont(unpack(Ether.mediaPath.Font), 20, "OUTLINE")
+        name:SetFont(unpack(Ether.mediaPath.expressway), 20, "OUTLINE")
         name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
         name:SetText("|cffcc66ffEther|r")
-        Ether:FramePosition(340)
+        Ether:ApplyFramePosition(340)
         self.Frames["Main"]:EnableMouse(true)
         self.Frames["Main"]:SetMovable(true)
         self.Frames["Main"]:RegisterForDrag("LeftButton")
@@ -570,7 +568,7 @@ do
 
     dataBroker = LDB:NewDataObject("EtherIcon", {
         type = "launcher",
-        icon = unpack(Ether.mediaPath.Icon)
+        icon = unpack(Ether.mediaPath.etherIcon)
     })
 
     local function OnClick(_, button)
@@ -687,29 +685,16 @@ function Ether:RefreshAllSettings()
 end
 
 function Ether:RefreshFramePositions()
-    local frames = {
-        [331] = Ether.Anchor.tooltip,
-        [332] = Ether.unitButtons.solo["player"],
-        [333] = Ether.unitButtons.solo["target"],
-        [334] = Ether.unitButtons.solo["targettarget"],
-        [335] = Ether.unitButtons.solo["pet"],
-        [336] = Ether.unitButtons.solo["pettarget"],
-        [337] = Ether.unitButtons.solo["focus"],
-        [338] = Ether.Anchor.raid,
-        [339] = Ether.DebugFrame,
-        [340] = Construct.Frames["Main"]
-    }
-
-    for frameID, frame in pairs(frames) do
-        if frame and Ether.DB[5111][frameID] then
-            Ether:ApplyFramePosition(frameID, frame)
+    for frameID in pairs(Ether.DB[5111]) do
+        if frameID then
+            Ether:ApplyFramePosition(frameID)
         end
     end
 end
 
-function Ether:ApplyFramePosition(frameID, frame)
+function Ether:ApplyFramePosition(frameID)
     local pos = Ether.DB[5111][frameID]
-    if not pos or not frame then return end
+    if not pos then return end
 
     local frames = {
         [331] = Ether.Anchor.tooltip,
@@ -725,36 +710,16 @@ function Ether:ApplyFramePosition(frameID, frame)
     }
 
     local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
-
-    local s = frame:GetEffectiveScale()
-    local x, y = pos[4] / s, pos[5] / s
-
-    if frame.SetPoint then
-        frame:ClearAllPoints()
-        frame:SetPoint(pos[1], relTo, pos[3], x, y)
-        frame:SetScale(pos[8])
-        frame:SetAlpha(pos[9])
-        Ether.Fire("FRAME_UPDATED", frameID)
-    end
-end
-
-function Ether:FramePosition(frameID)
-    local frames = {
-        [331] = Ether.Anchor.tooltip,
-        [332] = Ether.unitButtons.solo["player"],
-        [333] = Ether.unitButtons.solo["target"],
-        [334] = Ether.unitButtons.solo["targettarget"],
-        [335] = Ether.unitButtons.solo["pet"],
-        [336] = Ether.unitButtons.solo["pettarget"],
-        [337] = Ether.unitButtons.solo["focus"],
-        [338] = Ether.Anchor.raid,
-        [339] = Ether.DebugFrame,
-        [340] = Construct.Frames["Main"]
-    }
-
     local frame = frames[frameID]
     if frame then
-        Ether:ApplyFramePosition(frameID, frame)
+        local s = frame:GetEffectiveScale()
+        local x, y = pos[4] / s, pos[5] / s
+        if frame.SetPoint then
+            frame:ClearAllPoints()
+            frame:SetPoint(pos[1], relTo, pos[3], x, y)
+            frame:SetScale(pos[8])
+            frame:SetAlpha(pos[9])
+        end
     end
 end
 
@@ -763,29 +728,6 @@ local arraysLength = {
     [501] = 9, [701] = 4, [801] = 12,
     [1001] = 4, [1101] = 3
 }
-
-function Ether:FramePosition(frameID)
-    local frames = {
-        [331] = Ether.Anchor.tooltip,
-        [332] = Ether.unitButtons.solo["player"],
-        [333] = Ether.unitButtons.solo["target"],
-        [334] = Ether.unitButtons.solo["targettarget"],
-        [335] = Ether.unitButtons.solo["pet"],
-        [336] = Ether.unitButtons.solo["pettarget"],
-        [337] = Ether.unitButtons.solo["focus"],
-        [338] = Ether.Anchor.raid,
-        [339] = Ether.DebugFrame,
-        [340] = Construct.Frames["Main"]
-    }
-    local frame = frames[frameID]
-    local position = Ether.DB[5111][frameID]
-    if frame and position then
-        frame:ClearAllPoints()
-        frame:SetPoint(position[1], UIParent, position[3], position[4], position[5])
-        frame:SetScale(position[8])
-        frame:SetAlpha(position[9])
-    end
-end
 
 local currentVersion = nil
 local function OnInitialize(self, event, ...)
@@ -807,10 +749,13 @@ local function OnInitialize(self, event, ...)
             _G.ETHER_DATABASE_DX_AA[101] = 0
         end
 
+        if type(_G.ETHER_ICON) ~= "table" then
+            _G.ETHER_ICON = {}
+        end
+
         self:RegisterEvent("PLAYER_LOGOUT")
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
-        Ether:CreateSplitGroupHeader(8)
 
         local charKey = Ether.GetCharacterKey()
         if not charKey then
@@ -897,7 +842,7 @@ local function OnInitialize(self, event, ...)
 
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
-
+        Ether:CreateSplitGroupHeader(8)
         SLASH_ETHER1 = "/ether"
         SlashCmdList["ETHER"] = function(msg)
             local input, rest = msg:match("^(%S*)%s*(.-)$")
@@ -934,15 +879,16 @@ local function OnInitialize(self, event, ...)
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, "GUILD", nil, "NORMAL")
         end
 
-        if (LibStub and LibStub("LibDBIcon-1.0")) then
-            if type(_G.ETHER_ICON) ~= "table" then
-                ETHER_ICON = {}
+        if LibStub and LibStub("LibDBIcon-1.0", true) and LibStub("LibSharedMedia-3.0", true) then
+            if not soundsRegistered then
+                local LDI = LibStub("LibDBIcon-1.0")
+                LDI:Register("EtherIcon", Ether.dataBroker, _G.ETHER_ICON)
+                local LSM = LibStub("LibSharedMedia-3.0")
+                LSM:Register("font", "Expressway", [[Interface\AddOns\Ether\Media\Font\expressway.ttf]])
+                LSM:Register("statusbar", "BlankBar", [[Interface\AddOns\Ether\Media\StatusBar\BlankBar.tga]])
+                soundsRegistered = true
             end
-            local LDI = LibStub("LibDBIcon-1.0", true)
-            LDI:Register("EtherIcon", Ether.dataBroker, ETHER_ICON)
         end
-
-        Ether:RosterEnable()
 
         if not Ether.DebugFrame then
             Ether:SetupDebugFrame()
@@ -956,7 +902,7 @@ local function OnInitialize(self, event, ...)
                 text = currentVersion,
                 button1 = "Yes",
                 button2 = "No",
-                OnAccept = function(self, spellId)
+                OnAccept = function(self)
                     if not InCombatLockdown() then
                         ReloadUI()
                     end
@@ -969,7 +915,7 @@ local function OnInitialize(self, event, ...)
             StaticPopup_Show("ETHER_RELOAD_UI")
         end
         Ether.Anchor.raid:SetSize(1, 1)
-        Ether:FramePosition(338)
+        Ether:ApplyFramePosition(338)
 
         local tooltip = CreateFrame("Frame", nil, UIParent)
         tooltip:SetFrameLevel(400)
@@ -997,6 +943,7 @@ local function OnInitialize(self, event, ...)
         end
     elseif (event == "PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        Ether:RosterEnable()
         C_Timer.After(0.8, function()
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")
@@ -1009,9 +956,7 @@ local function OnInitialize(self, event, ...)
                     Ether:UpdatePowerText(button)
                 end
             end
-            if Ether.DB[801][12] == 1 then
-                Ether:HeaderBackground(true)
-            end
+            Ether:HeaderBackground()
         end)
 
     elseif (event == "PLAYER_LOGOUT") then

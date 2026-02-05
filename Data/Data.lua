@@ -23,7 +23,7 @@ local Default = {
     [401] = {1, 0, 1, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1},
+    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1 },
     [901] = {
         player = true,
         target = true,
@@ -49,9 +49,9 @@ local Default = {
     [1101] = {1, 1, 1},
     [5111] = {
         [331] = {"BOTTOMRIGHT", "UIParent", "BOTTOMRIGHT", -400, 300, 1, 1, 1.0, 1.0},
-        [332] = {"CENTER", "UIParent", "CENTER", -250, -160, 120, 50, 1.0, 1.0},
-        [333] = {"CENTER", "UIParent", "CENTER", 250, -160, 120, 50, 1.0, 1.0},
-        [334] = {"CENTER", "UIParent", "CENTER", 0, -250, 120, 50, 1.0, 1.0},
+        [332] = {"CENTER", "UIParent", "CENTER", -150, -200, 120, 50, 1.0, 1.0},
+        [333] = {"CENTER", "UIParent", "CENTER", 150, -200, 120, 50, 1.0, 1.0},
+        [334] = {"CENTER", "UIParent", "CENTER", 0, -220, 120, 50, 1.0, 1.0},
         [335] = {"CENTER", "UIParent", "CENTER", -350, -100, 120, 50, 1.0, 1.0},
         [336] = {"CENTER", "UIParent", "CENTER", -270, -20, 120, 50, 1.0, 1.0},
         [337] = {"LEFT", "UIParent", "LEFT", 500, 100, 120, 50, 1.0, 1.0},
@@ -167,7 +167,6 @@ Ether.DataDefault = Default
 ---| name CastBar  9
 ---| SafeZone CastBar  10
 ---| isTradeSkill CastBar  11
----| header Background 12
 
 ---@alias Update_901 boolean
 ---| Player

@@ -281,9 +281,7 @@ local function ChannelUpdate(self, event, unit)
     if event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
         local bar = self.castBar
         local name, _, _, startTimeMS, endTimeMS = UnitChannel(unit)
-        if (not bar or not name) then
-            return
-        end
+        if not bar or not name then return end
         local duration = (endTimeMS / 1000) - GetTime()
         bar.delay = bar.delay + bar.duration - duration
         bar.duration = duration

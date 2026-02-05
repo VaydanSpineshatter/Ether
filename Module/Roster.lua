@@ -37,7 +37,8 @@ do
 end
 
 local ValidUnits = {
-    player = false,
+    player = true,
+    pet = true,
     party = false,
     partypet = false,
     raid = true,
@@ -95,35 +96,27 @@ local status = false
 local function ifValidUnits()
     if not status then
         status = true
-        C_After(4, function()
+        C_After(5, function()
             if not UnitInAnyGroup("player") then
                 Ether:FullUpdateIndicators()
-                Ether:AuraDisable()
-                Ether:AuraEnable()
-                if Ether.DB[801][12] == 1 then
-                    Ether:HeaderBackground(true)
-                end
+                Ether:HeaderBackground()
                 ValidUnits.player = true
                 ValidUnits.raid = false
                 ValidUnits.party = false
             elseif UnitInRaid("player") then
-                if Ether.DB[801][12] == 1 then
-                    Ether:HeaderBackground(true)
-                end
                 ValidUnits.player = false
                 ValidUnits.party = false
                 ValidUnits.partypet = false
                 ValidUnits.raid = true
                 ValidUnits.raidpet = true
+                Ether:HeaderBackground()
             elseif UnitInParty("player") then
-                if Ether.DB[801][12] == 1 then
-                    Ether:HeaderBackground(true)
-                end
                 ValidUnits.player = true
                 ValidUnits.party = true
                 ValidUnits.partypet = true
                 ValidUnits.raid = false
                 ValidUnits.raidpet = false
+                Ether:HeaderBackground()
             end
             status = false
         end)
@@ -157,7 +150,9 @@ local function RosterChanged(_, event)
 end
 local function PlayerUnghost(_, event)
     if event == "PLAYER_UNGHOST" then
-        Ether:FullUpdateIndicators()
+        C_After(0.2, function()
+            Ether:FullUpdateIndicators()
+        end)
     end
 end
 --[[

@@ -70,8 +70,9 @@ local function OnAttributeChanged(self, name, unit)
         if Ether.DB and Ether.DB[1001] and Ether.DB[1001][4] == 1 then
             Ether:UpdateRaidIsHelpful(unit)
         end
+        Update(self)
+        Ether:FullUpdateIndicators()
     end
-    Update(self)
 end
 
 local function Show(self)
@@ -94,20 +95,11 @@ end
 local function CreateChildren(headerName, buttonName)
     local button = _G[buttonName]
     Ether:AddBlackBorder(button, 1, 0, 0, 0, 1)
-    local healthBar = CreateFrame("StatusBar", nil, button)
-    button.healthBar = healthBar
-    healthBar:SetPoint("TOPLEFT")
-    healthBar:SetAllPoints(button)
-    healthBar:SetOrientation("VERTICAL")
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.statusBar))
-    healthBar:SetMinMaxValues(0, 100)
-    healthBar:SetFrameLevel(button:GetFrameLevel() + 1)
-    local healthDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
-    button.healthDrop = healthDrop
-    healthDrop:SetAllPoints(healthBar)
-    healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
+    local w = headerName:GetAttribute("ButtonWidth")
+    local h = headerName:GetAttribute("ButtonHeight")
+    Ether:SetupHealthBar(button, "VERTICAL", w, h)
     Ether:SetupPrediction(button)
-    Ether:SetupName(button, 10, -5)
+    Ether:SetupName(button, -5)
     Ether:GetClassColor(button)
     if headerName:GetAttribute("TypePet") then
         button.TypePet = true
@@ -115,19 +107,19 @@ local function CreateChildren(headerName, buttonName)
         Ether:SetupUpdateText(button, "health")
         Ether:SetupUpdateText(button, "power", true)
         Ether:DispelIconSetup(button)
-        Mixin(healthBar, SmoothStatusBarMixin)
+        Mixin(button.healthBar, SmoothStatusBarMixin)
         button.Indicators = {}
         button.Smooth = true
-        button.Indicators.PlayerFlags = healthBar:CreateFontString(nil, "OVERLAY")
-        button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.Font), 10, "OUTLINE")
-        button.Indicators.UnitFlags = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.ReadyCheck = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.Connection = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.Resurrection = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.RaidTarget = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.MasterLoot = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.GroupLeader = healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.PlayerRoles = healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.PlayerFlags = button.healthBar:CreateFontString(nil, "OVERLAY")
+        button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+        button.Indicators.UnitFlags = button.healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.ReadyCheck = button.healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.Connection = button.healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.Resurrection = button.healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.RaidTarget = button.healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.MasterLoot = button.healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.GroupLeader = button.healthBar:CreateTexture(nil, "OVERLAY")
+        button.Indicators.PlayerRoles = button.healthBar:CreateTexture(nil, "OVERLAY")
     end
     button:SetScript("OnShow", Show)
     button:SetScript("OnHide", Hide)
@@ -153,15 +145,15 @@ local function CreateGroupHeader(group)
     header:SetAttribute("groupFilter", group)
     header:SetAttribute("initialConfigFunction", initialConfigFunction)
     header.CreateChildren = CreateChildren
-    header:SetAttribute("ButtonWidth", 60)
-    header:SetAttribute("ButtonHeight", 60)
+    header:SetAttribute("ButtonWidth", 55)
+    header:SetAttribute("ButtonHeight", 55)
     header:SetAttribute("columnAnchorPoint", "LEFT")
     header:SetAttribute("point", "TOP")
     header:SetAttribute("groupBy", "GROUP")
     header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset", 0)
-    header:SetAttribute("yOffset", -2)
-    header:SetAttribute("columnSpacing", 2)
+    header:SetAttribute("yOffset", -3)
+    header:SetAttribute("columnSpacing", 3)
     header:SetAttribute("unitsPerColumn", 5)
     header:SetAttribute("maxColumns", 1)
     header:SetAttribute("raidHeader", true)
@@ -170,34 +162,32 @@ local function CreateGroupHeader(group)
     header:SetAttribute("showPlayer", true)
     header:SetAttribute("showSolo", true)
     header:Show()
-    background[group] = Ether.Header.raid:CreateTexture(nil, "BACKGROUND")
-    background[group]:SetColorTexture(0, 0, 0, .6)
+    local frame = CreateFrame("Frame", nil, header)
+    Ether.headerBG = frame
+    background[group] = frame:CreateTexture(nil, "BACKGROUND")
+    background[group]:SetColorTexture(0, 0, 0, .7)
     background[group]:SetPoint("TOPLEFT", header, "TOPLEFT", -3, 3)
     background[group]:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 3, -3)
-    background[group]:Hide()
 end
 
-function Ether:HeaderBackground(state)
-    if InCombatLockdown() then return end
-    if type(state) ~= "boolean" then return end
-    if state then
-        for i = 1, 8 do
-            background[i]:Hide()
-        end
-        if UnitInRaid("player") then
-            for index = 1, GetNumGroupMembers() do
-                local _, _, subgroup = GetRaidRosterInfo(index)
-                for i = 1, subgroup do
-                    background[i]:Show()
-                end
+function Ether:HeaderBackground()
+    for i = 1, 9 do
+        background[i]:Hide()
+    end
+    if UnitInRaid("player") then
+        for index = 1, GetNumGroupMembers() do
+            local _, _, subgroup = GetRaidRosterInfo(index)
+            for i = 1, subgroup do
+                background[i]:Show()
             end
-        elseif UnitInParty("player") or not UnitInAnyGroup("player") then
-            background[1]:Show()
         end
+        background[9]:Show()
+    elseif UnitInParty("player") then
+        background[1]:Show()
+        background[9]:Show()
     else
-        for i = 1, 8 do
-            background[i]:Hide()
-        end
+        background[1]:Show()
+        background[9]:Hide()
     end
 end
 
@@ -232,6 +222,10 @@ function Ether:InitializePetHeader()
         raidpet:SetAttribute("unitsPerColumn", 10)
         raidpet:SetAttribute("maxColumns", 1)
         raidpet:Show()
+        background[9] = Ether.headerBG:CreateTexture(nil, "BACKGROUND")
+        background[9]:SetColorTexture(0, 0, 0, .7)
+        background[9]:SetPoint("TOPLEFT", raidpet, "TOPLEFT", -3, 3)
+        background[9]:SetPoint("BOTTOMRIGHT", raidpet, "BOTTOMRIGHT", 3, -3)
     end
 end
 

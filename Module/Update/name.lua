@@ -4,6 +4,15 @@ local string_byte = string.byte
 local UnitIsUnit = UnitIsUnit
 local ME = "|cffffd700ME|r"
 
+function Ether:ShortenName(name, maxLength)
+    if not name then return end
+    if (#name > maxLength) then
+        return name:sub(1, maxLength)
+    else
+        return name
+    end
+end
+
 local function utf8sub(name, start, numChars)
     local byteIndex = start
     local charCount = 0
@@ -31,14 +40,10 @@ function Ether:UpdateName(button, IsRaid)
     local unit = button.unit
     local name = UnitName(unit)
     if name then
-        if UnitIsUnit(unit, "player") then
-            button.name:SetText(ME)
+        if IsRaid then
+            button.name:SetText(utf8sub(name, 1, 3))
         else
-            if IsRaid then
-                button.name:SetText(utf8sub(name, 1, 3))
-            else
-                button.name:SetText(utf8sub(name, 1, 10))
-            end
+            button.name:SetText(Ether:ShortenName(name, 10))
         end
     end
 end

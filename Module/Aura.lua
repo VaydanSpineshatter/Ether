@@ -50,10 +50,6 @@ function Ether:CleanupTimerCache()
     end
 end
 
---local cleanupTimer = C_Timer.NewTicker(10, function()
---    CleanupTimerCache()
---end)
-
 local function updateAuraPos(tbl, spellId, spellConfig)
     for guid, _ in pairs(tbl) do
         if tbl[guid] and tbl[guid][spellId] then
@@ -442,13 +438,9 @@ function Ether:SingleAuraUpdateBuff(button)
             if now then
                 local last = auras.LastBuffs[buffIndex] or {}
 
-                if last.auraInstanceID ~= aura.auraInstanceID or
-                        last.name ~= aura.name or
-                        last.icon ~= aura.icon then
-
+                if last.auraInstanceID ~= aura.auraInstanceID or last.name ~= aura.name or last.icon ~= aura.icon then
                     now.icon:SetTexture(aura.icon)
                     now.icon:Show()
-
                     last.auraInstanceID = aura.auraInstanceID
                     last.name = aura.name
                     last.icon = aura.icon
@@ -466,7 +458,7 @@ function Ether:SingleAuraUpdateBuff(button)
 
                 local xOffset, yOffset = AuraPosition(buffIndex)
                 now:ClearAllPoints()
-                now:SetPoint("BOTTOMLEFT", button, "TOPLEFT", xOffset - 1, yOffset + 2)
+                now:SetPoint("BOTTOMLEFT", button, "TOPLEFT", xOffset - 1, yOffset + 3)
 
                 now:Show()
                 visibleBuffCount = visibleBuffCount + 1
@@ -620,32 +612,20 @@ local function soloAuraUpdate(unit, updateInfo)
     end
 end
 
-local InitializeAuras, DisableAuras
-do
-    local frame
-    function InitializeAuras()
-        if not frame then
-            frame = CreateFrame("Frame")
-            frame:SetScript("OnEvent", function(_, event, arg1, ...)
-                if event == "UNIT_AURA" then
-                    if not arg1 or not UnitExists(arg1) then return end
-                    local updateInfo = ...
-                    if updateInfo then
-                        raidAuraUpdate(arg1, updateInfo)
-                        soloAuraUpdate(arg1, updateInfo)
-                    end
-                end
-            end)
+local function Aura(_, event, arg1, ...)
+   if event == "UNIT_AURA" then
+        if not UnitExists(arg1) then return end
+        local updateInfo = ...
+        if updateInfo then
+            raidAuraUpdate(arg1, updateInfo)
+            soloAuraUpdate(arg1, updateInfo)
         end
-        if not frame:IsEventRegistered("UNIT_AURA") then
-            frame:RegisterEvent("UNIT_AURA")
-        end
-    end
-    function DisableAuras()
-        if frame then
-            frame:UnregisterAllEvents()
-        end
-    end
+   end
+end
+
+local update
+if not update then
+    update = CreateFrame("Frame")
 end
 
 function Ether:AuraWipe()
@@ -658,14 +638,20 @@ function Ether:AuraWipe()
 end
 
 function Ether:AuraEnable()
-    InitializeAuras()
-    C_Timer.After(1, function()
-           Ether:UpdateRaidIsHelpful("player")
-    end)
+    if not update:GetScript("OnEvent") then
+        update:RegisterEvent("UNIT_AURA")
+        update:SetScript("OnEvent", Aura)
+        C_Timer.After(1, function()
+            Ether:UpdateRaidIsHelpful("player")
+        end)
+    end
 end
 
 function Ether:AuraDisable()
     Ether:CleanupAllRaidIcons()
+    if update:GetScript("OnEvent") then
+         update:UnregisterAllEvents()
+        update:SetScript("OnEvent", nil)
+    end
     Ether:AuraWipe()
-    DisableAuras()
 end

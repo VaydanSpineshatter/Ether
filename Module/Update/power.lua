@@ -6,29 +6,6 @@ local UnitPowerMax = UnitPowerMax
 local string_format = string.format
 local fm = "%.1f"
 
-local Power_Colors = {
-    [0] = {
-        r = 0.0,
-        g = 0.44,
-        b = 0.87
-    },
-    [1] = {
-        r = 1.0,
-        g = 0.0,
-        b = 0.0
-    },
-    [2] = {
-        r = 1.0,
-        g = 0.5,
-        b = 0.25
-    },
-    [3] = {
-        r = 1.0,
-        g = 0.96,
-        b = 0.41
-    }
-}
-
 local RegisterPEvent, UnregisterPEvent
 do
     local IsEventValid = C_EventUtils.IsEventValid
@@ -94,10 +71,19 @@ function Ether:UpdatePowerText(button)
     end
 end
 
-function Ether:GetPowerColor(self)
-    local powerTypeID = UnitPowerType(self)
-    local c = Power_Colors[powerTypeID] or Power_Colors[1]
-    return c.r, c.g, c.b or false
+function Ether:GetPowerColor(unit)
+    local powerType, powerToken, altR, altG, altB = UnitPowerType(unit)
+    local info = PowerBarColor[powerToken]
+    local r, g, b
+    if (info) then
+        r, g, b = info.r, info.g, info.b
+    elseif (not altR) then
+        info = PowerBarColor[powerType] or PowerBarColor["MANA"]
+        r, g, b = info.r, info.g, info.b
+    else
+        r, g, b = altR, altG, altB;
+    end
+    return r, g, b
 end
 
 function Ether:UpdatePower(button, smooth)

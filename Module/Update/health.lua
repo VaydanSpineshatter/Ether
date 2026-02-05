@@ -147,12 +147,45 @@ function Ether:InitialHealth(button)
     button.healthBar:SetMinMaxValues(0, ReturnMaxHealth(button.unit))
 end
 
+function Ether:GetClassColors(unit)
+    local _, classFilename = UnitClass(unit)
+    local info = RAID_CLASS_COLORS[classFilename]
+    local r, g, b
+    if (info) then
+        info = RAID_CLASS_COLORS[classFilename]
+        r, g, b = info.r, info.g, info.b
+    else
+        r, g, b = 0.18, 0.54, 0.34
+    end
+    return r, g, b
+end
+local function unitIsDead(button)
+    button.top:SetColorTexture(0, 0, 0, 1)
+    button.right:SetColorTexture(0, 0, 0, 1)
+    button.left:SetColorTexture(0, 0, 0, 1)
+    button.bottom:SetColorTexture(0, 0, 0, 1)
+end
+
+local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 function Ether:UpdateHealth(button, smooth)
     if not button or not button.unit or not button.healthBar then
         return
     end
     local h = UnitHealth(button.unit)
     local mh = UnitHealthMax(button.unit)
+    if h <= 1 then
+        if button.Indicators and button.Indicators.UnitFlags then
+            button.Indicators.UnitFlags:SetTexture(deadIcon)
+            button.Indicators.UnitFlags:Show()
+        end
+        if button.top then
+            unitIsDead(button)
+        end
+    else
+        if button.Indicators and button.Indicators.UnitFlags then
+            button.Indicators.UnitFlags:Hide()
+        end
+    end
 
     if smooth and button.Smooth then
         button.healthBar:SetMinMaxSmoothedValue(0, mh)
@@ -161,9 +194,10 @@ function Ether:UpdateHealth(button, smooth)
         button.healthBar:SetValue(h)
         button.healthBar:SetMinMaxValues(0, mh)
     end
-    local r, g, b = Ether:GetClassColor(button)
-    button.healthBar:SetStatusBarColor(r, g, b)
-    button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
+
+    local r, g, b = Ether:GetClassColors(button.unit)
+    button.healthBar:SetStatusBarColor(r, g, b, .8)
+    button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
 end
 
 function Ether:UpdateHealthText(button)

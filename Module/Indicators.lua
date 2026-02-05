@@ -10,10 +10,8 @@ local GetLoot = C_PartyInfo.GetLootMethod
 local pairs, ipairs = pairs, ipairs
 local UnitIsGroupLeader = UnitIsGroupLeader
 local UnitIsCharmed = UnitIsCharmed
-local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitIsUnit = UnitIsUnit
 local connectionIcon = "Interface\\CharacterFrame\\Disconnect-Icon"
-local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 local ReadyCheck_Ready = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local ReadyCheck_NotReady = "Interface\\RaidFrame\\ReadyCheck-NotReady"
 local ReadyCheck_Waiting = "Interface\\RaidFrame\\ReadyCheck-Waiting"
@@ -27,6 +25,9 @@ local charmedIcon = "Interface\\Icons\\Spell_Shadow_Charm"
 local AFK = [[|cE600CCFFAFK|r]]
 local DND = [[|cffCC66FFDND|r]]
 local Events = {}
+local function EtherDB(number)
+    return Ether and Ether.DB and Ether.DB[number]
+end
 local RegisterIndicatorEvent, UnregisterIndicatorEvent
 do
     local frame
@@ -270,29 +271,17 @@ local function UpdateMasterLoot(_, event)
     end
 end
 
-local function unitIsDead(button)
-    button.top:SetColorTexture(0, 0, 0, 1)
-    button.right:SetColorTexture(0, 0, 0, 1)
-    button.left:SetColorTexture(0, 0, 0, 1)
-    button.bottom:SetColorTexture(0, 0, 0, 1)
-end
-
 local function UpdateUnitFlags(_, event, unit)
     if not unit then return end
     if event == "UNIT_FLAGS" then
         local button = Ether.unitButtons.raid[unit]
         if not button or not button.Indicators or not button.Indicators.UnitFlags then return end
         if button.unit == unit and UnitExists(unit) then
-            local dead = UnitIsDeadOrGhost(unit)
             local charmed = UnitIsCharmed(unit)
             if charmed then
                 button.name:SetTextColor(1.00, 0.00, 0.00)
                 button.Indicators.UnitFlags:SetTexture(charmedIcon)
                 button.Indicators.UnitFlags:Show()
-            elseif dead then
-                button.Indicators.UnitFlags:SetTexture(deadIcon)
-                button.Indicators.UnitFlags:Show()
-                unitIsDead(button)
             else
                 button.Indicators.UnitFlags:Hide()
                 button.name:SetTextColor(1, 1, 1)
@@ -499,7 +488,7 @@ local indicatorsHandlers = {
 }
 
 function Ether:IndicatorsToggle()
-    local I = Ether.DB[501]
+    local I = EtherDB(501)
     for index, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 then
             handlers[1]()
@@ -510,7 +499,7 @@ function Ether:IndicatorsToggle()
 end
 
 function Ether:IndicatorsEnable()
-    local I = Ether.DB[501]
+    local I = EtherDB(501)
     for index, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 then
             handlers[1]()
@@ -527,7 +516,7 @@ function Ether:IndicatorsDisable()
 end
 
 function Ether:UpdateIndicatorsByIndex(index)
-    local I = Ether.DB[501]
+    local I = EtherDB(501)
     for _, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 and handlers[3] then
             for data in pairs(Events) do
@@ -538,7 +527,7 @@ function Ether:UpdateIndicatorsByIndex(index)
 end
 
 function Ether:FullUpdateIndicators()
-    local I = Ether.DB[501]
+    local I = EtherDB(501)
     for index, handlers in ipairs(indicatorsHandlers) do
         if I[index] == 1 and handlers[3] then
             for data in pairs(Events) do

@@ -86,10 +86,10 @@ local warnedPrefix = false
 function AceComm:SendCommMessage(prefix, text, distribution, target, prio, callbackFn, callbackArg)
     prio = prio or "NORMAL"    -- pasta's reference implementation had different prio for singlepart and multipart, but that's a very bad idea since that can easily lead to out-of-sequence delivery!
     if not (type(prefix) == "string" and
-            type(text) == "string" and
-            type(distribution) == "string" and
-            (target == nil or type(target) == "string" or type(target) == "number") and
-            (prio == "BULK" or prio == "NORMAL" or prio == "ALERT")
+                  type(text) == "string" and
+                  type(distribution) == "string" and
+                  (target == nil or type(target) == "string" or type(target) == "number") and
+                  (prio == "BULK" or prio == "NORMAL" or prio == "ALERT")
     ) then
         error('Usage: SendCommMessage(addon, "prefix", "text", "distribution"[, "target"[, "prio"[, callbackFn, callbackarg]]])', 2)
     end
@@ -237,9 +237,9 @@ end
 
 if not AceComm.callbacks then
     AceComm.callbacks = CallbackHandler:New(AceComm,
-            "_RegisterComm",
-            "UnregisterComm",
-            "UnregisterAllComm")
+                  "_RegisterComm",
+                  "UnregisterComm",
+                  "UnregisterAllComm")
 end
 
 AceComm.callbacks.OnUsed = nil
