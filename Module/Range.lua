@@ -70,7 +70,6 @@ function Ether:UpdateAlpha(button)
     else
         inRange = Ether:IsUnitInRange(button.unit)
     end
-    inRange = Ether:IsUnitInRange(button.unit)
     local value = inRange and 1.0 or 0.45
     button:SetAlpha(value)
 end

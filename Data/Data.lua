@@ -17,13 +17,13 @@ local Default = {
         LAST_TAB = "Module",
         SELECTED = 331,
     },
-    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     [201] = {1, 1, 1, 1, 1, 1},
     [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     [401] = {1, 0, 1, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1 },
+    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
     [901] = {
         player = true,
         target = true,
@@ -105,9 +105,8 @@ Ether.DataDefault = Default
 ---| Raid 7
 ---| Manager 8
 ---| MicroMenu 9
----| MainStatusBarContainer 10
----| MainMenuBar 11
----| BagsBar 12
+---| XP Bar 10
+---| BagsBar 11
 
 ---@alias Create_201 number
 ---| Player 1

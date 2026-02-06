@@ -36,40 +36,6 @@ do
     end
 end
 
-local ValidUnits = {
-    player = true,
-    party = false,
-    partypet = false,
-    raid = true,
-    raidpet = false,
-}
-
-function Ether:IsValidUnitForAuras(unit)
-    if not unit then
-        return false
-    end
-    local baseType, index = unit:match("^(%a+)(%d*)$")
-    if not baseType then
-        return false
-    end
-    if not ValidUnits[baseType] then
-        return false
-    end
-    if index ~= "" then
-        local num = tonumber(index)
-        if baseType == "raid" then
-            if not num or num < 1 or num > 40 then
-                return false
-            end
-        elseif baseType == "party" then
-            if not num or num < 1 or num > 4 then
-                return false
-            end
-        end
-    end
-    return UnitExists(unit)
-end
-
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
         if Ether.DB[1001][3] == 1 then
@@ -96,24 +62,8 @@ local function ifValidUnits()
     if not status then
         status = true
         C_After(5, function()
-            if not UnitInAnyGroup("player") then
-                Ether:FullUpdateIndicators()
-                Ether:HeaderBackground()
-                ValidUnits.raid = false
-                ValidUnits.party = false
-            elseif UnitInRaid("player") then
-                ValidUnits.party = false
-                ValidUnits.partypet = false
-                ValidUnits.raid = true
-                ValidUnits.raidpet = true
-                Ether:HeaderBackground()
-            elseif UnitInParty("player") then
-                ValidUnits.party = true
-                ValidUnits.partypet = true
-                ValidUnits.raid = false
-                ValidUnits.raidpet = false
-                Ether:HeaderBackground()
-            end
+            Ether:FullUpdateIndicators()
+            Ether:HeaderBackground()
             status = false
         end)
     end

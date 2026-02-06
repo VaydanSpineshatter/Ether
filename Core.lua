@@ -36,7 +36,7 @@ local function BuildContent(self)
     local success, msg = pcall(function()
         Ether.CreateModuleSection(self)
         Ether.CreateInformationSection(self)
-        Ether.CreateHideSection(self)
+        Ether.CreateBlizzardSection(self)
         Ether.CreateSection(self)
         Ether.CreateUpdateSection(self)
         Ether.CreateAuraSettingsSection(self)
@@ -82,18 +82,22 @@ local Construct = {
     },
     Menu = {
         ["TOP"] = {
-            [1] = {"Module", "Information"},
-            [2] = {"Hide", "Create", "Updates"},
+            [1] = {"Module", "Blizzard", "Information"},
+            [2] = {"Create", "Updates"},
             [3] = {"Aura Settings", "Aura Custom"},
             [4] = {"Register", "Position"},
-            [5] = {"Layout", "Tooltip", "Config", "Profile"}
+            [5] = {"Layout", "Config"},
+            [6] = {"Tooltip"},
+            [7] = {"Profile"}
         },
         ["LEFT"] = {
             [1] = {"Info"},
             [2] = {"Units"},
             [3] = {"Auras"},
             [4] = {"Indicators"},
-            [5] = {"Interface"}
+            [5] = {"Interface"},
+            [6] = {"Tooltip"},
+            [7] = {"Profile"}
         },
     },
 }
@@ -103,7 +107,7 @@ function Ether.ShowCategory(self, tab)
         return
     end
     local tabLayer
-    for layer = 1, 6 do
+    for layer = 1, 7 do
         if self.Menu["TOP"][layer] then
             for _, tabName in ipairs(self.Menu["TOP"][layer]) do
                 if tabName == tab then
@@ -196,7 +200,7 @@ local function InitializeSettings(self)
         return
     end
     local success, msg = pcall(function()
-        for layer = 1, 6 do
+        for layer = 1, 7 do
             if self.Menu["TOP"][layer] then
                 for _, name in ipairs(self.Menu["TOP"][layer]) do
                     self.Content.Children[name] = CreateSettingsScrollTab(self.Frames["Content"], name)
@@ -209,7 +213,7 @@ local function InitializeSettings(self)
         end
         BuildContent(self)
 
-        for layer = 1, 6 do
+        for layer = 1, 7 do
             if self.Menu["TOP"][layer] then
                 self.MenuButtons[layer] = {}
                 local BtnConfig = {}
@@ -250,7 +254,7 @@ local function InitializeSettings(self)
         end
 
         local last = nil
-        for layer = 1, 6 do
+        for layer = 1, 7 do
             if self.Menu["LEFT"][layer] then
                 for _, itemName in ipairs(self.Menu["LEFT"][layer]) do
                     local btn = CreateSettingsButtons(self, itemName, self.Frames["Left"], layer, function(_, btnLayer)
@@ -439,7 +443,6 @@ local function ToggleSettings(self)
         Ether.ShowCategory(self, category)
     end
 end
-
 local hiddenParent = CreateFrame("Frame", nil, UIParent)
 hiddenParent:SetAllPoints()
 hiddenParent:Hide()
@@ -522,9 +525,6 @@ local function HideBlizzard()
         HiddenFrame(MainStatusTrackingBarContainer)
     end
     if Ether.DB[101][11] == 1 then
-        HiddenFrame(MainMenuBar)
-    end
-    if Ether.DB[101][12] == 1 then
         HiddenFrame(BagsBar)
     end
 end
@@ -724,7 +724,7 @@ function Ether:ApplyFramePosition(frameID)
 end
 
 local arraysLength = {
-    [101] = 12, [201] = 6, [301] = 13, [401] = 4,
+    [101] = 11, [201] = 6, [301] = 13, [401] = 4,
     [501] = 9, [701] = 4, [801] = 12,
     [1001] = 4, [1101] = 3
 }

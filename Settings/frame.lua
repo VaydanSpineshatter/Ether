@@ -67,21 +67,20 @@ function Ether.CreateInformationSection(self)
     idleInfo:SetPoint("TOP", 0, -220)
 end
 
-function Ether.CreateHideSection(self)
-    local parent = self.Content.Children["Hide"]
+function Ether.CreateBlizzardSection(self)
+    local parent = self.Content.Children["Blizzard"]
     local HideValue = {
-        [1] = {name = "Blizzard Player frame"},
-        [2] = {name = "Blizzard Pet frame"},
-        [3] = {name = "Blizzard Target frame"},
-        [4] = {name = "Blizzard Focus frame"},
-        [5] = {name = "Blizzard CastBar"},
-        [6] = {name = "Blizzard Party"},
-        [7] = {name = "Blizzard Raid"},
-        [8] = {name = "Blizzard Raid Manager"},
-        [9] = {name = "Blizzard MicroMenu"},
-        [10] = {name = "Blizzard MainStatusTrackingBarContainer"},
-        [11] = {name = "Blizzard MainMenuBar"},
-        [12] = {name = "Blizzard BagsBar"}
+        [1] = {name = "Player frame"},
+        [2] = {name = "Pet frame"},
+        [3] = {name = "Target frame"},
+        [4] = {name = "Focus frame"},
+        [5] = {name = "CastBar"},
+        [6] = {name = "Party"},
+        [7] = {name = "Raid"},
+        [8] = {name = "Raid Manager"},
+        [9] = {name = "MicroMenu"},
+        [10] = {name = "XP Bar"},
+        [11] = {name = "BagsBar"}
     }
     local hide = GetFont(self, parent, "|cffffff00Hide Blizzard Frames|r", 15)
     hide:SetPoint("TOPLEFT", 10, -10)
@@ -101,6 +100,7 @@ function Ether.CreateHideSection(self)
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[101][i] = checked and 1 or 0
+
         end)
         self.Content.Buttons.Hide.A[i] = btn
     end
@@ -1671,9 +1671,6 @@ function Ether.CreateTooltipSection(self)
         [13] = {name = "Reaction"}
     }
 
-    local tTip = GetFont(self, parent, "|cffffd700Tooltip Options:|r", 15)
-    tTip:SetPoint("TOPLEFT", 20, -20)
-
     local mF = CreateFrame("Frame", nil, parent)
     mF:SetSize(200, (#Tooltip * 30) + 60)
 
@@ -1681,7 +1678,7 @@ function Ether.CreateTooltipSection(self)
         local btn = CreateFrame("CheckButton", nil, mF, "InterfaceOptionsCheckButtonTemplate")
 
         if i == 1 then
-            btn:SetPoint("TOPLEFT", tTip, "BOTTOMLEFT", 0, -20)
+            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, -20)
         else
             btn:SetPoint("TOPLEFT", self.Content.Buttons.Tooltip.A[i - 1], "BOTTOMLEFT", 0, 0)
         end
@@ -2428,7 +2425,6 @@ function Ether.RenameProfile(oldName, newName)
     end
     return true, "Profile renamed"
 end
-
 
 function Ether.ResetProfile()
     ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DataDefault)

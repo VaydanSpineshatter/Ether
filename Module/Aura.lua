@@ -311,7 +311,6 @@ function Ether:UpdateRaidIsHarmful(unit)
 end
 
 local function raidAuraUpdate(unit, updateInfo)
-    if not Ether:IsValidUnitForAuras(unit) then return end
     if not Ether.unitButtons.raid[unit] or Ether.DB[1001][4] ~= 1 then
         return
     end
