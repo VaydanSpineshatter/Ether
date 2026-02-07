@@ -210,20 +210,23 @@ end
 
 
 function Ether:CleanupAuras(guid, unit)
-
-    for _, texture in pairs(raidBuffData[guid]) do
-        texture:Hide()
-        texture:ClearAllPoints()
-        texture:SetParent(nil)
+    if raidBuffData[guid] then
+        for _, texture in pairs(raidBuffData[guid]) do
+            texture:Hide()
+            texture:ClearAllPoints()
+            texture:SetParent(nil)
+        end
+        raidBuffData[guid] = nil
     end
-    raidBuffData[guid] = nil
-
-    for _, texture in pairs(raidDebuffData[guid]) do
-        texture:Hide()
-        texture:ClearAllPoints()
-        texture:SetParent(nil)
+    
+    if raidDebuffData[guid] then
+        for _, texture in pairs(raidDebuffData[guid]) do
+            texture:Hide()
+            texture:ClearAllPoints()
+            texture:SetParent(nil)
+        end
+        raidDebuffData[guid] = nil
     end
-    raidDebuffData[guid] = nil
 
     local button = FindUnitButton(unit)
     if not button then return end
