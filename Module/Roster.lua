@@ -120,7 +120,7 @@ function Ether:RosterEnable()
     RegisterRosterEvent("PLAYER_TARGET_CHANGED", TargetChanged)
     RegisterRosterEvent("PLAYER_UNGHOST", PlayerUnghost)
     RegisterRosterEvent("GROUP_ROSTER_UPDATE", RosterChanged)
-    if Ether.DB[801][6] == 1 then
+    if Ether.DB[401][5] == 1 then
         C_After(0.1, function()
             Ether:RangeEnable()
         end)
@@ -133,7 +133,7 @@ function Ether:RosterDisable()
     UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
     UnregisterRosterEvent("GROUP_ROSTER_UPDATE")
     UnregisterRosterEvent("PLAYER_UNGHOST")
-    if Ether.DB[801][6] == 1 then
+    if Ether.DB[401][5] == 1 then
         C_After(0.1, function()
             Ether.Range:Disable()
         end)

@@ -86,8 +86,8 @@ local Construct = {
             [2] = {"Create", "Updates"},
             [3] = {"Aura Settings", "Aura Custom"},
             [4] = {"Register", "Position"},
-            [5] = {"Layout", "Config"},
-            [6] = {"Tooltip"},
+            [5] = {"Tooltip"},
+            [6] = {"Layout", "Config"},
             [7] = {"Profile"}
         },
         ["LEFT"] = {
@@ -95,8 +95,8 @@ local Construct = {
             [2] = {"Units"},
             [3] = {"Auras"},
             [4] = {"Indicators"},
-            [5] = {"Interface"},
-            [6] = {"Tooltip"},
+            [5] = {"Tooltip"},
+            [6] = {"Interface"},
             [7] = {"Profile"}
         },
     },
@@ -709,14 +709,13 @@ function Ether:ApplyFramePosition(frameID)
         [340] = Construct.Frames["Main"]
     }
 
-    local relTo = (pos[2] == "UIParent") and UIParent or frames[pos[2]] or UIParent
     local frame = frames[frameID]
     if frame then
         local s = frame:GetEffectiveScale()
         local x, y = pos[4] / s, pos[5] / s
         if frame.SetPoint then
             frame:ClearAllPoints()
-            frame:SetPoint(pos[1], relTo, pos[3], x, y)
+            frame:SetPoint(pos[1], UIParent, pos[3], x, y)
             frame:SetScale(pos[8])
             frame:SetAlpha(pos[9])
         end
@@ -724,8 +723,8 @@ function Ether:ApplyFramePosition(frameID)
 end
 
 local arraysLength = {
-    [101] = 11, [201] = 6, [301] = 13, [401] = 4,
-    [501] = 9, [701] = 4, [801] = 12,
+    [101] = 11, [201] = 6, [301] = 13, [401] = 5,
+    [501] = 9, [701] = 4, [801] = 11,
     [1001] = 4, [1101] = 3
 }
 

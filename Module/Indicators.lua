@@ -326,7 +326,7 @@ local function OnAfk(self)
     Ether:AuraDisable()
     Ether:IndicatorsDisable()
     Ether:CleanupAllRaidIcons()
-    if Ether.DB[801][6] == 1 then
+    if Ether.DB[401][5] == 1 then
         C_Timer.After(0.1, function()
             Ether:RangeDisable()
         end)
@@ -353,7 +353,7 @@ local function NotAfk(self)
             end
         end
     end
-    if Ether.DB[801][6] == 1 then
+    if Ether.DB[401][5] == 1 then
         C_Timer.After(0.1, function()
             Ether:RangeEnable()
         end)

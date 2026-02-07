@@ -20,10 +20,10 @@ local Default = {
     [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
     [201] = {1, 1, 1, 1, 1, 1},
     [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 0, 1, 1},
+    [401] = {1, 0, 1, 1, 0},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1},
+    [801] = {1, 1, 0, 0, 0, 1, 1, 1, 1, 1},
     [901] = {
         player = true,
         target = true,
@@ -136,6 +136,7 @@ Ether.DataDefault = Default
 ---| Whisper 2
 ---| Tooltip 3
 ---| Idle mode 4
+---| Range check 5
 
 ---@alias IndicatorRegister_501 number
 ---| READY_CHECK READY_CHECK_CONFIRM READY_FINISHED 1
@@ -160,12 +161,11 @@ Ether.DataDefault = Default
 ---| smooth health Solo 3
 ---| smooth Power Solo 4
 ---| smooth health Header 5
----| range checker  6
----| icon CastBar  7
----| time CastBar  8
----| name CastBar  9
----| SafeZone CastBar  10
----| isTradeSkill CastBar  11
+---| icon CastBar  6
+---| time CastBar  7
+---| name CastBar 8
+---| SafeZone CastBar  9
+---| isTradeSkill CastBar  10
 
 ---@alias Update_901 boolean
 ---| Player

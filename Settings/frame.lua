@@ -9,13 +9,33 @@ local function GetFont(_, target, tex, numb)
     return target.label
 end
 Ether.GetFont = GetFont
+
+local function CreatePreviewBar(parent, preview)
+    local healthBar = CreateFrame("StatusBar", nil, preview)
+    parent.healthBar = healthBar
+    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
+    healthBar:SetPoint("CENTER")
+    healthBar:SetSize(55, 55)
+    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
+    local _, classFilename = UnitClass("player")
+    local c = Ether.RAID_COLORS[classFilename]
+    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
+    local name = healthBar:CreateFontString(nil, "OVERLAY")
+    parent.healthBar = healthBar
+    name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    name:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
+    name:SetText(Ether:ShortenName(playerName, 3))
+    return parent
+end
+
 function Ether.CreateModuleSection(self)
     local parent = self.Content.Children["Module"]
     local modulesValue = {
         [1] = {name = "Icon"},
         [2] = {name = "Chat Bn & Msg Whisper"},
         [3] = {name = "Tooltip"},
-        [4] = {name = "Idle mode"}
+        [4] = {name = "Idle mode"},
+        [5] = {name = "Range check"}
     }
     local mod = CreateFrame("Frame", nil, parent)
     mod:SetSize(200, (#modulesValue * 30) + 60)
@@ -45,6 +65,12 @@ function Ether.CreateModuleSection(self)
                 end
             elseif i == 2 then
                 Ether.EnableMsgEvents()
+            elseif i == 5 then
+                if Ether.DB[401][5] == 1 then
+                    Ether:RangeEnable()
+                else
+                    Ether:RangeDisable()
+                end
             end
         end)
         self.Content.Buttons.Module.A[i] = btn
@@ -1041,6 +1067,7 @@ function Ether.UpdateEditor()
     if not selectedSpellId or not Ether.DB[1003][selectedSpellId] then
         return
     end
+
     local data = Ether.DB[1003][selectedSpellId]
     Editor.nameInput:SetText(data.name or "")
     Editor.nameInput:Enable()
@@ -1177,7 +1204,9 @@ function Ether.CreateRegisterSection(self)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
             Ether:IndicatorsToggle()
-            Ether:UpdateIndicatorsByIndex(i)
+            C_Timer.After(0.1, function()
+                Ether:UpdateIndicatorsByIndex(i)
+            end)
         end)
         self.Content.Buttons.Indicators.A[i] = btn
     end
@@ -1250,24 +1279,12 @@ function Ether.CreatePositionSection(self)
     preview:SetPoint("TOPLEFT", selectLabel, "BOTTOMLEFT", 80, -100)
     preview:SetSize(55, 55)
 
-    local healthBar = CreateFrame("StatusBar", nil, preview)
-    Indicator.healthBar = healthBar
-    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
-    healthBar:SetPoint("CENTER")
-    healthBar:SetSize(55, 55)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
-    local _, classFilename = UnitClass("player")
-    local c = Ether.RAID_COLORS[classFilename]
-    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
-    local name = healthBar:CreateFontString(nil, "OVERLAY")
-    name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    name:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
-    name:SetText(Ether:ShortenName(playerName, 3))
+    local healthBar = CreatePreviewBar(Indicator, preview)
 
     local icon = healthBar:CreateTexture(nil, "OVERLAY")
     Indicator.icon = icon
     icon:SetSize(12, 12)
-    icon:SetPoint("TOP", healthBar, "TOP", 0, 0)
+    icon:SetPoint("TOP", preview.healthBar, "TOP", 0, 0)
     icon:SetTexture(iconTexture)
 
     local textIndicator = healthBar:CreateFontString(nil, "OVERLAY")
@@ -1520,17 +1537,16 @@ function Ether.CreateLayoutSection(self)
     local parent = self.Content.Children["Layout"]
 
     local layoutValue = {
-        [1] = {text = "Create/Delete Player CastBar"},
-        [2] = {text = "Create/Delete Target CastBar"},
-        [3] = {text = "Smooth Bar Solo Health"},
-        [4] = {text = "Smooth Bar Solo Power"},
-        [5] = {text = "Smooth Bar Header"},
-        [6] = {text = "Range check"},
-        [7] = {text = "CastBar - Icon"},
-        [8] = {text = "CastBar - Time"},
-        [9] = {text = "CastBar - Name"},
-        [10] = {text = "CastBar - SafeZone"},
-        [11] = {text = "CastBar - IsTradeSkill"},
+        [1] = {text = "Player CastBar"},
+        [2] = {text = "Target CastBar"},
+        [3] = {text = "Smooth Health Solo"},
+        [4] = {text = "Smooth Power Solo"},
+        [5] = {text = "Smooth Header"},
+        [6] = {text = "CastBar - Icon"},
+        [7] = {text = "CastBar - Time"},
+        [8] = {text = "CastBar - Name"},
+        [9] = {text = "CastBar - SafeZone"},
+        [10] = {text = "CastBar - IsTradeSkill"},
     }
 
     local layout = CreateFrame("Frame", nil, parent)
@@ -1563,27 +1579,412 @@ function Ether.CreateLayoutSection(self)
                 else
                     Ether:CastBarDisable("target")
                 end
-            elseif i == 6 then
-                if Ether.DB[801][6] == 1 then
-                    Ether:RangeEnable()
-                else
-                    Ether:RangeDisable()
-                end
-            elseif i == 12 then
-                if Ether.DB[801][12] == 1 then
-                    Ether:HeaderBackground(true)
-                else
-                    Ether:HeaderBackground(false)
-                end
             end
         end)
         self.Content.Buttons.Layout.A[i] = btn
     end
 
+end
+
+function Ether.CreateTooltipSection(self)
+    local parent = self.Content.Children["Tooltip"]
+
+    local Tooltip = {
+        [1] = {name = "AFK"},
+        [2] = {name = "DND"},
+        [3] = {name = "PVP Icon"},
+        [4] = {name = "Resting Icon"},
+        [5] = {name = "Realm"},
+        [6] = {name = "Level"},
+        [7] = {name = "Class"},
+        [8] = {name = "Guild"},
+        [9] = {name = "Role"},
+        [10] = {name = "Creature Type"},
+        [11] = {name = "Race", },
+        [12] = {name = "Raid Target"},
+        [13] = {name = "Reaction"}
+    }
+
+    local mF = CreateFrame("Frame", nil, parent)
+    mF:SetSize(200, (#Tooltip * 30) + 60)
+
+    for i, opt in ipairs(Tooltip) do
+        local btn = CreateFrame("CheckButton", nil, mF, "InterfaceOptionsCheckButtonTemplate")
+
+        if i == 1 then
+            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -10)
+        else
+            btn:SetPoint("TOPLEFT", self.Content.Buttons.Tooltip.A[i - 1], "BOTTOMLEFT", 0, 0)
+        end
+
+        btn:SetSize(24, 24)
+
+        btn.label = GetFont(self, btn, opt.name, 12)
+        btn.label:SetPoint("LEFT", btn, "RIGHT", 8, 1)
+        btn:SetChecked(Ether.DB[301][i] == 1)
+
+        btn:SetScript("OnClick", function(self)
+            local checked = self:GetChecked()
+            Ether.DB[301][i] = checked and 1 or 0
+        end)
+
+        self.Content.Buttons.Tooltip.A[i] = btn
+    end
+end
+
+function Ether.CreateConfigSection(self)
+    local parent = self.Content.Children["Config"]
+    local DB = Ether.DB
+
+    local function SetupSliderText(slider, lowText, highText)
+        slider.Low:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
+        slider.Low:SetText(lowText)
+
+        slider.High:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
+        slider.High:SetText(highText)
+
+        slider.Low:ClearAllPoints()
+        slider.Low:SetPoint("TOPLEFT", slider, "BOTTOMLEFT", 0, -2)
+
+        slider.High:ClearAllPoints()
+        slider.High:SetPoint("TOPRIGHT", slider, "BOTTOMRIGHT", 0, -2)
+    end
+
+    local function SetupSliderThump(slider, size, color)
+        local thumb = slider:GetThumbTexture()
+        if thumb then
+            thumb:SetSize(size, size)
+            thumb:SetColorTexture(unpack(color))
+        end
+    end
+
+    local FRAME_GROUPS = {
+        [331] = {name = "Tooltip"},
+        [332] = {name = "Player"},
+        [333] = {name = "Target"},
+        [334] = {name = "TargetTarget"},
+        [335] = {name = "Pet"},
+        [336] = {name = "Pet Target"},
+        [337] = {name = "Focus"},
+        [338] = {name = "Raid"},
+        [339] = {name = "Debug"}
+    }
+
+    local labels = {}
+    local function CreateLabel(text, point, relativeTo, relativePoint, x, y)
+        local label = GetFont(self, parent, text, 13)
+        label:SetPoint(point, relativeTo, relativePoint, x, y)
+        labels[text] = label
+        return label
+    end
+
+    CreateLabel("Select frame:", "TOPLEFT", parent, "TOPLEFT", 10, -10)
+
+    local sizeLabel = parent:CreateFontString(nil, "OVERLAY")
+    sizeLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    sizeLabel:SetPoint("TOPLEFT", labels["Select frame:"], "BOTTOMLEFT", 10, -200)
+    sizeLabel:SetText("Size")
+
+    local sizeSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+    sizeSlider:SetPoint("TOPLEFT", sizeLabel, "BOTTOMLEFT", 0, -10)
+    sizeSlider:SetWidth(100)
+    sizeSlider:SetMinMaxValues(0.5, 2)
+    sizeSlider:SetValueStep(0.1)
+    sizeSlider:SetObeyStepOnDrag(true)
+    sizeSlider.Low:SetText("0.5")
+    sizeSlider.High:SetText("2")
+
+    local sizeSliderBG = sizeSlider:CreateTexture(nil, "BACKGROUND")
+    sizeSliderBG:SetPoint("CENTER")
+    sizeSliderBG:SetSize(100, 10)
+    sizeSliderBG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    sizeSliderBG:SetDrawLayer("BACKGROUND", -1)
+
+    local sizeValue = parent:CreateFontString(nil, "OVERLAY")
+    sizeValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    sizeValue:SetPoint("TOP", sizeSlider, "BOTTOM", 0, -5)
+
+    local alphaLabel = parent:CreateFontString(nil, "OVERLAY")
+    alphaLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    alphaLabel:SetPoint("LEFT", sizeLabel, "RIGHT", 100, 0)
+    alphaLabel:SetText("Alpha")
+
+    local alphaSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+    alphaSlider:SetPoint("TOPLEFT", alphaLabel, "BOTTOMLEFT", 0, -10)
+    alphaSlider:SetWidth(100)
+    alphaSlider:SetMinMaxValues(0.1, 1)
+    alphaSlider:SetValueStep(0.1)
+    alphaSlider:SetObeyStepOnDrag(true)
+    alphaSlider.Low:SetText("0")
+    alphaSlider.High:SetText("1")
+
+    local alphaSliderBG = alphaSlider:CreateTexture(nil, "BACKGROUND")
+    alphaSliderBG:SetPoint("CENTER")
+    alphaSliderBG:SetSize(100, 10)
+    alphaSliderBG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    alphaSliderBG:SetDrawLayer("BACKGROUND", -1)
+
+    local alphaValue = parent:CreateFontString(nil, "OVERLAY")
+    alphaValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    alphaValue:SetPoint("TOP", alphaSlider, "BOTTOM", 0, -5)
+
+    local offsetXLabel = parent:CreateFontString(nil, "OVERLAY")
+    offsetXLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    offsetXLabel:SetPoint("TOPLEFT", sizeLabel, "BOTTOMLEFT", 0, -50)
+    offsetXLabel:SetText("X Offset")
+
+    local offsetXSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+    offsetXSlider:SetPoint("TOPLEFT", offsetXLabel, "BOTTOMLEFT", 0, -10)
+    offsetXSlider:SetWidth(100)
+    offsetXSlider:SetMinMaxValues(-300, 300)
+    offsetXSlider:SetValueStep(10)
+    offsetXSlider:SetObeyStepOnDrag(true)
+    offsetXSlider.Low:SetText("-300")
+    offsetXSlider.High:SetText("300")
+
+    local offsetXBG = offsetXSlider:CreateTexture(nil, "BACKGROUND")
+    offsetXBG:SetPoint("CENTER")
+    offsetXBG:SetSize(100, 10)
+    offsetXBG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    offsetXBG:SetDrawLayer("BACKGROUND", -1)
+
+    local offsetXValue = parent:CreateFontString(nil, "OVERLAY")
+    offsetXValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    offsetXValue:SetPoint("TOP", offsetXSlider, "BOTTOM")
+
+    local offsetYLabel = parent:CreateFontString(nil, "OVERLAY")
+    offsetYLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    offsetYLabel:SetPoint("LEFT", offsetXLabel, "RIGHT", 80, 0)
+    offsetYLabel:SetText("Y Offset")
+
+    local offsetYSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
+    offsetYSlider:SetPoint("TOPLEFT", offsetYLabel, "BOTTOMLEFT", 0, -10)
+    offsetYSlider:SetWidth(100)
+    offsetYSlider:SetMinMaxValues(-300, 300)
+    offsetYSlider:SetValueStep(10)
+    offsetYSlider:SetObeyStepOnDrag(true)
+    offsetYSlider.Low:SetText("-300")
+    offsetYSlider.High:SetText("300")
+
+    local offsetYBG = offsetYSlider:CreateTexture(nil, "BACKGROUND")
+    offsetYBG:SetPoint("CENTER")
+    offsetYBG:SetSize(100, 10)
+    offsetYBG:SetColorTexture(0.2, 0.2, 0.2, 0.6)
+    offsetYBG:SetDrawLayer("BACKGROUND", -1)
+
+    local offsetYValue = parent:CreateFontString(nil, "OVERLAY")
+    offsetYValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    offsetYValue:SetPoint("TOP", offsetYSlider, "BOTTOM")
+
+    SetupSliderText(offsetXSlider, "-300", "300")
+    SetupSliderText(offsetYSlider, "-300", "300")
+    SetupSliderText(sizeSlider, "0.5", "2.0")
+    SetupSliderText(alphaSlider, "0", "1")
+
+    SetupSliderThump(offsetXSlider, 12, {0.8, 0.6, 0, 1})
+    SetupSliderThump(offsetYSlider, 12, {0.8, 0.6, 0, 1})
+    SetupSliderThump(sizeSlider, 12, {0.8, 0.6, 0, 1})
+    SetupSliderThump(alphaSlider, 12, {0.8, 0.6, 0, 1})
+
+    local dropdowns = {}
+    local function CreateDropdown(name, relativeTo, width)
+        local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
+        dropdown:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, -10)
+        UIDropDownMenu_SetWidth(dropdown, width)
+        UIDropDownMenu_JustifyText(dropdown, "CENTER")
+        dropdowns[name] = dropdown
+        return dropdown
+    end
+
+    dropdowns.frame = CreateDropdown("frame", labels["Select frame:"], 100)
+
+    local positions = {
+        {"TOPLEFT", "TOP", "TOPRIGHT"},
+        {"LEFT", "CENTER", "RIGHT"},
+        {"BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}
+    }
+
+    local posButtons = {}
+    local startX, startY = 110, -100
+    local btnSize = 25
+
+    for row = 1, 3 do
+        for col = 1, 3 do
+            local pos = positions[row][col]
+            local btn = CreateFrame("Button", nil, parent)
+            btn:SetSize(btnSize, btnSize)
+            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", startX + (col - 1) * (btnSize + 1), startY - (row - 1) * (btnSize + 1))
+
+            btn.bg = btn:CreateTexture(nil, "BACKGROUND")
+            btn.bg:SetAllPoints()
+            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+
+            btn.text = btn:CreateFontString(nil, "OVERLAY")
+            btn.text:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+            btn.text:SetPoint("CENTER")
+            btn.text:SetText(pos:sub(1, 1))
+
+            btn.position = pos
+            posButtons[pos] = btn
+        end
+    end
+
+    local function UpdateValueLabels()
+        local SELECTED = DB[111].SELECTED
+        if not SELECTED or not DB[5111] or not DB[5111][SELECTED] then
+            sizeValue:SetText("")
+            alphaValue:SetText("")
+            offsetXValue:SetText("")
+            offsetYValue:SetText("")
+            return
+        end
+
+        local pos = DB[5111][SELECTED]
+        sizeValue:SetText(string.format("%.1f", pos[8] or 1))
+        alphaValue:SetText(string.format("%.1f", pos[9] or 1))
+        offsetXValue:SetText(tostring(pos[4] or 0))
+        offsetYValue:SetText(tostring(pos[5] or 0))
+    end
+
+    local function UpdatePositionButtons()
+        local frame = DB[111].SELECTED
+        if not frame or not DB[5111][frame] then
+            for _, btn in pairs(posButtons) do
+                btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+            end
+            return
+        end
+
+        local posData = DB[5111][frame]
+        local selectedPoint = posData[1]
+
+        for pos, btn in pairs(posButtons) do
+            if pos == selectedPoint then
+                btn.bg:SetColorTexture(0.8, 0.6, 0, 0.4)
+            else
+                btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+            end
+        end
+    end
+
+    local function UpdateAllControls()
+        local SELECTED = DB[111].SELECTED
+        if not SELECTED or not DB[5111][SELECTED] then
+            UIDropDownMenu_SetText(dropdowns.frame, "Select...")
+            sizeSlider:Disable()
+            alphaSlider:Disable()
+            offsetXSlider:Disable()
+            offsetYSlider:Disable()
+            UpdateValueLabels()
+            UpdatePositionButtons()
+            return
+        end
+
+        local frameName = FRAME_GROUPS[SELECTED] and FRAME_GROUPS[SELECTED].name or "Unknown"
+        UIDropDownMenu_SetText(dropdowns.frame, frameName)
+
+        sizeSlider:Enable()
+        alphaSlider:Enable()
+        offsetXSlider:Enable()
+        offsetYSlider:Enable()
+
+        local pos = DB[5111][SELECTED]
+        if math.abs((offsetXSlider:GetValue() or 0) - (pos[4] or 0)) > 0.001 then
+            offsetXSlider:SetValue(pos[4] or 0)
+        end
+        if math.abs((offsetYSlider:GetValue() or 0) - (pos[5] or 0)) > 0.001 then
+            offsetYSlider:SetValue(pos[5] or 0)
+        end
+        if math.abs((sizeSlider:GetValue() or 1) - (pos[8] or 1)) > 0.001 then
+            sizeSlider:SetValue(pos[8] or 1)
+        end
+        if math.abs((alphaSlider:GetValue() or 1) - (pos[9] or 1)) > 0.001 then
+            alphaSlider:SetValue(pos[9] or 1)
+        end
+        UpdateValueLabels()
+        UpdatePositionButtons()
+    end
+
+    local function InitializeFrameDropdown(self, level)
+        local info = UIDropDownMenu_CreateInfo()
+        for frameID, frameData in pairs(FRAME_GROUPS) do
+            info.text = frameData.name
+            info.value = frameID
+            info.checked = (DB[111].SELECTED == frameID)
+            info.func = function(self)
+                DB[111].SELECTED = self.value
+                UIDropDownMenu_SetText(dropdowns.frame, self:GetText())
+                UpdateAllControls()
+            end
+            UIDropDownMenu_AddButton(info, level)
+        end
+    end
+
+    UIDropDownMenu_Initialize(dropdowns.frame, InitializeFrameDropdown)
+    UIDropDownMenu_SetText(dropdowns.frame, "Select...")
+
+    for pos, btn in pairs(posButtons) do
+        btn:SetScript("OnClick", function(self)
+            local frame = DB[111].SELECTED
+            if DB[5111][frame] then
+                DB[5111][frame][1] = self.position
+                DB[5111][frame][3] = self.position
+                Ether:ApplyFramePosition(frame)
+                UpdatePositionButtons()
+            end
+        end)
+
+        btn:SetScript("OnEnter", function(self)
+            self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
+        end)
+
+        btn:SetScript("OnLeave", function(self)
+            UpdatePositionButtons()
+        end)
+    end
+
+    sizeSlider:SetScript("OnValueChanged", function(self, value)
+        local frame = DB[111].SELECTED
+        if DB[5111][frame] then
+            DB[5111][frame][8] = self:GetValue()
+            Ether:ApplyFramePosition(frame)
+            UpdateValueLabels()
+        end
+    end)
+
+    alphaSlider:SetScript("OnValueChanged", function(self, value)
+        local frame = DB[111].SELECTED
+        if DB[5111][frame] then
+            DB[5111][frame][9] = self:GetValue()
+            Ether:ApplyFramePosition(frame)
+            UpdateValueLabels()
+        end
+    end)
+
+    offsetXSlider:SetScript("OnValueChanged", function(self, value)
+        local frame = DB[111].SELECTED
+        if DB[5111][frame] then
+            DB[5111][frame][4] = self:GetValue()
+            Ether:ApplyFramePosition(frame)
+            UpdateValueLabels()
+        end
+    end)
+
+    offsetYSlider:SetScript("OnValueChanged", function(self, value)
+        local frame = DB[111].SELECTED
+        if DB[5111][frame] then
+            DB[5111][frame][5] = self:GetValue()
+            Ether:ApplyFramePosition(frame)
+            UpdateValueLabels()
+        end
+    end)
+
+    UpdateAllControls()
+
     if not LibStub or not LibStub("LibSharedMedia-3.0", true) then return end
     local LSM = LibStub("LibSharedMedia-3.0")
     local fontMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    fontMedia:SetPoint("TOP", 100, -10)
+    fontMedia:SetPoint("TOPRIGHT", 0, -10)
     UIDropDownMenu_SetWidth(fontMedia, 140)
     UIDropDownMenu_SetText(fontMedia, "Select Font")
     UIDropDownMenu_Initialize(fontMedia, function(self)
@@ -1650,233 +2051,25 @@ function Ether.CreateLayoutSection(self)
         end
     end)
 
-end
-
-function Ether.CreateTooltipSection(self)
-    local parent = self.Content.Children["Tooltip"]
-
-    local Tooltip = {
-        [1] = {name = "AFK"},
-        [2] = {name = "DND"},
-        [3] = {name = "PVP Icon"},
-        [4] = {name = "Resting Icon"},
-        [5] = {name = "Realm"},
-        [6] = {name = "Level"},
-        [7] = {name = "Class"},
-        [8] = {name = "Guild"},
-        [9] = {name = "Role"},
-        [10] = {name = "Creature Type"},
-        [11] = {name = "Race", },
-        [12] = {name = "Raid Target"},
-        [13] = {name = "Reaction"}
-    }
-
-    local mF = CreateFrame("Frame", nil, parent)
-    mF:SetSize(200, (#Tooltip * 30) + 60)
-
-    for i, opt in ipairs(Tooltip) do
-        local btn = CreateFrame("CheckButton", nil, mF, "InterfaceOptionsCheckButtonTemplate")
-
-        if i == 1 then
-            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 20, -20)
-        else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Tooltip.A[i - 1], "BOTTOMLEFT", 0, 0)
-        end
-
-        btn:SetSize(24, 24)
-
-        btn.label = GetFont(self, btn, opt.name, 12)
-        btn.label:SetPoint("LEFT", btn, "RIGHT", 8, 1)
-        btn:SetChecked(Ether.DB[301][i] == 1)
-
-        btn:SetScript("OnClick", function(self)
-            local checked = self:GetChecked()
-            Ether.DB[301][i] = checked and 1 or 0
-        end)
-
-        self.Content.Buttons.Tooltip.A[i] = btn
-    end
-end
-
-function Ether.CreateConfigSection(self)
-    local parent = self.Content.Children["Config"]
-    local DB = Ether.DB
-
-    local FRAME_GROUPS = {
-        [331] = {name = "Tooltip"},
-        [332] = {name = "Player"},
-        [333] = {name = "Target"},
-        [334] = {name = "TargetTarget"},
-        [335] = {name = "Pet"},
-        [336] = {name = "Pet Target"},
-        [337] = {name = "Focus"},
-        [338] = {name = "Raid"},
-        [339] = {name = "Debug"},
-    }
-
-    local ANCHOR_POINTS = {
-        "RIGHT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT",
-        "BOTTOM", "TOP", "LEFT", "TOPLEFT", "CENTER"
-    }
-
-    local labels = {}
-    local function CreateLabel(text, point, relativeTo, relativePoint, x, y)
-        local label = GetFont(self, parent, text, 13)
-        label:SetPoint(point, relativeTo, relativePoint, x, y)
-        labels[text] = label
-        return label
-    end
-
-    CreateLabel("Select frame:", "TOPLEFT", parent, "TOPLEFT", 10, -10)
-    CreateLabel("Point", "TOPLEFT", labels["Select frame:"], "BOTTOMLEFT", 30, -80)
-    CreateLabel("Relative", "LEFT", labels["Point"], "RIGHT", 200, 0)
-    CreateLabel("Slide X", "TOPLEFT", labels["Point"], "BOTTOMLEFT", 30, -100)
-    CreateLabel("Slide Y", "LEFT", labels["Slide X"], "RIGHT", 200, 0)
-    CreateLabel("Scale", "TOPLEFT", labels["Slide X"], "BOTTOMLEFT", 0, -80)
-    CreateLabel("Alpha", "LEFT", labels["Scale"], "RIGHT", 220, 0)
-    local dropdowns = {}
-    local function CreateDropdown(name, relativeTo, width)
-        local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, -10)
-        UIDropDownMenu_SetWidth(dropdown, width)
-        UIDropDownMenu_JustifyText(dropdown, "CENTER")
-        dropdowns[name] = dropdown
-        return dropdown
-    end
-    dropdowns.frame = CreateDropdown("frame", labels["Select frame:"], 100)
-    dropdowns.point = CreateDropdown("point", labels["Point"], 80)
-    dropdowns.relative = CreateDropdown("relative", labels["Relative"], 80)
-    local sliders = {}
-    local function CreateSlider(name, relativeTo, min, max, step, formatFunc)
-        local slider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
-        slider:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, -10)
-        slider:SetWidth(140)
-        slider:SetMinMaxValues(min, max)
-        slider:SetValueStep(step)
-        slider:SetObeyStepOnDrag(true)
-        slider.Low:SetText(tostring(min))
-        slider.High:SetText(tostring(max))
-        local BG = slider:CreateTexture(nil, "BACKGROUND")
-        BG:SetPoint("CENTER")
-        BG:SetSize(140, 10)
-        BG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-        BG:SetDrawLayer("BACKGROUND", -1)
-        local currentFrame = DB[111].SELECTED
-        local defaultValue = 0
-        if currentFrame and DB[5111] and DB[5111][currentFrame] then
-            if name == "x" then
-                defaultValue = DB[5111][currentFrame][4] or 0
-            elseif name == "y" then
-                defaultValue = DB[5111][currentFrame][5] or 0
-            elseif name == "scale" then
-                defaultValue = DB[5111][currentFrame][8] or 1
-            elseif name == "alpha" then
-                defaultValue = DB[5111][currentFrame][9] or 1
-            end
-        end
-        slider:SetValue(defaultValue)
-        slider:SetScript("OnValueChanged", function(self, value)
-            self.Text:SetText(formatFunc(value))
-            local frame = DB[111].SELECTED
-            if frame and DB[5111] and DB[5111][frame] then
-                local index = name == "x" and 4 or name == "y" and 5 or name == "scale" and 8 or name == "alpha" and 9
-                DB[5111][frame][index] = self:GetValue()
-                Ether:ApplyFramePosition(frame)
-            end
-        end)
-        sliders[name] = slider
-        return slider
-    end
-    local function UpdateValue()
-        local SELECTED = DB[111].SELECTED
-        if not SELECTED or not DB[5111] or not DB[5111][SELECTED] then
-            return
-        end
-        local pos = DB[5111][SELECTED]
-        UIDropDownMenu_SetText(dropdowns.point, pos[1] or "TOP")
-        UIDropDownMenu_SetText(dropdowns.relative, pos[3] or "TOP")
-        if sliders.x:GetValue() ~= (pos[4] or 0) then
-            sliders.x:SetValue(pos[4] or 0)
-        end
-        if sliders.y:GetValue() ~= (pos[5] or 0) then
-            sliders.y:SetValue(pos[5] or 0)
-        end
-        if sliders.scale:GetValue() ~= (pos[8] or 1) then
-            sliders.scale:SetValue(pos[8] or 1)
-        end
-        if sliders.alpha:GetValue() ~= (pos[9] or 1) then
-            sliders.alpha:SetValue(pos[9] or 1)
-        end
-    end
-    sliders.x = CreateSlider("x", labels["Slide X"], -800, 800, 10,
-                  function(v)
-                      return string.format("%.0f", v)
-                  end)
-    sliders.y = CreateSlider("y", labels["Slide Y"], -800, 800, 10,
-                  function(v)
-                      return string.format("%.0f", v)
-                  end)
-    sliders.scale = CreateSlider("scale", sliders.x, 0.5, 2, 0.1,
-                  function(v)
-                      return string.format("%.0f%%", v * 100)
-                  end)
-    sliders.alpha = CreateSlider("alpha", sliders.y, 0.1, 1, 0.1,
-                  function(v)
-                      return string.format("%.0f%%", v * 100)
-                  end)
-
-    local function CreateFrameDropdown()
-        UIDropDownMenu_Initialize(dropdowns.frame, function()
-            for id, data in pairs(FRAME_GROUPS) do
-                local info = UIDropDownMenu_CreateInfo()
-                info.text = data.name
-                info.value = id
-                info.func = function()
-                    local oldFrame = DB[111].SELECTED
-                    Ether.DB[111].SELECTED = id
-                    UIDropDownMenu_SetSelectedValue(dropdowns.frame, id)
-                    UIDropDownMenu_SetText(dropdowns.frame, data.name)
-                    Ether:ApplyFramePosition(oldFrame)
-                    UpdateValue()
-                end
-                UIDropDownMenu_AddButton(info)
-            end
-        end)
-    end
-    local function CreatePointDropdown(dropdown, pointIndex)
-        UIDropDownMenu_Initialize(dropdown, function()
-            for _, point in pairs(ANCHOR_POINTS) do
-                local info = UIDropDownMenu_CreateInfo()
-                info.text = point
-                info.value = point
-                info.func = function()
-                    local currentFrame = DB[111].SELECTED
-                    if currentFrame and DB[5111] and DB[5111][currentFrame] then
-                        DB[5111][currentFrame][pointIndex] = point
-                        UIDropDownMenu_SetText(dropdown, point)
-                        Ether:ApplyFramePosition(currentFrame)
-                        UpdateValue()
-                    end
-                end
-                UIDropDownMenu_AddButton(info)
-            end
-        end)
-    end
-    CreateFrameDropdown()
-    CreatePointDropdown(dropdowns.point, 1)
-    CreatePointDropdown(dropdowns.relative, 3)
-
-    local function SetInitialValue()
-        local currentFrame = DB[111].SELECTED
-        if currentFrame and FRAME_GROUPS[currentFrame] then
-            UIDropDownMenu_SetSelectedValue(dropdowns.frame, currentFrame)
-            UIDropDownMenu_SetText(dropdowns.frame, FRAME_GROUPS[currentFrame].name)
-            UpdateValue()
-        else
-            UIDropDownMenu_SetText(dropdowns.frame, "Choose frame...")
-        end
-    end
-    SetInitialValue()
+    local preview = CreateFrame("Frame", nil, parent)
+    preview:SetPoint("TOPLEFT", backgroundMedia, "BOTTOMLEFT", 80, -80)
+    preview:SetSize(90, 90)
+    local healthBar = CreateFrame("StatusBar", nil, preview)
+    healthBar:SetFrameLevel(preview:GetFrameLevel() + 1)
+    healthBar:SetPoint("CENTER")
+    healthBar:SetSize(90, 90)
+    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
+    local _, classFilename = UnitClass("player")
+    local c = Ether.RAID_COLORS[classFilename]
+    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
+    local name = healthBar:CreateFontString(nil, "OVERLAY")
+    name:SetFont(unpack(Ether.mediaPath.expressway), 18, "OUTLINE")
+    name:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
+    name:SetText(Ether:ShortenName(playerName, 3))
+    local background = preview:CreateTexture(nil, "BACKGROUND")
+    background:SetColorTexture(0, 0, 0, 1)
+    background:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -5, 5)
+    background:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 5, -5)
 end
 
 function Ether.CreateProfileSection(self)
