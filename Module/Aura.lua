@@ -31,7 +31,8 @@ local dispelPriority = {
 local _, classFilename = UnitClass("player")
 local dispelByPlayer = {}
 dispelByPlayer = dispelClass[classFilename]
-
+local foundHelpful = {}
+local foundHarmful = {}
 local raidAurasHelpful = {}
 local raidAurasHarmful = {}
 local raidAurasDispel = {}
@@ -40,7 +41,6 @@ local raidDebuffData = {}
 local getUnitBuffs = {}
 local getUnitDebuffs = {}
 local dispelCache = {}
-
 
 function Ether:CleanupTimerCache()
     local currentTime = GetTime()
@@ -153,7 +153,10 @@ function Ether:UpdateRaidIsHelpful(unit)
     if not raidBuffData[guid] then
         raidBuffData[guid] = {}
     end
-
+    if not foundHelpful[guid] then
+        foundHelpful[guid] = {}
+    end
+    wipe(foundHelpful[guid])
     local index = 1
     while true do
         local auraData = GetBuffDataByIndex(unit, index)
@@ -171,6 +174,11 @@ function Ether:UpdateRaidIsHelpful(unit)
         end
         index = index + 1
     end
+    for spellId, texture in pairs(raidBuffData[guid]) do
+        if not foundHelpful[guid][spellId] then
+            texture:Hide()
+        end
+    end
 end
 
 function Ether:UpdateRaidIsHarmful(unit)
@@ -184,11 +192,13 @@ function Ether:UpdateRaidIsHarmful(unit)
     local button = FindUnitButton(unit)
     if not button then return end
     local config = Ether.DB[1003]
-
     if not raidDebuffData[guid] then
         raidDebuffData[guid] = {}
     end
-
+    if not foundHarmful[guid] then
+        foundHarmful[guid] = {}
+    end
+    wipe(foundHarmful[guid])
     local index = 1
     while true do
         local auraData = GetDebuffDataByIndex(unit, index)
@@ -206,8 +216,12 @@ function Ether:UpdateRaidIsHarmful(unit)
         end
         index = index + 1
     end
+    for spellId, texture in pairs(raidDebuffData[guid]) do
+        if not foundHarmful[guid][spellId] then
+            texture:Hide()
+        end
+    end
 end
-
 
 function Ether:CleanupAuras(guid, unit)
     if raidBuffData[guid] then
@@ -217,6 +231,7 @@ function Ether:CleanupAuras(guid, unit)
             texture:SetParent(nil)
         end
         raidBuffData[guid] = nil
+        foundHelpful[guid] = nil
     end
 
     if raidDebuffData[guid] then
@@ -226,6 +241,7 @@ function Ether:CleanupAuras(guid, unit)
             texture:SetParent(nil)
         end
         raidDebuffData[guid] = nil
+        foundHarmful[guid] = nil
     end
 
     local button = FindUnitButton(unit)
@@ -292,7 +308,6 @@ local function OnAuraDispelAdded(unit)
     end
 end
 
-
 local function UpdateAddedHelpfulAuras(unit)
     if not UnitExists(unit) then
         return
@@ -304,11 +319,13 @@ local function UpdateAddedHelpfulAuras(unit)
     local button = FindUnitButton(unit)
     if not button then return end
     local config = Ether.DB[1003]
-
     if not raidBuffData[guid] then
         raidBuffData[guid] = {}
     end
-
+    if not foundHelpful[guid] then
+        foundHelpful[guid] = {}
+    end
+    wipe(foundHelpful[guid])
     for _, auraData in pairs(raidAurasHelpful) do
         if not auraData then break end
         if auraData.spellId and config[auraData.spellId] then
@@ -321,6 +338,12 @@ local function UpdateAddedHelpfulAuras(unit)
                 raidBuffData[guid][auraData.spellId] = texture
             end
             raidBuffData[guid][auraData.spellId]:Show()
+            foundHelpful[guid][auraData.spellId] = true
+        end
+    end
+    for spellId, texture in pairs(raidBuffData[guid]) do
+        if not foundHelpful[guid][spellId] then
+            texture:Hide()
         end
     end
 end
@@ -336,11 +359,13 @@ local function UpdateAddedHarmfulAuras(unit)
     local button = FindUnitButton(unit)
     if not button then return end
     local config = Ether.DB[1003]
-
     if not raidDebuffData[guid] then
         raidDebuffData[guid] = {}
     end
-
+    if not foundHarmful[guid] then
+        foundHarmful[guid] = {}
+    end
+    wipe(foundHarmful[guid])
     for _, auraData in pairs(raidAurasHarmful) do
         if not auraData then break end
         if auraData.spellId and config[auraData.spellId] then
@@ -355,8 +380,12 @@ local function UpdateAddedHarmfulAuras(unit)
             raidDebuffData[guid][auraData.spellId]:Show()
         end
     end
+    for spellId, texture in pairs(raidDebuffData[guid]) do
+        if not foundHarmful[guid][spellId] then
+            texture:Hide()
+        end
+    end
 end
-
 
 local function raidAuraUpdate(unit, updateInfo)
     if not Ether.unitButtons.raid[unit] or Ether.DB[1001][4] ~= 1 then
@@ -623,7 +652,6 @@ function Ether:SingleAuraFullInitial(self)
     Ether:SingleAuraUpdateDebuff(self)
 end
 
-
 local function soloAuraUpdate(unit, updateInfo)
     if not Ether.unitButtons.solo["player"] or not Ether.unitButtons.solo["target"] and not Ether.unitButtons.solo["pet"]:IsVisible() then
         return
@@ -681,6 +709,8 @@ function Ether:AuraWipe()
     wipe(raidAurasDispel)
     wipe(raidBuffData)
     wipe(raidDebuffData)
+    wipe(foundHelpful)
+    wipe(foundHarmful)
     wipe(dispelCache)
 end
 

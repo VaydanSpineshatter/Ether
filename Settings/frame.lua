@@ -1967,6 +1967,8 @@ function Ether.CreateConfigSection(self)
 
     UpdateAllControls()
 
+
+
     if not LibStub or not LibStub("LibSharedMedia-3.0", true) then return end
     local LSM = LibStub("LibSharedMedia-3.0")
     local fontMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
@@ -1981,6 +1983,7 @@ function Ether.CreateConfigSection(self)
             info.value = fontPath
             info.func = function(self)
                 UIDropDownMenu_SetText(fontMedia, fontName)
+
             end
             UIDropDownMenu_AddButton(info)
         end
