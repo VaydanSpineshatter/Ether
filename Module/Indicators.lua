@@ -350,6 +350,7 @@ local function NotAfk(self)
         for unit in pairs(Ether.unitButtons.raid) do
             if UnitExists(unit) then
                 Ether:UpdateRaidIsHelpful(unit)
+                Ether:UpdateRaidIsHarmful(unit)
             end
         end
     end

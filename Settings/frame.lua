@@ -957,20 +957,6 @@ function Ether.CreateAuraCustomSection(self)
     end
 end
 
-local function protoType(newId)
-    local obj = {
-        name = "New Aura " .. newId,
-        color = {1, 1, 0, 1},
-        size = 6,
-        position = "TOP",
-        offsetX = 0,
-        offsetY = 0,
-        enabled = true,
-        isDebuff = false
-    }
-    return obj
-end
-
 function Ether.UpdateAuraList()
 
     for _, btn in ipairs(AuraButtons) do
@@ -1138,7 +1124,7 @@ function Ether:AddNewAura()
     while Ether.DB[1003][newId] do
         newId = newId + 1
     end
-    Ether.DB[1003][newId] = protoType(newId)
+    Ether.DB[1003][newId] = Ether.AuraTemplate(newId)
     Ether:SelectAura(newId)
 end
 

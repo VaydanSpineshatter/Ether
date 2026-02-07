@@ -101,14 +101,7 @@ local function PlayerUnghost(_, event)
         end)
     end
 end
---[[
-  for i = 1, GetNumGroupMembers() do
-            local unit = "raid" .. i
-                if UnitExists(unit) then
-                    Ether:IndicatorsUpdateUnit(unit)
-                end
-            end
-]]
+
 function Ether:RosterEnable()
     Ether:AuraEnable()
     Ether:IndicatorsEnable()

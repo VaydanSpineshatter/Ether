@@ -50,6 +50,7 @@ local function OnAttributeChanged(self, name, unit)
     if name ~= "unit" or not unit then
         return
     end
+    local status = false
     local oldUnit = self.unit
     local oldGUID = self.unitGUID
     local newGUID = UnitGUID(unit)
@@ -63,13 +64,14 @@ local function OnAttributeChanged(self, name, unit)
 
     if oldUnit and Ether.unitButtons.raid[oldUnit] == self then
         Ether.unitButtons.raid[oldUnit] = nil
+        status = true
     end
     Ether.unitButtons.raid[unit] = self
-
+    if not status then return end
     if self.unit == unit and UnitExists(unit) then
-        if Ether.DB and Ether.DB[1001] and Ether.DB[1001][4] == 1 then
-            Ether:UpdateRaidIsHelpful(unit)
-        end
+        -- if Ether.DB and Ether.DB[1001] and Ether.DB[1001][4] == 1 then
+        -- Ether:UpdateRaidIsHelpful(unit)
+        --  end
         Update(self)
         Ether:FullUpdateIndicators()
     end
