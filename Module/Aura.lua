@@ -218,7 +218,7 @@ function Ether:CleanupAuras(guid, unit)
         end
         raidBuffData[guid] = nil
     end
-    
+
     if raidDebuffData[guid] then
         for _, texture in pairs(raidDebuffData[guid]) do
             texture:Hide()
@@ -310,11 +310,6 @@ local function UpdateAddedHelpfulAuras(unit)
     end
 
     for _, auraData in pairs(raidAurasHelpful) do
-        local auraGuid = auraData.guid
-        local spellId = auraData.spellId
-        if raidBuffData[auraGuid] and raidBuffData[auraGuid][spellId] then
-            raidBuffData[auraGuid][spellId]:Hide()
-        end
         if not auraData then break end
         if auraData.spellId and config[auraData.spellId] then
             local spellConfig = config[auraData.spellId]
@@ -347,11 +342,6 @@ local function UpdateAddedHarmfulAuras(unit)
     end
 
     for _, auraData in pairs(raidAurasHarmful) do
-        local auraGuid = auraData.guid
-        local spellId = auraData.spellId
-        if raidDebuffData[auraGuid] and raidDebuffData[auraGuid][spellId] then
-            raidDebuffData[auraGuid][spellId]:Hide()
-        end
         if not auraData then break end
         if auraData.spellId and config[auraData.spellId] then
             local spellConfig = config[auraData.spellId]
