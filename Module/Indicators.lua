@@ -322,9 +322,10 @@ local function OnAfk(self)
     Ether:NameDisable()
     Ether:HealthDisable()
     Ether:PowerDisable()
-    Ether:AuraDisable()
     Ether:IndicatorsDisable()
-    Ether:CleanupAllRaidIcons()
+    if Ether.DB[1001][4] == 1 then
+        Ether:AuraDisable()
+    end
     if Ether.DB[401][5] == 1 then
         C_Timer.After(0.1, function()
             Ether:RangeDisable()
@@ -343,15 +344,11 @@ local function NotAfk(self)
     Ether:NameEnable()
     Ether:HealthEnable()
     Ether:PowerEnable()
-    Ether:AuraEnable()
     Ether:IndicatorsEnable()
     if Ether.DB[1001][4] == 1 then
-        for unit in pairs(Ether.unitButtons.raid) do
-            if UnitExists(unit) then
-                Ether:UpdateRaidIsHelpful(unit)
-                Ether:UpdateRaidIsHarmful(unit)
-            end
-        end
+        C_Timer.After(0.3, function()
+            Ether:AuraEnable()
+        end)
     end
     if Ether.DB[401][5] == 1 then
         C_Timer.After(0.1, function()
@@ -378,15 +375,14 @@ local function UpdatePlayerFlags(self, event, unit)
             button.Indicators.PlayerFlags:Hide()
         end
     end
-    if Ether.DB[401][4] == 1 then
-        if UnitIsAFK("player") then
-            if not self.isActive then
-                OnAfk(self)
-            end
-        else
-            if self.isActive then
-                NotAfk(self)
-            end
+    if Ether.DB[401][4] ~= 1 then return end
+    if UnitIsAFK("player") then
+        if not self.isActive then
+            OnAfk(self)
+        end
+    else
+        if self.isActive then
+            NotAfk(self)
         end
     end
 end

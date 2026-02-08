@@ -62,8 +62,10 @@ local function ifValidUnits()
     if not status then
         status = true
         C_After(5, function()
-            if not UnitInAnyGroup("player") then
-                Ether:CleanupAllRaidIcons()
+            if Ether.DB[1001][4] == 1 then
+                if not UnitInAnyGroup("player") then
+                    Ether:CleanupRaidIcons()
+                end
             end
             Ether:HeaderBackground()
             status = false

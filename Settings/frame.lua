@@ -339,6 +339,12 @@ function Ether.CreateAuraSettingsSection(self)
                 else
                     ShowHideSingleAura(Ether.unitButtons.solo["target"], false)
                 end
+            elseif i == 4 then
+                if Ether.DB[1001][4] == 1 then
+                    Ether:AuraEnable()
+                else
+                    Ether:AuraDisable()
+                end
             end
         end)
         self.Content.Buttons.Auras.A[i] = btn
