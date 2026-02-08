@@ -24,6 +24,10 @@ local Default = {
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
     [801] = {1, 1, 0, 0, 0, 1, 1, 1, 1, 1},
+    [811] = {
+        font = "Fonts\\FRIZQT__.TTF",
+        bar = "Interface\\TargetingFrame\\UI-StatusBar"
+    },
     [901] = {
         player = true,
         target = true,
@@ -546,113 +550,3 @@ end
 	["EtherBlue"]   = { r = 0.00, g = 0.80, b = 1.00, str = "cE600CCFF" }
 ]]
 
-Ether.AuraTemplates = {
-    ["Priest - Group Buffs"] = {
-        [21564] = {
-            name = "Prayer of Fortitude: Rank 2",
-            color = {0.93, 0.91, 0.67, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [27681] = {
-            name = "Prayer of Spirit: Rank 1",
-            color = {0.93, 0.91, 0.67, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 6,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [27683] = {
-            name = "Prayer of Shadow Protection",
-            color = {0, 0, 0, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 12,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-    },
-    ["Priest - Helpful"] = {
-        [10901] = {
-            name = "Power Word: Shield",
-            color = {0.93, 0.91, 0.67, 1},
-            size = 6,
-            position = "TOPLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [25315] = {
-            name = "Renew",
-            color = {0.2, 1, 0.2, 1},
-            size = 6,
-            position = "TOPRIGHT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [6346] = {
-            name = "Fear Ward",
-            color = {1, 0.2, 0.5, 1},
-            size = 6,
-            position = "BOTTOM",
-            offsetX = 0,
-            offsetY = 6,
-            enabled = true,
-            isDebuff = false
-        },
-    },
-    ["Druid - Group Buffs"] = {
-        [9885] = {
-            name = "Mark of the Wild: Rank 7",
-            color = {1, 0.4, 1, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            debuff = false
-        },
-        [21850] = {
-            name = "Gift of the Wild: Rank 2",
-            color = {0.2, 1, 0.2, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 8,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-    },
-    ["Mage - Group Buffs"] = {
-        [10157] = {
-            name = "Arcane Intellect: Rank 5",
-            color = {1, 1, 0.4, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-        [23028] = {
-            name = "Arcane Brilliance: Rank 1",
-            color = {0.6, 0.2, 0.6, 1},
-            size = 6,
-            position = "BOTTOMRIGHT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false
-        },
-    }
-}

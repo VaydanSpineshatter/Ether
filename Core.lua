@@ -41,6 +41,7 @@ local function BuildContent(self)
         Ether.CreateUpdateSection(self)
         Ether.CreateAuraSettingsSection(self)
         Ether.CreateAuraCustomSection(self)
+        Ether.CreateAuraConfigSection(self)
         Ether.CreateRegisterSection(self)
         Ether.CreatePositionSection(self)
         Ether.CreateLayoutSection(self)
@@ -84,11 +85,11 @@ local Construct = {
         ["TOP"] = {
             [1] = {"Module", "Blizzard", "Information"},
             [2] = {"Create", "Updates"},
-            [3] = {"Aura Settings", "Aura Custom"},
+            [3] = {"Aura Settings", "Aura Custom", "Aura Helper"},
             [4] = {"Register", "Position"},
             [5] = {"Tooltip"},
             [6] = {"Layout", "Config"},
-            [7] = {"Profile"}
+            [7] = {"Edit"}
         },
         ["LEFT"] = {
             [1] = {"Info"},
@@ -813,6 +814,14 @@ local function OnInitialize(self, event, ...)
                 for subkey in pairs(Ether.DataDefault[1002]) do
                     if profile[1002][subkey] == nil then
                         profile[1002] = Ether.CopyTable(Ether.DataDefault[1002])
+                        break
+                    end
+                end
+            end
+            if profile[811] then
+                for subkey in pairs(Ether.DataDefault[811]) do
+                    if profile[811][subkey] == nil then
+                        profile[811] = Ether.CopyTable(Ether.DataDefault[811])
                         break
                     end
                 end

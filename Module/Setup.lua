@@ -15,10 +15,9 @@ end
 
 function Ether:SetupName(button, number)
     if not button or not button.healthBar then return end
-    local font = LSM:Fetch("font", "Expressway")
     local name = button.healthBar:CreateFontString(nil, "OVERLAY")
     button.name = name
-    name:SetFont(font, 12, "OUTLINE")
+    name:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     name:SetPoint("CENTER", button.healthBar, "CENTER", 0, number)
     name:SetTextColor(1, 1, 1)
     return button
@@ -32,7 +31,7 @@ function Ether:SetupHealthBar(button, orient, w, h)
     healthBar:SetWidth(w)
     healthBar:SetHeight(h)
     healthBar:SetOrientation(orient)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
+    healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
     healthBar:SetMinMaxValues(0, 100)
     healthBar:SetFrameLevel(button:GetFrameLevel() + 1)
     local healthDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)

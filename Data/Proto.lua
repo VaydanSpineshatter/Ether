@@ -1,6 +1,5 @@
 local _, Ether = ...
 
-
 Ether.AuraTemplate = function(newId)
     local obj = {
         name = "New Aura " .. newId,

@@ -393,7 +393,7 @@ local function CreateAuraList(parent)
 
         UIDropDownMenu_AddSeparator()
 
-        for templateName, _ in pairs(Ether.AuraTemplates) do
+        for templateName, _ in pairs(Ether.PredefinedAuras) do
             info.text = templateName
             info.func = function(self)
                 UIDropDownMenu_SetText(templateDropdown, templateName)
@@ -464,7 +464,7 @@ local function CreateAuraList(parent)
 end
 
 function Ether:AddTemplateAuras(templateName)
-    local template = Ether.AuraTemplates[templateName]
+    local template = Ether.PredefinedAuras[templateName]
     if not template then
         return
     end
@@ -548,7 +548,6 @@ local function GenericColorChanged()
 
         if state.editorFrame then
             state.editorFrame.colorBtn.bg:SetColorTexture(r, g, b, a)
-            state.editorFrame.rgbText:SetText(string.format("RGB: %d, %d, %d", r * 255, g * 255, b * 255))
             Ether.UpdatePreview()
             Ether.UpdateAuraList()
         end
@@ -570,7 +569,6 @@ local function GenericCancel(prevValues)
         if state.editorFrame then
             local r, g, b, a = auraData.color[1], auraData.color[2], auraData.color[3], auraData.color[4]
             state.editorFrame.colorBtn.bg:SetColorTexture(r, g, b, a)
-            state.editorFrame.rgbText:SetText(string.format("RGB: %d, %d, %d", r * 255, g * 255, b * 255))
             Ether.UpdatePreview()
             Ether.UpdateAuraList()
         end
@@ -601,8 +599,6 @@ local function OnCancel(prevValues)
             a = originalColor[4]
         }
         currentEditor.colorBtn.bg:SetColorTexture(color.r, color.g, color.b, color.a)
-        currentEditor.rgbText:SetText(string.format("RGB: %d, %d, %d",
-                      color.r * 255, color.g * 255, color.b * 255))
         Ether.UpdateAuraList()
     end
 end
@@ -617,40 +613,6 @@ local function UpdateIsDebuff(button, spellId)
         debuff = false
         button:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     end
-end
-
-local function CreateToggle(parent, name, dbTable, dbKey, func)
-    local toggle = CreateFrame('CheckButton', nil, parent, 'InterfaceOptionsCheckButtonTemplate')
-    toggle:SetPoint('TOPLEFT', 10, 0)
-    toggle:SetSize(24, 24)
-
-    if dbTable and dbKey then
-        toggle:SetChecked(dbTable[dbKey] or false)
-    else
-        toggle:SetChecked(false)
-    end
-
-    toggle:SetScript('OnClick', function(self)
-        local checked = self:GetChecked()
-
-        if dbTable and dbKey then
-            dbTable[dbKey] = checked
-        end
-
-        if func then
-            func(checked)
-        end
-    end)
-
-    toggle.label = toggle:CreateFontString(nil, 'OVERLAY')
-    toggle.label:SetFont([[Interface\AddOns\Ether\Media\Font\expressway.ttf]], 12, 'OUTLINE')
-    toggle.label:SetTextColor(1, 1, 1)
-    toggle.label:SetShadowColor(0, 0, 0, 0.8)
-    toggle.label:SetShadowOffset(1, -1)
-    toggle.label:SetText(name)
-    toggle.label:SetPoint('LEFT', toggle, 'RIGHT', 8, 1)
-
-    return toggle
 end
 
 local function CreateEditor(parent)
@@ -774,7 +736,6 @@ local function CreateEditor(parent)
                 local auraData = Ether.DB[1003][selectedSpellId]
                 auraData.color[1], auraData.color[2], auraData.color[3], auraData.color[4] = r, g, b, a
                 currentEditor.colorBtn.bg:SetColorTexture(r, g, b, a)
-                currentEditor.rgbText:SetText(string.format("RGB: %d, %d, %d", r * 255, g * 255, b * 255))
                 Ether.UpdateAuraList()
                 Ether.UpdatePreview()
             end
@@ -795,10 +756,9 @@ local function CreateEditor(parent)
     end)
 
     local rgbText = frame:CreateFontString(nil, "OVERLAY")
-    frame.rgbText = rgbText
     rgbText:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     rgbText:SetPoint("LEFT", sizeSlider, "RIGHT", 40, 0)
-    rgbText:SetText("RGB: 255, 255, 0")
+    rgbText:SetText("Pick Color")
 
     local preview = CreateFrame("Frame", nil, frame)
     frame.preview = preview
@@ -1006,7 +966,7 @@ function Ether.UpdateAuraList()
         btn.spellId:SetTextColor(0, 0.8, 1)
 
         btn.colorBox = btn:CreateTexture(nil, "OVERLAY")
-        btn.colorBox:SetSize(16, 16)
+        btn.colorBox:SetSize(20, 20)
         btn.colorBox:SetPoint("RIGHT", -10, 0)
         if data.color then
             btn.colorBox:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
@@ -1014,14 +974,14 @@ function Ether.UpdateAuraList()
 
         btn.deleteBtn = CreateFrame("Button", nil, btn)
         btn.deleteBtn:SetSize(20, 20)
-        btn.deleteBtn:SetPoint("TOPRIGHT", -10, -5)
+        btn.deleteBtn:SetPoint("RIGHT", btn.colorBox, "LEFT", 0, 0)
         btn.deleteBtn:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
         btn.deleteBtn:SetScript("OnClick", function(self)
             StaticPopup_Show("ETHER_DELETE_AURA", data.name or "this Aura", nil, spellId)
             self:GetParent():GetScript("OnLeave")(self:GetParent())
         end)
         StaticPopupDialogs["ETHER_DELETE_AURA"] = {
-            text = "Destroy Aura ?",
+            text = "Delete Aura ?",
             button1 = "Yes",
             button2 = "No",
             OnAccept = function(self, spellId)
@@ -1043,7 +1003,7 @@ function Ether.UpdateAuraList()
         if selectedSpellId == spellId then
             btn.bg:SetColorTexture(0, 0.8, 1, 0.8, .3)
         end
-        yOffset = yOffset - 55
+        yOffset = yOffset - 45
         index = index + 1
     end
     AuraList.scrollChild:SetHeight(math.max(1, index * 55))
@@ -1051,18 +1011,33 @@ end
 
 function Ether.UpdateEditor()
     if not selectedSpellId or not Ether.DB[1003][selectedSpellId] then
+        Editor.nameInput:SetText("")
+        Editor.nameInput:Disable()
+        Editor.spellIdInput:SetText("")
+        Editor.spellIdInput:Disable()
+        Editor.colorBtn:Disable()
+        Editor.sizeSlider:Disable()
+        Editor.offsetXSlider:Disable()
+        Editor.offsetYSlider:Disable()
+        Editor.preview.indicator:Hide()
+        for _, btn in pairs(Editor.posButtons) do
+            btn:Disable()
+        end
         return
     end
 
     local data = Ether.DB[1003][selectedSpellId]
     Editor.nameInput:SetText(data.name or "")
     Editor.nameInput:Enable()
+    Editor.preview.indicator:Show()
     Editor.spellIdInput:SetText(tostring(selectedSpellId))
+    Editor.spellIdInput:Enable()
     Editor.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
-    Editor.rgbText:SetText(string.format("RGB: %d, %d, %d",
-                  data.color[1] * 255, data.color[2] * 255, data.color[3] * 255))
-
+    Editor.colorBtn:Enable()
+    Editor.offsetXSlider:Enable()
+    Editor.offsetYSlider:Enable()
     Editor.sizeSlider:SetValue(data.size)
+    Editor.sizeSlider:Enable()
     Editor.sizeValue:SetText(string.format("%.0f px", data.size))
 
     for pos, btn in pairs(Editor.posButtons) do
@@ -1126,6 +1101,159 @@ function Ether:AddNewAura()
     end
     Ether.DB[1003][newId] = Ether.AuraTemplate(newId)
     Ether:SelectAura(newId)
+end
+
+function Ether.CreateAuraConfigSection(self)
+    local parent = self.Content.Children["Aura Helper"]
+
+    local spellIDPanel = CreateFrame("Frame", nil, parent)
+    spellIDPanel:SetPoint("TOPLEFT", 10, -10)
+    spellIDPanel:SetSize(250, 80)
+
+    local title = parent:CreateFontString(nil, "OVERLAY")
+    title:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
+    title:SetPoint("TOPLEFT", 10, -10)
+    title:SetText("Spell Information")
+
+    local resultText, spellIcon
+
+    local spellNameBox = CreateLineInput(spellIDPanel, 180, 20)
+    spellNameBox:SetPoint("TOPLEFT", spellIDPanel, "TOPLEFT", 10, -30)
+    spellNameBox:SetAutoFocus(false)
+    spellNameBox:SetScript("OnEnterPressed", function(self)
+        Ether:GetSpellIDFromName(spellNameBox:GetText(), resultText, spellIcon)
+    end)
+
+    local spellInfo = CreateFrame("Button", nil, spellIDPanel)
+    spellInfo:SetSize(80, 25)
+    spellInfo:SetPoint("LEFT", spellNameBox, "RIGHT", 10, 0)
+    spellInfo.bg = spellInfo:CreateTexture(nil, "BACKGROUND")
+    spellInfo.bg:SetAllPoints()
+    spellInfo.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    spellInfo.text = spellInfo:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    spellInfo.text:SetPoint("CENTER")
+    spellInfo.text:SetText("Search")
+
+    local resultFrame = CreateFrame("Frame", nil, spellIDPanel)
+    resultFrame:SetPoint("TOPLEFT", spellNameBox, "BOTTOMLEFT", 0, -15)
+    resultFrame:SetSize(230, 40)
+
+    resultText = resultFrame:CreateFontString(nil, "OVERLAY")
+    resultText:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+    resultText:SetPoint("TOPLEFT", resultFrame, "BOTTOMLEFT", 0, 0)
+    resultText:SetWidth(230)
+    resultText:SetJustifyH("LEFT")
+
+    spellIcon = resultFrame:CreateTexture(nil, "OVERLAY")
+    spellIcon:SetPoint("TOP", resultText, "BOTTOM", 0, -40)
+    spellIcon:SetSize(64, 64)
+    spellIcon:Hide()
+
+    spellInfo:SetScript("OnClick", function(self)
+        Ether:GetSpellIDFromName(spellNameBox:GetText(), resultText, spellIcon)
+    end)
+
+    local Highlight = spellInfo:CreateTexture(nil, "HIGHLIGHT")
+    Highlight:SetAllPoints()
+    Highlight:SetColorTexture(1, 1, 1, .4)
+
+    local examples = {
+        "Greater Heal(Rank 4)",
+        "Greater Heal",
+        "18248",
+        "Fishing",
+        "Power Word: Shield",
+        "Renew(Rank 10)",
+        "25233"
+    }
+
+    local exampleText = "Example\n\n"
+    for i = 1, 7 do
+        exampleText = exampleText .. string.format("• %s\n", examples[i])
+    end
+
+    local example = parent:CreateFontString(nil, "OVERLAY")
+    example:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
+    example:SetJustifyH("LEFT")
+    example:SetPoint("TOPLEFT", spellInfo, "BOTTOMLEFT", 20, -50)
+    example:SetText(exampleText)
+end
+
+function Ether:GetSpellIDFromName(spellName, resultText, spellIcon)
+    if not resultText or not spellIcon then return end
+    spellName = spellName:trim()
+    if spellName == "" then
+        resultText:SetText("Enter spell name")
+        resultText:SetTextColor(1, 1, 1)
+        spellIcon:Hide()
+        return
+    end
+    local spellID = C_Spell.GetSpellIDForSpellIdentifier(spellName)
+    if not spellID then
+        local baseName = spellName:gsub("%s*%(%s*[Rr]ank%s+%d+%s*%)", ""):trim()
+        if baseName ~= spellName then
+            spellID = C_Spell.GetSpellIDForSpellIdentifier(baseName)
+        end
+    end
+    if not spellID then
+        resultText:SetText("Not found: " .. spellName)
+        resultText:SetTextColor(1, 0, 0)
+        spellIcon:Hide()
+        return
+    end
+    local name = C_Spell.GetSpellName(spellID)
+    local subtext = C_Spell.GetSpellSubtext(spellID) or ""
+    local iconID = C_Spell.GetSpellTexture(spellID)
+    local levelLearned = C_Spell.GetSpellLevelLearned(spellID)
+    local spellRank = 0
+    if subtext:match("Rank") then
+        spellRank = tonumber(subtext:match("Rank%s+(%d+)")) or 0
+    end
+    if iconID then
+        spellIcon:SetTexture(iconID)
+        spellIcon:Show()
+    else
+        spellIcon:Hide()
+    end
+    local resultStr = string.format("Spell Name: %s\nSpellID: %d", name, spellID)
+    if subtext ~= "" then
+        resultStr = resultStr .. string.format("\n%s", subtext)
+    end
+    if levelLearned > 0 then
+        resultStr = resultStr .. string.format("\nLearned at: Level %d", levelLearned)
+    end
+
+    resultText:SetText(resultStr)
+    resultText:SetTextColor(1, 1, 1)
+    Ether.DebugOutput(resultStr)
+
+    spellIcon:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(spellIcon, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(name, 1, 1, 1)
+        GameTooltip:AddLine("Spell ID: " .. spellID, 0.5, 1, 0.5)
+
+        if subtext ~= "" then
+            GameTooltip:AddLine(subtext, 1, 0.82, 0)
+        end
+
+        local level = C_Spell.GetSpellLevelLearned(spellID)
+        if level > 0 then
+            GameTooltip:AddLine("Learned at level " .. level, 0.7, 0.7, 1)
+        end
+
+        local desc = C_Spell.GetSpellDescription(spellID)
+        if desc and desc ~= "" then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(desc:sub(1, 200), 0.8, 0.8, 0.8, true)
+        end
+
+        GameTooltip:Show()
+    end)
+
+    spellIcon:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+
 end
 
 function Ether.CreateRegisterSection(self)
@@ -1968,80 +2096,8 @@ function Ether.CreateConfigSection(self)
     UpdateAllControls()
 
 
-
-    if not LibStub or not LibStub("LibSharedMedia-3.0", true) then return end
-    local LSM = LibStub("LibSharedMedia-3.0")
-    local fontMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    fontMedia:SetPoint("TOPRIGHT", 0, -10)
-    UIDropDownMenu_SetWidth(fontMedia, 140)
-    UIDropDownMenu_SetText(fontMedia, "Select Font")
-    UIDropDownMenu_Initialize(fontMedia, function(self)
-        local fonts = LSM:HashTable("font")
-        for fontName, fontPath in pairs(fonts) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = fontName
-            info.value = fontPath
-            info.func = function(self)
-                UIDropDownMenu_SetText(fontMedia, fontName)
-
-            end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
-
-    local statusbarMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    statusbarMedia:SetPoint("TOP", fontMedia, "BOTTOM")
-    UIDropDownMenu_SetWidth(statusbarMedia, 140)
-    UIDropDownMenu_SetText(statusbarMedia, "Select Statusbar")
-    UIDropDownMenu_Initialize(statusbarMedia, function(self)
-        local bars = LSM:HashTable("statusbar")
-        for barName, barPath in pairs(bars) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = barName
-            info.value = barPath
-            info.func = function(self)
-                UIDropDownMenu_SetText(statusbarMedia, barName)
-            end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
-
-    local borderMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    borderMedia:SetPoint("TOP", statusbarMedia, "BOTTOM")
-    UIDropDownMenu_SetWidth(borderMedia, 140)
-    UIDropDownMenu_SetText(borderMedia, "Select Border")
-    UIDropDownMenu_Initialize(borderMedia, function(self)
-        local border = LSM:HashTable("border")
-        for borderName, borderPath in pairs(border) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = borderName
-            info.value = borderPath
-            info.func = function(self)
-                UIDropDownMenu_SetText(borderMedia, borderName)
-            end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
-
-    local backgroundMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    backgroundMedia:SetPoint("TOP", borderMedia, "BOTTOM")
-    UIDropDownMenu_SetWidth(backgroundMedia, 140)
-    UIDropDownMenu_SetText(backgroundMedia, "Select Background")
-    UIDropDownMenu_Initialize(backgroundMedia, function(self)
-        local bg = LSM:HashTable("background")
-        for bgName, bgPath in pairs(bg) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = bgName
-            info.value = bgPath
-            info.func = function(self)
-                UIDropDownMenu_SetText(backgroundMedia, bgName)
-            end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
-
     local preview = CreateFrame("Frame", nil, parent)
-    preview:SetPoint("TOPLEFT", backgroundMedia, "BOTTOMLEFT", 80, -80)
+    preview:SetPoint("TOPRIGHT", 0, -220)
     preview:SetSize(90, 90)
     local healthBar = CreateFrame("StatusBar", nil, preview)
     healthBar:SetFrameLevel(preview:GetFrameLevel() + 1)
@@ -2059,10 +2115,95 @@ function Ether.CreateConfigSection(self)
     background:SetColorTexture(0, 0, 0, 1)
     background:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -5, 5)
     background:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 5, -5)
+
+    if not LibStub or not LibStub("LibSharedMedia-3.0", true) then return end
+    local LSM = LibStub("LibSharedMedia-3.0")
+    local fontMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
+    fontMedia:SetPoint("TOPRIGHT", 0, -10)
+    UIDropDownMenu_SetWidth(fontMedia, 140)
+    UIDropDownMenu_SetText(fontMedia, "Select Font")
+    UIDropDownMenu_Initialize(fontMedia, function(self)
+        local fonts = LSM:HashTable("font")
+
+        local currentFont = DB[811].font
+
+        for fontName, fontPath in pairs(fonts) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = fontName
+            info.value = fontPath
+
+            if currentFont == fontPath then
+                info.checked = true
+                UIDropDownMenu_SetText(fontMedia, fontName)
+            end
+
+            info.func = function(self)
+                UIDropDownMenu_SetText(fontMedia, fontName)
+                DB[811].font = self.value
+                if name then
+                    name:SetFont(self.value, 18, "OUTLINE")
+                end
+                for _, button in pairs(Ether.unitButtons.raid) do
+                    if button and button.name then
+                        button.name:SetFont(self.value, 13, "OUTLINE")
+                    end
+                end
+                for _, button in pairs(Ether.unitButtons.solo) do
+                    if button and button.name then
+                        button.name:SetFont(self.value, 13, "OUTLINE")
+                    end
+                end
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+
+    local statusbarMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
+    statusbarMedia:SetPoint("TOP", fontMedia, "BOTTOM")
+    UIDropDownMenu_SetWidth(statusbarMedia, 140)
+    UIDropDownMenu_SetText(statusbarMedia, "Select Statusbar")
+    UIDropDownMenu_Initialize(statusbarMedia, function(self)
+        local bars = LSM:HashTable("statusbar")
+        local currentBar = DB[811].bar
+
+        for barName, barPath in pairs(bars) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = barName
+            info.value = barPath
+
+            if currentBar == barPath then
+                info.checked = true
+                UIDropDownMenu_SetText(statusbarMedia, barName)
+            end
+
+            info.func = function(self)
+                UIDropDownMenu_SetText(statusbarMedia, barName)
+                DB[811].bar = self.value
+
+                if healthBar then
+                    healthBar:SetStatusBarTexture(self.value)
+                end
+
+                for _, button in pairs(Ether.unitButtons.raid) do
+                    if button and button.healthBar then
+                        button.healthBar:SetStatusBarTexture(self.value)
+                    end
+                end
+                for _, button in pairs(Ether.unitButtons.solo) do
+                    if button and button.healthBar then
+                        button.healthBar:SetStatusBarTexture(self.value)
+                    end
+                end
+            end
+
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
+
 end
 
 function Ether.CreateProfileSection(self)
-    local parent = self.Content.Children["Profile"]
+    local parent = self.Content.Children["Edit"]
     local dropdownLabel = parent:CreateFontString(nil, "OVERLAY")
     dropdownLabel:SetFont(unpack(Ether.mediaPath.expressway), 13, "OUTLINE")
     dropdownLabel:SetPoint("TOPLEFT", 10, -10)

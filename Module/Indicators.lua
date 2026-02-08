@@ -76,7 +76,6 @@ function Ether.SaveIndicatorsPos(icon, number)
             button.Indicators[icon]:ClearAllPoints()
             button.Indicators[icon]:SetPoint(Ether.DB[1002][number][2], button.healthBar, Ether.DB[1002][number][2], Ether.DB[1002][number][3], Ether.DB[1002][number][4])
             button.Indicators[icon]:SetSize(Ether.DB[1002][number][1], Ether.DB[1002][number][1])
-            button.Indicators[icon]:Show()
         end
     end
     Ether:UpdateIndicatorsByIndex(number)

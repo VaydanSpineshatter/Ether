@@ -137,7 +137,6 @@ local function FindUnitButton(unit)
     end
     return nil
 end
-
 function Ether:UpdateRaidIsHelpful(unit)
     if not UnitExists(unit) then
         return
@@ -146,10 +145,10 @@ function Ether:UpdateRaidIsHelpful(unit)
     if not guid then
         return
     end
-
     local button = FindUnitButton(unit)
     if not button then return end
     local config = Ether.DB[1003]
+
     if not raidBuffData[guid] then
         raidBuffData[guid] = {}
     end
@@ -171,6 +170,7 @@ function Ether:UpdateRaidIsHelpful(unit)
                 raidBuffData[guid][auraData.spellId] = texture
             end
             raidBuffData[guid][auraData.spellId]:Show()
+            foundHelpful[guid][auraData.spellId] = true
         end
         index = index + 1
     end
@@ -192,6 +192,7 @@ function Ether:UpdateRaidIsHarmful(unit)
     local button = FindUnitButton(unit)
     if not button then return end
     local config = Ether.DB[1003]
+
     if not raidDebuffData[guid] then
         raidDebuffData[guid] = {}
     end
@@ -213,6 +214,7 @@ function Ether:UpdateRaidIsHarmful(unit)
                 raidDebuffData[guid][auraData.spellId] = texture
             end
             raidDebuffData[guid][auraData.spellId]:Show()
+            foundHarmful[guid][auraData.spellId] = true
         end
         index = index + 1
     end
@@ -308,85 +310,6 @@ local function OnAuraDispelAdded(unit)
     end
 end
 
-local function UpdateAddedHelpfulAuras(unit)
-    if not UnitExists(unit) then
-        return
-    end
-    local guid = UnitGUID(unit)
-    if not guid then
-        return
-    end
-    local button = FindUnitButton(unit)
-    if not button then return end
-    local config = Ether.DB[1003]
-    if not raidBuffData[guid] then
-        raidBuffData[guid] = {}
-    end
-    if not foundHelpful[guid] then
-        foundHelpful[guid] = {}
-    end
-    wipe(foundHelpful[guid])
-    for _, auraData in pairs(raidAurasHelpful) do
-        if not auraData then break end
-        if auraData.spellId and config[auraData.spellId] then
-            local spellConfig = config[auraData.spellId]
-            if not raidBuffData[guid][auraData.spellId] then
-                local texture = button.healthBar:CreateTexture(nil, "OVERLAY")
-                texture:SetColorTexture(unpack(spellConfig.color))
-                texture:SetSize(spellConfig.size, spellConfig.size)
-                texture:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
-                raidBuffData[guid][auraData.spellId] = texture
-            end
-            raidBuffData[guid][auraData.spellId]:Show()
-            foundHelpful[guid][auraData.spellId] = true
-        end
-    end
-    for spellId, texture in pairs(raidBuffData[guid]) do
-        if not foundHelpful[guid][spellId] then
-            texture:Hide()
-        end
-    end
-end
-
-local function UpdateAddedHarmfulAuras(unit)
-    if not UnitExists(unit) then
-        return
-    end
-    local guid = UnitGUID(unit)
-    if not guid then
-        return
-    end
-    local button = FindUnitButton(unit)
-    if not button then return end
-    local config = Ether.DB[1003]
-    if not raidDebuffData[guid] then
-        raidDebuffData[guid] = {}
-    end
-    if not foundHarmful[guid] then
-        foundHarmful[guid] = {}
-    end
-    wipe(foundHarmful[guid])
-    for _, auraData in pairs(raidAurasHarmful) do
-        if not auraData then break end
-        if auraData.spellId and config[auraData.spellId] then
-            local spellConfig = config[auraData.spellId]
-            if not raidDebuffData[guid][auraData.spellId] then
-                local texture = button.healthBar:CreateTexture(nil, "OVERLAY")
-                texture:SetColorTexture(unpack(spellConfig.color))
-                texture:SetSize(spellConfig.size, spellConfig.size)
-                texture:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
-                raidDebuffData[guid][auraData.spellId] = texture
-            end
-            raidDebuffData[guid][auraData.spellId]:Show()
-        end
-    end
-    for spellId, texture in pairs(raidDebuffData[guid]) do
-        if not foundHarmful[guid][spellId] then
-            texture:Hide()
-        end
-    end
-end
-
 local function raidAuraUpdate(unit, updateInfo)
     if not Ether.unitButtons.raid[unit] or Ether.DB[1001][4] ~= 1 then
         return
@@ -451,11 +374,11 @@ local function raidAuraUpdate(unit, updateInfo)
     end
 
     if buffAdded then
-        UpdateAddedHelpfulAuras(unit)
+        Ether:UpdateRaidIsHelpful(unit)
     end
 
     if debuffAdded then
-        UpdateAddedHarmfulAuras(unit)
+        Ether:UpdateRaidIsHarmful(unit)
     end
 
     if dispelAdded then
@@ -739,3 +662,87 @@ function Ether:AuraDisable()
     end
     Ether:AuraWipe()
 end
+
+
+
+--[[
+
+local function UpdateAddedHelpfulAuras(unit)
+    if not UnitExists(unit) then
+        return
+    end
+    local guid = UnitGUID(unit)
+    if not guid then
+        return
+    end
+    local button = FindUnitButton(unit)
+    if not button then return end
+    local config = Ether.DB[1003]
+    if not raidBuffData[guid] then
+        raidBuffData[guid] = {}
+    end
+    if not foundHelpful[guid] then
+        foundHelpful[guid] = {}
+    end
+    wipe(foundHelpful[guid])
+    for _, auraData in pairs(raidAurasHelpful) do
+        if not auraData then break end
+        if auraData.spellId and config[auraData.spellId] then
+            local spellConfig = config[auraData.spellId]
+            if not raidBuffData[guid][auraData.spellId] then
+                local texture = button.healthBar:CreateTexture(nil, "OVERLAY")
+                texture:SetColorTexture(unpack(spellConfig.color))
+                texture:SetSize(spellConfig.size, spellConfig.size)
+                texture:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
+                raidBuffData[guid][auraData.spellId] = texture
+            end
+            raidBuffData[guid][auraData.spellId]:Show()
+            foundHelpful[guid][auraData.spellId] = true
+        end
+    end
+    for spellId, texture in pairs(raidBuffData[guid]) do
+        if not foundHelpful[guid][spellId] then
+            texture:Hide()
+        end
+    end
+end
+
+local function UpdateAddedHarmfulAuras(unit)
+    if not UnitExists(unit) then
+        return
+    end
+    local guid = UnitGUID(unit)
+    if not guid then
+        return
+    end
+    local button = FindUnitButton(unit)
+    if not button then return end
+    local config = Ether.DB[1003]
+    if not raidDebuffData[guid] then
+        raidDebuffData[guid] = {}
+    end
+    if not foundHarmful[guid] then
+        foundHarmful[guid] = {}
+    end
+    wipe(foundHarmful[guid])
+    for _, auraData in pairs(raidAurasHarmful) do
+        if not auraData then break end
+        if auraData.spellId and config[auraData.spellId] then
+            local spellConfig = config[auraData.spellId]
+            if not raidDebuffData[guid][auraData.spellId] then
+                local texture = button.healthBar:CreateTexture(nil, "OVERLAY")
+                texture:SetColorTexture(unpack(spellConfig.color))
+                texture:SetSize(spellConfig.size, spellConfig.size)
+                texture:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
+                raidDebuffData[guid][auraData.spellId] = texture
+            end
+            raidDebuffData[guid][auraData.spellId]:Show()
+        end
+    end
+    for spellId, texture in pairs(raidDebuffData[guid]) do
+        if not foundHarmful[guid][spellId] then
+            texture:Hide()
+        end
+    end
+end
+]]
