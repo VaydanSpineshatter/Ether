@@ -91,6 +91,11 @@ function Ether.CreateInformationSection(self)
     idle:SetPoint("TOP", 0, -180)
     local idleInfo = GetFont(self, parent, "When the user is not at the keyboard,\nEther deregisters all events and OnUpdate functions.", 12)
     idleInfo:SetPoint("TOP", 0, -220)
+
+    local auras = GetFont(self, parent, "|cffffff00How do I create my own auras?|r", 15)
+    auras:SetPoint("TOP", idleInfo, "BOTTOM", 0, -30)
+    local aurasInfo = GetFont(self, parent, "Only via SpellId. Use Aura Helper or other methods.", 12)
+    aurasInfo:SetPoint("TOP", auras, "BOTTOM", 0, -10)
 end
 
 function Ether.CreateBlizzardSection(self)
@@ -2094,7 +2099,6 @@ function Ether.CreateConfigSection(self)
     end)
 
     UpdateAllControls()
-
 
     local preview = CreateFrame("Frame", nil, parent)
     preview:SetPoint("TOPRIGHT", 0, -220)
