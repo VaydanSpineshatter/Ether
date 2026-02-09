@@ -237,8 +237,57 @@ local function UpdateTooltip(self, unit)
     Tooltip.StringBuffer.Release(buffer)
 end
 
+local function SnapToGrid(x, y, gridSize)
+    local snappedX = math.floor((x + gridSize / 2) / gridSize) * gridSize
+    local snappedY = math.floor((y + gridSize / 2) / gridSize) * gridSize
+    return snappedX, snappedY
+end
+
+local function OnDrag(self)
+    if not Ether.IsMovable then return end
+    if self:IsMovable() then
+        self:StartMoving()
+    end
+end
+
+local function StopDrag(self)
+    if not Ether.IsMovable then return end
+    if self:IsMovable() then
+        self:StopMovingOrSizing()
+    end
+    local point, relTo, relPoint, x, y = self:GetPoint(1)
+    local relToName = "UIParent"
+    if relTo then
+        if relTo == UIParent then
+            relToName = "UIParent"
+        elseif relTo.GetName and relTo:GetName() then
+            relToName = relTo:GetName()
+        end
+    end
+    local snappedX, snappedY = SnapToGrid(x, y, 20)
+    local DB = Ether.DB[5111][331]
+    DB[1] = point
+    DB[2] = relToName
+    DB[3] = relPoint
+    DB[4] = snappedX
+    DB[5] = snappedY
+
+    local anchorRelTo = (relToName == "UIParent") and UIParent or _G[relToName]
+    if anchorRelTo then
+        self:ClearAllPoints()
+        self:SetPoint(point, anchorRelTo, relPoint, snappedX, snappedY)
+    end
+
+end
+
 local function SetupToolFrame(parent)
     local frame = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    Ether.tooltipFrame = frame
+    frame:SetScript("OnDragStart", OnDrag)
+    frame:SetScript("OnDragStop", StopDrag)
+    frame:RegisterForDrag("LeftButton")
+    frame:EnableMouse(true)
+    frame:SetMovable(true)
     frame:SetPoint("TOPLEFT")
     frame:Hide()
     frame:SetSize(280, 110)

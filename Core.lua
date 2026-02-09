@@ -4,6 +4,7 @@ local L = Ether.L
 local pairs, ipairs = pairs, ipairs
 Ether.version = ""
 Ether.charKey = "Unknown-Unknown"
+Ether.IsMovable = false
 local updatedChannel = false
 Ether.debug = false
 Ether.Header = {}
@@ -103,7 +104,7 @@ local Construct = {
         },
     },
 }
-
+Ether.Construct = Construct
 function Ether.ShowCategory(self, tab)
     if not self.IsLoaded then
         return
@@ -302,19 +303,25 @@ local function InitializeSettings(self)
 end
 
 local function OnDrag(self)
+    if not Ether.IsMovable then return end
     if self:IsMovable() then
         self:StartMoving()
     end
 end
 
+local function SnapToGrid(x, y, gridSize)
+    local snappedX = math.floor((x + gridSize / 2) / gridSize) * gridSize
+    local snappedY = math.floor((y + gridSize / 2) / gridSize) * gridSize
+    return snappedX, snappedY
+end
+
 local function StopDrag(self)
+    if not Ether.IsMovable then return end
     if self:IsMovable() then
         self:StopMovingOrSizing()
     end
-
     local point, relTo, relPoint, x, y = self:GetPoint(1)
     local relToName = "UIParent"
-
     if relTo then
         if relTo.GetName and relTo:GetName() then
             relToName = relTo:GetName()
@@ -324,22 +331,16 @@ local function StopDrag(self)
             relToName = "UIParent"
         end
     end
-
-    Ether.DB[5111][340][1] = point
-    Ether.DB[5111][340][2] = relToName
-    Ether.DB[5111][340][3] = relPoint
-    Ether.DB[5111][340][4] = x
-    Ether.DB[5111][340][5] = y
-
+    local snappedX, snappedY = SnapToGrid(x, y, 40)
+    local DB = Ether.DB[5111][340]
+    DB[1] = point
+    DB[2] = relToName
+    DB[3] = relPoint
+    DB[4] = snappedX
+    DB[5] = snappedY
     local anchorRelTo = _G[relToName] or UIParent
     self:ClearAllPoints()
-    self:SetPoint(
-                  Ether.DB[5111][340][1],
-                  anchorRelTo,
-                  Ether.DB[5111][340][3],
-                  Ether.DB[5111][340][4],
-                  Ether.DB[5111][340][5]
-    )
+    self:SetPoint(DB[1], anchorRelTo, DB[3], snappedX, snappedY)
 end
 
 function Ether.CreateMainSettings(self)
@@ -360,6 +361,10 @@ function Ether.CreateMainSettings(self)
         self.Frames["Main"]:Hide()
         self.Frames["Main"]:SetScript("OnHide", function()
             Ether.DB[111].SHOW = false
+            Ether.IsMovable = false
+            if Ether and Ether.gridFrame then
+                Ether.gridFrame:SetShown(false)
+            end
         end)
         tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
         RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")
@@ -368,6 +373,9 @@ function Ether.CreateMainSettings(self)
         btnX:SetSize(28, 28)
         btnX:SetScript("OnClick", function()
             self.Frames["Main"]:Hide()
+            if Ether and Ether.gridFrame then
+                Ether.gridFrame:SetShown(false)
+            end
         end)
         self.Frames["Top"] = CreateFrame("Frame", nil, self.Frames["Main"])
         self.Frames["Top"]:SetPoint("TOPLEFT", 10, -10)
@@ -582,18 +590,11 @@ do
                 Ether.DB[111].SHOW = true
             end
             ToggleSettings(Construct)
-        elseif button == "LeftButton" then
-            if not Ether.gridFrame then
-                Ether:SetupGridFrame()
-            end
-            local isShown = Ether.gridFrame:IsShown()
-            Ether.gridFrame:SetShown(not isShown)
         end
     end
 
     local function ShowTooltip(GameTooltip)
         GameTooltip:SetText("Ether", 0, 0.8, 1)
-        GameTooltip:AddLine(L.MINIMAP_TOOLTIP_LEFT, 1, 1, 1, 1)
         GameTooltip:AddLine(L.MINIMAP_TOOLTIP_RIGHT, 1, 1, 1, 1)
         GameTooltip:AddLine(L.MINIMAP_TOOLTIP_LOCALE, 1, 1, 1, 1)
     end
@@ -608,7 +609,7 @@ function Ether:RefreshAllSettings()
     if not Construct or not Construct.Content then
         return
     end
-
+    Construct.Frames["Main"]:Hide()
     if Construct.Content.Buttons.Module and Construct.Content.Buttons.Module.A then
         for i = 1, #Ether.DB[401] do
             local checkbox = Construct.Content.Buttons.Module.A[i]
@@ -685,6 +686,7 @@ function Ether:RefreshAllSettings()
             end
         end
     end
+    Construct.Frames["Main"]:Show()
 end
 
 function Ether:RefreshFramePositions()
@@ -714,14 +716,11 @@ function Ether:ApplyFramePosition(frameID)
 
     local frame = frames[frameID]
     if frame then
-        local s = frame:GetEffectiveScale()
-        local x, y = pos[4] / s, pos[5] / s
-        if frame.SetPoint then
-            frame:ClearAllPoints()
-            frame:SetPoint(pos[1], UIParent, pos[3], x, y)
-            frame:SetScale(pos[8])
-            frame:SetAlpha(pos[9])
-        end
+        local x, y = pos[4], pos[5]
+        frame:ClearAllPoints()
+        frame:SetPoint(pos[1], UIParent, pos[3], x, y)
+        frame:SetScale(pos[8] or 1.0)
+        frame:SetAlpha(pos[9] or 1.0)
     end
 end
 
@@ -924,7 +923,7 @@ local function OnInitialize(self, event, ...)
             }
             StaticPopup_Show("ETHER_RELOAD_UI")
         end
-        Ether.Anchor.raid:SetSize(1, 1)
+        Ether.Anchor.raid:SetSize(1,1)
         Ether:ApplyFramePosition(338)
 
         local tooltip = CreateFrame("Frame", nil, UIParent)

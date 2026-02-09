@@ -65,6 +65,14 @@ local function ifValidUnits()
                 if not UnitInAnyGroup("player") then
                     Ether:DisableHeaderAuras()
                     Ether:EnableHeaderAuras()
+                else
+                    local getUnits = Ether.GetUnits()
+                    for _, unit in ipairs(getUnits) do
+                        if UnitExists(unit) then
+                            Ether:UpdateRaidIsHelpful(unit, true)
+                            Ether:UpdateRaidIsHarmful(unit, true)
+                        end
+                    end
                 end
             end
             Ether:FullUpdateIndicators()

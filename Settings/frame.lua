@@ -1,5 +1,7 @@
 local _, Ether = ...
 local realmName = GetRealmName()
+local string_format = string.format
+local pairs, ipairs = pairs, ipairs
 
 local function GetFont(_, target, tex, numb)
     target.label = target:CreateFontString(nil, "OVERLAY")
@@ -85,7 +87,7 @@ function Ether.CreateInformationSection(self)
     slash:SetPoint("TOP", 0, -20)
     local lastY = -20
     for _, entry in ipairs(Ether.SlashInfo) do
-        local fs = GetFont(self, parent, string.format("%s  –  %s", entry.cmd, entry.desc), 12)
+        local fs = GetFont(self, parent, string_format("%s  –  %s", entry.cmd, entry.desc), 12)
         fs:SetPoint("TOP", slash, "BOTTOM", 0, lastY)
         lastY = lastY - 18
     end
@@ -418,12 +420,12 @@ function Ether:AddTemplateAuras(templateName)
 
     Ether.UpdateAuraList()
 
-    local msg = string.format("|cff00ccffAuras|r: Template '%s' loaded. ", templateName)
+    local msg = string_format("|cff00ccffAuras|r: Template '%s' loaded. ", templateName)
     if added > 0 then
-        msg = msg .. string.format("|cff00ff00+%d new auras|r", added)
+        msg = msg .. string_format("|cff00ff00+%d new auras|r", added)
     end
     if skipped > 0 then
-        msg = msg .. string.format(" (%d already existed)", skipped)
+        msg = msg .. string_format(" (%d already existed)", skipped)
     end
     Ether.DebugOutput(msg)
 
@@ -622,7 +624,7 @@ local function CreateEditor(parent)
     sizeSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].size = value
-            frame.sizeValue:SetText(string.format("%.0f px", value))
+            frame.sizeValue:SetText(string_format("%.0f px", value))
             Ether.UpdatePreview()
         end
     end)
@@ -687,23 +689,12 @@ local function CreateEditor(parent)
     preview:SetPoint("TOPLEFT", 15, -140)
     preview:SetSize(55, 55)
 
-    local healthBar = CreateFrame("StatusBar", nil, preview)
-    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
-    preview.healthBar = healthBar
-    healthBar:SetPoint("BOTTOMLEFT")
-    healthBar:SetSize(55, 55)
-    healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
-    local _, classFilename = UnitClass("player")
-    local c = Ether.RAID_COLORS[classFilename]
-    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
-    local pName = healthBar:CreateFontString(nil, "OVERLAY")
-    pName:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    pName:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
-    pName:SetText(Ether:ShortenName(Ether.playerName, 3))
-    preview.indicator = preview:CreateTexture(nil, "OVERLAY")
-    preview.indicator:SetSize(6, 6)
-    preview.indicator:SetPoint("TOP", healthBar, "TOP", 0, 0)
-    preview.indicator:SetColorTexture(1, 1, 0, 1)
+    local healthBar = Ether:SetupPreviewBar(Editor, preview)
+    local icon = healthBar:CreateTexture(nil, "OVERLAY")
+    frame.icon = icon
+    icon:SetSize(6, 6)
+    icon:SetPoint("TOP", frame.healthBar, "TOP", 0, 0)
+    icon:SetColorTexture(1, 1, 0, 1)
 
     local positions = {
         {"TOPLEFT", "TOP", "TOPRIGHT"},
@@ -774,7 +765,7 @@ local function CreateEditor(parent)
     offsetXSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].offsetX = value
-            frame.offsetXValue:SetText(string.format("%.0f", value))
+            frame.offsetXValue:SetText(string_format("%.0f", value))
             Ether.UpdatePreview()
         end
     end)
@@ -802,7 +793,7 @@ local function CreateEditor(parent)
     offsetYSlider:SetScript("OnValueChanged", function(self, value)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].offsetY = value
-            frame.offsetYValue:SetText(string.format("%.0f", value))
+            frame.offsetYValue:SetText(string_format("%.0f", value))
             Ether.UpdatePreview()
         end
     end)
@@ -941,7 +932,7 @@ function Ether.UpdateEditor()
         Editor.sizeSlider:Disable()
         Editor.offsetXSlider:Disable()
         Editor.offsetYSlider:Disable()
-        Editor.preview.indicator:Hide()
+        Editor.icon:Hide()
         for _, btn in pairs(Editor.posButtons) do
             btn:Disable()
         end
@@ -951,7 +942,7 @@ function Ether.UpdateEditor()
     local data = Ether.DB[1003][selectedSpellId]
     Editor.nameInput:SetText(data.name or "")
     Editor.nameInput:Enable()
-    Editor.preview.indicator:Show()
+    Editor.icon:Show()
     Editor.spellIdInput:SetText(tostring(selectedSpellId))
     Editor.spellIdInput:Enable()
     Editor.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
@@ -960,7 +951,7 @@ function Ether.UpdateEditor()
     Editor.offsetYSlider:Enable()
     Editor.sizeSlider:SetValue(data.size)
     Editor.sizeSlider:Enable()
-    Editor.sizeValue:SetText(string.format("%.0f px", data.size))
+    Editor.sizeValue:SetText(string_format("%.0f px", data.size))
     for pos, btn in pairs(Editor.posButtons) do
         if pos == data.position then
             btn.bg:SetColorTexture(0.8, 0.6, 0, 0.5)
@@ -971,9 +962,9 @@ function Ether.UpdateEditor()
         end
     end
     Editor.offsetXSlider:SetValue(data.offsetX)
-    Editor.offsetXValue:SetText(string.format("%.0f", data.offsetX))
+    Editor.offsetXValue:SetText(string_format("%.0f", data.offsetX))
     Editor.offsetYSlider:SetValue(data.offsetY)
-    Editor.offsetYValue:SetText(string.format("%.0f", data.offsetY))
+    Editor.offsetYValue:SetText(string_format("%.0f", data.offsetY))
 
     Ether.UpdatePreview()
 end
@@ -984,7 +975,7 @@ function Ether.UpdatePreview()
     end
 
     local data = Ether.DB[1003][selectedSpellId]
-    local indicator = Editor.preview.indicator
+    local indicator = Editor.icon
 
     indicator:SetSize(data.size, data.size)
     indicator:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
@@ -1005,7 +996,7 @@ function Ether.UpdatePreview()
 
     local pos = posMap[data.position]
     if pos then
-        indicator:SetPoint(pos[1], Editor.preview.healthBar, pos[1], pos[2], pos[3])
+        indicator:SetPoint(pos[1], Editor.healthBar, pos[1], pos[2], pos[3])
     end
 end
 
@@ -1077,7 +1068,7 @@ function Ether.CreateAuraConfigSection(self)
 
     local exampleText = "Example\n\n"
     for i = 1, 7 do
-        exampleText = exampleText .. string.format("• %s\n", examples[i])
+        exampleText = exampleText .. string_format("• %s\n", examples[i])
     end
 
     local example = parent:CreateFontString(nil, "OVERLAY")
@@ -1123,12 +1114,12 @@ function Ether:GetSpellInfo(spellName, resultText, spellIcon)
     else
         spellIcon:Hide()
     end
-    local resultStr = string.format("Spell Name: %s\nSpellID: %d", name, spellID)
+    local resultStr = string_format("Spell Name: %s\nSpellID: %d", name, spellID)
     if subtext ~= "" then
-        resultStr = resultStr .. string.format("\n%s", subtext)
+        resultStr = resultStr .. string_format("\n%s", subtext)
     end
     if levelLearned > 0 then
-        resultStr = resultStr .. string.format("\nLearned at: Level %d", levelLearned)
+        resultStr = resultStr .. string_format("\nLearned at: Level %d", levelLearned)
     end
 
     resultText:SetText(resultStr)
@@ -1390,7 +1381,7 @@ function Ether.CreatePositionSection(self)
         if number then
             Ether.DB[1002][number][1] = value
             if Indicator.sizeValue then
-                Indicator.sizeValue:SetText(string.format("%.0f px", value))
+                Indicator.sizeValue:SetText(string_format("%.0f px", value))
             end
             Ether.UpdateIndicatorsValue()
         end
@@ -1425,7 +1416,7 @@ function Ether.CreatePositionSection(self)
         if number then
             Ether.DB[1002][number][3] = value
             if Indicator.offsetXValue then
-                Indicator.offsetXValue:SetText(string.format("%.0f", value))
+                Indicator.offsetXValue:SetText(string_format("%.0f", value))
             end
             Ether.UpdateIndicatorsValue()
         end
@@ -1460,7 +1451,7 @@ function Ether.CreatePositionSection(self)
         if number then
             Ether.DB[1002][number][4] = value
             if Indicator.offsetYValue then
-                Indicator.offsetYValue:SetText(string.format("%.0f", value))
+                Indicator.offsetYValue:SetText(string_format("%.0f", value))
             end
             Ether.UpdateIndicatorsValue()
         end
@@ -1501,7 +1492,7 @@ function Ether.UpdateIndicatorsValue()
     Indicator.sizeSlider:SetValue(data[1])
 
     if Indicator.sizeValue then
-        Indicator.sizeValue:SetText(string.format("%.0f px", data[1]))
+        Indicator.sizeValue:SetText(string_format("%.0f px", data[1]))
     end
 
     for pos, btn in pairs(Indicator.posButtons) do
@@ -1514,12 +1505,12 @@ function Ether.UpdateIndicatorsValue()
 
     Indicator.offsetXSlider:SetValue(data[3])
     if Indicator.offsetXValue then
-        Indicator.offsetXValue:SetText(string.format("%.0f", data[3]))
+        Indicator.offsetXValue:SetText(string_format("%.0f", data[3]))
     end
 
     Indicator.offsetYSlider:SetValue(data[4])
     if Indicator.offsetYValue then
-        Indicator.offsetYValue:SetText(string.format("%.0f", data[4]))
+        Indicator.offsetYValue:SetText(string_format("%.0f", data[4]))
     end
 
     Ether.UpdateIndicators()
@@ -1647,13 +1638,10 @@ function Ether.CreateConfigSection(self)
     local function SetupSliderText(slider, lowText, highText)
         slider.Low:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
         slider.Low:SetText(lowText)
-
         slider.High:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
         slider.High:SetText(highText)
-
         slider.Low:ClearAllPoints()
         slider.Low:SetPoint("TOPLEFT", slider, "BOTTOMLEFT", 0, -2)
-
         slider.High:ClearAllPoints()
         slider.High:SetPoint("TOPRIGHT", slider, "BOTTOMRIGHT", 0, -2)
     end
@@ -1666,16 +1654,16 @@ function Ether.CreateConfigSection(self)
         end
     end
 
-    local FRAME_GROUPS = {
-        [331] = {name = "Tooltip"},
-        [332] = {name = "Player"},
-        [333] = {name = "Target"},
-        [334] = {name = "TargetTarget"},
-        [335] = {name = "Pet"},
-        [336] = {name = "Pet Target"},
-        [337] = {name = "Focus"},
-        [338] = {name = "Raid"},
-        [339] = {name = "Debug"}
+    local frameKeys = {
+        [331] = "Tooltip",
+        [332] = "Player",
+        [333] = "Target",
+        [334] = "TargetTarget",
+        [335] = "Pet",
+        [336] = "Pet Target",
+        [337] = "Focus",
+        [338] = "Raid",
+        [339] = "Debug"
     }
 
     local labels = {}
@@ -1690,7 +1678,7 @@ function Ether.CreateConfigSection(self)
 
     local sizeLabel = parent:CreateFontString(nil, "OVERLAY")
     sizeLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    sizeLabel:SetPoint("TOPLEFT", labels["Select frame:"], "BOTTOMLEFT", 10, -200)
+    sizeLabel:SetPoint("TOPLEFT", labels["Select frame:"], "BOTTOMLEFT", 10, -60)
     sizeLabel:SetText("Size")
 
     local sizeSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
@@ -1736,63 +1724,23 @@ function Ether.CreateConfigSection(self)
     alphaValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     alphaValue:SetPoint("TOP", alphaSlider, "BOTTOM", 0, -5)
 
-    local offsetXLabel = parent:CreateFontString(nil, "OVERLAY")
-    offsetXLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    offsetXLabel:SetPoint("TOPLEFT", sizeLabel, "BOTTOMLEFT", 0, -50)
-    offsetXLabel:SetText("X Offset")
-
-    local offsetXSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
-    offsetXSlider:SetPoint("TOPLEFT", offsetXLabel, "BOTTOMLEFT", 0, -10)
-    offsetXSlider:SetWidth(100)
-    offsetXSlider:SetMinMaxValues(-300, 300)
-    offsetXSlider:SetValueStep(10)
-    offsetXSlider:SetObeyStepOnDrag(true)
-    offsetXSlider.Low:SetText("-300")
-    offsetXSlider.High:SetText("300")
-
-    local offsetXBG = offsetXSlider:CreateTexture(nil, "BACKGROUND")
-    offsetXBG:SetPoint("CENTER")
-    offsetXBG:SetSize(100, 10)
-    offsetXBG:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    offsetXBG:SetDrawLayer("BACKGROUND", -1)
-
-    local offsetXValue = parent:CreateFontString(nil, "OVERLAY")
-    offsetXValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    offsetXValue:SetPoint("TOP", offsetXSlider, "BOTTOM")
-
-    local offsetYLabel = parent:CreateFontString(nil, "OVERLAY")
-    offsetYLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    offsetYLabel:SetPoint("LEFT", offsetXLabel, "RIGHT", 80, 0)
-    offsetYLabel:SetText("Y Offset")
-
-    local offsetYSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
-    offsetYSlider:SetPoint("TOPLEFT", offsetYLabel, "BOTTOMLEFT", 0, -10)
-    offsetYSlider:SetWidth(100)
-    offsetYSlider:SetMinMaxValues(-300, 300)
-    offsetYSlider:SetValueStep(10)
-    offsetYSlider:SetObeyStepOnDrag(true)
-    offsetYSlider.Low:SetText("-300")
-    offsetYSlider.High:SetText("300")
-
-    local offsetYBG = offsetYSlider:CreateTexture(nil, "BACKGROUND")
-    offsetYBG:SetPoint("CENTER")
-    offsetYBG:SetSize(100, 10)
-    offsetYBG:SetColorTexture(0.2, 0.2, 0.2, 0.6)
-    offsetYBG:SetDrawLayer("BACKGROUND", -1)
-
-    local offsetYValue = parent:CreateFontString(nil, "OVERLAY")
-    offsetYValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    offsetYValue:SetPoint("TOP", offsetYSlider, "BOTTOM")
-
-    SetupSliderText(offsetXSlider, "-300", "300")
-    SetupSliderText(offsetYSlider, "-300", "300")
     SetupSliderText(sizeSlider, "0.5", "2.0")
     SetupSliderText(alphaSlider, "0", "1")
-
-    SetupSliderThump(offsetXSlider, 12, {0.8, 0.6, 0, 1})
-    SetupSliderThump(offsetYSlider, 12, {0.8, 0.6, 0, 1})
     SetupSliderThump(sizeSlider, 12, {0.8, 0.6, 0, 1})
     SetupSliderThump(alphaSlider, 12, {0.8, 0.6, 0, 1})
+
+    local unlock = EtherPanelButton(parent, 100, 25, "Unlock frames", "TOPLEFT", sizeSlider, "BOTTOMLEFT", 0, -50)
+    unlock:SetScript("OnClick", function()
+        if InCombatLockdown() then return end
+        if not Ether.gridFrame then
+            Ether:SetupGridFrame()
+        end
+        local isShown = Ether.gridFrame:IsShown()
+        Ether.IsMovable = not isShown
+        Ether.gridFrame:SetShown(not isShown)
+        Ether.tooltipFrame:SetShown(not isShown)
+        Ether.DB[401][3] = isShown and 1 or 0
+    end)
 
     local dropdowns = {}
     local function CreateDropdown(name, relativeTo, width)
@@ -1806,103 +1754,33 @@ function Ether.CreateConfigSection(self)
 
     dropdowns.frame = CreateDropdown("frame", labels["Select frame:"], 100)
 
-    local positions = {
-        {"TOPLEFT", "TOP", "TOPRIGHT"},
-        {"LEFT", "CENTER", "RIGHT"},
-        {"BOTTOMLEFT", "BOTTOM", "BOTTOMRIGHT"}
-    }
-
-    local posButtons = {}
-    local startX, startY = 110, -100
-    local btnSize = 25
-
-    for row = 1, 3 do
-        for col = 1, 3 do
-            local pos = positions[row][col]
-            local btn = CreateFrame("Button", nil, parent)
-            btn:SetSize(btnSize, btnSize)
-            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", startX + (col - 1) * (btnSize + 1), startY - (row - 1) * (btnSize + 1))
-
-            btn.bg = btn:CreateTexture(nil, "BACKGROUND")
-            btn.bg:SetAllPoints()
-            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-
-            btn.text = btn:CreateFontString(nil, "OVERLAY")
-            btn.text:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-            btn.text:SetPoint("CENTER")
-            btn.text:SetText(pos:sub(1, 1))
-
-            btn.position = pos
-            posButtons[pos] = btn
-        end
-    end
-
     local function UpdateValueLabels()
         local SELECTED = DB[111].SELECTED
         if not SELECTED or not DB[5111] or not DB[5111][SELECTED] then
             sizeValue:SetText("")
             alphaValue:SetText("")
-            offsetXValue:SetText("")
-            offsetYValue:SetText("")
             return
         end
-
         local pos = DB[5111][SELECTED]
-        sizeValue:SetText(string.format("%.1f", pos[8] or 1))
-        alphaValue:SetText(string.format("%.1f", pos[9] or 1))
-        offsetXValue:SetText(tostring(pos[4] or 0))
-        offsetYValue:SetText(tostring(pos[5] or 0))
+        sizeValue:SetText(string_format("%.1f", pos[8] or 1))
+        alphaValue:SetText(string_format("%.1f", pos[9] or 1))
     end
 
-    local function UpdatePositionButtons()
-        local frame = DB[111].SELECTED
-        if not frame or not DB[5111][frame] then
-            for _, btn in pairs(posButtons) do
-                btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-            end
-            return
-        end
-
-        local posData = DB[5111][frame]
-        local selectedPoint = posData[1]
-
-        for pos, btn in pairs(posButtons) do
-            if pos == selectedPoint then
-                btn.bg:SetColorTexture(0.8, 0.6, 0, 0.4)
-            else
-                btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-            end
-        end
-    end
-
-    local function UpdateAllControls()
+    local function UpdateSliders()
         local SELECTED = DB[111].SELECTED
         if not SELECTED or not DB[5111][SELECTED] then
             UIDropDownMenu_SetText(dropdowns.frame, "Select...")
             sizeSlider:Disable()
             alphaSlider:Disable()
-            offsetXSlider:Disable()
-            offsetYSlider:Disable()
             UpdateValueLabels()
-            UpdatePositionButtons()
             return
         end
 
-        local frameName = FRAME_GROUPS[SELECTED] and FRAME_GROUPS[SELECTED].name or "Unknown"
+        local frameName = frameKeys[SELECTED]
         UIDropDownMenu_SetText(dropdowns.frame, frameName)
-
         sizeSlider:Enable()
         alphaSlider:Enable()
-        offsetXSlider:Enable()
-        offsetYSlider:Enable()
-
         local pos = DB[5111][SELECTED]
-        if math.abs((offsetXSlider:GetValue() or 0) - (pos[4] or 0)) > 0.001 then
-            offsetXSlider:SetValue(pos[4] or 0)
-        end
-        if math.abs((offsetYSlider:GetValue() or 0) - (pos[5] or 0)) > 0.001 then
-            offsetYSlider:SetValue(pos[5] or 0)
-        end
         if math.abs((sizeSlider:GetValue() or 1) - (pos[8] or 1)) > 0.001 then
             sizeSlider:SetValue(pos[8] or 1)
         end
@@ -1910,19 +1788,18 @@ function Ether.CreateConfigSection(self)
             alphaSlider:SetValue(pos[9] or 1)
         end
         UpdateValueLabels()
-        UpdatePositionButtons()
     end
 
     local function InitializeFrameDropdown(self, level)
         local info = UIDropDownMenu_CreateInfo()
-        for frameID, frameData in pairs(FRAME_GROUPS) do
-            info.text = frameData.name
+        for frameID, frameData in pairs(frameKeys) do
+            info.text = frameData
             info.value = frameID
             info.checked = (DB[111].SELECTED == frameID)
             info.func = function(self)
                 DB[111].SELECTED = self.value
                 UIDropDownMenu_SetText(dropdowns.frame, self:GetText())
-                UpdateAllControls()
+                UpdateSliders()
             end
             UIDropDownMenu_AddButton(info, level)
         end
@@ -1930,26 +1807,6 @@ function Ether.CreateConfigSection(self)
 
     UIDropDownMenu_Initialize(dropdowns.frame, InitializeFrameDropdown)
     UIDropDownMenu_SetText(dropdowns.frame, "Select...")
-
-    for pos, btn in pairs(posButtons) do
-        btn:SetScript("OnClick", function(self)
-            local frame = DB[111].SELECTED
-            if DB[5111][frame] then
-                DB[5111][frame][1] = self.position
-                DB[5111][frame][3] = self.position
-                Ether:ApplyFramePosition(frame)
-                UpdatePositionButtons()
-            end
-        end)
-
-        btn:SetScript("OnEnter", function(self)
-            self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
-        end)
-
-        btn:SetScript("OnLeave", function(self)
-            UpdatePositionButtons()
-        end)
-    end
 
     sizeSlider:SetScript("OnValueChanged", function(self, value)
         local frame = DB[111].SELECTED
@@ -1969,28 +1826,10 @@ function Ether.CreateConfigSection(self)
         end
     end)
 
-    offsetXSlider:SetScript("OnValueChanged", function(self, value)
-        local frame = DB[111].SELECTED
-        if DB[5111][frame] then
-            DB[5111][frame][4] = self:GetValue()
-            Ether:ApplyFramePosition(frame)
-            UpdateValueLabels()
-        end
-    end)
-
-    offsetYSlider:SetScript("OnValueChanged", function(self, value)
-        local frame = DB[111].SELECTED
-        if DB[5111][frame] then
-            DB[5111][frame][5] = self:GetValue()
-            Ether:ApplyFramePosition(frame)
-            UpdateValueLabels()
-        end
-    end)
-
-    UpdateAllControls()
+    UpdateSliders()
 
     local preview = CreateFrame("Frame", nil, parent)
-    preview:SetPoint("TOP", 100, -100)
+    preview:SetPoint("TOP", 20, -200)
     preview:SetSize(55, 55)
     Ether:SetupHealthBar(preview, "VERTICAL", 55, 55)
     local _, classFilename = UnitClass("player")
@@ -2005,6 +1844,17 @@ function Ether.CreateConfigSection(self)
     background:SetPoint("TOPLEFT", preview.healthBar, "TOPLEFT", -3, 3)
     background:SetPoint("BOTTOMRIGHT", preview.healthBar, "BOTTOMRIGHT", 3, -3)
 
+    local classColor = EtherPanelButton(parent, 80, 25, "Class color", "TOP", preview, "BOTTOM", 0, -20)
+    classColor:SetScript("OnClick", function()
+        if name then
+            local unit = "player"
+            local r, g, b = Ether:GetClassColors(unit)
+            name:Hide()
+            name:SetTextColor(r, g, b)
+            name:Show()
+        end
+    end)
+
     if not LibStub or not LibStub("LibSharedMedia-3.0", true) then return end
     local LSM = LibStub("LibSharedMedia-3.0")
     local fontMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
@@ -2013,19 +1863,15 @@ function Ether.CreateConfigSection(self)
     UIDropDownMenu_SetText(fontMedia, "Select Font")
     UIDropDownMenu_Initialize(fontMedia, function(self)
         local fonts = LSM:HashTable("font")
-
         local currentFont = DB[811].font
-
         for fontName, fontPath in pairs(fonts) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = fontName
             info.value = fontPath
-
             if currentFont == fontPath then
                 info.checked = true
                 UIDropDownMenu_SetText(fontMedia, fontName)
             end
-
             info.func = function(self)
                 UIDropDownMenu_SetText(fontMedia, fontName)
                 DB[811].font = self.value
@@ -2054,25 +1900,20 @@ function Ether.CreateConfigSection(self)
     UIDropDownMenu_Initialize(statusbarMedia, function(self)
         local bars = LSM:HashTable("statusbar")
         local currentBar = DB[811].bar
-
         for barName, barPath in pairs(bars) do
             local info = UIDropDownMenu_CreateInfo()
             info.text = barName
             info.value = barPath
-
             if currentBar == barPath then
                 info.checked = true
                 UIDropDownMenu_SetText(statusbarMedia, barName)
             end
-
             info.func = function(self)
                 UIDropDownMenu_SetText(statusbarMedia, barName)
                 DB[811].bar = self.value
-
-                if healthBar then
-                    healthBar:SetStatusBarTexture(self.value)
+                if preview.healthBar then
+                    preview.healthBar:SetStatusBarTexture(self.value)
                 end
-
                 for _, button in pairs(Ether.unitButtons.raid) do
                     if button and button.healthBar then
                         button.healthBar:SetStatusBarTexture(self.value)
@@ -2084,7 +1925,6 @@ function Ether.CreateConfigSection(self)
                     end
                 end
             end
-
             UIDropDownMenu_AddButton(info)
         end
     end)

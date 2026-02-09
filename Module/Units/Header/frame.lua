@@ -67,7 +67,8 @@ local function OnAttributeChanged(self, name, unit)
     Ether.unitButtons.raid[unit] = self
     if self.unit == unit and UnitExists(unit) then
         if Ether.DB and Ether.DB[1001] and Ether.DB[1001][3] == 1 then
-            Ether:UpdateRaidIsHelpful(unit)
+            Ether:UpdateRaidIsHelpful(unit, true)
+            Ether:UpdateRaidIsHarmful(unit, true)
         end
     end
     Update(self)
@@ -131,6 +132,47 @@ local function CreateChildren(headerName, buttonName)
     return button
 end
 
+local function SnapToGrid(x, y, gridSize)
+    local snappedX = math.floor((x + gridSize / 2) / gridSize) * gridSize
+    local snappedY = math.floor((y + gridSize / 2) / gridSize) * gridSize
+    return snappedX, snappedY
+end
+
+local function OnDrag(self)
+    if not Ether.IsMovable then return end
+    if self:IsMovable() then
+        self:StartMoving()
+    end
+end
+
+local function StopDrag(self)
+    if not Ether.IsMovable then return end
+    if self:IsMovable() then
+        self:StopMovingOrSizing()
+    end
+    local point, relTo, relPoint, x, y = self:GetPoint(1)
+    local relToName = "UIParent"
+    if relTo then
+        if relTo.GetName and relTo:GetName() then
+            relToName = relTo:GetName()
+        elseif relTo == UIParent then
+            relToName = "UIParent"
+        else
+            relToName = "UIParent"
+        end
+    end
+    local snappedX, snappedY = SnapToGrid(x, y, 40)
+    local DB = Ether.DB[5111][338]
+    DB[1] = point
+    DB[2] = relToName
+    DB[3] = relPoint
+    DB[4] = snappedX
+    DB[5] = snappedY
+    local anchorRelTo = _G[relToName] or UIParent
+    self:ClearAllPoints()
+    self:SetPoint(DB[1], anchorRelTo, DB[3], snappedX, snappedY)
+end
+
 local groupHeaders = {}
 local background = {}
 local function CreateGroupHeader(group)
@@ -138,7 +180,7 @@ local function CreateGroupHeader(group)
     local header = CreateFrame("Frame", headerName, raidAnchor, "SecureGroupHeaderTemplate")
     groupHeaders[group] = header
     Ether.Header.raid = header
-    header:SetAllPoints(raidAnchor)
+    header:SetPoint("TOPLEFT", raidAnchor, "TOPLEFT", 15, -15)
     header:SetAttribute("template", "EtherUnitTemplate")
     header:SetAttribute("initial-unitWatch", true)
     header:SetAttribute("groupFilter", group)

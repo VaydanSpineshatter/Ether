@@ -1,7 +1,6 @@
 local _, Ether = ...
 local math_floor = math.floor
 local tinsert = table.insert
-local LSM = LibStub("LibSharedMedia-3.0")
 
 function Ether:SetupUpdateText(button, tbl, p)
     if not button or not button.healthBar then return end
@@ -285,19 +284,25 @@ function Ether:SetupGridFrame()
 end
 
 local function OnDrag(self)
+    if not Ether.IsMovable then return end
     if self:IsMovable() then
         self:StartMoving()
     end
 end
 
+local function SnapToGrid(x, y, gridSize)
+    local snappedX = math.floor((x + gridSize/2) / gridSize) * gridSize
+    local snappedY = math.floor((y + gridSize/2) / gridSize) * gridSize
+    return snappedX, snappedY
+end
+
 local function StopDrag(self)
+    if not Ether.IsMovable then return end
     if self:IsMovable() then
         self:StopMovingOrSizing()
     end
-
     local point, relTo, relPoint, x, y = self:GetPoint(1)
     local relToName = "UIParent"
-
     if relTo then
         if relTo.GetName and relTo:GetName() then
             relToName = relTo:GetName()
@@ -307,22 +312,16 @@ local function StopDrag(self)
             relToName = "UIParent"
         end
     end
-
-    Ether.DB[5111][339][1] = point
-    Ether.DB[5111][339][2] = relToName
-    Ether.DB[5111][339][3] = relPoint
-    Ether.DB[5111][339][4] = x
-    Ether.DB[5111][339][5] = y
-
+    local snappedX, snappedY = SnapToGrid(x, y, 40)
+    local DB = Ether.DB[5111]
+    DB[339][1] = point
+    DB[339][2] = relToName
+    DB[339][3] = relPoint
+    DB[339][4] = snappedX
+    DB[339][5] = snappedY
     local anchorRelTo = _G[relToName] or UIParent
     self:ClearAllPoints()
-    self:SetPoint(
-                  Ether.DB[5111][339][1],
-                  anchorRelTo,
-                  Ether.DB[5111][339][3],
-                  Ether.DB[5111][339][4],
-                  Ether.DB[5111][339][5]
-    )
+    self:SetPoint(DB[339][1],anchorRelTo, DB[339][3],snappedX, snappedY)
 end
 
 function Ether:SetupDebugFrame()

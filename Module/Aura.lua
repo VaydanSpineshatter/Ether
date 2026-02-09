@@ -636,7 +636,7 @@ function Ether:AuraWipe()
     wipe(dispelCache)
 end
 
-local function GetUnits()
+Ether.GetUnits = function()
     local data = {}
     if UnitInParty("player") and not UnitInRaid("player") then
         table.insert(data, "player")
@@ -688,7 +688,7 @@ end
 
 function Ether:EnableHeaderAuras()
     C_Timer.After(0.3, function()
-        local getUnits = GetUnits()
+        local getUnits = Ether.GetUnits()
         for _, unit in ipairs(getUnits) do
             if UnitExists(unit) then
                 Ether:UpdateRaidIsHelpful(unit, true)
