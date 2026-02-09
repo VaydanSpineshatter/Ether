@@ -62,7 +62,7 @@ do
             end
             if Ether.DB[901][unit] then
                 local button = Ether.unitButtons.solo[unit]
-                if button and button:IsVisible() then
+                if button then
                     Ether:UpdateName(button)
                 end
             end

@@ -248,7 +248,7 @@ local function HealthChanged(_, event, unit)
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
         if Ether.DB[901][unit] then
             local button = Ether.unitButtons.solo[unit]
-            if button and button:IsVisible() then
+            if button then
                 if Ether.DB[801][3] == 1 then
                     Ether:UpdateHealth(button, true)
                 else
@@ -280,7 +280,7 @@ local function PredictionChanged(_, event, unit)
     if event ~= "UNIT_HEAL_PREDICTION" then return end
     if Ether.DB[901][unit] then
         local button = Ether.unitButtons.solo[unit]
-        if button and button:IsVisible() then
+        if button then
             Ether:UpdatePrediction(button)
         end
     end

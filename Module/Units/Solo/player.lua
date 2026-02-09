@@ -57,6 +57,7 @@ local units = {
     [5] = "pettarget",
     [6] = "focus"
 }
+
 function Ether:CreateUnitButtons(index)
     if InCombatLockdown() or type(index) ~= "number" then
         return
@@ -100,31 +101,20 @@ function Ether:CreateUnitButtons(index)
         end
         button:SetScript("OnAttributeChanged", AttributeChanged)
         button:SetScript("OnShow", Show)
-
         FullUpdate(button, true)
         Ether.unitButtons.solo[button.unit] = button
-
         if button.unit == "player" then
             if Ether.DB[801][1] == 1 then
                 Ether:CastBarEnable("player")
             end
-            if Ether.DB[1001][1] == 1 then
-                Ether:SingleAuraFullInitial(button)
-            end
-        end
-        if button.unit == "pet" then
-            if Ether.DB[1001][2] == 1 then
-                Ether:SingleAuraFullInitial(button)
-            end
-            Ether:PetCondition(button)
         end
         if button.unit == "target" then
             if Ether.DB[801][2] == 1 then
                 Ether:CastBarEnable("target")
             end
-            if Ether.DB[1001][3] == 1 then
-                Ether:SingleAuraFullInitial(button)
-            end
+        end
+        if button.unit == "pet" then
+            Ether:PetCondition(button)
         end
         for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
             if Ether.DB[201][key] == 1 then
@@ -219,7 +209,7 @@ function Ether.CreateCustomUnit()
         return
     end
     local token = "target"
-    if not UnitGUID(token) then
+    if not UnitGUID(token) or not UnitInAnyGroup("player") then
         Ether.DebugOutput("Target a group or raid member")
         enabled = false
         return
@@ -241,14 +231,14 @@ function Ether.CreateCustomUnit()
             background:SetColorTexture(0, 0, 0, .6)
             background:SetPoint("TOPLEFT", custom, "TOPLEFT", -2, 2)
             background:SetPoint("BOTTOMRIGHT", custom, "BOTTOMRIGHT", 2, -2)
-            local _, classFilename = UnitClass("player")
-            local c = Ether.RAID_COLORS[classFilename]
-            custom.healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
+            local r, g, b = Ether:GetClassColors(custom.unit)
+            custom.healthBar:SetStatusBarColor(r, g, b, .8)
+            custom.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
             Ether:SetupPowerBar(custom)
             Ether:SetupName(custom, 0)
             custom.name:SetText(name)
-            local r, g, b = Ether:GetPowerColor(custom.unit)
-            custom.powerBar:SetStatusBarColor(r, g, b, .6)
+            local re, ge, be = Ether:GetPowerColor(custom.unit)
+            custom.powerBar:SetStatusBarColor(re, ge, be, .6)
         end)
         if not success then
             Ether.DebugOutput("Custom unit creation failed - ", msg)

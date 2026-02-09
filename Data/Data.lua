@@ -37,7 +37,7 @@ local Default = {
         focus = true,
         raid = true,
     },
-    [1001] = {1, 1, 1, 1},
+    [1001] = {1, 1, 1},
     [1002] = {
         [1] = {12, "TOP", 0, 0},
         [2] = {24, "TOPLEFT", 0, 0},
@@ -181,10 +181,9 @@ Ether.DataDefault = Default
 ---| Header
 
 ---@alias AuraEnable_1001 number
----| Player 1
----| Pet 2
----| Target 3
----| Header 4
+---| Enable 1
+---| Solo 2
+---| Header 3
 
 ---@alias IndicatorsPosition_1002 number
 ---| READY_CHECK READY_CHECK_CONFIRM READY_FINISHED 1

@@ -323,7 +323,7 @@ local function OnAfk(self)
     Ether:HealthDisable()
     Ether:PowerDisable()
     Ether:IndicatorsDisable()
-    if Ether.DB[1001][4] == 1 then
+    if Ether.DB[1001][1] == 1 then
         Ether:AuraDisable()
     end
     if Ether.DB[401][5] == 1 then
@@ -345,7 +345,7 @@ local function NotAfk(self)
     Ether:HealthEnable()
     Ether:PowerEnable()
     Ether:IndicatorsEnable()
-    if Ether.DB[1001][4] == 1 then
+    if Ether.DB[1001][1] == 1 then
         C_Timer.After(0.3, function()
             Ether:AuraEnable()
         end)

@@ -38,23 +38,19 @@ end
 
 local function TargetChanged(_, event)
     if event == "PLAYER_TARGET_CHANGED" then
-        if Ether.DB[1001][3] == 1 then
-            if UnitExists("target") then
-                local button = Ether.unitButtons.solo["target"]
-                if not button then return end
-                local index = GetRaidTargetIndex("target")
-                if index then
-                    button.RaidTarget:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
-                    SetRaidTargetIconTexture(button.RaidTarget, index)
-                    button.RaidTarget:Show()
-                else
-                    button.RaidTarget:Hide()
-                end
-                if not button.Aura then return end
-                local unit = button.unit
-                Ether:SingleAuraUpdateBuff(unit)
-                Ether:SingleAuraUpdateDebuff(unit)
-
+        if UnitExists("target") then
+            local button = Ether.unitButtons.solo["target"]
+            if not button then return end
+            local index = GetRaidTargetIndex("target")
+            if index then
+                button.RaidTarget:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+                SetRaidTargetIconTexture(button.RaidTarget, index)
+                button.RaidTarget:Show()
+            else
+                button.RaidTarget:Hide()
+            end
+            if Ether.DB[1001][2] == 1 and button.Aura then
+                Ether:TargetAuraFullUpdate()
             end
         end
     end

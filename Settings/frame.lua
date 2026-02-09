@@ -8,7 +8,28 @@ local function GetFont(_, target, tex, numb)
     target.label:SetText(tex)
     return target.label
 end
-Ether.GetFont = GetFont
+
+local function EtherPanelButton(parent, width, height, text, point, relto, rel, offX, offY)
+    local btn = CreateFrame("Button", nil, parent)
+    btn:SetSize(width, height)
+    btn:SetPoint(point, relto, rel, offX, offY)
+    btn.bg = btn:CreateTexture(nil, "BACKGROUND")
+    btn.bg:SetAllPoints()
+    btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+    btn.text = btn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    btn.text:SetPoint("CENTER")
+    btn.text:SetText(text)
+    btn.hl = btn:CreateTexture(nil, "HIGHLIGHT")
+    btn.hl:SetAllPoints()
+    btn.hl:SetColorTexture(0.80, 0.40, 1.00, .2)
+    btn:SetScript("OnEnter", function()
+        btn.text:SetTextColor(0.00, 0.80, 1.00, 1)
+    end)
+    btn:SetScript("OnLeave", function()
+        btn.text:SetTextColor(1, 1, 1, 1)
+    end)
+    return btn
+end
 
 local function CreatePreviewBar(parent, preview)
     local healthBar = CreateFrame("StatusBar", nil, preview)
@@ -192,30 +213,6 @@ function Ether.CreateSection(self)
         Ether.stopUpdateFunc()
     end)
 end
-function Ether:ShowHideSingleAura(button, hide)
-    if not button or not button.Aura then
-        return
-    end
-    if hide then
-        for i = 1, 16 do
-            if button.Aura.Buffs and button.Aura.Buffs[i] then
-                button.Aura.Buffs[i]:SetShown(false)
-            end
-            if button.Aura.Debuffs and button.Aura.Debuffs[i] then
-                button.Aura.Debuffs[i]:SetShown(false)
-            end
-        end
-        wipe(button.Aura.Buffs)
-        wipe(button.Aura.Debuffs)
-        wipe(button.Aura.LastBuffs)
-        wipe(button.Aura.LastDebuffs)
-    else
-        for i = 1, 16 do
-            button.Aura.Buffs[i]:SetShown(true)
-            button.Aura.Debuffs[i]:SetShown(true)
-        end
-    end
-end
 
 local function GetTblText(buttons, tbl)
     for _, btn in pairs(buttons) do
@@ -302,10 +299,9 @@ end
 function Ether.CreateAuraSettingsSection(self)
     local parent = self.Content.Children["Aura Settings"]
     local CreateAura = {
-        [1] = {text = "Player Auras"},
-        [2] = {text = "Pet Auras"},
-        [3] = {text = "Target Auras"},
-        [4] = {text = "Header Auras"}
+        [1] = {text = "Enable/Disable Auras"},
+        [2] = {text = "Solo Auras"},
+        [3] = {text = "Header Auras"}
     }
     local CreateAuras = GetFont(self, parent, "|cffffff00Update Auras|r", 15)
     CreateAuras:SetPoint("TOPLEFT", 30, -10)
@@ -327,27 +323,21 @@ function Ether.CreateAuraSettingsSection(self)
             Ether.DB[1001][i] = checked and 1 or 0
             if i == 1 then
                 if Ether.DB[1001][1] == 1 then
-                    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
-                else
-                    Ether:ShowHideSingleAura(Ether.unitButtons.solo["player"], true)
-                end
-            elseif i == 2 then
-                if Ether.DB[1001][2] == 1 then
-                    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
-                else
-                    Ether:ShowHideSingleAura(Ether.unitButtons.solo["pet"], true)
-                end
-            elseif i == 3 then
-                if Ether.DB[1001][3] == 1 then
-                    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
-                else
-                    Ether:ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
-                end
-            elseif i == 4 then
-                if Ether.DB[1001][4] == 1 then
                     Ether:AuraEnable()
                 else
                     Ether:AuraDisable()
+                end
+            elseif i == 2 then
+                if Ether.DB[1001][2] == 1 then
+                    Ether:EnableSoloAuras()
+                else
+                    Ether:DisableSoloAuras()
+                end
+            elseif i == 3 then
+                if Ether.DB[1001][3] == 1 then
+                    Ether:EnableHeaderAuras()
+                else
+                    Ether:DisableHeaderAuras()
                 end
             end
         end)
@@ -1054,7 +1044,6 @@ function Ether.UpdateEditor()
     Editor.sizeSlider:SetValue(data.size)
     Editor.sizeSlider:Enable()
     Editor.sizeValue:SetText(string.format("%.0f px", data.size))
-
     for pos, btn in pairs(Editor.posButtons) do
         if pos == data.position then
             btn.bg:SetColorTexture(0.8, 0.6, 0, 0.5)
@@ -1136,19 +1125,10 @@ function Ether.CreateAuraConfigSection(self)
     spellNameBox:SetPoint("TOPLEFT", spellIDPanel, "TOPLEFT", 10, -30)
     spellNameBox:SetAutoFocus(false)
     spellNameBox:SetScript("OnEnterPressed", function(self)
-        Ether:GetSpellIDFromName(spellNameBox:GetText(), resultText, spellIcon)
+        Ether:GetSpellInfo(spellNameBox:GetText(), resultText, spellIcon)
     end)
 
-    local spellInfo = CreateFrame("Button", nil, spellIDPanel)
-    spellInfo:SetSize(80, 25)
-    spellInfo:SetPoint("LEFT", spellNameBox, "RIGHT", 10, 0)
-    spellInfo.bg = spellInfo:CreateTexture(nil, "BACKGROUND")
-    spellInfo.bg:SetAllPoints()
-    spellInfo.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    spellInfo.text = spellInfo:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    spellInfo.text:SetPoint("CENTER")
-    spellInfo.text:SetText("Search")
-
+    local spellInfo = EtherPanelButton(spellIDPanel, 80, 25, "Search", "LEFT", spellNameBox, "RIGHT", 10, 0)
     local resultFrame = CreateFrame("Frame", nil, spellIDPanel)
     resultFrame:SetPoint("TOPLEFT", spellNameBox, "BOTTOMLEFT", 0, -15)
     resultFrame:SetSize(230, 40)
@@ -1165,12 +1145,9 @@ function Ether.CreateAuraConfigSection(self)
     spellIcon:Hide()
 
     spellInfo:SetScript("OnClick", function(self)
-        Ether:GetSpellIDFromName(spellNameBox:GetText(), resultText, spellIcon)
+        Ether:GetSpellInfo(spellNameBox:GetText(), resultText, spellIcon)
     end)
 
-    local Highlight = spellInfo:CreateTexture(nil, "HIGHLIGHT")
-    Highlight:SetAllPoints()
-    Highlight:SetColorTexture(1, 1, 1, .4)
 
     local examples = {
         "Greater Heal(Rank 4)",
@@ -1194,7 +1171,7 @@ function Ether.CreateAuraConfigSection(self)
     example:SetText(exampleText)
 end
 
-function Ether:GetSpellIDFromName(spellName, resultText, spellIcon)
+function Ether:GetSpellInfo(spellName, resultText, spellIcon)
     if not resultText or not spellIcon then return end
     spellName = spellName:trim()
     if spellName == "" then
@@ -2277,17 +2254,9 @@ function Ether.CreateProfileSection(self)
         UIDropDownMenu_SetText(dropdown, ETHER_DATABASE_DX_AA.currentProfile)
     end
     RefreshDropdown()
-    local buttonY = -80
-    local function CreateButton(text, w, h, xOffset, yOffset)
-        local btn = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
-        btn:SetSize(w, h)
-        btn:SetPoint("TOP", dropdown, "BOTTOM", xOffset, yOffset)
-        btn:SetText(text)
-        btn:GetFontString():SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-        return btn
-    end
-    local newButton = CreateButton("Create new profile", 140, 30, 0, buttonY)
-    newButton:SetScript("OnClick", function()
+    local buttonY = -30
+    local createButton = EtherPanelButton(parent, 110, 25, "Create new profile", "TOP", dropdown, "BOTTOM", 0, buttonY)
+    createButton:SetScript("OnClick", function()
         inputTitle:SetText("Create new profile")
         inputBox:SetText("")
         inputDialog:Show()
@@ -2308,7 +2277,7 @@ function Ether.CreateProfileSection(self)
             inputDialog:Hide()
         end)
     end)
-    local copyButton = CreateButton("Copy profile", 140, 30, 0, buttonY - 40)
+    local copyButton = EtherPanelButton(parent, 110, 25, "Copy profile", "TOP", dropdown, "BOTTOM", 0, buttonY - 40)
     copyButton:SetScript("OnClick", function()
         inputTitle:SetText("Copy profile")
         inputBox:SetText(ETHER_DATABASE_DX_AA.currentProfile .. " - Copy")
@@ -2329,7 +2298,7 @@ function Ether.CreateProfileSection(self)
             inputDialog:Hide()
         end)
     end)
-    local renameButton = CreateButton("Rename profile", 140, 30, 0, buttonY - 80)
+    local renameButton = EtherPanelButton(parent, 110, 25, "Rename profile", "TOP", dropdown, "BOTTOM", 0, buttonY - 80)
     renameButton:SetScript("OnClick", function()
         inputTitle:SetText("Rename profile")
         inputBox:SetText(ETHER_DATABASE_DX_AA.currentProfile)
@@ -2349,7 +2318,8 @@ function Ether.CreateProfileSection(self)
             inputDialog:Hide()
         end)
     end)
-    local deleteButton = CreateButton("Delete profile", 140, 30, 0, buttonY - 120)
+
+    local deleteButton = EtherPanelButton(parent, 110, 25, "Delete profile", "TOP", dropdown, "BOTTOM", 0, buttonY - 120)
     deleteButton:SetScript("OnClick", function()
         local profileToDelete = ETHER_DATABASE_DX_AA.currentProfile
         local profiles = Ether.GetProfileList()
@@ -2380,10 +2350,10 @@ function Ether.CreateProfileSection(self)
         StaticPopup_Show("ETHER_DELETE_PROFILE")
     end)
 
-    local resetButton = CreateButton("Reset to default", 140, 30, 0, buttonY - 160)
+    local resetButton = EtherPanelButton(parent, 110, 25, "Reset to default", "TOP", dropdown, "BOTTOM", 0, buttonY - 160)
     resetButton:SetScript("OnClick", function()
         StaticPopupDialogs["ETHER_RESET_PROFILE"] = {
-            text = "Reset profile to default settings?\nThis cannot be undone!",
+            text = "Reset profile to default settings?",
             button1 = "Yes",
             button2 = "No",
             OnAccept = function()
@@ -2414,12 +2384,7 @@ function Ether.CreateProfileSection(self)
     transferTitle:SetPoint("TOPLEFT")
     transferTitle:SetText("Transfer")
 
-    local exportBtn = CreateFrame("Button", nil, transfer, "GameMenuButtonTemplate")
-    exportBtn:SetSize(120, 30)
-    exportBtn:SetPoint("TOPLEFT", transferTitle, "BOTTOMLEFT", 0, -10)
-    exportBtn:SetText("Export Profile")
-    exportBtn:GetFontString():SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-
+    local exportBtn = EtherPanelButton(transfer, 110, 25, "Export Profile", "TOPLEFT", transferTitle, "BOTTOMLEFT", 0, -10)
     exportBtn:SetScript("OnClick", function()
         local encoded = Ether.ExportProfileToClipboard()
         if encoded then
@@ -2428,12 +2393,7 @@ function Ether.CreateProfileSection(self)
     end)
 
     local importBox
-    local importBtn = CreateFrame("Button", nil, transfer, "GameMenuButtonTemplate")
-    importBtn:SetSize(120, 30)
-    importBtn:SetPoint("TOPLEFT", exportBtn, "BOTTOMLEFT", 0, -10)
-    importBtn:SetText("Import Profile")
-    importBtn:GetFontString():SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-
+    local importBtn = EtherPanelButton(transfer, 110, 25, "Import Profile", "TOPLEFT", exportBtn, "BOTTOMLEFT", 0, -10)
     importBtn:SetScript("OnClick", function()
         local data = importBox:GetText()
         if data and data ~= "" and data ~= "Paste export data here..." then
@@ -2546,7 +2506,6 @@ function Ether.CreateProfileSection(self)
     Ether.ExportPopup = frame
     parent.Refresh = RefreshDropdown
     parent.RefreshConfig = function()
-
     end
 end
 

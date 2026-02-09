@@ -66,7 +66,7 @@ local function OnAttributeChanged(self, name, unit)
     end
     Ether.unitButtons.raid[unit] = self
     if self.unit == unit and UnitExists(unit) then
-        if Ether.DB and Ether.DB[1001] and Ether.DB[1001][4] == 1 then
+        if Ether.DB and Ether.DB[1001] and Ether.DB[1001][3] == 1 then
             Ether:UpdateRaidIsHelpful(unit)
         end
     end

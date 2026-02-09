@@ -328,7 +328,7 @@ local function OnAuraDispelAdded(unit)
 end
 
 local function raidAuraUpdate(unit, updateInfo)
-    if Ether.DB[1001][4] ~= 1 then return end
+    if Ether.DB[1001][3] ~= 1 then return end
     if not Ether.unitButtons.raid[unit] then
         return
     end
@@ -428,7 +428,6 @@ local function AuraPosition(i)
     local col = (i - 1) % 8
     local xOffset = col * (14 + 1)
     local yOffset = 1 + row * (14 + 1)
-
     return xOffset, yOffset
 end
 
@@ -448,7 +447,7 @@ local function CheckDispelType(self, dispelName)
     end
 end
 
-function Ether:SingleAuraUpdateBuff(unit)
+local function SoloAuraIsHelpful(unit)
     local button = Ether.unitButtons.solo[unit]
     if not button or not button.Aura then return end
     local visibleBuffCount = 0
@@ -492,7 +491,7 @@ function Ether:SingleAuraUpdateBuff(unit)
     button.Aura.visibleBuffCount = visibleBuffCount
 end
 
-function Ether:SingleAuraUpdateDebuff(unit)
+local function SoloAuraIsHarmful(unit)
     local button = Ether.unitButtons.solo[unit]
     if not button or not button.Aura then return end
     local visibleBuffCount = button.Aura.visibleBuffCount or 0
@@ -554,25 +553,54 @@ function Ether:SingleAuraUpdateDebuff(unit)
     end
 end
 
-function Ether:SingleAuraFullInitial(button)
+function Ether:SoloAuraFullInitial(unit)
+    local button = Ether.unitButtons.solo[unit]
     if not button then return end
-    local unit = button.unit
-    Ether:SingleAuraSetup(button)
-    Ether:SingleAuraUpdateBuff(unit)
-    Ether:SingleAuraUpdateDebuff(unit)
+    Ether:SoloAuraSetup(button)
+    SoloAuraIsHelpful(button.unit)
+    SoloAuraIsHarmful(button.unit)
+    for i = 1, 16 do
+        if button.Aura.Buffs and button.Aura.Buffs[i] then
+            button.Aura.Buffs[i]:SetShown(true)
+        end
+        if button.Aura.Debuffs and button.Aura.Debuffs[i] then
+            button.Aura.Debuffs[i]:SetShown(true)
+        end
+    end
 end
 
-local updateHelpful = {}
-local updateHarmful = {}
+function Ether:TargetAuraFullUpdate()
+    if Ether.DB[1001][2] ~= 1 then return end
+    local button = Ether.unitButtons.solo["target"]
+    if not button then return end
+    SoloAuraIsHelpful("target")
+    SoloAuraIsHarmful("target")
+end
+
 local function soloAuraUpdate(unit, updateInfo)
-    if not Ether.unitButtons.solo[unit] then return end
-
-    if not updateInfo.addedAuras and not updateInfo.removedAuraInstanceIDs then
-        return
+    local button = Ether.unitButtons.solo[unit]
+    if not button or not button.Aura then return end
+    local helpful, harmful = false, false
+    if updateInfo.addedAuras then
+        for _, aura in ipairs(updateInfo.addedAuras) do
+            if aura.isHelpful then
+                helpful = true
+            end
+            if aura.isHarmful then
+                harmful = true
+            end
+        end
     end
-
-    Ether:SingleAuraUpdateBuff(unit)
-    Ether:SingleAuraUpdateDebuff(unit)
+    if updateInfo.removedAuraInstanceIDs then
+        helpful = true
+        harmful = true
+    end
+    if helpful then
+        SoloAuraIsHelpful(button.unit)
+    end
+    if harmful then
+        SoloAuraIsHarmful(button.unit)
+    end
 end
 
 local function Aura(_, event, arg1, ...)
@@ -580,10 +608,12 @@ local function Aura(_, event, arg1, ...)
         if not UnitExists(arg1) then return end
         local updateInfo = ...
         if updateInfo then
-            if Ether.DB[1001][4] == 1 then
+            if Ether.DB[1001][3] == 1 then
                 raidAuraUpdate(arg1, updateInfo)
             end
-            soloAuraUpdate(arg1, updateInfo)
+            if Ether.DB[1001][2] == 1 then
+                soloAuraUpdate(arg1, updateInfo)
+            end
         end
     end
 end
@@ -604,8 +634,6 @@ function Ether:AuraWipe()
     wipe(foundHelpful)
     wipe(foundHarmful)
     wipe(dispelCache)
-    wipe(updateHelpful)
-    wipe(updateHarmful)
 end
 
 local function GetUnits()
@@ -631,40 +659,79 @@ local function GetUnits()
     return data
 end
 
+local function auraTblReset(unit)
+    local button = Ether.unitButtons.solo[unit]
+    if not button or not button.Aura then return end
+    for i = 1, 16 do
+        if button.Aura.Buffs and button.Aura.Buffs[i] then
+            button.Aura.Buffs[i]:SetShown(false)
+        end
+        if button.Aura.Debuffs and button.Aura.Debuffs[i] then
+            button.Aura.Debuffs[i]:SetShown(false)
+        end
+    end
+    wipe(button.Aura.LastBuffs)
+    wipe(button.Aura.LastDebuffs)
+end
+
+function Ether:EnableSoloAuras()
+    for _, unit in ipairs({"player", "target", "pet"}) do
+        Ether:SoloAuraFullInitial(unit)
+    end
+end
+
+function Ether:DisableSoloAuras()
+    for _, unit in ipairs({"player", "target", "pet"}) do
+        auraTblReset(unit)
+    end
+end
+
+function Ether:EnableHeaderAuras()
+    C_Timer.After(0.3, function()
+        local getUnits = GetUnits()
+        for _, unit in ipairs(getUnits) do
+            if UnitExists(unit) then
+                Ether:UpdateRaidIsHelpful(unit, true)
+                Ether:UpdateRaidIsHarmful(unit, true)
+            end
+        end
+    end)
+end
+
 function Ether:AuraEnable()
     if not update:GetScript("OnEvent") then
         update:RegisterEvent("UNIT_AURA")
         update:SetScript("OnEvent", Aura)
     end
-    if Ether.DB[1001][4] == 1 then
-        C_Timer.After(0.3, function()
-            local getUnits = GetUnits()
-            for _, unit in ipairs(getUnits) do
-                if UnitExists(unit) then
-                    Ether:UpdateRaidIsHelpful(unit, true)
-                    Ether:UpdateRaidIsHarmful(unit, true)
-                end
-            end
-        end)
+    if Ether.DB[1001][3] == 1 then
+        Ether:EnableHeaderAuras()
     end
-    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
-    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
-    Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
+    if Ether.DB[1001][2] == 1 then
+        Ether:EnableSoloAuras()
+    end
+end
+
+function Ether:DisableHeaderAuras()
+    Ether:CleanupRaidIcons()
+    wipe(raidAurasHelpful)
+    wipe(raidAurasHarmful)
+    wipe(raidAurasDispel)
+    wipe(raidBuffData)
+    wipe(raidDebuffData)
+    wipe(foundHelpful)
+    wipe(foundHarmful)
+    wipe(dispelCache)
 end
 
 function Ether:AuraDisable()
     Ether:CleanupRaidIcons()
-    Ether:ShowHideSingleAura(Ether.unitButtons.solo["player"], true)
-    Ether:ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
-    Ether:ShowHideSingleAura(Ether.unitButtons.solo["pet"], true)
+    Ether:DisableSoloAuras()
     if update:GetScript("OnEvent") then
         update:UnregisterAllEvents()
         update:SetScript("OnEvent", nil)
     end
     Ether:AuraWipe()
 end
-
-
 
 --[[
 

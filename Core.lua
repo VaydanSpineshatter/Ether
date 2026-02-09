@@ -184,12 +184,13 @@ local function CreateSettingsButtons(self, name, parent, layer, onClick, isTopBu
     else
         btn:SetWidth(parent:GetWidth() - 10)
     end
-    btn.font = Ether.GetFont(self, btn, name, 15)
+    btn.font = btn:CreateFontString(nil, "OVERLAY")
+    btn.font:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
     btn.font:SetText(name)
     btn.font:SetAllPoints()
-    btn.Highlight = btn:CreateTexture(nil, "HIGHLIGHT")
-    btn.Highlight:SetAllPoints()
-    btn.Highlight:SetColorTexture(1, 1, 1, .4)
+    btn.hl = btn:CreateTexture(nil, "HIGHLIGHT")
+    btn.hl:SetAllPoints()
+    btn.hl:SetColorTexture(1, 1, 1, .4)
     btn:SetScript("OnClick", function()
         return onClick(name, layer)
     end)
@@ -726,7 +727,7 @@ end
 local arraysLength = {
     [101] = 11, [201] = 6, [301] = 13, [401] = 5,
     [501] = 9, [701] = 4, [801] = 11,
-    [1001] = 4, [1101] = 3
+    [1001] = 3, [1101] = 3
 }
 
 local currentVersion = nil

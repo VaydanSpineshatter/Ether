@@ -109,7 +109,7 @@ local function PowerChanged(_, event, unit)
     if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
         if Ether.DB[901][unit] then
             local button = Ether.unitButtons.solo[unit]
-            if button and button:IsVisible() then
+            if button then
                 if Ether.DB[801][4] == 1 then
                     Ether:UpdatePower(button, true)
                 else
@@ -122,7 +122,7 @@ local function PowerChanged(_, event, unit)
         end
         if Ether.DB[701][4] == 1 then
             local button = Ether.unitButtons.raid[unit]
-            if button then
+            if button and button:IsVisible() then
                 Ether:UpdatePowerText(button)
             end
         end
