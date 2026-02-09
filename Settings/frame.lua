@@ -1,6 +1,5 @@
 local _, Ether = ...
-
-local playerName, realmName = UnitName("player"), GetRealmName()
+local realmName = GetRealmName()
 
 local function GetFont(_, target, tex, numb)
     target.label = target:CreateFontString(nil, "OVERLAY")
@@ -29,24 +28,6 @@ local function EtherPanelButton(parent, width, height, text, point, relto, rel, 
         btn.text:SetTextColor(1, 1, 1, 1)
     end)
     return btn
-end
-
-local function CreatePreviewBar(parent, preview)
-    local healthBar = CreateFrame("StatusBar", nil, preview)
-    parent.healthBar = healthBar
-    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
-    healthBar:SetPoint("CENTER")
-    healthBar:SetSize(55, 55)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
-    local _, classFilename = UnitClass("player")
-    local c = Ether.RAID_COLORS[classFilename]
-    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
-    local name = healthBar:CreateFontString(nil, "OVERLAY")
-    parent.healthBar = healthBar
-    name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    name:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
-    name:SetText(Ether:ShortenName(playerName, 3))
-    return parent
 end
 
 function Ether.CreateModuleSection(self)
@@ -196,20 +177,12 @@ function Ether.CreateSection(self)
         self.Content.Buttons.Create.A[i] = btn
     end
 
-    local CreateCustom = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
-    CreateCustom:SetPoint("TOPLEFT", self.Content.Buttons.Create.A[6], "BOTTOMLEFT", 0, -40)
-    CreateCustom:GetFontString():SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    CreateCustom:SetText("Create Custom")
-    CreateCustom:SetSize(100, 30)
-    CreateCustom:SetScript("OnClick", function()
+    local create = EtherPanelButton(parent, 100, 25, "Create Custom", "TOPLEFT", self.Content.Buttons.Create.A[6], "BOTTOMLEFT", 10, -40)
+    create:SetScript("OnClick", function()
         Ether.CreateCustomUnit()
     end)
-    local destroyCustom = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
-    destroyCustom:SetPoint("TOPLEFT", CreateCustom, "BOTTOMLEFT")
-    destroyCustom:GetFontString():SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    destroyCustom:SetText("Destroy Custom")
-    destroyCustom:SetSize(100, 30)
-    destroyCustom:SetScript("OnClick", function()
+    local destroy = EtherPanelButton(parent, 100, 25, "Destroy Custom", "LEFT", create, "RIGHT", 40, 0)
+    destroy:SetScript("OnClick", function()
         Ether.stopUpdateFunc()
     end)
 end
@@ -360,27 +333,12 @@ local function CreateAuraList(parent)
     templateDropdown:SetPoint("TOPLEFT", templateLabel, "BOTTOMLEFT", -10, -10)
     UIDropDownMenu_SetWidth(templateDropdown, 140)
     UIDropDownMenu_SetText(templateDropdown, "Select Template...")
-
-    local loadBtn = CreateFrame("Button", nil, parent)
-    loadBtn:SetSize(60, 25)
-    loadBtn:SetPoint("TOP", 30, -10)
-    loadBtn.bg = loadBtn:CreateTexture(nil, "BACKGROUND")
-    loadBtn.bg:SetAllPoints()
-    loadBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    loadBtn.text = loadBtn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    loadBtn.text:SetPoint("CENTER")
-    loadBtn.text:SetText("Load")
+    local loadBtn = EtherPanelButton(parent, 60, 25, "Load", "TOP", parent, "TOP", 30, -10)
     loadBtn:SetScript("OnClick", function(self)
         local selectedTemplate = UIDropDownMenu_GetText(templateDropdown)
         if selectedTemplate and selectedTemplate ~= "Select Template..." then
             Ether:AddTemplateAuras(selectedTemplate, true)
         end
-    end)
-    loadBtn:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
-    end)
-    loadBtn:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     end)
 
     UIDropDownMenu_Initialize(templateDropdown, function()
@@ -421,34 +379,12 @@ local function CreateAuraList(parent)
     scrollFrame:SetScrollChild(scrollChild)
     AuraList.scrollChild = scrollChild
 
-    local addBtn = CreateFrame("Button", nil, frame)
-    addBtn:SetSize(80, 25)
-    addBtn:SetPoint("LEFT", loadBtn, "RIGHT", 10, 0)
-    addBtn.bg = addBtn:CreateTexture(nil, "BACKGROUND")
-    addBtn.bg:SetAllPoints()
-    addBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    addBtn.text = addBtn:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    addBtn.text:SetPoint("CENTER")
-    addBtn.text:SetText("New Aura")
+    local addBtn = EtherPanelButton(frame, 80, 25, "New Aura", "LEFT", loadBtn, "RIGHT", 10, 0)
     addBtn:SetScript("OnClick", function(self)
         Ether.AddNewAura()
     end)
-    addBtn:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
-    end)
-    addBtn:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    end)
 
-    local confirm = CreateFrame("Button", nil, frame)
-    confirm:SetSize(80, 25)
-    confirm:SetPoint("LEFT", addBtn, "RIGHT", 10, 0)
-    confirm.bg = confirm:CreateTexture(nil, "BACKGROUND")
-    confirm.bg:SetAllPoints()
-    confirm.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    confirm.text = confirm:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    confirm.text:SetPoint("CENTER")
-    confirm.text:SetText("Confirm")
+    local confirm = EtherPanelButton(frame, 80, 25, "Confirm", "LEFT", addBtn, "RIGHT", 10, 0)
     confirm:SetScript("OnClick", function(self)
         if selectedSpellId then
             if Ether.DB[1003][selectedSpellId].isDebuff then
@@ -457,12 +393,6 @@ local function CreateAuraList(parent)
                 Ether.SaveAuraPos(selectedSpellId)
             end
         end
-    end)
-    confirm:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
-    end)
-    confirm:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     end)
 
     return frame
@@ -665,28 +595,15 @@ local function CreateEditor(parent)
         end
         self:ClearFocus()
     end)
-
-    local isDebuff = CreateFrame("Button", nil, frame)
+    
+    local isDebuff = EtherPanelButton(frame, 80, 25, "Debuff", "LEFT", spellIdInput, "RIGHT", 10, 0)
     frame.isDebuff = isDebuff
-    isDebuff:SetSize(80, 25)
-    isDebuff:SetPoint("LEFT", spellIdInput, "RIGHT", 10, 0)
-    isDebuff.bg = isDebuff:CreateTexture(nil, "BACKGROUND")
-    isDebuff.bg:SetAllPoints()
-    isDebuff.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    isDebuff.text = isDebuff:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    isDebuff.text:SetPoint("CENTER")
-    isDebuff.text:SetText("Debuff")
-
     isDebuff:SetScript("OnClick", function(self)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].isDebuff = not Ether.DB[1003][selectedSpellId].isDebuff
             UpdateIsDebuff(Editor.isDebuff.bg, selectedSpellId)
         end
     end)
-
-    isDebuff.Highlight = isDebuff:CreateTexture(nil, "HIGHLIGHT")
-    isDebuff.Highlight:SetAllPoints()
-    isDebuff.Highlight:SetColorTexture(1, 1, 1, .4)
 
     local sizeLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
     frame.sizeLabel = sizeLabel
@@ -775,14 +692,14 @@ local function CreateEditor(parent)
     preview.healthBar = healthBar
     healthBar:SetPoint("BOTTOMLEFT")
     healthBar:SetSize(55, 55)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
+    healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
     local _, classFilename = UnitClass("player")
     local c = Ether.RAID_COLORS[classFilename]
     healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
     local pName = healthBar:CreateFontString(nil, "OVERLAY")
     pName:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     pName:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
-    pName:SetText(Ether:ShortenName(playerName, 3))
+    pName:SetText(Ether:ShortenName(Ether.playerName, 3))
     preview.indicator = preview:CreateTexture(nil, "OVERLAY")
     preview.indicator:SetSize(6, 6)
     preview.indicator:SetPoint("TOP", healthBar, "TOP", 0, 0)
@@ -1148,7 +1065,6 @@ function Ether.CreateAuraConfigSection(self)
         Ether:GetSpellInfo(spellNameBox:GetText(), resultText, spellIcon)
     end)
 
-
     local examples = {
         "Greater Heal(Rank 4)",
         "Greater Heal",
@@ -1385,7 +1301,7 @@ function Ether.CreatePositionSection(self)
     preview:SetPoint("TOPLEFT", selectLabel, "BOTTOMLEFT", 80, -100)
     preview:SetSize(55, 55)
 
-    local healthBar = CreatePreviewBar(Indicator, preview)
+    local healthBar = Ether:SetupPreviewBar(Indicator, preview)
 
     local icon = healthBar:CreateTexture(nil, "OVERLAY")
     Indicator.icon = icon
@@ -1454,25 +1370,11 @@ function Ether.CreatePositionSection(self)
     sizeLabel:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 40, -50)
     sizeLabel:SetText("Size")
 
-    local confirm = CreateFrame("Button", nil, preview)
-    confirm:SetSize(80, 25)
-    confirm:SetPoint("TOPLEFT", preview, "TOPRIGHT", 160, 0)
-    confirm.bg = confirm:CreateTexture(nil, "BACKGROUND")
-    confirm.bg:SetAllPoints()
-    confirm.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    confirm.text = confirm:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
-    confirm.text:SetPoint("CENTER")
-    confirm.text:SetText("Confirm")
+    local confirm = EtherPanelButton(preview, 100, 25, "Confirm", "TOPLEFT", preview, "TOPRIGHT", 160, 0)
     confirm:SetScript("OnClick", function(self)
         if currentIndicator and number then
             Ether.SaveIndicatorsPos(currentIndicator, number)
         end
-    end)
-    confirm:SetScript("OnEnter", function(self)
-        self.bg:SetColorTexture(0.3, 0.3, 0.3, 0.9)
-    end)
-    confirm:SetScript("OnLeave", function(self)
-        self.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
     end)
 
     local sizeSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
@@ -2088,24 +1990,20 @@ function Ether.CreateConfigSection(self)
     UpdateAllControls()
 
     local preview = CreateFrame("Frame", nil, parent)
-    preview:SetPoint("TOPRIGHT", 0, -220)
-    preview:SetSize(90, 90)
-    local healthBar = CreateFrame("StatusBar", nil, preview)
-    healthBar:SetFrameLevel(preview:GetFrameLevel() + 1)
-    healthBar:SetPoint("CENTER")
-    healthBar:SetSize(90, 90)
-    healthBar:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
+    preview:SetPoint("TOP", 100, -100)
+    preview:SetSize(55, 55)
+    Ether:SetupHealthBar(preview, "VERTICAL", 55, 55)
     local _, classFilename = UnitClass("player")
     local c = Ether.RAID_COLORS[classFilename]
-    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
-    local name = healthBar:CreateFontString(nil, "OVERLAY")
-    name:SetFont(unpack(Ether.mediaPath.expressway), 18, "OUTLINE")
-    name:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
-    name:SetText(Ether:ShortenName(playerName, 3))
+    preview.healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
+    local name = preview.healthBar:CreateFontString(nil, "OVERLAY")
+    name:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
+    name:SetPoint("CENTER", preview.healthBar, "CENTER", 0, -5)
+    name:SetText(Ether:ShortenName(Ether.playerName, 3))
     local background = preview:CreateTexture(nil, "BACKGROUND")
     background:SetColorTexture(0, 0, 0, 1)
-    background:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -5, 5)
-    background:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 5, -5)
+    background:SetPoint("TOPLEFT", preview.healthBar, "TOPLEFT", -3, 3)
+    background:SetPoint("BOTTOMRIGHT", preview.healthBar, "BOTTOMRIGHT", 3, -3)
 
     if not LibStub or not LibStub("LibSharedMedia-3.0", true) then return end
     local LSM = LibStub("LibSharedMedia-3.0")
@@ -2679,7 +2577,7 @@ function Ether.DeleteProfile(name)
 end
 
 function Ether.GetCharacterKey()
-    return playerName .. "-" .. realmName
+    return Ether.playerName .. "-" .. realmName
 end
 
 function Ether.GetCurrentProfile()

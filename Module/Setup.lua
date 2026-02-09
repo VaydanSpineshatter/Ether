@@ -41,6 +41,28 @@ function Ether:SetupHealthBar(button, orient, w, h)
     return button
 end
 
+function Ether:SetupPreviewBar(parent, preview)
+    local healthBar = CreateFrame("StatusBar", nil, preview)
+    parent.healthBar = healthBar
+    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
+    healthBar:SetPoint("CENTER")
+    healthBar:SetSize(55, 55)
+    healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
+    local _, classFilename = UnitClass("player")
+    local c = Ether.RAID_COLORS[classFilename]
+    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
+    local name = healthBar:CreateFontString(nil, "OVERLAY")
+    parent.healthBar = healthBar
+    name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    name:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
+    name:SetText(Ether:ShortenName(Ether.playerName, 3))
+    local background = healthBar:CreateTexture(nil, "BACKGROUND")
+    background:SetColorTexture(0, 0, 0, 1)
+    background:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -3, 3)
+    background:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 3, -3)
+    return parent
+end
+
 function Ether:SetupPowerBar(button)
     if not button then return end
     local powerBar = CreateFrame('StatusBar', nil, button)

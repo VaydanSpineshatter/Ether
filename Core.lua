@@ -8,6 +8,7 @@ local updatedChannel = false
 Ether.debug = false
 Ether.Header = {}
 Ether.Anchor = {}
+Ether.playerName = UnitName("player")
 local soundsRegistered = false
 
 Ether.mediaPath = {
