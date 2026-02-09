@@ -339,7 +339,7 @@ local function raidAuraUpdate(unit, updateInfo)
     end
 
     local config = Ether.DB[1003]
-    local buffAdded, debuffAdded, dispelAdded = false, false
+    local buffAdded, debuffAdded, dispelAdded = false, false, false
 
     if updateInfo.addedAuras then
         for _, aura in ipairs(updateInfo.addedAuras) do
