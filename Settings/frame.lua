@@ -595,7 +595,7 @@ local function CreateEditor(parent)
         end
         self:ClearFocus()
     end)
-    
+
     local isDebuff = EtherPanelButton(frame, 80, 25, "Debuff", "LEFT", spellIdInput, "RIGHT", 10, 0)
     frame.isDebuff = isDebuff
     isDebuff:SetScript("OnClick", function(self)

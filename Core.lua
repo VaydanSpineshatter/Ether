@@ -767,8 +767,8 @@ local function OnInitialize(self, event, ...)
         local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
         Ether.version = version
 
-        local REQUIREMENT_VERSION = 20222
-        Ether.REQUIREMENT_VERSION = 20222
+        local REQUIREMENT_VERSION = 26766
+        Ether.REQUIREMENT_VERSION = 26766
         local CURRENT_VERSION = ETHER_DATABASE_DX_AA[101]
 
         if CURRENT_VERSION < REQUIREMENT_VERSION then
