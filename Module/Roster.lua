@@ -61,11 +61,13 @@ local function ifValidUnits()
     if not status then
         status = true
         C_After(5, function()
-            if Ether.DB[1001][4] == 1 then
+            if Ether.DB[1001][3] == 1 then
                 if not UnitInAnyGroup("player") then
-                    Ether:CleanupRaidIcons()
+                    Ether:DisableHeaderAuras()
+                    Ether:EnableHeaderAuras()
                 end
             end
+            Ether:FullUpdateIndicators()
             Ether:HeaderBackground()
             status = false
         end)
@@ -92,8 +94,7 @@ end
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
         ifValidUnits()
-        Ether:FullUpdateIndicators()
-        if Ether.DB[1001][4] == 1 then
+        if Ether.DB[1001][3] == 1 then
             clearTimerCache()
         end
     end
