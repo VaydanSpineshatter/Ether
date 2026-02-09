@@ -192,25 +192,31 @@ function Ether.CreateSection(self)
         Ether.stopUpdateFunc()
     end)
 end
-local function ShowHideSingleAura(frame, bool)
-    if not frame or not frame.Aura then
+function Ether:ShowHideSingleAura(button, hide)
+    if not button or not button.Aura then
         return
     end
-    for i = 1, 16 do
-        if frame.Aura.Buffs and frame.Aura.Buffs[i] then
-            frame.Aura.Buffs[i]:SetShown(bool)
+    if hide then
+        for i = 1, 16 do
+            if button.Aura.Buffs and button.Aura.Buffs[i] then
+                button.Aura.Buffs[i]:SetShown(false)
+            end
+            if button.Aura.Debuffs and button.Aura.Debuffs[i] then
+                button.Aura.Debuffs[i]:SetShown(false)
+            end
         end
-        if frame.Aura.Debuffs and frame.Aura.Debuffs[i] then
-            frame.Aura.Debuffs[i]:SetShown(bool)
+        wipe(button.Aura.Buffs)
+        wipe(button.Aura.Debuffs)
+        wipe(button.Aura.LastBuffs)
+        wipe(button.Aura.LastDebuffs)
+    else
+        for i = 1, 16 do
+            button.Aura.Buffs[i]:SetShown(true)
+            button.Aura.Debuffs[i]:SetShown(true)
         end
-    end
-    if bool ~= true then
-        wipe(frame.Aura.Buffs)
-        wipe(frame.Aura.Debuffs)
-        wipe(frame.Aura.LastBuffs)
-        wipe(frame.Aura.LastDebuffs)
     end
 end
+
 local function GetTblText(buttons, tbl)
     for _, btn in pairs(buttons) do
         if btn[tbl] then
@@ -218,6 +224,7 @@ local function GetTblText(buttons, tbl)
         end
     end
 end
+
 local function resetHealthPowerText(value)
     if value == 1 then
         GetTblText(Ether.unitButtons["solo"], "health")
@@ -321,23 +328,20 @@ function Ether.CreateAuraSettingsSection(self)
             if i == 1 then
                 if Ether.DB[1001][1] == 1 then
                     Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
-                    ShowHideSingleAura(Ether.unitButtons.solo["player"], true)
                 else
-                    ShowHideSingleAura(Ether.unitButtons.solo["player"], false)
+                    Ether:ShowHideSingleAura(Ether.unitButtons.solo["player"], true)
                 end
             elseif i == 2 then
                 if Ether.DB[1001][2] == 1 then
                     Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
-                    ShowHideSingleAura(Ether.unitButtons.solo["pet"], true)
                 else
-                    ShowHideSingleAura(Ether.unitButtons.solo["pet"], false)
+                    Ether:ShowHideSingleAura(Ether.unitButtons.solo["pet"], true)
                 end
             elseif i == 3 then
                 if Ether.DB[1001][3] == 1 then
                     Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
-                    ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
                 else
-                    ShowHideSingleAura(Ether.unitButtons.solo["target"], false)
+                    Ether:ShowHideSingleAura(Ether.unitButtons.solo["target"], true)
                 end
             elseif i == 4 then
                 if Ether.DB[1001][4] == 1 then

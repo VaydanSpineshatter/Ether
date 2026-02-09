@@ -42,8 +42,6 @@ local function TargetChanged(_, event)
             if UnitExists("target") then
                 local button = Ether.unitButtons.solo["target"]
                 if not button then return end
-                Ether:SingleAuraUpdateBuff(button)
-                Ether:SingleAuraUpdateDebuff(button)
                 local index = GetRaidTargetIndex("target")
                 if index then
                     button.RaidTarget:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
@@ -52,6 +50,11 @@ local function TargetChanged(_, event)
                 else
                     button.RaidTarget:Hide()
                 end
+                if not button.Aura then return end
+                local unit = button.unit
+                Ether:SingleAuraUpdateBuff(unit)
+                Ether:SingleAuraUpdateDebuff(unit)
+
             end
         end
     end

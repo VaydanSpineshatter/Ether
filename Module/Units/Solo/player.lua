@@ -109,22 +109,21 @@ function Ether:CreateUnitButtons(index)
                 Ether:CastBarEnable("player")
             end
             if Ether.DB[1001][1] == 1 then
-                Ether:SingleAuraFullInitial(Ether.unitButtons.solo["player"])
+                Ether:SingleAuraFullInitial(button)
             end
+        end
+        if button.unit == "pet" then
+            if Ether.DB[1001][2] == 1 then
+                Ether:SingleAuraFullInitial(button)
+            end
+            Ether:PetCondition(button)
         end
         if button.unit == "target" then
             if Ether.DB[801][2] == 1 then
                 Ether:CastBarEnable("target")
             end
-            if Ether.DB[1001][2] == 1 then
-
-                Ether:SingleAuraFullInitial(Ether.unitButtons.solo["target"])
-            end
-        end
-        if button.unit == "pet" then
             if Ether.DB[1001][3] == 1 then
-                Ether:SingleAuraFullInitial(Ether.unitButtons.solo["pet"])
-                Ether:PetCondition(Ether.unitButtons.solo["pet"])
+                Ether:SingleAuraFullInitial(button)
             end
         end
         for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
