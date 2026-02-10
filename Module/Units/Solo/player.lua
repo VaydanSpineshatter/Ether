@@ -58,61 +58,6 @@ local units = {
     [6] = "focus"
 }
 
-local function OnDrag(self)
-    if not Ether.IsMovable then return end
-    if self:IsMovable() then
-        self:StartMoving()
-    end
-end
-
-local function SnapToGrid(x, y, gridSize)
-    local snappedX = math.floor((x + gridSize/2) / gridSize) * gridSize
-    local snappedY = math.floor((y + gridSize/2) / gridSize) * gridSize
-    return snappedX, snappedY
-end
-
-local function StopDrag(self)
-    if not Ether.IsMovable then return end
-    if self:IsMovable() then
-        self:StopMovingOrSizing()
-    end
-
-    local point, relTo, relPoint, x, y = self:GetPoint(1)
-    local relToName = "UIParent"
-
-    if relTo then
-        if relTo == UIParent then
-            relToName = "UIParent"
-        elseif relTo.GetName and relTo:GetName() then
-            relToName = relTo:GetName()
-        end
-    end
-     local snappedX, snappedY = SnapToGrid(x, y, 20)
-
-    local frameID
-    for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
-        if self.unit == units[key] then
-            frameID = value
-            break
-        end
-    end
-
-    if frameID and Ether.DB[5111] and Ether.DB[5111][frameID] then
-        local DB = Ether.DB[5111][frameID]
-        DB[1] = point
-        DB[2] = relToName
-        DB[3] = relPoint
-        DB[4] = snappedX
-        DB[5] = snappedY
-
-        local anchorRelTo = (relToName == "UIParent") and UIParent or _G[relToName]
-        if anchorRelTo then
-            self:ClearAllPoints()
-            self:SetPoint(point, anchorRelTo, relPoint, snappedX, snappedY)
-        end
-    end
-end
-
 function Ether:CreateUnitButtons(index)
     if InCombatLockdown() or type(index) ~= "number" then
         return
@@ -137,6 +82,12 @@ function Ether:CreateUnitButtons(index)
         Ether:GetClassColor(button)
         Ether:SetupUpdateText(button, "health")
         Ether:SetupUpdateText(button, "power", true)
+        for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
+            if button.unit == units[key] then
+                Ether:SetupDrag(button, value, 20)
+                break
+            end
+        end
         Mixin(button.healthBar, SmoothStatusBarMixin)
         Mixin(button.powerBar, SmoothStatusBarMixin)
         button.Smooth = true
@@ -159,8 +110,6 @@ function Ether:CreateUnitButtons(index)
         button:RegisterForDrag("LeftButton")
         button:EnableMouse(true)
         button:SetMovable(true)
-        button:SetScript("OnDragStart", OnDrag)
-        button:SetScript("OnDragStop", StopDrag)
         FullUpdate(button, true)
         Ether.unitButtons.solo[button.unit] = button
         if button.unit == "player" then

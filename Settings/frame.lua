@@ -1532,6 +1532,52 @@ function Ether.UpdateIndicators()
     end
 end
 
+function Ether.CreateTooltipSection(self)
+    local parent = self.Content.Children["Tooltip"]
+
+    local Tooltip = {
+        [1] = {name = "AFK"},
+        [2] = {name = "DND"},
+        [3] = {name = "PVP Icon"},
+        [4] = {name = "Resting Icon"},
+        [5] = {name = "Realm"},
+        [6] = {name = "Level"},
+        [7] = {name = "Class"},
+        [8] = {name = "Guild"},
+        [9] = {name = "Role"},
+        [10] = {name = "Creature Type"},
+        [11] = {name = "Race", },
+        [12] = {name = "Raid Target"},
+        [13] = {name = "Reaction"}
+    }
+
+    local mF = CreateFrame("Frame", nil, parent)
+    mF:SetSize(200, (#Tooltip * 30) + 60)
+
+    for i, opt in ipairs(Tooltip) do
+        local btn = CreateFrame("CheckButton", nil, mF, "InterfaceOptionsCheckButtonTemplate")
+
+        if i == 1 then
+            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -10)
+        else
+            btn:SetPoint("TOPLEFT", self.Content.Buttons.Tooltip.A[i - 1], "BOTTOMLEFT", 0, 0)
+        end
+
+        btn:SetSize(24, 24)
+
+        btn.label = GetFont(self, btn, opt.name, 12)
+        btn.label:SetPoint("LEFT", btn, "RIGHT", 8, 1)
+        btn:SetChecked(Ether.DB[301][i] == 1)
+
+        btn:SetScript("OnClick", function(self)
+            local checked = self:GetChecked()
+            Ether.DB[301][i] = checked and 1 or 0
+        end)
+
+        self.Content.Buttons.Tooltip.A[i] = btn
+    end
+end
+
 function Ether.CreateLayoutSection(self)
     local parent = self.Content.Children["Layout"]
 
@@ -1585,50 +1631,22 @@ function Ether.CreateLayoutSection(self)
 
 end
 
-function Ether.CreateTooltipSection(self)
-    local parent = self.Content.Children["Tooltip"]
+function Ether.CreateCastBarSection(self)
+    local parent = self.Content.Children["CastBar"]
 
-    local Tooltip = {
-        [1] = {name = "AFK"},
-        [2] = {name = "DND"},
-        [3] = {name = "PVP Icon"},
-        [4] = {name = "Resting Icon"},
-        [5] = {name = "Realm"},
-        [6] = {name = "Level"},
-        [7] = {name = "Class"},
-        [8] = {name = "Guild"},
-        [9] = {name = "Role"},
-        [10] = {name = "Creature Type"},
-        [11] = {name = "Race", },
-        [12] = {name = "Raid Target"},
-        [13] = {name = "Reaction"}
-    }
-
-    local mF = CreateFrame("Frame", nil, parent)
-    mF:SetSize(200, (#Tooltip * 30) + 60)
-
-    for i, opt in ipairs(Tooltip) do
-        local btn = CreateFrame("CheckButton", nil, mF, "InterfaceOptionsCheckButtonTemplate")
-
-        if i == 1 then
-            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -10)
-        else
-            btn:SetPoint("TOPLEFT", self.Content.Buttons.Tooltip.A[i - 1], "BOTTOMLEFT", 0, 0)
-        end
-
-        btn:SetSize(24, 24)
-
-        btn.label = GetFont(self, btn, opt.name, 12)
-        btn.label:SetPoint("LEFT", btn, "RIGHT", 8, 1)
-        btn:SetChecked(Ether.DB[301][i] == 1)
-
-        btn:SetScript("OnClick", function(self)
-            local checked = self:GetChecked()
-            Ether.DB[301][i] = checked and 1 or 0
-        end)
-
-        self.Content.Buttons.Tooltip.A[i] = btn
-    end
+    local indicator = CreateFrame("StatusBar", nil, parent)
+    indicator:SetPoint("TOP", 40, -40)
+    indicator:SetSize(220, 15)
+    indicator:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
+    local drop = indicator:CreateTexture(nil, "ARTWORK", nil, -7)
+    drop:SetAllPoints()
+    local _, classFilename = UnitClass("player")
+    local c = Ether.RAID_COLORS[classFilename]
+    indicator:SetStatusBarColor(c.r, c.g, c.b, .6)
+    drop:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.8)
+    local text = indicator:CreateFontString(nil, "OVERLAY")
+    text:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
+    text:SetPoint("LEFT", 31, 0)
 end
 
 function Ether.CreateConfigSection(self)
@@ -1737,8 +1755,15 @@ function Ether.CreateConfigSection(self)
         end
         local isShown = Ether.gridFrame:IsShown()
         Ether.IsMovable = not isShown
-        Ether.gridFrame:SetShown(not isShown)
-        Ether.tooltipFrame:SetShown(not isShown)
+        if Ether.gridFrame then
+            Ether.gridFrame:SetShown(not isShown)
+        end
+        if Ether.tooltipFrame then
+            Ether.tooltipFrame:SetShown(not isShown)
+        end
+        if Ether.debugFrame then
+            Ether.debugFrame:SetShown(not isShown)
+        end
         Ether.DB[401][3] = isShown and 1 or 0
     end)
 

@@ -5,10 +5,10 @@ local select, wipe = select, wipe
 local C_After = C_Timer.After
 local debugText = ""
 local function SendOutput(input)
-    if not Ether.DebugFrame then
+    if not Ether.debugFrame then
         return
     end
-    Ether.DebugFrame:Show()
+    Ether.debugFrame:Show()
     debugText = debugText .. '\n' .. input
     Ether.DebugText:SetText(debugText)
 end
@@ -18,7 +18,7 @@ local function hide()
         timer = true
         C_After(7, function()
             debugText = ""
-            Ether.DebugFrame:Hide()
+            Ether.debugFrame:Hide()
             timer = false
         end)
     end

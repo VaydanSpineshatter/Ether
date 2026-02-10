@@ -112,9 +112,10 @@ function Ether:SetupCastBar(button)
     local drop = frame:CreateTexture(nil, "ARTWORK", nil, -7)
     frame.drop = drop
     drop:SetAllPoints()
-    local r, g, b = GetClassColor("player")
-    frame:SetStatusBarColor(r, g, b)
-    drop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3, 0.8)
+    local _, classFilename = UnitClass("player")
+    local c = Ether.RAID_COLORS[classFilename]
+    frame:SetStatusBarColor(c.r, c.g, c.b, .6)
+    drop:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.8)
     local text = frame:CreateFontString(nil, "OVERLAY")
     frame.text = text
     text:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
@@ -161,21 +162,6 @@ function Ether:SetupAttribute(button, unit)
     button:SetAttribute("unit", unit)
     button:SetAttribute("*type1", "target")
     button:SetAttribute("*type2", "togglemenu")
-end
-
-function Ether:SetupDrag(button)
-    button:RegisterForDrag("LeftButton")
-    button:SetMovable(true)
-    button:SetScript("OnDragStart", function(self)
-        if self:IsMovable() then
-            self:StartMoving()
-        end
-    end)
-    button:SetScript("OnDragStop", function(self)
-        if self:IsMovable() then
-            self:StopMovingOrSizing()
-        end
-    end)
 end
 
 local initialGrid = false
@@ -283,20 +269,20 @@ function Ether:SetupGridFrame()
     end
 end
 
-local function OnDrag(self)
+local function SnapToGrid(x, y, gridSize)
+    local snappedX = x + gridSize / 2 / gridSize * gridSize
+    local snappedY = y + gridSize / 2 / gridSize * gridSize
+    return snappedX, snappedY
+end
+
+local function onStart(self)
     if not Ether.IsMovable then return end
     if self:IsMovable() then
         self:StartMoving()
     end
 end
 
-local function SnapToGrid(x, y, gridSize)
-    local snappedX = math.floor((x + gridSize/2) / gridSize) * gridSize
-    local snappedY = math.floor((y + gridSize/2) / gridSize) * gridSize
-    return snappedX, snappedY
-end
-
-local function StopDrag(self)
+local function onStop(self, index, grid)
     if not Ether.IsMovable then return end
     if self:IsMovable() then
         self:StopMovingOrSizing()
@@ -312,21 +298,33 @@ local function StopDrag(self)
             relToName = "UIParent"
         end
     end
-    local snappedX, snappedY = SnapToGrid(x, y, 40)
-    local DB = Ether.DB[5111]
-    DB[339][1] = point
-    DB[339][2] = relToName
-    DB[339][3] = relPoint
-    DB[339][4] = snappedX
-    DB[339][5] = snappedY
+    local snapX, snapY = SnapToGrid(x, y, grid)
+    local DB = Ether.DB[5111][index]
+    DB[1] = point
+    DB[2] = relToName
+    DB[3] = relPoint
+    DB[4] = snapX
+    DB[5] = snapY
     local anchorRelTo = _G[relToName] or UIParent
     self:ClearAllPoints()
-    self:SetPoint(DB[339][1],anchorRelTo, DB[339][3],snappedX, snappedY)
+    self:SetPoint(DB[1], relToName, DB[3], snapX, snapY)
+end
+
+function Ether:SetupDrag(button, index, grid)
+    if not button then return end
+    if type(index) ~= "number" or type(grid) ~= "number" then return end
+    button:EnableMouse(true)
+    button:RegisterForDrag("LeftButton")
+    button:SetMovable(true)
+    button:SetScript("OnDragStart", onStart)
+    button:SetScript("OnDragStop", function(self)
+        onStop(self, index, grid)
+    end)
 end
 
 function Ether:SetupDebugFrame()
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    Ether.DebugFrame = frame
+    Ether.debugFrame = frame
     frame:SetPoint("CENTER")
     frame:SetSize(320, 200)
     frame:SetBackdrop({
@@ -359,11 +357,7 @@ function Ether:SetupDebugFrame()
     top:SetText("|cE600CCFFEther|r")
     frame:Hide()
     Ether:ApplyFramePosition(339)
-    frame:EnableMouse(true)
-    frame:SetMovable(true)
-    frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", OnDrag)
-    frame:SetScript("OnDragStop", StopDrag)
+    Ether:SetupDrag(frame, 339, 40)
 end
 
 local function AuraPosition(i)

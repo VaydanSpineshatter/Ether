@@ -24,8 +24,7 @@ Ether.SlashInfo = {
     [2] = {cmd = "/ether settings", desc = "Toggle settings"},
     [3] = {cmd = "/ether debug", desc = "Toggle debug"},
     [4] = {cmd = "/ether rl", desc = "Reload Interface"},
-    [5] = {cmd = "/ether Msg", desc = "Ether whisper enable"},
-
+    [5] = {cmd = "/ether Msg", desc = "Ether whisper enable"}
 }
 
 Ether.unitButtons = {
@@ -46,8 +45,9 @@ local function BuildContent(self)
         Ether.CreateAuraConfigSection(self)
         Ether.CreateRegisterSection(self)
         Ether.CreatePositionSection(self)
-        Ether.CreateLayoutSection(self)
         Ether.CreateTooltipSection(self)
+        Ether.CreateLayoutSection(self)
+        Ether.CreateCastBarSection(self)
         Ether.CreateConfigSection(self)
         Ether.CreateProfileSection(self)
     end)
@@ -90,7 +90,7 @@ local Construct = {
             [3] = {"Aura Settings", "Aura Custom", "Aura Helper"},
             [4] = {"Register", "Position"},
             [5] = {"Tooltip"},
-            [6] = {"Layout", "Config"},
+            [6] = {"Layout", "CastBar", "Config"},
             [7] = {"Edit"}
         },
         ["LEFT"] = {
@@ -302,47 +302,6 @@ local function InitializeSettings(self)
     end
 end
 
-local function OnDrag(self)
-    if not Ether.IsMovable then return end
-    if self:IsMovable() then
-        self:StartMoving()
-    end
-end
-
-local function SnapToGrid(x, y, gridSize)
-    local snappedX = math.floor((x + gridSize / 2) / gridSize) * gridSize
-    local snappedY = math.floor((y + gridSize / 2) / gridSize) * gridSize
-    return snappedX, snappedY
-end
-
-local function StopDrag(self)
-    if not Ether.IsMovable then return end
-    if self:IsMovable() then
-        self:StopMovingOrSizing()
-    end
-    local point, relTo, relPoint, x, y = self:GetPoint(1)
-    local relToName = "UIParent"
-    if relTo then
-        if relTo.GetName and relTo:GetName() then
-            relToName = relTo:GetName()
-        elseif relTo == UIParent then
-            relToName = "UIParent"
-        else
-            relToName = "UIParent"
-        end
-    end
-    local snappedX, snappedY = SnapToGrid(x, y, 40)
-    local DB = Ether.DB[5111][340]
-    DB[1] = point
-    DB[2] = relToName
-    DB[3] = relPoint
-    DB[4] = snappedX
-    DB[5] = snappedY
-    local anchorRelTo = _G[relToName] or UIParent
-    self:ClearAllPoints()
-    self:SetPoint(DB[1], anchorRelTo, DB[3], snappedX, snappedY)
-end
-
 function Ether.CreateMainSettings(self)
     if not self.IsCreated then
         self.Frames["Main"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
@@ -373,9 +332,6 @@ function Ether.CreateMainSettings(self)
         btnX:SetSize(28, 28)
         btnX:SetScript("OnClick", function()
             self.Frames["Main"]:Hide()
-            if Ether and Ether.gridFrame then
-                Ether.gridFrame:SetShown(false)
-            end
         end)
         self.Frames["Top"] = CreateFrame("Frame", nil, self.Frames["Main"])
         self.Frames["Top"]:SetPoint("TOPLEFT", 10, -10)
@@ -431,11 +387,7 @@ function Ether.CreateMainSettings(self)
         name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
         name:SetText("|cffcc66ffEther|r")
         Ether:ApplyFramePosition(340)
-        self.Frames["Main"]:EnableMouse(true)
-        self.Frames["Main"]:SetMovable(true)
-        self.Frames["Main"]:RegisterForDrag("LeftButton")
-        self.Frames["Main"]:SetScript("OnDragStart", OnDrag)
-        self.Frames["Main"]:SetScript("OnDragStop", StopDrag)
+        Ether:SetupDrag(self.Frames["Main"], 340, 40)
         self.IsCreated = true
     end
 end
@@ -697,11 +649,9 @@ function Ether:RefreshFramePositions()
     end
 end
 
-function Ether:ApplyFramePosition(frameID)
-    local pos = Ether.DB[5111][frameID]
-    if not pos then return end
-
-    local frames = {
+function Ether:ApplyFramePosition(index)
+    if type(index) ~= "number" then return end
+    local frameGroup = {
         [331] = Ether.Anchor.tooltip,
         [332] = Ether.unitButtons.solo["player"],
         [333] = Ether.unitButtons.solo["target"],
@@ -710,17 +660,20 @@ function Ether:ApplyFramePosition(frameID)
         [336] = Ether.unitButtons.solo["pettarget"],
         [337] = Ether.unitButtons.solo["focus"],
         [338] = Ether.Anchor.raid,
-        [339] = Ether.DebugFrame,
+        [339] = Ether.debugFrame,
         [340] = Construct.Frames["Main"]
     }
-
-    local frame = frames[frameID]
-    if frame then
-        local x, y = pos[4], pos[5]
+    local frame = frameGroup[index]
+    local pos = Ether.DB[5111][index]
+    for i, default in ipairs({"CENTER", "UIParent", "CENTER", 0, 0, 100, 100, 1, 1}) do
+        pos[i] = pos[i] or default
+    end
+    if frame and pos then
+        local relTo = (pos[2] == "UIParent") and UIParent or frame[pos[2]]
         frame:ClearAllPoints()
-        frame:SetPoint(pos[1], UIParent, pos[3], x, y)
-        frame:SetScale(pos[8] or 1.0)
-        frame:SetAlpha(pos[9] or 1.0)
+        frame:SetPoint(pos[1], relTo, pos[3], pos[4], pos[5])
+        frame:SetScale(pos[8])
+        frame:SetAlpha(pos[9])
     end
 end
 
@@ -899,7 +852,7 @@ local function OnInitialize(self, event, ...)
             end
         end
 
-        if not Ether.DebugFrame then
+        if not Ether.debugFrame then
             Ether:SetupDebugFrame()
         end
 
@@ -923,13 +876,12 @@ local function OnInitialize(self, event, ...)
             }
             StaticPopup_Show("ETHER_RELOAD_UI")
         end
-        Ether.Anchor.raid:SetSize(1,1)
+        Ether.Anchor.raid:SetSize(1, 1)
         Ether:ApplyFramePosition(338)
 
         local tooltip = CreateFrame("Frame", nil, UIParent)
-        tooltip:SetFrameLevel(400)
-        tooltip:SetSize(1, 1)
         Ether.Anchor.tooltip = tooltip
+        tooltip:SetSize(1, 1)
 
         Ether.CreateMainSettings(Construct)
 
@@ -967,7 +919,6 @@ local function OnInitialize(self, event, ...)
             end
             Ether:HeaderBackground()
         end)
-
     elseif (event == "PLAYER_LOGOUT") then
         local charKey = Ether.GetCharacterKey()
         if charKey then
