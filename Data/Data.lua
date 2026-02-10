@@ -25,8 +25,10 @@ local Default = {
     [701] = {0, 0, 0, 0},
     [801] = {1, 1, 0, 0, 0, 1, 1, 1, 1, 1},
     [811] = {
-        font = "Fonts\\FRIZQT__.TTF",
-        bar = "Interface\\TargetingFrame\\UI-StatusBar"
+        ["font"] = "Fonts\\FRIZQT__.TTF",
+        ["bar"] = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
+        ["border"] = "Interface\\DialogFrame\\UI-DialogBox-Border",
+        ["background"]  = "Interface\\ChatFrame\\ChatFrameBackground"
     },
     [901] = {
         player = true,

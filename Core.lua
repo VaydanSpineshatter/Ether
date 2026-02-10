@@ -320,8 +320,17 @@ function Ether.CreateMainSettings(self)
         self.Frames["Main"]:SetScript("OnHide", function()
             Ether.DB[111].SHOW = false
             Ether.IsMovable = false
-            if Ether and Ether.gridFrame then
+            if Ether.gridFrame then
                 Ether.gridFrame:SetShown(false)
+            end
+            if Ether.debugFrame then
+                Ether.debugFrame:SetShown(false)
+            end
+            if Ether.tooltipFrame then
+                Ether.tooltipFrame:SetShown(false)
+            end
+            if Ether.Anchor.raid.tex then
+                Ether.Anchor.raid.tex:SetShown(false)
             end
         end)
         tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
@@ -875,8 +884,13 @@ local function OnInitialize(self, event, ...)
             }
             StaticPopup_Show("ETHER_RELOAD_UI")
         end
-        Ether.Anchor.raid:SetSize(1, 1)
+        Ether.Anchor.raid:SetSize(66, 66)
         Ether:ApplyFramePosition(338)
+        Ether.Anchor.raid.tex = Ether.Anchor.raid:CreateTexture(nil, "BACKGROUND")
+        Ether.Anchor.raid.tex:SetAllPoints()
+        Ether.Anchor.raid.tex:SetColorTexture(0, 1, 0, .7)
+        Ether.Anchor.raid.tex:Hide()
+        Ether:SetupDrag(Ether.Anchor.raid, 338, 40)
 
         local tooltip = CreateFrame("Frame", nil, UIParent)
         Ether.Anchor.tooltip = tooltip
@@ -916,7 +930,6 @@ local function OnInitialize(self, event, ...)
                     Ether:UpdatePowerText(button)
                 end
             end
-            Ether:HeaderBackground()
         end)
     elseif (event == "PLAYER_LOGOUT") then
         local charKey = Ether.GetCharacterKey()

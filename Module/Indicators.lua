@@ -310,16 +310,14 @@ local function IndicatorUnit(self, event, unit)
         local button = FindUnitButton(unit)
         if not button then return end
         if not button.Indicators.UnitFlags then return end
-        if button.unit == unit and UnitExists(unit) then
-            local charmed = UnitIsCharmed(unit)
-            if charmed then
-                button.name:SetTextColor(1.00, 0.00, 0.00)
-                button.Indicators.UnitFlags:SetTexture(charmedIcon)
-                button.Indicators.UnitFlags:Show()
-            else
-                button.Indicators.UnitFlags:Hide()
-                button.name:SetTextColor(1, 1, 1)
-            end
+        local charmed = UnitIsCharmed(unit)
+        if charmed then
+            button.name:SetTextColor(1.00, 0.00, 0.00)
+            button.Indicators.UnitFlags:SetTexture(charmedIcon)
+            button.Indicators.UnitFlags:Show()
+        else
+            button.Indicators.UnitFlags:Hide()
+            button.name:SetTextColor(1, 1, 1)
         end
     elseif event == "PLAYER_FLAGS_CHANGED" then
         local button = FindUnitButton(unit)

@@ -307,7 +307,7 @@ local function onStop(self, index, grid)
     DB[5] = snapY
     local anchorRelTo = _G[relToName] or UIParent
     self:ClearAllPoints()
-    self:SetPoint(DB[1], relToName, DB[3], snapX, snapY)
+    self:SetPoint(DB[1], anchorRelTo, DB[3], snapX, snapY)
 end
 
 function Ether:SetupDrag(button, index, grid)

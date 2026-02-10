@@ -58,6 +58,18 @@ local units = {
     [6] = "focus"
 }
 
+function Ether:ApplyEtherBorder(frame, r, g, b, a)
+
+    if not frame.etherBorder then
+        frame.etherBorder = frame:CreateTexture(nil, "OVERLAY")
+        frame.etherBorder:SetPoint("TOPLEFT", -3, 3)
+        frame.etherBorder:SetPoint("BOTTOMRIGHT", 3, -3)
+        frame.etherBorder:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
+        frame.etherBorder:SetTexCoord(0.1, 0.9, 0.1, 0.9)
+    end
+
+    frame.etherBorder:SetVertexColor(r or 0.8, g or 0.4, b or 1.0, a or 1.0)
+end
 function Ether:CreateUnitButtons(index)
     if InCombatLockdown() or type(index) ~= "number" then
         return
@@ -74,10 +86,16 @@ function Ether:CreateUnitButtons(index)
         Ether:SetupHealthBar(button, "HORIZONTAL", 120, 40)
         Ether:SetupPowerBar(button)
         Ether:SetupPrediction(button)
-        local background = button:CreateTexture(nil, "BACKGROUND")
-        background:SetColorTexture(0, 0, 0, .6)
-        background:SetPoint("TOPLEFT", button, "TOPLEFT", -2, 2)
-        background:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
+         button:SetBackdrop({
+            bgFile = Ether.DB[811]["background"],
+            edgeFile = Ether.DB[811]["border"],
+            tile = true,
+            tileSize = 16,
+            edgeSize = 16,
+            insets = {left = -2, right = -2, top = -2, bottom = -2}
+        })
+        button:SetBackdropColor(0.1, 0.1, 0.1, .9)
+        button:SetBackdropBorderColor(0.4, 0.4, 0.4)
         Ether:SetupName(button, 0)
         Ether:GetClassColor(button)
         Ether:SetupUpdateText(button, "health")

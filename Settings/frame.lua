@@ -29,6 +29,39 @@ local function SetupSliderThump(slider, size, color)
     end
 end
 
+local function CreateLineInput(parent, width, height)
+    local input = CreateFrame("EditBox", nil, parent)
+    input:SetSize(width, height)
+    input:SetAutoFocus(false)
+
+    local bg = input:CreateTexture(nil, "BACKGROUND")
+    bg:SetAllPoints()
+    bg:SetColorTexture(1, 1, 1, 0.1)
+
+    local line = input:CreateTexture(nil, "BORDER")
+    line:SetPoint("BOTTOMLEFT")
+    line:SetPoint("BOTTOMRIGHT")
+    line:SetHeight(1)
+    line:SetColorTexture(0.80, 0.40, 1.00, 1)
+    input:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+    input:SetTextInsets(4, 4, 2, 2)
+
+    input:SetScript("OnEditFocusGained", function(self)
+        line:SetColorTexture(0, 0.8, 1, 1)
+        line:SetHeight(1)
+        bg:SetColorTexture(1, 1, 1, 0.1)
+    end)
+    input:SetScript("OnEditFocusLost", function(self)
+        line:SetColorTexture(0.80, 0.40, 1.00, 1)
+        line:SetHeight(1)
+        bg:SetColorTexture(1, 1, 1, 0.1)
+    end)
+    input:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+    end)
+    return input
+end
+
 local function EtherPanelButton(parent, width, height, text, point, relto, rel, offX, offY)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(width, height)
@@ -53,6 +86,7 @@ end
 
 function Ether.CreateModuleSection(self)
     local parent = self.Content.Children["Module"]
+
     local modulesValue = {
         [1] = {name = "Icon"},
         [2] = {name = "Chat Bn & Msg Whisper"},
@@ -350,69 +384,113 @@ local selectedSpellId = nil
 local AuraList
 local AuraButtons = {}
 
+local function CreateEtherDropdown(parent, width, text, options)
+    local dropdown = CreateFrame("Button", nil, parent)
+    dropdown:SetSize(width, 25)
+    dropdown.bg = dropdown:CreateTexture(nil, "BACKGROUND")
+    dropdown.bg:SetAllPoints()
+    dropdown.bg:SetColorTexture(1, 1, 1, 0.1)
+    dropdown.bottom = dropdown:CreateTexture(nil, "BORDER")
+    dropdown.bottom:SetPoint("BOTTOMLEFT")
+    dropdown.bottom:SetPoint("BOTTOMRIGHT")
+    dropdown.bottom:SetHeight(1)
+    dropdown.bottom:SetColorTexture(0.80, 0.40, 1.00, 1)
+    dropdown.right = dropdown:CreateTexture(nil, "BORDER")
+    dropdown.right:SetPoint("TOPRIGHT")
+    dropdown.right:SetPoint("BOTTOMRIGHT")
+    dropdown.right:SetHeight(1)
+    dropdown.right:SetColorTexture(0.80, 0.40, 1.00, 1)
+    dropdown.text = dropdown:CreateFontString(nil, "OVERLAY")
+    dropdown.text:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+    dropdown.text:SetPoint("LEFT", 8, 0)
+    dropdown.text:SetText(text)
+    local menu = CreateFrame("Button", nil, dropdown)
+    dropdown.menu = menu
+    menu:SetPoint("TOPLEFT")
+    menu:SetWidth(width)
+    menu.bg = menu:CreateTexture(nil, "BACKGROUND")
+    menu.bg:SetAllPoints()
+    menu.bg:SetColorTexture(0.2, 0.2, 0.2, 1)
+    menu:SetFrameLevel(parent:GetFrameLevel() + 10)
+    menu:Hide()
+    menu.bottom = menu:CreateTexture(nil, "BORDER")
+    menu.bottom:SetPoint("BOTTOMLEFT")
+    menu.bottom:SetPoint("BOTTOMRIGHT")
+    menu.bottom:SetHeight(1)
+    menu.bottom:SetColorTexture(0.00, 0.80, 1.00, 1)
+    menu.right = menu:CreateTexture(nil, "BORDER")
+    menu.right:SetPoint("TOPRIGHT")
+    menu.right:SetPoint("BOTTOMRIGHT")
+    menu.right:SetHeight(1)
+    menu.right:SetColorTexture(0.00, 0.80, 1.00, 1)
+    local totalHeight = 4
+    for _, data in ipairs(options) do
+        local btn = CreateFrame("Button", nil, menu)
+        btn:SetSize(width - 8, 20)
+        btn:SetPoint("TOPLEFT", 4, -totalHeight)
+        btn.text = btn:CreateFontString(nil, "OVERLAY")
+        btn.text:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+        btn.text:SetPoint("LEFT", 4, 0)
+        btn.text:SetText(data.text)
+        btn:SetScript("OnEnter", function() btn.text:SetTextColor(0.00, 0.80, 1.00, 1) end)
+        btn:SetScript("OnLeave", function() btn.text:SetTextColor(1, 1, 1, 1) end)
+        btn:SetScript("OnClick", function()
+            if data.func then
+                data.func()
+                menu:Hide()
+            end
+        end)
+        totalHeight = totalHeight + 20
+    end
+    menu:SetHeight(totalHeight + 4)
+    dropdown:SetScript("OnClick", function()
+        menu:SetShown(true)
+    end)
+    menu:SetScript("OnLeave", function(self)
+        self:Hide()
+    end)
+    return dropdown
+end
+
 local function CreateAuraList(parent)
 
-    local templateLabel = parent:CreateFontString(nil, "OVERLAY")
-    templateLabel:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
-    templateLabel:SetPoint("TOPLEFT", 10, -10)
-    templateLabel:SetText("Load Template:")
+    local auraWipe = {}
 
-    local templateDropdown = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    templateDropdown:SetPoint("TOPLEFT", templateLabel, "BOTTOMLEFT", -10, -10)
-    UIDropDownMenu_SetWidth(templateDropdown, 140)
-    UIDropDownMenu_SetText(templateDropdown, "Select Template...")
-    local loadBtn = EtherPanelButton(parent, 60, 25, "Load", "TOP", parent, "TOP", 30, -10)
-    loadBtn:SetScript("OnClick", function(self)
-        local selectedTemplate = UIDropDownMenu_GetText(templateDropdown)
-        if selectedTemplate and selectedTemplate ~= "Select Template..." then
-            Ether:AddTemplateAuras(selectedTemplate, true)
-        end
-    end)
-
-    UIDropDownMenu_Initialize(templateDropdown, function()
-        local info = UIDropDownMenu_CreateInfo()
-
-        info.text = "|cffff0000Clear Auras|r"
-        info.func = function()
-            wipe(Ether.DB[1003])
-            Ether.UpdateAuraList()
-            selectedSpellId = nil
-            Ether.UpdateEditor()
-            Ether.DebugOutput("|cff00ccffAuras|r: Custom auras cleared")
-        end
-        UIDropDownMenu_AddButton(info)
-
-        UIDropDownMenu_AddSeparator()
-
-        for templateName, _ in pairs(Ether.PredefinedAuras) do
-            info.text = templateName
-            info.func = function(self)
-                UIDropDownMenu_SetText(templateDropdown, templateName)
+    for templateName, _ in pairs(Ether.PredefinedAuras) do
+        table.insert(auraWipe, {
+            text = templateName,
+            func = function()
+                Ether:AddTemplateAuras(templateName, true)
             end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
+        })
+    end
+
+    local auraDropdown = CreateEtherDropdown(parent, 210, "Select Aura Template", auraWipe)
+    auraDropdown:SetPoint("TOPLEFT", 5, -5)
 
     local frame = CreateFrame("Frame", nil, parent)
     AuraList = frame
-    AuraList:SetPoint("TOPLEFT", templateLabel, "BOTTOMLEFT", 0, -50)
-    AuraList:SetSize(210, 320)
+    AuraList:SetPoint("TOPLEFT", auraDropdown, "BOTTOMLEFT", 0, 0)
+    AuraList:SetSize(230, 400)
 
-    local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT")
+    local scrollFrame = CreateFrame("ScrollFrame", nil, frame, "ScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT", 0, -10)
     scrollFrame:SetPoint("BOTTOMRIGHT", -25, 35)
 
     local scrollChild = CreateFrame("Frame", nil, scrollFrame)
     scrollChild:SetSize(190, 1)
     scrollFrame:SetScrollChild(scrollChild)
-    AuraList.scrollChild = scrollChild
 
-    local addBtn = EtherPanelButton(frame, 80, 25, "New Aura", "LEFT", loadBtn, "RIGHT", 10, 0)
+    if scrollFrame.ScrollBar then
+        scrollFrame.ScrollBar:Hide()
+    end
+
+    AuraList.scrollChild = scrollChild
+    local addBtn = EtherPanelButton(frame, 60, 25, "New", "LEFT", auraDropdown, "RIGHT", 20, 0)
     addBtn:SetScript("OnClick", function(self)
         Ether.AddNewAura()
     end)
-
-    local confirm = EtherPanelButton(frame, 80, 25, "Confirm", "LEFT", addBtn, "RIGHT", 10, 0)
+    local confirm = EtherPanelButton(frame, 60, 25, "Confirm", "LEFT", addBtn, "RIGHT", 10, 0)
     confirm:SetScript("OnClick", function(self)
         if selectedSpellId then
             if Ether.DB[1003][selectedSpellId].isDebuff then
@@ -421,6 +499,15 @@ local function CreateAuraList(parent)
                 Ether.SaveAuraPos(selectedSpellId)
             end
         end
+    end)
+    local clear = EtherPanelButton(frame, 60, 25, "Clear ", "LEFT", confirm, "RIGHT", 10, 0)
+    clear:SetScript("OnClick", function(self)
+        wipe(Ether.DB[1003])
+        Ether.UpdateAuraList()
+        selectedSpellId = nil
+        Ether.UpdateEditor()
+        Ether.DebugOutput("|cff00ccffAuras|r: Custom auras cleared")
+        auraDropdown.menu:Hide()
     end)
 
     return frame
@@ -460,40 +547,6 @@ function Ether:AddTemplateAuras(templateName)
 end
 
 local Editor
-
-local function CreateLineInput(parent, width, height)
-    local input = CreateFrame("EditBox", nil, parent)
-    input:SetSize(width, height)
-    input:SetAutoFocus(false)
-
-    local bg = input:CreateTexture(nil, "BACKGROUND")
-    bg:SetAllPoints()
-    bg:SetColorTexture(1, 1, 1, 0.1)
-
-    local line = input:CreateTexture(nil, "BORDER")
-    line:SetPoint("BOTTOMLEFT")
-    line:SetPoint("BOTTOMRIGHT")
-    line:SetHeight(1)
-    line:SetColorTexture(0.80, 0.40, 1.00, 1)
-    input:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
-    input:SetTextInsets(4, 4, 2, 2)
-
-    input:SetScript("OnEditFocusGained", function(self)
-        line:SetColorTexture(0, 0.8, 1, 1)
-        line:SetHeight(1)
-        bg:SetColorTexture(1, 1, 1, 0.1)
-    end)
-    input:SetScript("OnEditFocusLost", function(self)
-        line:SetColorTexture(0.80, 0.40, 1.00, 1)
-        line:SetHeight(1)
-        bg:SetColorTexture(1, 1, 1, 0.1)
-    end)
-    input:SetScript("OnEscapePressed", function(self)
-        self:ClearFocus()
-    end)
-
-    return input
-end
 
 local colorPickerCallbacks = {
     currentSpellId = nil,
@@ -584,11 +637,11 @@ local function CreateEditor(parent)
     frame:SetPoint("TOPRIGHT", 70, -50)
     frame:SetSize(320, 300)
 
-    local name = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    local name = frame:CreateFontString(nil, "OVERLAY")
     frame.nameLabel = name
+    name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     name:SetPoint("TOPLEFT", 15, -5)
     name:SetText("Name")
-    name:SetAlpha(.6)
 
     local nameInput = CreateLineInput(frame, 140, 24)
     frame.nameInput = nameInput
@@ -601,11 +654,11 @@ local function CreateEditor(parent)
         self:ClearFocus()
     end)
 
-    local spellID = frame:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
+    local spellID = frame:CreateFontString(nil, "OVERLAY")
     frame.spellIdLabel = spellID
+    spellID:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     spellID:SetPoint("TOPLEFT", nameInput, "BOTTOMLEFT", 0, -10)
     spellID:SetText("Spell ID")
-    spellID:SetAlpha(.6)
 
     local spellIdInput = CreateLineInput(frame, 140, 24)
     frame.spellIdInput = spellIdInput
@@ -841,6 +894,12 @@ local function CreateEditor(parent)
     offsetYValue:SetPoint("TOP", offsetYSlider, "BOTTOM")
     offsetYValue:SetText("0")
 
+    SetupSliderText(sizeSlider, "4", "20")
+    SetupSliderText(offsetYSlider, "-20", "20")
+    SetupSliderText(offsetXSlider, "-20", "20")
+    SetupSliderThump(sizeSlider, 10, {0.8, 0.6, 0, 1})
+    SetupSliderThump(offsetYSlider, 10, {0.8, 0.6, 0, 1})
+    SetupSliderThump(offsetXSlider, 10, {0.8, 0.6, 0, 1})
     return frame
 end
 
@@ -857,7 +916,6 @@ function Ether.CreateAuraCustomSection(self)
 end
 
 function Ether.UpdateAuraList()
-
     for _, btn in ipairs(AuraButtons) do
         btn:Hide()
         btn:SetParent(nil)
@@ -865,13 +923,13 @@ function Ether.UpdateAuraList()
 
     wipe(AuraButtons)
 
-    local yOffset = -5
+    local yOffset = 0
     local index = 1
 
     for spellId, data in pairs(Ether.DB[1003]) do
         local btn = CreateFrame("Button", nil, AuraList.scrollChild)
-        btn:SetSize(180, 40)
-        btn:SetPoint("TOP", 0, yOffset)
+        btn:SetSize(200, 40)
+        btn:SetPoint("TOP", 2, yOffset)
 
         btn.bg = btn:CreateTexture(nil, "BACKGROUND")
         btn.bg:SetAllPoints()
@@ -905,14 +963,14 @@ function Ether.UpdateAuraList()
         btn.spellId:SetTextColor(0, 0.8, 1)
 
         btn.colorBox = btn:CreateTexture(nil, "OVERLAY")
-        btn.colorBox:SetSize(20, 20)
+        btn.colorBox:SetSize(15, 15)
         btn.colorBox:SetPoint("RIGHT", -10, 0)
         if data.color then
             btn.colorBox:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
         end
 
         btn.deleteBtn = CreateFrame("Button", nil, btn)
-        btn.deleteBtn:SetSize(20, 20)
+        btn.deleteBtn:SetSize(15, 15)
         btn.deleteBtn:SetPoint("RIGHT", btn.colorBox, "LEFT", 0, 0)
         btn.deleteBtn:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
         btn.deleteBtn:SetScript("OnClick", function(self)
@@ -1179,7 +1237,6 @@ function Ether:GetSpellInfo(spellName, resultText, spellIcon)
         GameTooltip:Hide()
     end)
 end
-
 local number = nil
 local iconTexture = ""
 local Indicator
@@ -1256,53 +1313,41 @@ function Ether.CreateIndicatorsSection(self)
     Indicator.offsetXValue = nil
     Indicator.offsetYValue = nil
 
-    local selectLabel = parent:CreateFontString(nil, "OVERLAY")
-    selectLabel:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
-    selectLabel:SetPoint("TOPLEFT", 10, -10)
-    selectLabel:SetText("Select Indicator")
-
-    local templateDropdown = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    templateDropdown:SetPoint("TOPLEFT", selectLabel, "BOTTOMLEFT", -10, -10)
-    UIDropDownMenu_SetWidth(templateDropdown, 140)
-    UIDropDownMenu_SetText(templateDropdown, "...")
-
     local indicators = {
-        [1] = {name = "ReadyCheck", icon = "Interface\\RaidFrame\\ReadyCheck-Ready", type = "texture"},
-        [2] = {name = "Connection", icon = "Interface\\CharacterFrame\\Disconnect-Icon", type = "texture"},
-        [3] = {name = "RaidTarget", icon = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", coordinates = {0.75, 1, 0.25, 0.5}, type = "texture"},
-        [4] = {name = "Resurrection", icon = "Interface\\RaidFrame\\Raid-Icon-Rez", type = "texture"},
-        [5] = {name = "GroupLeader", icon = "Interface\\GroupFrame\\UI-Group-LeaderIcon", type = "texture"},
-        [6] = {name = "MasterLoot", icon = "Interface\\GroupFrame\\UI-Group-MasterLooter", type = "texture"},
-        [7] = {name = "UnitFlags", icon = "Interface\\Icons\\Spell_Holy_GuardianSpirit", type = "texture"},
-        [8] = {name = "PlayerRoles", icon = "Interface\\GroupFrame\\UI-Group-MainTankIcon", type = "texture"},
-        [9] = {name = "PlayerFlags", type = "string"},
+        ["ReadyCheck"] = {icon = "Interface\\RaidFrame\\ReadyCheck-Ready", id = 1, type = "texture"},
+        ["Connection"] = {icon = "Interface\\CharacterFrame\\Disconnect-Icon", id = 2, type = "texture"},
+        ["RaidTarget"] = {icon = "Interface\\TargetingFrame\\UI-RaidTargetingIcons", id = 3, coordinates = {0.75, 1, 0.25, 0.5}, type = "texture"},
+        ["Resurrection"] = {icon = "Interface\\RaidFrame\\Raid-Icon-Rez", id = 4, type = "texture"},
+        ["GroupLeader"] = {icon = "Interface\\GroupFrame\\UI-Group-LeaderIcon", id = 5, type = "texture"},
+        ["MasterLoot"] = {icon = "Interface\\GroupFrame\\UI-Group-MasterLooter", id = 6, type = "texture"},
+        ["UnitFlags"] = {icon = "Interface\\Icons\\Spell_Holy_GuardianSpirit", id = 7, type = "texture"},
+        ["PlayerRoles"] = {icon = "Interface\\GroupFrame\\UI-Group-MainTankIcon", id = 8, type = "texture"},
+        ["PlayerFlags"] = {type = "string", id = 9},
     }
-
-    UIDropDownMenu_Initialize(templateDropdown, function()
-        for id, name in ipairs(indicators) do
-            local data = indicators[id]
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = data.name
-            info.func = function()
-                number = id
-                if data.type == "texture" then
-                    indicatorType = indicators[id].type
-                    iconTexture = indicators[id].icon
-                    coordinates = indicators[id].coordinates
-                    currentIndicator = indicators[id].name
+    local indicatorFunc = {}
+    for name in pairs(indicators) do
+        table.insert(indicatorFunc, {
+            text = name,
+            func = function()
+                number = indicators[name].id
+                if indicators[name].type == "texture" then
+                    indicatorType = indicators[name].type
+                    iconTexture = indicators[name].icon
+                    coordinates = indicators[name].coordinates
+                    currentIndicator = name
                 end
-                if data.type == "string" then
-                    indicatorType = indicators[id].type
-                    coordinates = indicators[id].coordinates
-                    currentIndicator = indicators[id].name
+                if indicators[name].type == "string" then
+                    indicatorType = indicators[name].type
+                    coordinates = indicators[name].coordinates
+                    currentIndicator = name
                 end
-                UIDropDownMenu_SetSelectedValue(templateDropdown, id)
-                UIDropDownMenu_SetText(templateDropdown, data.name)
                 Ether.UpdateIndicatorsValue()
             end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
+        })
+    end
+
+    local templateDropdown = CreateEtherDropdown(parent, 210, "Select Indicator", indicatorFunc)
+    templateDropdown:SetPoint("TOPLEFT", 10, -10)
 
     local preview = CreateFrame("Frame", nil, parent)
     preview:SetPoint("TOP", 80, -90)
@@ -1484,7 +1529,7 @@ function Ether.CreateIndicatorsSection(self)
     offsetYValue:SetPoint("TOP", offsetYSlider, "BOTTOM")
     offsetYValue:SetText("0")
 
-    SetupSliderText(sizeSlider, "0.5", "2.0")
+    SetupSliderText(sizeSlider, "4", "34")
     SetupSliderText(offsetYSlider, "-20", "20")
     SetupSliderText(offsetXSlider, "-20", "20")
     SetupSliderThump(sizeSlider, 10, {0.8, 0.6, 0, 1})
@@ -1688,19 +1733,9 @@ function Ether.CreateConfigSection(self)
         [339] = "Debug"
     }
 
-    local labels = {}
-    local function CreateLabel(text, point, relativeTo, relativePoint, x, y)
-        local label = GetFont(self, parent, text, 13)
-        label:SetPoint(point, relativeTo, relativePoint, x, y)
-        labels[text] = label
-        return label
-    end
-
-    CreateLabel("Select frame:", "TOPLEFT", parent, "TOPLEFT", 10, -10)
-
     local sizeLabel = parent:CreateFontString(nil, "OVERLAY")
     sizeLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    sizeLabel:SetPoint("TOPLEFT", labels["Select frame:"], "BOTTOMLEFT", 10, -60)
+    sizeLabel:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 10, -60)
     sizeLabel:SetText("Size")
 
     local sizeSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
@@ -1768,20 +1803,13 @@ function Ether.CreateConfigSection(self)
         if Ether.debugFrame then
             Ether.debugFrame:SetShown(not isShown)
         end
-        Ether.DB[401][3] = isShown and 1 or 0
+        if Ether.Anchor.raid.tex then
+            Ether.Anchor.raid.tex:SetShown(not isShown)
+        end
     end)
 
     local dropdowns = {}
-    local function CreateDropdown(name, relativeTo, width)
-        local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
-        dropdown:SetPoint("TOPLEFT", relativeTo, "BOTTOMLEFT", 0, -10)
-        UIDropDownMenu_SetWidth(dropdown, width)
-        UIDropDownMenu_JustifyText(dropdown, "CENTER")
-        dropdowns[name] = dropdown
-        return dropdown
-    end
-
-    dropdowns.frame = CreateDropdown("frame", labels["Select frame:"], 100)
+    local frameOptions = {}
 
     local function UpdateValueLabels()
         local SELECTED = DB[111].SELECTED
@@ -1798,15 +1826,12 @@ function Ether.CreateConfigSection(self)
     local function UpdateSliders()
         local SELECTED = DB[111].SELECTED
         if not SELECTED or not DB[5111][SELECTED] then
-            UIDropDownMenu_SetText(dropdowns.frame, "Select...")
             sizeSlider:Disable()
             alphaSlider:Disable()
             UpdateValueLabels()
             return
         end
 
-        local frameName = frameKeys[SELECTED]
-        UIDropDownMenu_SetText(dropdowns.frame, frameName)
         sizeSlider:Enable()
         alphaSlider:Enable()
         local pos = DB[5111][SELECTED]
@@ -1819,23 +1844,19 @@ function Ether.CreateConfigSection(self)
         UpdateValueLabels()
     end
 
-    local function InitializeFrameDropdown(self, level)
-        local info = UIDropDownMenu_CreateInfo()
-        for frameID, frameData in pairs(frameKeys) do
-            info.text = frameData
-            info.value = frameID
-            info.checked = (DB[111].SELECTED == frameID)
-            info.func = function(self)
-                DB[111].SELECTED = self.value
-                UIDropDownMenu_SetText(dropdowns.frame, self:GetText())
+    for frameID, frameData in pairs(frameKeys) do
+        table.insert(frameOptions, {
+            text = frameData,
+            func = function()
+                DB[111].SELECTED = frameID
                 UpdateSliders()
+                dropdowns.frame.text:SetText(frameKeys[frameID])
             end
-            UIDropDownMenu_AddButton(info, level)
-        end
+        })
     end
 
-    UIDropDownMenu_Initialize(dropdowns.frame, InitializeFrameDropdown)
-    UIDropDownMenu_SetText(dropdowns.frame, "Select...")
+    dropdowns.frame = CreateEtherDropdown(parent, 160, "Select Frame", frameOptions)
+    dropdowns.frame:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 10, -10)
 
     sizeSlider:SetScript("OnValueChanged", function(self, value)
         local frame = DB[111].SELECTED
@@ -1857,21 +1878,28 @@ function Ether.CreateConfigSection(self)
 
     UpdateSliders()
 
-    local preview = CreateFrame("Frame", nil, parent)
+    local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     preview:SetPoint("TOP", 20, -200)
     preview:SetSize(55, 55)
     Ether:SetupHealthBar(preview, "VERTICAL", 55, 55)
     local _, classFilename = UnitClass("player")
     local c = Ether.RAID_COLORS[classFilename]
     preview.healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
+    preview:SetFrameLevel(preview.healthBar:GetFrameLevel() + 1)
     local name = preview.healthBar:CreateFontString(nil, "OVERLAY")
     name:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     name:SetPoint("CENTER", preview.healthBar, "CENTER", 0, -5)
     name:SetText(Ether:ShortenName(Ether.playerName, 3))
-    local background = preview:CreateTexture(nil, "BACKGROUND")
-    background:SetColorTexture(0, 0, 0, 1)
-    background:SetPoint("TOPLEFT", preview.healthBar, "TOPLEFT", -3, 3)
-    background:SetPoint("BOTTOMRIGHT", preview.healthBar, "BOTTOMRIGHT", 3, -3)
+    preview:SetBackdrop({
+        bgFile = Ether.DB[811].background or "Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile = Ether.DB[811].border or "Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile = true,
+        tileSize = 16,
+        edgeSize = 16,
+        insets = {left = -3, right = -3, top = -3, bottom = -3}
+    })
+    preview:SetBackdropColor(0.1, 0.1, 0.1, .9)
+    preview:SetBackdropBorderColor(0.4, 0.4, 0.4)
 
     local classColor = EtherPanelButton(parent, 80, 25, "Class color", "TOP", preview, "BOTTOM", 0, -20)
     classColor:SetScript("OnClick", function()
@@ -1957,7 +1985,138 @@ function Ether.CreateConfigSection(self)
             UIDropDownMenu_AddButton(info)
         end
     end)
+    local backgroundMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
+    backgroundMedia:SetPoint("TOP", statusbarMedia, "BOTTOM")
+    UIDropDownMenu_SetWidth(backgroundMedia, 140)
+    UIDropDownMenu_SetText(backgroundMedia, "Select Background")
+    UIDropDownMenu_Initialize(backgroundMedia, function(self)
+        local background = LSM:HashTable("background")
+        local currentBackground = DB[811]["background"]
+        for backgroundName, backgroundPath in pairs(background) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = backgroundName
+            info.value = backgroundPath
+            if currentBackground == backgroundPath then
+                info.checked = true
+                UIDropDownMenu_SetText(backgroundMedia, backgroundName)
+            end
+            info.func = function(self)
+                UIDropDownMenu_SetText(backgroundMedia, backgroundName)
+                local edgeFile = DB[811]["border"]
+                DB[811]["background"] = self.value
+                if preview then
+                    preview:SetBackdrop({
+                        bgFile = self.value,
+                        edgeFile = edgeFile,
+                        tile = true,
+                        tileSize = 16,
+                        edgeSize = 16,
+                        insets = {left = -2, right = -2, top = -2, bottom = -2}
+                    })
+                    preview:SetBackdropColor(0.1, 0.1, 0.1, .9)
+                    preview:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                end
+                for _, button in pairs(Ether.unitButtons.solo) do
+                    button:SetBackdrop({
+                        bgFile = self.value,
+                        edgeFile = edgeFile,
+                        tile = true,
+                        tileSize = 16,
+                        edgeSize = 16,
+                        insets = {left = -2, right = -2, top = -2, bottom = -2}
+                    })
+                    button:SetBackdropColor(0.1, 0.1, 0.1, .9)
+                    button:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                end
+                for _, button in pairs(Ether.unitButtons.raid) do
+                    if button then
+                        button:SetBackdrop({
+                            bgFile = self.value,
+                            edgeFile = edgeFile,
+                            tile = true,
+                            tileSize = 16,
+                            edgeSize = 16,
+                            insets = {left = -2, right = -2, top = -2, bottom = -2}
+                        })
+                        button:SetBackdropColor(0.1, 0.1, 0.1, .9)
+                        button:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                    end
+                end
+            end
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
 
+    local borderMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
+    borderMedia:SetPoint("TOP", backgroundMedia, "BOTTOM")
+    UIDropDownMenu_SetWidth(borderMedia, 140)
+    UIDropDownMenu_SetText(borderMedia, "Select Border")
+
+    UIDropDownMenu_Initialize(borderMedia, function(self)
+        local border = LSM:HashTable("border")
+        local currentBorder = DB[811]["border"]
+
+        for borderName, borderPath in pairs(border) do
+            local info = UIDropDownMenu_CreateInfo()
+            info.text = borderName
+            info.value = borderPath
+
+            if currentBorder == borderPath then
+                info.checked = true
+                UIDropDownMenu_SetText(borderMedia, borderName)
+            end
+
+            info.func = function(self)
+                UIDropDownMenu_SetText(borderMedia, borderName)
+                DB[811]["border"] = self.value
+
+                local bgFile = DB[811]["background"]
+
+                if preview then
+                    preview:SetBackdrop({
+                        bgFile = bgFile,
+                        edgeFile = self.value,
+                        tile = true,
+                        tileSize = 16,
+                        edgeSize = 16,
+                        insets = {left = -2, right = -2, top = -2, bottom = -2}
+                    })
+                    preview:SetBackdropColor(0.1, 0.1, 0.1, .9)
+                    preview:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                end
+
+                for _, button in pairs(Ether.unitButtons.solo) do
+                    button:SetBackdrop({
+                        bgFile = bgFile,
+                        edgeFile = self.value,
+                        tile = true,
+                        tileSize = 16,
+                        edgeSize = 16,
+                        insets = {left = -2, right = -2, top = -2, bottom = -2}
+                    })
+                    button:SetBackdropColor(0.1, 0.1, 0.1, .9)
+                    button:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                end
+
+                for _, button in pairs(Ether.unitButtons.raid) do
+                    if button then
+                        button:SetBackdrop({
+                            bgFile = bgFile,
+                            edgeFile = self.value,
+                            tile = true,
+                            tileSize = 16,
+                            edgeSize = 16,
+                            insets = {left = -2, right = -2, top = -2, bottom = -2}
+                        })
+                        button:SetBackdropColor(0.1, 0.1, 0.1, .9)
+                        button:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                    end
+                end
+            end
+
+            UIDropDownMenu_AddButton(info)
+        end
+    end)
 end
 
 function Ether.CreateProfileSection(self)

@@ -75,7 +75,6 @@ local function ifValidUnits()
                     end
                 end
             end
-            Ether:HeaderBackground()
             status = false
         end)
     end

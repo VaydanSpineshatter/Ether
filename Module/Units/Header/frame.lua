@@ -100,6 +100,16 @@ local function CreateChildren(headerName, buttonName)
     Ether:SetupPrediction(button)
     Ether:SetupName(button, -5)
     Ether:GetClassColor(button)
+    button:SetBackdrop({
+        bgFile = Ether.DB[811]["background"],
+        edgeFile = Ether.DB[811]["border"],
+        tile = true,
+        tileSize = 16,
+        edgeSize = 16,
+        insets = {left = -2, right = -2, top = -2, bottom = -2}
+    })
+    button:SetBackdropColor(0.1, 0.1, 0.1, .9)
+    button:SetBackdropBorderColor(0.4, 0.4, 0.4)
     if headerName:GetAttribute("TypePet") then
         button.TypePet = true
     else
@@ -132,13 +142,12 @@ local function CreateChildren(headerName, buttonName)
 end
 
 local groupHeaders = {}
-local background = {}
 local function CreateGroupHeader(group)
     local headerName = "EtherRaidGroupHeader" .. group
     local header = CreateFrame("Frame", headerName, raidAnchor, "SecureGroupHeaderTemplate")
     groupHeaders[group] = header
     Ether.Header.raid = header
-    header:SetPoint("TOPLEFT", raidAnchor, "TOPLEFT", 15, -15)
+    header:SetAllPoints(raidAnchor)
     header:SetAttribute("template", "EtherUnitTemplate")
     header:SetAttribute("initial-unitWatch", true)
     header:SetAttribute("groupFilter", group)
@@ -161,33 +170,6 @@ local function CreateGroupHeader(group)
     header:SetAttribute("showPlayer", true)
     header:SetAttribute("showSolo", true)
     header:Show()
-    local frame = CreateFrame("Frame", nil, header)
-    Ether.headerBG = frame
-    background[group] = frame:CreateTexture(nil, "BACKGROUND")
-    background[group]:SetColorTexture(0, 0, 0, .7)
-    background[group]:SetPoint("TOPLEFT", header, "TOPLEFT", -3, 3)
-    background[group]:SetPoint("BOTTOMRIGHT", header, "BOTTOMRIGHT", 3, -3)
-end
-
-function Ether:HeaderBackground()
-    for i = 1, 9 do
-        background[i]:Hide()
-    end
-    if UnitInRaid("player") then
-        for index = 1, GetNumGroupMembers() do
-            local _, _, subgroup = GetRaidRosterInfo(index)
-            for i = 1, subgroup do
-                background[i]:Show()
-            end
-        end
-        background[9]:Show()
-    elseif UnitInParty("player") then
-        background[1]:Show()
-        background[9]:Show()
-    else
-        background[1]:Show()
-        background[9]:Hide()
-    end
 end
 
 function Ether:CreateSplitGroupHeader(number)
@@ -221,10 +203,6 @@ function Ether:InitializePetHeader()
         raidpet:SetAttribute("unitsPerColumn", 10)
         raidpet:SetAttribute("maxColumns", 1)
         raidpet:Show()
-        background[9] = Ether.headerBG:CreateTexture(nil, "BACKGROUND")
-        background[9]:SetColorTexture(0, 0, 0, .7)
-        background[9]:SetPoint("TOPLEFT", raidpet, "TOPLEFT", -3, 3)
-        background[9]:SetPoint("BOTTOMRIGHT", raidpet, "BOTTOMRIGHT", 3, -3)
     end
 end
 
