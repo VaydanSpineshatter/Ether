@@ -75,9 +75,6 @@ local function ifValidUnits()
                     end
                 end
             end
-            if Ether.DB[401][6] == 1 then
-                Ether:FullUpdateIndicators()
-            end
             Ether:HeaderBackground()
             status = false
         end)
@@ -104,6 +101,9 @@ end
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
         ifValidUnits()
+        if Ether.DB[401][6] == 1 then
+            Ether:FullUpdateIndicators()
+        end
         if Ether.DB[1001][3] == 1 then
             clearTimerCache()
         end
