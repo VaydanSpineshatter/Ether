@@ -10,6 +10,25 @@ local function GetFont(_, target, tex, numb)
     return target.label
 end
 
+local function SetupSliderText(slider, lowText, highText)
+    slider.Low:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
+    slider.Low:SetText(lowText)
+    slider.High:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
+    slider.High:SetText(highText)
+    slider.Low:ClearAllPoints()
+    slider.Low:SetPoint("TOPLEFT", slider, "BOTTOMLEFT", 0, -2)
+    slider.High:ClearAllPoints()
+    slider.High:SetPoint("TOPRIGHT", slider, "BOTTOMRIGHT", 0, -2)
+end
+
+local function SetupSliderThump(slider, size, color)
+    local thumb = slider:GetThumbTexture()
+    if thumb then
+        thumb:SetSize(size, size)
+        thumb:SetColorTexture(unpack(color))
+    end
+end
+
 local function EtherPanelButton(parent, width, height, text, point, relto, rel, offX, offY)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(width, height)
@@ -39,7 +58,8 @@ function Ether.CreateModuleSection(self)
         [2] = {name = "Chat Bn & Msg Whisper"},
         [3] = {name = "Tooltip"},
         [4] = {name = "Idle mode"},
-        [5] = {name = "Range check"}
+        [5] = {name = "Range check"},
+        [6] = {name = "Indicators"}
     }
     local mod = CreateFrame("Frame", nil, parent)
     mod:SetSize(200, (#modulesValue * 30) + 60)
@@ -74,6 +94,12 @@ function Ether.CreateModuleSection(self)
                     Ether:RangeEnable()
                 else
                     Ether:RangeDisable()
+                end
+            elseif i == 6 then
+                if Ether.DB[401][6] == 1 then
+                    Ether:IndicatorsEnable()
+                else
+                    Ether:IndicatorsDisable()
                 end
             end
         end)
@@ -1152,11 +1178,16 @@ function Ether:GetSpellInfo(spellName, resultText, spellIcon)
     spellIcon:SetScript("OnLeave", function()
         GameTooltip:Hide()
     end)
-
 end
 
-function Ether.CreateRegisterSection(self)
-    local parent = self.Content.Children["Register"]
+local number = nil
+local iconTexture = ""
+local Indicator
+local coordinates = ""
+local indicatorType = ""
+local currentIndicator = nil
+function Ether.CreateIndicatorsSection(self)
+    local parent = self.Content.Children["Indicators Settings"]
 
     local I_Register = {
         [1] = {text = "Ready check", texture = "Interface\\RaidFrame\\ReadyCheck-Ready", texture2 = "Interface\\RaidFrame\\ReadyCheck-NotReady", texture3 = "Interface\\RaidFrame\\ReadyCheck-Waiting"},
@@ -1178,13 +1209,11 @@ function Ether.CreateRegisterSection(self)
         local btn = CreateFrame("CheckButton", nil, iRegister, "InterfaceOptionsCheckButtonTemplate")
 
         if i == 1 then
-            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -10)
+            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -100)
         else
             btn:SetPoint("TOPLEFT", self.Content.Buttons.Indicators.A[i - 1], "BOTTOMLEFT", 0, 0)
         end
-
         btn:SetSize(24, 24)
-
         btn.label = GetFont(self, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn.texture = btn:CreateTexture(nil, "OVERLAY")
@@ -1216,23 +1245,10 @@ function Ether.CreateRegisterSection(self)
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
-            Ether:IndicatorsToggle()
-            C_Timer.After(0.1, function()
-                Ether:UpdateIndicatorsByIndex(i)
-            end)
         end)
         self.Content.Buttons.Indicators.A[i] = btn
     end
-end
 
-local number = nil
-local iconTexture = ""
-local Indicator
-local coordinates = ""
-local indicatorType = ""
-local currentIndicator = nil
-function Ether.CreatePositionSection(self)
-    local parent = self.Content.Children["Position"]
     local frame = CreateFrame("Frame", nil, parent)
     Indicator = frame
 
@@ -1289,7 +1305,7 @@ function Ether.CreatePositionSection(self)
     end)
 
     local preview = CreateFrame("Frame", nil, parent)
-    preview:SetPoint("TOPLEFT", selectLabel, "BOTTOMLEFT", 80, -100)
+    preview:SetPoint("TOP", 80, -90)
     preview:SetSize(55, 55)
 
     local healthBar = Ether:SetupPreviewBar(Indicator, preview)
@@ -1313,7 +1329,7 @@ function Ether.CreatePositionSection(self)
     }
 
     Indicator.posButtons = {}
-    local startX, startY = 110, 0
+    local startX, startY = 90, 0
     local btnSize = 25
 
     for row = 1, 3 do
@@ -1358,10 +1374,10 @@ function Ether.CreatePositionSection(self)
 
     local sizeLabel = parent:CreateFontString(nil, "OVERLAY")
     sizeLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    sizeLabel:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 40, -50)
+    sizeLabel:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 0, -50)
     sizeLabel:SetText("Size")
 
-    local confirm = EtherPanelButton(preview, 100, 25, "Confirm", "TOPLEFT", preview, "TOPRIGHT", 160, 0)
+    local confirm = EtherPanelButton(preview, 100, 25, "Confirm", "BOTTOMLEFT", preview, "TOPRIGHT", 0, 40)
     confirm:SetScript("OnClick", function(self)
         if currentIndicator and number then
             Ether.SaveIndicatorsPos(currentIndicator, number)
@@ -1435,7 +1451,7 @@ function Ether.CreatePositionSection(self)
 
     local offsetYLabel = parent:CreateFontString(nil, "OVERLAY")
     offsetYLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    offsetYLabel:SetPoint("LEFT", offsetXLabel, "RIGHT", 80, 0)
+    offsetYLabel:SetPoint("TOPLEFT", offsetXLabel, "BOTTOMLEFT", 0, -50)
     offsetYLabel:SetText("Y Offset")
 
     local offsetYSlider = CreateFrame("Slider", nil, parent, "OptionsSliderTemplate")
@@ -1467,6 +1483,13 @@ function Ether.CreatePositionSection(self)
     offsetYValue:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     offsetYValue:SetPoint("TOP", offsetYSlider, "BOTTOM")
     offsetYValue:SetText("0")
+
+    SetupSliderText(sizeSlider, "0.5", "2.0")
+    SetupSliderText(offsetYSlider, "-20", "20")
+    SetupSliderText(offsetXSlider, "-20", "20")
+    SetupSliderThump(sizeSlider, 10, {0.8, 0.6, 0, 1})
+    SetupSliderThump(offsetYSlider, 10, {0.8, 0.6, 0, 1})
+    SetupSliderThump(offsetXSlider, 10, {0.8, 0.6, 0, 1})
 end
 
 function Ether.UpdateIndicatorsValue()
@@ -1653,25 +1676,6 @@ function Ether.CreateConfigSection(self)
     local parent = self.Content.Children["Config"]
     local DB = Ether.DB
 
-    local function SetupSliderText(slider, lowText, highText)
-        slider.Low:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
-        slider.Low:SetText(lowText)
-        slider.High:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
-        slider.High:SetText(highText)
-        slider.Low:ClearAllPoints()
-        slider.Low:SetPoint("TOPLEFT", slider, "BOTTOMLEFT", 0, -2)
-        slider.High:ClearAllPoints()
-        slider.High:SetPoint("TOPRIGHT", slider, "BOTTOMRIGHT", 0, -2)
-    end
-
-    local function SetupSliderThump(slider, size, color)
-        local thumb = slider:GetThumbTexture()
-        if thumb then
-            thumb:SetSize(size, size)
-            thumb:SetColorTexture(unpack(color))
-        end
-    end
-
     local frameKeys = {
         [331] = "Tooltip",
         [332] = "Player",
@@ -1744,8 +1748,8 @@ function Ether.CreateConfigSection(self)
 
     SetupSliderText(sizeSlider, "0.5", "2.0")
     SetupSliderText(alphaSlider, "0", "1")
-    SetupSliderThump(sizeSlider, 12, {0.8, 0.6, 0, 1})
-    SetupSliderThump(alphaSlider, 12, {0.8, 0.6, 0, 1})
+    SetupSliderThump(sizeSlider, 10, {0.8, 0.6, 0, 1})
+    SetupSliderThump(alphaSlider, 10, {0.8, 0.6, 0, 1})
 
     local unlock = EtherPanelButton(parent, 100, 25, "Unlock frames", "TOPLEFT", sizeSlider, "BOTTOMLEFT", 0, -50)
     unlock:SetScript("OnClick", function()

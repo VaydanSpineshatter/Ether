@@ -60,7 +60,7 @@ local status = false
 local function ifValidUnits()
     if not status then
         status = true
-        C_After(5, function()
+        C_After(4, function()
             if Ether.DB[1001][3] == 1 then
                 if not UnitInAnyGroup("player") then
                     Ether:DisableHeaderAuras()
@@ -75,7 +75,9 @@ local function ifValidUnits()
                     end
                 end
             end
-            Ether:FullUpdateIndicators()
+            if Ether.DB[401][6] == 1 then
+                Ether:FullUpdateIndicators()
+            end
             Ether:HeaderBackground()
             status = false
         end)
@@ -107,18 +109,46 @@ local function RosterChanged(_, event)
         end
     end
 end
+
 local function PlayerUnghost(_, event)
     if event == "PLAYER_UNGHOST" then
-        C_After(0.2, function()
-            Ether:FullUpdateIndicators()
-        end)
+        if Ether.DB[401][6] == 1 then
+            C_After(0.3, function()
+                Ether:FullUpdateIndicators()
+            end)
+        end
+    end
+end
+
+local function ZoneChanged(_, event)
+    if event == "ZONE_CHANGED" then
+        if Ether.DB[401][6] == 1 then
+            C_After(0.3, function()
+                Ether:FullUpdateIndicators()
+            end)
+        end
+    end
+end
+
+local function NewAreaChanged(_, event)
+    if event == "ZONE_CHANGED_NEW_AREA" then
+        if Ether.DB[401][6] == 1 then
+            C_After(0.3, function()
+                Ether:FullUpdateIndicators()
+            end)
+        end
     end
 end
 
 function Ether:RosterEnable()
     Ether:AuraEnable()
-    Ether:IndicatorsEnable()
-    Ether:InitialIndicatorsPos()
+    if Ether.DB[401][6] == 1 then
+        Ether:IndicatorsEnable()
+        Ether:InitialIndicatorsPos()
+        C_After(0.3, function()
+            Ether:FullUpdateIndicators()
+        end)
+    end
     Ether:NameEnable()
     Ether:HealthEnable()
     Ether:PowerEnable()
@@ -126,12 +156,13 @@ function Ether:RosterEnable()
     RegisterRosterEvent("PLAYER_TARGET_CHANGED", TargetChanged)
     RegisterRosterEvent("PLAYER_UNGHOST", PlayerUnghost)
     RegisterRosterEvent("GROUP_ROSTER_UPDATE", RosterChanged)
+    RegisterRosterEvent("ZONE_CHANGED", ZoneChanged)
+    RegisterRosterEvent("ZONE_CHANGED_NEW_AREA", NewAreaChanged)
     if Ether.DB[401][5] == 1 then
         C_After(0.1, function()
             Ether:RangeEnable()
         end)
     end
-    Ether:FullUpdateIndicators()
 end
 
 function Ether:RosterDisable()
@@ -139,6 +170,8 @@ function Ether:RosterDisable()
     UnregisterRosterEvent("PLAYER_ENTERING_WORLD")
     UnregisterRosterEvent("GROUP_ROSTER_UPDATE")
     UnregisterRosterEvent("PLAYER_UNGHOST")
+    UnregisterRosterEvent("ZONE_CHANGED", ZoneChanged)
+    UnregisterRosterEvent("ZONE_CHANGED_NEW_AREA", NewAreaChanged)
     if Ether.DB[401][5] == 1 then
         C_After(0.1, function()
             Ether.Range:Disable()

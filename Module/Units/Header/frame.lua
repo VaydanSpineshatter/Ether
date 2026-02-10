@@ -72,7 +72,6 @@ local function OnAttributeChanged(self, name, unit)
         end
     end
     Update(self)
-    Ether:FullUpdateIndicators()
 end
 
 local function Show(self)
@@ -130,47 +129,6 @@ local function CreateChildren(headerName, buttonName)
         button:RegisterForClicks("AnyUp")
     end
     return button
-end
-
-local function SnapToGrid(x, y, gridSize)
-    local snappedX = math.floor((x + gridSize / 2) / gridSize) * gridSize
-    local snappedY = math.floor((y + gridSize / 2) / gridSize) * gridSize
-    return snappedX, snappedY
-end
-
-local function OnDrag(self)
-    if not Ether.IsMovable then return end
-    if self:IsMovable() then
-        self:StartMoving()
-    end
-end
-
-local function StopDrag(self)
-    if not Ether.IsMovable then return end
-    if self:IsMovable() then
-        self:StopMovingOrSizing()
-    end
-    local point, relTo, relPoint, x, y = self:GetPoint(1)
-    local relToName = "UIParent"
-    if relTo then
-        if relTo.GetName and relTo:GetName() then
-            relToName = relTo:GetName()
-        elseif relTo == UIParent then
-            relToName = "UIParent"
-        else
-            relToName = "UIParent"
-        end
-    end
-    local snappedX, snappedY = SnapToGrid(x, y, 40)
-    local DB = Ether.DB[5111][338]
-    DB[1] = point
-    DB[2] = relToName
-    DB[3] = relPoint
-    DB[4] = snappedX
-    DB[5] = snappedY
-    local anchorRelTo = _G[relToName] or UIParent
-    self:ClearAllPoints()
-    self:SetPoint(DB[1], anchorRelTo, DB[3], snappedX, snappedY)
 end
 
 local groupHeaders = {}

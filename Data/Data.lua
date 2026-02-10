@@ -20,7 +20,7 @@ local Default = {
     [101] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1},
     [201] = {1, 1, 1, 1, 1, 1},
     [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 0, 0, 0, 0},
+    [401] = {1, 0, 0, 0, 0, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
     [801] = {1, 1, 0, 0, 0, 1, 1, 1, 1, 1},
@@ -52,7 +52,7 @@ local Default = {
     [1003] = {},
     [1101] = {1, 1, 1},
     [5111] = {
-        [331] = {"TOPLEFT", "UIParent", "TOPLEFT", -400, 300, 1, 1, 1.0, 1.0},
+        [331] = {"CENTER", "UIParent", "CENTER", 0, 0, 180, 200, 1.0, 1.0},
         [332] = {"CENTER", "UIParent", "CENTER", -150, -200, 120, 50, 1.0, 1.0},
         [333] = {"CENTER", "UIParent", "CENTER", 150, -200, 120, 50, 1.0, 1.0},
         [334] = {"CENTER", "UIParent", "CENTER", 0, -220, 120, 50, 1.0, 1.0},
@@ -141,6 +141,7 @@ Ether.DataDefault = Default
 ---| Tooltip 3
 ---| Idle mode 4
 ---| Range check 5
+---| Indicators 6
 
 ---@alias IndicatorRegister_501 number
 ---| READY_CHECK READY_CHECK_CONFIRM READY_FINISHED 1

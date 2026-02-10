@@ -43,8 +43,7 @@ local function BuildContent(self)
         Ether.CreateAuraSettingsSection(self)
         Ether.CreateAuraCustomSection(self)
         Ether.CreateAuraConfigSection(self)
-        Ether.CreateRegisterSection(self)
-        Ether.CreatePositionSection(self)
+        Ether.CreateIndicatorsSection(self)
         Ether.CreateTooltipSection(self)
         Ether.CreateLayoutSection(self)
         Ether.CreateCastBarSection(self)
@@ -77,7 +76,7 @@ local Construct = {
             Hide = {A = {}},
             Create = {A = {}},
             Auras = {A = {}, B = {}},
-            Indicators = {A = {}, B = {}},
+            Indicators = {A = {}},
             Update = {A = {}, B = {}},
             Tooltip = {A = {}},
             Layout = {A = {}}
@@ -88,7 +87,7 @@ local Construct = {
             [1] = {"Module", "Blizzard", "Information"},
             [2] = {"Create", "Updates"},
             [3] = {"Aura Settings", "Aura Custom", "Aura Helper"},
-            [4] = {"Register", "Position"},
+            [4] = {"Indicators Settings"},
             [5] = {"Tooltip"},
             [6] = {"Layout", "CastBar", "Config"},
             [7] = {"Edit"}
@@ -184,7 +183,7 @@ local function CreateSettingsButtons(self, name, parent, layer, onClick, isTopBu
     btn:SetHeight(25)
     if isTopButton then
     else
-        btn:SetWidth(parent:GetWidth() - 10)
+        btn:SetWidth(120)
     end
     btn.font = btn:CreateFontString(nil, "OVERLAY")
     btn.font:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
@@ -226,7 +225,7 @@ local function InitializeSettings(self)
                         Ether.ShowCategory(self, btnName)
                     end, true)
 
-                    btn:SetWidth(self.Frames["Top"]:GetWidth() / 6)
+                    btn:SetWidth(140)
 
                     btn:Hide()
                     BtnConfig[idx] = {
@@ -678,7 +677,7 @@ function Ether:ApplyFramePosition(index)
 end
 
 local arraysLength = {
-    [101] = 11, [201] = 6, [301] = 13, [401] = 5,
+    [101] = 11, [201] = 6, [301] = 13, [401] = 6,
     [501] = 9, [701] = 4, [801] = 11,
     [1001] = 3, [1101] = 3
 }
@@ -881,8 +880,8 @@ local function OnInitialize(self, event, ...)
 
         local tooltip = CreateFrame("Frame", nil, UIParent)
         Ether.Anchor.tooltip = tooltip
-        tooltip:SetSize(1, 1)
-
+        tooltip:SetSize(280, 120)
+        Ether:ApplyFramePosition(331)
         Ether.CreateMainSettings(Construct)
 
         for index = 1, 7 do

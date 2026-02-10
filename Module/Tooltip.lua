@@ -238,97 +238,94 @@ local function UpdateTooltip(self, unit)
 end
 
 local function SetupToolFrame()
-    local frame = CreateFrame("Frame", nil, Ether.Anchor.tooltip, "BackdropTemplate")
-    frame:SetFrameStrata("TOOLTIP")
-    Ether.tooltipFrame = frame
-    frame:SetPoint("CENTER")
-    Ether:SetupDrag(frame, 331, 20)
-    frame:SetSize(280, 130)
-    frame:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        tile = true, tileSize = 16, edgeSize = 16,
-        insets = {left = 4, right = 4, top = 4, bottom = 4}
-    })
-    frame:SetBackdropColor(0.08, 0.08, 0.08, 0.8)
-    frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.7)
-    local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    frame.name = name
-    name:SetFont(unpack(Ether.mediaPath.expressway), 14, "OUTLINE")
-    name:SetPoint("TOPLEFT", 12, -12)
-    name:SetJustifyH("LEFT")
-    name:SetTextColor(1, 0.9, 0.5, 1)
-    local nameLine = frame:CreateTexture(nil, "ARTWORK")
-    nameLine:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -4)
-    nameLine:SetPoint("RIGHT", frame, -12, 0)
-    nameLine:SetHeight(1)
-    nameLine:SetColorTexture(0.4, 0.4, 0.4, 0.6)
-    local guildIcon = frame:CreateTexture(nil, "OVERLAY")
-    guildIcon:SetSize(12, 12)
-    guildIcon:SetTexture(135026)
-    guildIcon:SetPoint("TOPLEFT", nameLine, "BOTTOMLEFT", 0, -8)
-    local guild = frame:CreateFontString(nil, "OVERLAY")
-    frame.guild = guild
-    guild:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
-    guild:SetPoint("LEFT", guildIcon, "RIGHT", 4, 0)
-    guild:SetTextColor(0.7, 0.7, 1, 1)
-    local info = frame:CreateFontString(nil, "OVERLAY")
-    frame.info = info
-    info:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
-    info:SetPoint("TOPLEFT", guildIcon, "BOTTOMLEFT", 0, -8)
-    info:SetTextColor(0.8, 0.8, 0.8, 1)
-    local targetIcon = frame:CreateTexture(nil, "OVERLAY")
-    targetIcon:SetSize(14, 14)
-    targetIcon:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
-    targetIcon:SetPoint("TOPLEFT", info, "BOTTOMLEFT", 0, -8)
-    local target = frame:CreateFontString(nil, "OVERLAY")
-    frame.target = target
-    target:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
-    target:SetPoint("LEFT", targetIcon, "RIGHT", 4, 0)
-    target:SetJustifyH("LEFT")
-    target:SetTextColor(1, 0.5, 0.5, 1)
-    local flags = frame:CreateFontString(nil, "OVERLAY")
-    frame.flags = flags
-    flags:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
-    flags:SetPoint("BOTTOMRIGHT", frame, -10, 10)
-    flags:SetJustifyH("RIGHT")
-    flags:SetTextColor(0.6, 0.6, 0.6, 1)
-    local pvpBg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    pvpBg:SetSize(22, 22)
-    pvpBg:SetPoint("TOPRIGHT", frame, -8, -8)
-    pvpBg:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 8,
-        insets = {left = 2, right = 2, top = 2, bottom = 2}
-    })
-    pvpBg:SetBackdropColor(0, 0, 0, 0.5)
-    pvpBg:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
-    local pvp = frame:CreateTexture(nil, "OVERLAY")
-    frame.pvp = pvp
-    pvp:SetAllPoints(pvpBg)
-    local restBg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-    restBg:SetSize(22, 22)
-    restBg:SetPoint("RIGHT", pvpBg, "LEFT", -6, 0)
-    restBg:SetBackdrop(pvpBg:GetBackdrop())
-    restBg:SetBackdropColor(0, 0, 0, 0.5)
-    restBg:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
-    local resting = frame:CreateTexture(nil, "OVERLAY")
-    frame.resting = resting
-    resting:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
-    resting:SetTexCoord(0.0625, 0.45, 0.0625, 0.45)
-    resting:SetPoint("CENTER", restBg)
-    resting:SetAllPoints(restBg)
-    frame:Hide()
-    return frame
+    if not Ether.tooltipFrame then
+        local frame = CreateFrame("Frame", nil, Ether.Anchor.tooltip, "BackdropTemplate")
+        frame:SetFrameStrata("TOOLTIP")
+        Ether.tooltipFrame = frame
+        frame:SetAllPoints(Ether.Anchor.tooltip)
+        Ether:SetupDrag(frame, 331, 20)
+        frame:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            tile = true, tileSize = 16, edgeSize = 16,
+            insets = {left = 4, right = 4, top = 4, bottom = 4}
+        })
+        frame:SetBackdropColor(0.08, 0.08, 0.08, 0.8)
+        frame:SetBackdropBorderColor(0.3, 0.3, 0.3, 0.7)
+        local name = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+        frame.name = name
+        name:SetFont(unpack(Ether.mediaPath.expressway), 14, "OUTLINE")
+        name:SetPoint("TOPLEFT", 12, -12)
+        name:SetJustifyH("LEFT")
+        name:SetTextColor(1, 0.9, 0.5, 1)
+        local nameLine = frame:CreateTexture(nil, "ARTWORK")
+        nameLine:SetPoint("TOPLEFT", name, "BOTTOMLEFT", 0, -4)
+        nameLine:SetPoint("RIGHT", frame, -12, 0)
+        nameLine:SetHeight(1)
+        nameLine:SetColorTexture(0.4, 0.4, 0.4, 0.6)
+        local guildIcon = frame:CreateTexture(nil, "OVERLAY")
+        guildIcon:SetSize(12, 12)
+        guildIcon:SetTexture(135026)
+        guildIcon:SetPoint("TOPLEFT", nameLine, "BOTTOMLEFT", 0, -8)
+        local guild = frame:CreateFontString(nil, "OVERLAY")
+        frame.guild = guild
+        guild:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+        guild:SetPoint("LEFT", guildIcon, "RIGHT", 4, 0)
+        guild:SetTextColor(0.7, 0.7, 1, 1)
+        local info = frame:CreateFontString(nil, "OVERLAY")
+        frame.info = info
+        info:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+        info:SetPoint("TOPLEFT", guildIcon, "BOTTOMLEFT", 0, -8)
+        info:SetTextColor(0.8, 0.8, 0.8, 1)
+        local targetIcon = frame:CreateTexture(nil, "OVERLAY")
+        targetIcon:SetSize(14, 14)
+        targetIcon:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
+        targetIcon:SetPoint("TOPLEFT", info, "BOTTOMLEFT", 0, -8)
+        local target = frame:CreateFontString(nil, "OVERLAY")
+        frame.target = target
+        target:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+        target:SetPoint("LEFT", targetIcon, "RIGHT", 4, 0)
+        target:SetJustifyH("LEFT")
+        target:SetTextColor(1, 0.5, 0.5, 1)
+        local flags = frame:CreateFontString(nil, "OVERLAY")
+        frame.flags = flags
+        flags:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
+        flags:SetPoint("BOTTOMRIGHT", frame, -10, 10)
+        flags:SetJustifyH("RIGHT")
+        flags:SetTextColor(0.6, 0.6, 0.6, 1)
+        local pvpBg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+        pvpBg:SetSize(22, 22)
+        pvpBg:SetPoint("TOPRIGHT", frame, -8, -8)
+        pvpBg:SetBackdrop({
+            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+            edgeSize = 8,
+            insets = {left = 2, right = 2, top = 2, bottom = 2}
+        })
+        pvpBg:SetBackdropColor(0, 0, 0, 0.5)
+        pvpBg:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
+        local pvp = frame:CreateTexture(nil, "OVERLAY")
+        frame.pvp = pvp
+        pvp:SetAllPoints(pvpBg)
+        local restBg = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+        restBg:SetSize(22, 22)
+        restBg:SetPoint("RIGHT", pvpBg, "LEFT", -6, 0)
+        restBg:SetBackdrop(pvpBg:GetBackdrop())
+        restBg:SetBackdropColor(0, 0, 0, 0.5)
+        restBg:SetBackdropBorderColor(0.5, 0.5, 0.5, 1)
+        local resting = frame:CreateTexture(nil, "OVERLAY")
+        frame.resting = resting
+        resting:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
+        resting:SetTexCoord(0.0625, 0.45, 0.0625, 0.45)
+        resting:SetPoint("CENTER", restBg)
+        resting:SetAllPoints(restBg)
+        frame:Hide()
+    end
 end
 
 local function SetupHooks()
 
-    local frame
-    if not frame then
-        frame = SetupToolFrame()
-    end
+    local frame = Ether.tooltipFrame
 
     GameTooltip:HookScript("OnTooltipSetUnit", function(self)
         if Ether.DB[401][3] ~= 1 then
@@ -354,6 +351,6 @@ local function SetupHooks()
 end
 
 function Tooltip:Initialize()
-    Ether:ApplyFramePosition(331)
+    SetupToolFrame()
     SetupHooks()
 end

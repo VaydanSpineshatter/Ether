@@ -142,6 +142,7 @@ local function FindUnitButton(unit)
     end
     return nil
 end
+
 function Ether:UpdateRaidIsHelpful(unit, force)
     if not UnitExists(unit) then
         return
