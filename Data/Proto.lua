@@ -17,7 +17,7 @@ end
 Ether.PredefinedAuras = {
     ["Priest - Group Buffs"] = {
         [21564] = {
-            name = "Prayer of Fortitude: Rank 2",
+            name = "Prayer Fortitude Rank 2",
             color = {0.93, 0.91, 0.67, 1},
             size = 6,
             position = "BOTTOMLEFT",
@@ -27,7 +27,7 @@ Ether.PredefinedAuras = {
             isDebuff = false
         },
         [27681] = {
-            name = "Prayer of Spirit: Rank 1",
+            name = "Prayer Spirit Rank 1",
             color = {0.93, 0.91, 0.67, 1},
             size = 6,
             position = "BOTTOMLEFT",
@@ -37,7 +37,7 @@ Ether.PredefinedAuras = {
             isDebuff = false
         },
         [27683] = {
-            name = "Prayer of Shadow Protection",
+            name = "Prayer Shadow",
             color = {0, 0, 0, 1},
             size = 6,
             position = "BOTTOMLEFT",
@@ -93,7 +93,7 @@ Ether.PredefinedAuras = {
     },
     ["Druid - Group Buffs"] = {
         [9885] = {
-            name = "Mark of the Wild: Rank 7",
+            name = "MotW Rank 7",
             color = {1, 0.4, 1, 1},
             size = 6,
             position = "BOTTOMLEFT",
@@ -103,7 +103,7 @@ Ether.PredefinedAuras = {
             debuff = false
         },
         [21850] = {
-            name = "Gift of the Wild: Rank 2",
+            name = "GotW Rank 2",
             color = {0.2, 1, 0.2, 1},
             size = 6,
             position = "BOTTOMLEFT",
@@ -115,7 +115,7 @@ Ether.PredefinedAuras = {
     },
     ["Mage - Group Buffs"] = {
         [10157] = {
-            name = "Arcane Intellect: Rank 5",
+            name = "Int Rank 5",
             color = {1, 1, 0.4, 1},
             size = 6,
             position = "BOTTOMLEFT",
@@ -125,7 +125,7 @@ Ether.PredefinedAuras = {
             isDebuff = false
         },
         [23028] = {
-            name = "Arcane Brilliance: Rank 1",
+            name = "Int Group Rank 1",
             color = {0.6, 0.2, 0.6, 1},
             size = 6,
             position = "BOTTOMRIGHT",

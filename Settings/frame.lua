@@ -469,7 +469,7 @@ local function CreateAuraList(parent)
         })
     end
 
-    local auraDropdown = CreateEtherDropdown(parent, 210, "Select Aura Template", auraWipe)
+    local auraDropdown = CreateEtherDropdown(parent, 160, "Select Aura Template", auraWipe)
     auraDropdown:SetPoint("TOPLEFT", 5, -5)
 
     local frame = CreateFrame("Frame", nil, parent)
@@ -959,6 +959,9 @@ function Ether.UpdateAuraList()
         end)
 
         btn:SetScript("OnClick", function()
+             if not Editor:IsShown() then
+                Editor:Show()
+            end
             Ether.SelectAura(spellId)
             UpdateIsDebuff(Editor.isDebuff.bg, spellId)
         end)
@@ -1992,7 +1995,6 @@ function Ether.CreateConfigSection(self)
         bgFile = Ether.DB[811]["background"],
         insets = {left = -2, right = -2, top = -2, bottom = -2}
     })
-    preview:SetBackdropColor(0, 0, 0, 1)
 
     local classColor = EtherPanelButton(parent, 80, 25, "Class color", "TOP", preview, "BOTTOM", 0, -20)
     classColor:SetScript("OnClick", function()
