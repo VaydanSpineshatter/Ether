@@ -58,18 +58,6 @@ local units = {
     [6] = "focus"
 }
 
-function Ether:ApplyEtherBorder(frame, r, g, b, a)
-
-    if not frame.etherBorder then
-        frame.etherBorder = frame:CreateTexture(nil, "OVERLAY")
-        frame.etherBorder:SetPoint("TOPLEFT", -3, 3)
-        frame.etherBorder:SetPoint("BOTTOMRIGHT", 3, -3)
-        frame.etherBorder:SetTexture("Interface\\Tooltips\\UI-Tooltip-Border")
-        frame.etherBorder:SetTexCoord(0.1, 0.9, 0.1, 0.9)
-    end
-
-    frame.etherBorder:SetVertexColor(r or 0.8, g or 0.4, b or 1.0, a or 1.0)
-end
 function Ether:CreateUnitButtons(index)
     if InCombatLockdown() or type(index) ~= "number" then
         return
@@ -86,7 +74,7 @@ function Ether:CreateUnitButtons(index)
         Ether:SetupHealthBar(button, "HORIZONTAL", 120, 40)
         Ether:SetupPowerBar(button)
         Ether:SetupPrediction(button)
-         button:SetBackdrop({
+        button:SetBackdrop({
             bgFile = Ether.DB[811]["background"],
             edgeFile = Ether.DB[811]["border"],
             tile = true,

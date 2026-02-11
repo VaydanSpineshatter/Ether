@@ -40,21 +40,21 @@ function Ether:SetupHealthBar(button, orient, w, h)
     return button
 end
 
-function Ether:SetupPreviewBar(parent, preview)
+function Ether:SetupPreviewBar(parent, preview, w, h, number, number2)
     local healthBar = CreateFrame("StatusBar", nil, preview)
     parent.healthBar = healthBar
     healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
     healthBar:SetPoint("CENTER")
-    healthBar:SetSize(55, 55)
+    healthBar:SetSize(w, h)
     healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
     local _, classFilename = UnitClass("player")
     local c = Ether.RAID_COLORS[classFilename]
-    healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
+    healthBar:SetStatusBarColor(c.r, c.g, c.b, 1)
     local name = healthBar:CreateFontString(nil, "OVERLAY")
     parent.healthBar = healthBar
     name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    name:SetPoint("CENTER", healthBar, "CENTER", 0, -5)
-    name:SetText(Ether:ShortenName(Ether.playerName, 3))
+    name:SetPoint("CENTER", healthBar, "CENTER", 0, number2)
+    name:SetText(Ether:ShortenName(Ether.playerName, number))
     local background = healthBar:CreateTexture(nil, "BACKGROUND")
     background:SetColorTexture(0, 0, 0, 1)
     background:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -3, 3)
@@ -64,7 +64,7 @@ end
 
 function Ether:SetupPowerBar(button)
     if not button then return end
-    local powerBar = CreateFrame('StatusBar', nil, button)
+    local powerBar = CreateFrame("StatusBar", nil, button)
     button.powerBar = powerBar
     powerBar:SetPoint("BOTTOMLEFT")
     powerBar:SetSize(120, 8)
@@ -102,48 +102,48 @@ function Ether:SetupPrediction(button)
     return button
 end
 
-function Ether:SetupCastBar(button)
+function Ether:SetupCastBar(button, number, iconS)
     if not button then return end
-    local frame = CreateFrame("StatusBar", nil, button)
+    local frame = CreateFrame("StatusBar", nil, UIParent)
     button.castBar = frame
-    frame:SetPoint("TOPLEFT", button.powerBar, "BOTTOMLEFT", -2, -2)
-    frame:SetSize(220, 15)
-    frame:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
+    frame:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
     local drop = frame:CreateTexture(nil, "ARTWORK", nil, -7)
     frame.drop = drop
     drop:SetAllPoints()
-    local _, classFilename = UnitClass("player")
-    local c = Ether.RAID_COLORS[classFilename]
-    frame:SetStatusBarColor(c.r, c.g, c.b, .6)
-    drop:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.8)
+    local r, g, b = Ether:GetClassColors("player")
+    frame:SetStatusBarColor(r, g, b, 1)
+    drop:SetColorTexture(0.2, 0.2, 0.4, .4)
     local text = frame:CreateFontString(nil, "OVERLAY")
     frame.text = text
-    text:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
+    text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     text:SetPoint("LEFT", 31, 0)
 
     local time = frame:CreateFontString(nil, "OVERLAY")
     frame.time = time
-    time:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
-    time:SetPoint("RIGHT", frame, "RIGHT", -8, 0)
+    time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
+    time:SetPoint("RIGHT", frame, "RIGHT", -12, 0)
 
     local icon = frame:CreateTexture(nil, "OVERLAY")
     frame.icon = icon
-    icon:SetSize(15, 15)
+    icon:SetSize(iconS, iconS)
     icon:SetPoint("LEFT")
 
     local safeZone = frame:CreateTexture(nil, "OVERLAY")
     frame.safeZone = safeZone
-    safeZone:SetTexture(unpack(Ether.mediaPath.blankBar))
-    safeZone:SetVertexColor(0.70, 0.13, 0.13, 1)
-    safeZone:SetBlendMode("ADD")
-
-    frame:Hide()
+    safeZone:SetColorTexture(1, 0, 0)
     frame.casting = nil
     frame.channeling = nil
     frame.duration = 0
-    frame.max = 0
     frame.delay = 0
     frame.timeToHold = 0.1
+    local pos = Ether.DB[5111][number]
+    frame:SetSize(pos[6], pos[7])
+    frame:SetScale(pos[8])
+    frame:SetAlpha(pos[9])
+    frame:SetPoint(pos[1], UIParent, pos[3], pos[4], pos[5])
+    Ether:SetupDrag(frame, number, 20)
+
+    frame:Hide()
 end
 
 function Ether:SetupTooltip(button, unit)

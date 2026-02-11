@@ -23,12 +23,12 @@ local Default = {
     [401] = {1, 0, 0, 0, 0, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0, 1, 1, 1, 1, 1},
+    [801] = {1, 1, 0, 0, 0},
     [811] = {
         ["font"] = "Fonts\\FRIZQT__.TTF",
         ["bar"] = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
         ["border"] = "Interface\\DialogFrame\\UI-DialogBox-Border",
-        ["background"]  = "Interface\\ChatFrame\\ChatFrameBackground"
+        ["background"] = "Interface\\ChatFrame\\ChatFrameBackground"
     },
     [901] = {
         player = true,
@@ -55,8 +55,8 @@ local Default = {
     [1101] = {1, 1, 1},
     [5111] = {
         [331] = {"CENTER", "UIParent", "CENTER", 0, 0, 180, 200, 1.0, 1.0},
-        [332] = {"CENTER", "UIParent", "CENTER", -150, -200, 120, 50, 1.0, 1.0},
-        [333] = {"CENTER", "UIParent", "CENTER", 150, -200, 120, 50, 1.0, 1.0},
+        [332] = {"CENTER", "UIParent", "CENTER", -250, -200, 120, 50, 1.0, 1.0},
+        [333] = {"CENTER", "UIParent", "CENTER", 250, -200, 120, 50, 1.0, 1.0},
         [334] = {"CENTER", "UIParent", "CENTER", 0, -220, 120, 50, 1.0, 1.0},
         [335] = {"CENTER", "UIParent", "CENTER", -350, -100, 120, 50, 1.0, 1.0},
         [336] = {"CENTER", "UIParent", "CENTER", -270, -20, 120, 50, 1.0, 1.0},
@@ -64,9 +64,11 @@ local Default = {
         [338] = {"LEFT", "UIParent", "LEFT", 50, 0, 1, 1, 1.0, 1.0},
         [339] = {"TOP", "UIParent", "TOP", 80, -80, 320, 200, 1.0, 1.0},
         [340] = {"TOPLEFT", "UIParent", "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
-        [341] = {"TOPLEFT", "UIParent", "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
+        [341] = {"CENTER", "UIParent", "CENTER", 0, -180, 340, 15, 1.0, 1.0},
+        [342] = {"CENTER", "UIParent", "CENTER", 360, -270, 240, 15, 1.0, 1.0}
     }
 }
+
 Ether.DataDefault = Default
 
 ---@alias Menu number
@@ -94,6 +96,8 @@ Ether.DataDefault = Default
 ---| 338 raid
 ---| 339 Debug
 ---| 340 Settings
+---| 341 PlayerCastBar
+---| 342 TargetCastBar
 
 ---@alias Data_111 table
 ---| LastVersion 1
@@ -168,11 +172,6 @@ Ether.DataDefault = Default
 ---| smooth health Solo 3
 ---| smooth Power Solo 4
 ---| smooth health Header 5
----| icon CastBar  6
----| time CastBar  7
----| name CastBar 8
----| SafeZone CastBar  9
----| isTradeSkill CastBar  10
 
 ---@alias Update_901 boolean
 ---| Player

@@ -768,7 +768,7 @@ local function CreateEditor(parent)
     preview:SetPoint("TOPLEFT", 15, -140)
     preview:SetSize(55, 55)
 
-    local healthBar = Ether:SetupPreviewBar(Editor, preview)
+    local healthBar = Ether:SetupPreviewBar(Editor, preview, 55, 55, 3, -5)
     local icon = healthBar:CreateTexture(nil, "OVERLAY")
     frame.icon = icon
     icon:SetSize(6, 6)
@@ -1353,7 +1353,7 @@ function Ether.CreateIndicatorsSection(self)
     preview:SetPoint("TOP", 80, -90)
     preview:SetSize(55, 55)
 
-    local healthBar = Ether:SetupPreviewBar(Indicator, preview)
+    local healthBar = Ether:SetupPreviewBar(Indicator, preview, 55, 55, 3, -5)
 
     local icon = healthBar:CreateTexture(nil, "OVERLAY")
     Indicator.icon = icon
@@ -1654,12 +1654,7 @@ function Ether.CreateLayoutSection(self)
         [2] = {text = "Target CastBar"},
         [3] = {text = "Smooth Health Solo"},
         [4] = {text = "Smooth Power Solo"},
-        [5] = {text = "Smooth Header"},
-        [6] = {text = "CastBar - Icon"},
-        [7] = {text = "CastBar - Time"},
-        [8] = {text = "CastBar - Name"},
-        [9] = {text = "CastBar - SafeZone"},
-        [10] = {text = "CastBar - IsTradeSkill"},
+        [5] = {text = "Smooth Header"}
     }
 
     local layout = CreateFrame("Frame", nil, parent)
@@ -1702,8 +1697,21 @@ end
 function Ether.CreateCastBarSection(self)
     local parent = self.Content.Children["CastBar"]
 
-    local indicator = CreateFrame("StatusBar", nil, parent)
-    indicator:SetPoint("TOP", 40, -40)
+    local preview = CreateFrame("Frame", nil, parent)
+    preview:SetPoint("TOP", 0, -90)
+    preview:SetSize(120, 50)
+
+    local healthBar = Ether:SetupPreviewBar(Indicator, preview, 120, 40, 10, 0)
+    local powerBar = CreateFrame("StatusBar", nil, preview)
+    powerBar:SetPoint("TOPLEFT", preview, "BOTTOMLEFT")
+    powerBar:SetSize(120, 8)
+    powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
+    powerBar:SetValue(44)
+    powerBar:SetMinMaxValues(0, 100)
+    local r, g, b = Ether:GetPowerColor("player")
+    powerBar:SetStatusBarColor(r, g, b)
+    local indicator = CreateFrame("StatusBar", nil, preview)
+    indicator:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 0, -20)
     indicator:SetSize(220, 15)
     indicator:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     local drop = indicator:CreateTexture(nil, "ARTWORK", nil, -7)

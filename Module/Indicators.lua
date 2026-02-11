@@ -6,7 +6,7 @@ local UnitHasIncomingResurrection = UnitHasIncomingResurrection
 local GetReadyCheckStatus = GetReadyCheckStatus
 local GetPartyAssignment = GetPartyAssignment
 local Enum = Enum
-local GetLoot = C_PartyInfo.GetLootMethod
+local GetLootMethod = C_PartyInfo.GetLootMethod
 local pairs, ipairs = pairs, ipairs
 local UnitIsGroupLeader = UnitIsGroupLeader
 local UnitIsCharmed = UnitIsCharmed
@@ -89,18 +89,10 @@ local function HideReadyCheckIcons()
     end
 end
 
-local function FindUnitButton(unit)
-    local button = Ether.unitButtons.raid[unit]
-    if button and button.Indicators and button.unit == unit then
-        return button
-    end
-    return nil
-end
-
 local function Indicator(_, event)
     if event == "READY_CHECK" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators and unit then
+            if button and button.Indicators then
                 local status = GetReadyCheckStatus(unit)
                 if (status) then
                     if (status == "ready") then
@@ -120,7 +112,7 @@ local function Indicator(_, event)
         end
     elseif event == "READY_CHECK_CONFIRM" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators and unit then
+            if button and button.Indicators then
                 local status = GetReadyCheckStatus(unit)
                 if (status == "ready") then
                     button.Indicators.ReadyCheck:SetTexture(ReadyCheck_Ready)
@@ -162,7 +154,7 @@ local function Indicator(_, event)
         end
     elseif event == "PARTY_LEADER_CHANGED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators and unit then
+            if button and button.Indicators then
                 local IsLeader = UnitIsGroupLeader(unit)
                 if (IsLeader) then
                     button.Indicators.GroupLeader:SetTexture(leaderIcon)
@@ -174,13 +166,13 @@ local function Indicator(_, event)
         end
     elseif event == "PARTY_LOOT_METHOD_CHANGED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators and unit then
-                button.Indicators.MasterLoot:SetTexture(masterlootIcon)
+            if button and button.Indicators then
                 button.Indicators.MasterLoot:Hide()
-                local lootType, partyID, raidID = GetLoot()
+                local lootType, partyID, raidID = GetLootMethod()
                 if lootType == Enum.LootMethod.Masterlooter then
                     local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
                     if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
+                        button.Indicators.MasterLoot:SetTexture(masterlootIcon)
                         button.Indicators.MasterLoot:Show()
                     else
                         button.Indicators.MasterLoot:Hide()
@@ -190,7 +182,7 @@ local function Indicator(_, event)
         end
     elseif event == "PLAYER_ROLES_ASSIGNED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators and unit then
+            if button and button.Indicators then
                 if not IsInRaid() then
                     button.Indicators.PlayerRoles:Hide()
                 else
@@ -283,56 +275,54 @@ end
 
 local function IndicatorUnit(self, event, unit)
     if not unit then return end
+    local button = Ether.unitButtons.raid[unit]
+    if not button or not button.Indicators then return end
     if event == "UNIT_CONNECTION" then
-        local button = FindUnitButton(unit)
-        if not button then return end
-        if not button.Indicators.Connection then return end
-        local isConnected = UnitIsConnected(unit)
-        if not isConnected then
-            button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
-            button.Indicators.Connection:SetTexture(connectionIcon)
-            button.Indicators.Connection:Show()
-        else
-            button.Indicators.Connection:Hide()
+        if button.Indicators.Connection then
+            local isConnected = UnitIsConnected(unit)
+            if not isConnected then
+                button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
+                button.Indicators.Connection:SetTexture(connectionIcon)
+                button.Indicators.Connection:Show()
+            else
+                button.Indicators.Connection:Hide()
+            end
         end
     elseif event == "INCOMING_RESURRECT_CHANGED" then
-        local button = FindUnitButton(unit)
-        if not button then return end
-        if not button.Indicators.Resurrection then return end
-        local Resurrection = UnitHasIncomingResurrection(unit)
-        if (Resurrection) then
-            button.Indicators.Resurrection:SetTexture(rezIcon)
-            button.Indicators.Resurrection:Show()
-        else
-            button.Indicators.Resurrection:Hide()
+        if button.Indicators.Resurrection then
+            local Resurrection = UnitHasIncomingResurrection(unit)
+            if (Resurrection) then
+                button.Indicators.Resurrection:SetTexture(rezIcon)
+                button.Indicators.Resurrection:Show()
+            else
+                button.Indicators.Resurrection:Hide()
+            end
         end
     elseif event == "UNIT_FLAGS" then
-        local button = FindUnitButton(unit)
-        if not button then return end
-        if not button.Indicators.UnitFlags then return end
-        local charmed = UnitIsCharmed(unit)
-        if charmed then
-            button.name:SetTextColor(1.00, 0.00, 0.00)
-            button.Indicators.UnitFlags:SetTexture(charmedIcon)
-            button.Indicators.UnitFlags:Show()
-        else
-            button.Indicators.UnitFlags:Hide()
-            button.name:SetTextColor(1, 1, 1)
+        if button.Indicators.UnitFlags then
+            local charmed = UnitIsCharmed(unit)
+            if charmed then
+                button.name:SetTextColor(1.00, 0.00, 0.00)
+                button.Indicators.UnitFlags:SetTexture(charmedIcon)
+                button.Indicators.UnitFlags:Show()
+            else
+                button.Indicators.UnitFlags:Hide()
+                button.name:SetTextColor(1, 1, 1)
+            end
         end
     elseif event == "PLAYER_FLAGS_CHANGED" then
-        local button = FindUnitButton(unit)
-        if not button then return end
-        if not button.Indicators.PlayerFlags then return end
-        local away = UnitIsAFK(unit)
-        local dnd = UnitIsDND(unit)
-        if away then
-            button.Indicators.PlayerFlags:SetText(AFK)
-            button.Indicators.PlayerFlags:Show()
-        elseif dnd then
-            button.Indicators.PlayerFlags:SetText(DND)
-            button.Indicators.PlayerFlags:Show()
-        else
-            button.Indicators.PlayerFlags:Hide()
+        if button.Indicators.PlayerFlags then
+            local away = UnitIsAFK(button.unit)
+            local dnd = UnitIsDND(button.unit)
+            if away then
+                button.Indicators.PlayerFlags:SetText(AFK)
+                button.Indicators.PlayerFlags:Show()
+            elseif dnd then
+                button.Indicators.PlayerFlags:SetText(DND)
+                button.Indicators.PlayerFlags:Show()
+            else
+                button.Indicators.PlayerFlags:Hide()
+            end
         end
         if Ether.DB[401][4] ~= 1 then return end
         if UnitIsAFK("player") then
@@ -347,8 +337,96 @@ local function IndicatorUnit(self, event, unit)
     end
 end
 
+function Ether:IndicatorsUnitUpdate(unit)
+    if not unit then return end
+    local button = Ether.unitButtons.raid[unit]
+    if not button or not button.Indicators then return end
+    if button.Indicators.Connection then
+        local isConnected = UnitIsConnected(unit)
+        if not isConnected then
+            button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
+            button.Indicators.Connection:SetTexture(connectionIcon)
+            button.Indicators.Connection:Show()
+        else
+            button.Indicators.Connection:Hide()
+        end
+    end
+    if button.Indicators.UnitFlags then
+        local charmed = UnitIsCharmed(unit)
+        if charmed then
+            button.name:SetTextColor(1.00, 0.00, 0.00)
+            button.Indicators.UnitFlags:SetTexture(charmedIcon)
+            button.Indicators.UnitFlags:Show()
+        else
+            button.Indicators.UnitFlags:Hide()
+            button.name:SetTextColor(1, 1, 1)
+        end
+    end
+    if button.Indicators.PlayerFlags then
+        local away = UnitIsAFK(unit)
+        local dnd = UnitIsDND(unit)
+        if away then
+            button.Indicators.PlayerFlags:SetText(AFK)
+            button.Indicators.PlayerFlags:Show()
+        elseif dnd then
+            button.Indicators.PlayerFlags:SetText(DND)
+            button.Indicators.PlayerFlags:Show()
+        else
+            button.Indicators.PlayerFlags:Hide()
+        end
+    end
+    if button.Indicators.GroupLeader then
+        button.Indicators.MasterLoot:Hide()
+        local IsLeader = UnitIsGroupLeader(unit)
+        if (IsLeader) then
+            button.Indicators.GroupLeader:SetTexture(leaderIcon)
+            button.Indicators.GroupLeader:Show()
+        else
+            button.Indicators.GroupLeader:Hide()
+        end
+    end
+    if button.Indicators.PlayerRoles then
+        if not IsInRaid() then
+            button.Indicators.PlayerRoles:Hide()
+        else
+            if (GetPartyAssignment("MAINTANK", unit)) then
+                button.Indicators.PlayerRoles:SetTexture(mainTankIcon)
+                button.Indicators.PlayerRoles:Show()
+            elseif (GetPartyAssignment("MAINASSIST", unit)) then
+                button.Indicators.PlayerRoles:SetTexture(mainAssistIcon)
+                button.Indicators.PlayerRoles:Show()
+            else
+                button.Indicators.PlayerRoles:Hide()
+            end
+        end
+    end
+    if button.Indicators.MasterLoot then
+        local lootType, partyID, raidID = GetLootMethod()
+        if lootType == Enum.LootMethod.Masterlooter then
+            local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
+            if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
+                button.Indicators.MasterLoot:SetTexture(masterlootIcon)
+                button.Indicators.MasterLoot:Show()
+            else
+                button.Indicators.MasterLoot:Hide()
+            end
+        end
+    end
+    if button.Indicators.RaidTarget then
+        if UnitExists(unit) then
+            local index = GetRaidTargetIndex(unit)
+            if index then
+                button.Indicators.RaidTarget:SetTexture(targetIcon)
+                SetRaidTargetIconTexture(button.Indicators.RaidTarget, index)
+                button.Indicators.RaidTarget:Show()
+            else
+                button.Indicators.RaidTarget:Hide()
+            end
+        end
+    end
+end
+
 function Ether:FullUpdateIndicators()
-    Indicator(frame, "READY_CHECK")
     Indicator(frame, "RAID_TARGET_UPDATE")
     Indicator(frame, "PARTY_LEADER_CHANGED")
     Indicator(frame, "PARTY_LOOT_METHOD_CHANGED")

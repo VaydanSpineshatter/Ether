@@ -6,17 +6,6 @@ local UnitChannel = UnitChannelInfo
 local timeStr = "%.1f|cffff0000-%.1f|r"
 local tStr = "%.1f"
 
-local Config = {
-    texture = {"Interface\\Icons\\INV_Misc_QuestionMark"},
-    colors = {
-        casting = {0.2, 0.6, 1.0, 0.8},
-        channeling = {0.18, 0.54, 0.34, 0.8},
-        fail = {1.0, 0.1, 0.1, 0.8},
-        interrupted = {0.50, 0.00, 0.50, 0.8},
-        trading = {1.00, 0.84, 0.00, 1}
-    }
-}
-
 local function OnUpdate(self, elapsed)
     if (self.casting) then
         local duration = self.duration + elapsed
@@ -25,7 +14,7 @@ local function OnUpdate(self, elapsed)
             self:Hide()
             return
         end
-        if (Ether.DB[801][7] == 1 and self.time) then
+        if (self.time) then
             if (self.delay ~= 0) then
                 self.time:SetFormattedText(timeStr, duration, self.delay)
             else
@@ -41,7 +30,7 @@ local function OnUpdate(self, elapsed)
             self:Hide()
             return
         end
-        if (Ether.DB[801][7] == 1 and self.time) then
+        if (self.time) then
             if (self.delay ~= 0) then
                 self.time:SetFormattedText(timeStr, duration, self.delay)
             else
@@ -126,19 +115,11 @@ local function updateSafeZone(self)
     safeZone:SetWidth(width * safeZoneRatio)
 end
 
-local function isTrade(self, data)
-    if Ether.DB[801][10] ~= 1 then return end
-    local trade = Config.colors.trading
-    local cast = Config.colors.casting
-    data = data and trade or cast
-    return self:SetStatusBarColor(unpack(data))
-end
-
 local function CastStart(self, event, unit)
     if self.unit ~= unit then return end
     if event == "UNIT_SPELLCAST_START" then
         local bar = self.castBar
-        local name, text, texture, startTimeMS, endTimeMS, isTradeSkill, castID, notInterruptible, spellID = UnitCast(unit)
+        local name, text, texture, startTimeMS, endTimeMS, _, castID, notInterruptible, spellID = UnitCast(unit)
         if not bar or not name then return end
         endTimeMS = endTimeMS / 1e3
         startTimeMS = startTimeMS / 1e3
@@ -153,16 +134,15 @@ local function CastStart(self, event, unit)
         bar.spellID = spellID
         bar:SetMinMaxValues(0, max)
         bar:SetValue(0)
-        bar:SetStatusBarColor(unpack(Config.colors.casting))
-        if (Ether.DB[801][6] == 1 and bar.icon) then
-            bar.icon:SetTexture(texture or unpack(Config.texture))
+        bar:SetStatusBarColor(0.2, 0.6, 1.0, 0.8)
+        if (bar.icon) then
+            bar.icon:SetTexture(texture or "Interface\\Icons\\INV_Misc_QuestionMark")
         end
-        if (Ether.DB[801][8] == 1 and bar.text) then
+        if (bar.text) then
             bar.spellName = name
             bar.text:SetText(text)
         end
-        isTrade(bar, isTradeSkill)
-        if (Ether.DB[801][9] == 1 and bar.safeZone) then
+        if (bar.safeZone) then
             bar.safeZone:ClearAllPoints()
             bar.safeZone:SetPoint(bar:GetReverseFill() and "LEFT" or "RIGHT")
             bar.safeZone:SetPoint("TOP")
@@ -180,13 +160,13 @@ local function CastFailed(self, event, unit, castID)
         if (not bar or bar.castID ~= castID) then
             return
         end
-        bar:SetStatusBarColor(unpack(Config.colors.fail))
-        if (Ether.DB[801][8] == 1 and bar.text) then
+        bar:SetStatusBarColor(1.0, 0.1, 0.1, 0.8)
+        if (bar.text) then
             bar.text:SetText("Cast - " .. (bar.spellName or "Failed"))
         end
         bar.casting = nil
         bar.notInterruptible = nil
-        bar.holdTime = bar.timeToHold or 0
+        bar.holdTime = bar.timeToHold or 0.1
     end
 end
 
@@ -197,13 +177,13 @@ local function CastInterrupted(self, event, unit, castID)
         if (not bar or bar.castID ~= castID) then
             return
         end
-        bar:SetStatusBarColor(unpack(Config.colors.interrupted))
-        if (Ether.DB[801][8] == 1 and bar.text) then
+        bar:SetStatusBarColor(0.50, 0.00, 0.50, 0.8)
+        if (bar.text) then
             bar.text:SetText("Cast - " .. (bar.spellName or "Interrupted"))
         end
         bar.casting = nil
         bar.channeling = nil
-        bar.holdTime = bar.timeToHold or 0
+        bar.holdTime = bar.timeToHold or 0.1
     end
 end
 
@@ -258,14 +238,14 @@ local function ChannelStart(self, event, unit, _, spellID)
         bar.castID = nil
         bar:SetMinMaxValues(0, max)
         bar:SetValue(duration)
-        bar:SetStatusBarColor(unpack(Config.colors.channeling))
-        if (Ether.DB[801][6] == 1 and bar.icon) then
-            bar.icon:SetTexture(textureID or unpack(Config.texture))
+        bar:SetStatusBarColor(0.18, 0.54, 0.34, 0.8)
+        if (bar.icon) then
+            bar.icon:SetTexture(textureID or "Interface\\Icons\\INV_Misc_QuestionMark")
         end
-        if (Ether.DB[801][8] == 1 and bar.text) then
+        if (bar.text) then
             bar.text:SetText(text)
         end
-        if (Ether.DB[801][9] == 1 and bar.safeZone) then
+        if (bar.safeZone) then
             bar.safeZone:ClearAllPoints()
             bar.safeZone:SetPoint(bar:GetReverseFill() and "LEFT" or "RIGHT")
             bar.safeZone:SetPoint("TOP")
@@ -330,7 +310,11 @@ function Ether:CastBarEnable(unit)
     local bar = Ether.unitButtons.solo[unit]
     if not bar then return
     elseif not bar.castBar then
-        Ether:SetupCastBar(bar)
+        if unit == "player" then
+            Ether:SetupCastBar(bar, 341, 20)
+        else
+            Ether:SetupCastBar(bar, 342, 18)
+        end
         RegisterUpdateFrame(bar.castBar)
     end
     if UpdateFrameInfo() then

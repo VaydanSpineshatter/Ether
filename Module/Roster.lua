@@ -56,6 +56,29 @@ local function TargetChanged(_, event)
     end
 end
 
+local function GetUnits()
+    local data = {}
+    if UnitInParty("player") and not UnitInRaid("player") then
+        table.insert(data, "player")
+        for i = 1, GetNumSubgroupMembers() do
+            local unit = "party" .. i
+            if UnitExists(unit) then
+                table.insert(data, unit)
+            end
+        end
+    elseif UnitInRaid("player") or UnitInBattleground("player") then
+        for i = 1, GetNumGroupMembers() do
+            local unit = "raid" .. i
+            if UnitExists(unit) then
+                table.insert(data, unit)
+            end
+        end
+    else
+        table.insert(data, "player")
+    end
+    return data
+end
+
 local status = false
 local function ifValidUnits()
     if not status then
@@ -72,6 +95,13 @@ local function ifValidUnits()
                             Ether:UpdateRaidIsHelpful(unit, true)
                             Ether:UpdateRaidIsHarmful(unit, true)
                         end
+                    end
+                end
+            end
+            if Ether.DB[401][6] == 1 then
+                for _, unit in ipairs(GetUnits()) do
+                    if UnitExists(unit) then
+                        Ether:IndicatorsUnitUpdate(unit)
                     end
                 end
             end
@@ -100,9 +130,6 @@ end
 local function RosterChanged(_, event)
     if event == "GROUP_ROSTER_UPDATE" then
         ifValidUnits()
-        if Ether.DB[401][6] == 1 then
-            Ether:FullUpdateIndicators()
-        end
         if Ether.DB[1001][3] == 1 then
             clearTimerCache()
         end
@@ -113,7 +140,11 @@ local function PlayerUnghost(_, event)
     if event == "PLAYER_UNGHOST" then
         if Ether.DB[401][6] == 1 then
             C_After(0.3, function()
-                Ether:FullUpdateIndicators()
+                for _, unit in ipairs(GetUnits()) do
+                    if UnitExists(unit) then
+                        Ether:IndicatorsUnitUpdate(unit)
+                    end
+                end
             end)
         end
     end
@@ -123,7 +154,11 @@ local function ZoneChanged(_, event)
     if event == "ZONE_CHANGED" then
         if Ether.DB[401][6] == 1 then
             C_After(0.3, function()
-                Ether:FullUpdateIndicators()
+                for _, unit in ipairs(GetUnits()) do
+                    if UnitExists(unit) then
+                        Ether:IndicatorsUnitUpdate(unit)
+                    end
+                end
             end)
         end
     end
@@ -133,7 +168,11 @@ local function NewAreaChanged(_, event)
     if event == "ZONE_CHANGED_NEW_AREA" then
         if Ether.DB[401][6] == 1 then
             C_After(0.3, function()
-                Ether:FullUpdateIndicators()
+                for _, unit in ipairs(GetUnits()) do
+                    if UnitExists(unit) then
+                        Ether:IndicatorsUnitUpdate(unit)
+                    end
+                end
             end)
         end
     end
@@ -145,7 +184,11 @@ function Ether:RosterEnable()
         Ether:IndicatorsEnable()
         Ether:InitialIndicatorsPos()
         C_After(0.3, function()
-            Ether:FullUpdateIndicators()
+            for _, unit in ipairs(GetUnits()) do
+                if UnitExists(unit) then
+                    Ether:IndicatorsUnitUpdate(unit)
+                end
+            end
         end)
     end
     Ether:NameEnable()

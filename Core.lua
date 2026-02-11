@@ -687,7 +687,7 @@ end
 
 local arraysLength = {
     [101] = 11, [201] = 6, [301] = 13, [401] = 6,
-    [501] = 9, [701] = 4, [801] = 11,
+    [501] = 9, [701] = 4, [801] = 5,
     [1001] = 3, [1101] = 3
 }
 
@@ -918,6 +918,18 @@ local function OnInitialize(self, event, ...)
     elseif (event == "PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
         Ether:RosterEnable()
+        for unit, button in pairs(Ether.unitButtons.solo) do
+            if button and button.RaidTarget and UnitExists(unit) then
+                local index = GetRaidTargetIndex(unit)
+                if index then
+                    button.RaidTarget:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
+                    SetRaidTargetIconTexture(button.RaidTarget, index)
+                    button.RaidTarget:Show()
+                else
+                    button.RaidTarget:Hide()
+                end
+            end
+        end
         C_Timer.After(0.8, function()
             Ether:RepositionHeaders()
             Ether.Fire("RESET_CHILDREN")

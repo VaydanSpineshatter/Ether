@@ -71,6 +71,9 @@ local function OnAttributeChanged(self, name, unit)
             Ether:UpdateRaidIsHarmful(unit, true)
         end
     end
+    if Ether.DB and Ether.DB[401] and Ether.DB[401][6] == 1 then
+        Ether:IndicatorsUnitUpdate(unit)
+    end
     Update(self)
 end
 

@@ -198,7 +198,7 @@ function Ether:UpdateHealth(button, smooth)
     end
 
     local r, g, b = Ether:GetClassColors(button.unit)
-    button.healthBar:SetStatusBarColor(r, g, b, .8)
+    button.healthBar:SetStatusBarColor(r, g, b, 1)
     button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
 end
 
