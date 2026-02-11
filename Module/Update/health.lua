@@ -159,36 +159,13 @@ function Ether:GetClassColors(unit)
     end
     return r, g, b
 end
-local function unitIsDead(button)
-    button.top:SetColorTexture(0, 0, 0, 1)
-    button.right:SetColorTexture(0, 0, 0, 1)
-    button.left:SetColorTexture(0, 0, 0, 1)
-    button.bottom:SetColorTexture(0, 0, 0, 1)
-end
 
-local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 function Ether:UpdateHealth(button, smooth)
     if not button or not button.unit or not button.healthBar then
         return
     end
     local h = UnitHealth(button.unit)
     local mh = UnitHealthMax(button.unit)
-    if button.Indicators and button.Indicators.UnitFlags then
-        button.Indicators.UnitFlags:Hide()
-    end
-    if h <= 1 then
-        if button.Indicators and button.Indicators.UnitFlags then
-            button.Indicators.UnitFlags:SetTexture(deadIcon)
-            button.Indicators.UnitFlags:Show()
-        end
-        if button.top then
-            unitIsDead(button)
-        end
-        button.healthBar:SetValue(0)
-        button.healthBar:SetMinMaxValues(0, 0)
-        return
-    end
-
     if smooth and button.Smooth then
         button.healthBar:SetMinMaxSmoothedValue(0, mh)
         button.healthBar:SetSmoothedValue(h)

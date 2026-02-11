@@ -86,6 +86,7 @@ local function ifValidUnits()
         C_After(4, function()
             if Ether.DB[1001][3] == 1 then
                 if not UnitInAnyGroup("player") then
+                    Ether.StopAllBlinks()
                     Ether:DisableHeaderAuras()
                     Ether:EnableHeaderAuras()
                 else
@@ -99,11 +100,7 @@ local function ifValidUnits()
                 end
             end
             if Ether.DB[401][6] == 1 then
-                for _, unit in ipairs(GetUnits()) do
-                    if UnitExists(unit) then
-                        Ether:IndicatorsUnitUpdate(unit)
-                    end
-                end
+                Ether:FullUpdateIndicators()
             end
             status = false
         end)

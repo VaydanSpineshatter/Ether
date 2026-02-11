@@ -32,21 +32,21 @@ function Ether:SetupHealthBar(button, orient, w, h)
     healthBar:SetOrientation(orient)
     healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
     healthBar:SetMinMaxValues(0, 100)
-    healthBar:SetFrameLevel(button:GetFrameLevel() + 1)
-    local healthDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
+    healthBar:SetFrameLevel(button:GetFrameLevel() + 3)
+    local healthDrop = button:CreateTexture(nil, "OVERLAY")
     button.healthDrop = healthDrop
     healthDrop:SetAllPoints(healthBar)
-    healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
     return button
 end
 
-function Ether:SetupPreviewBar(parent, preview, w, h, number, number2)
-    local healthBar = CreateFrame("StatusBar", nil, preview)
+function Ether:SetupPreviewBar(parent, w, h, number, number2)
+    local healthBar = CreateFrame("StatusBar", nil, parent)
     parent.healthBar = healthBar
-    healthBar:SetFrameLevel(preview:GetFrameLevel() - 1)
-    healthBar:SetPoint("CENTER")
+    healthBar:SetFrameLevel(parent:GetFrameLevel() - 1)
+    healthBar:SetPoint("TOPLEFT")
     healthBar:SetSize(w, h)
     healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
+    healthBar:SetFrameLevel(parent:GetFrameLevel() + 1)
     local _, classFilename = UnitClass("player")
     local c = Ether.RAID_COLORS[classFilename]
     healthBar:SetStatusBarColor(c.r, c.g, c.b, 1)
@@ -55,10 +55,6 @@ function Ether:SetupPreviewBar(parent, preview, w, h, number, number2)
     name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     name:SetPoint("CENTER", healthBar, "CENTER", 0, number2)
     name:SetText(Ether:ShortenName(Ether.playerName, number))
-    local background = healthBar:CreateTexture(nil, "BACKGROUND")
-    background:SetColorTexture(0, 0, 0, 1)
-    background:SetPoint("TOPLEFT", healthBar, "TOPLEFT", -3, 3)
-    background:SetPoint("BOTTOMRIGHT", healthBar, "BOTTOMRIGHT", 3, -3)
     return parent
 end
 
@@ -66,39 +62,38 @@ function Ether:SetupPowerBar(button)
     if not button then return end
     local powerBar = CreateFrame("StatusBar", nil, button)
     button.powerBar = powerBar
-    powerBar:SetPoint("BOTTOMLEFT")
+    powerBar:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", 0, 0)
     powerBar:SetSize(120, 8)
     powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
-    powerBar:SetFrameLevel(button:GetFrameLevel() + 1)
+    powerBar:SetFrameLevel(button:GetFrameLevel() + 3)
     powerBar:SetMinMaxValues(0, 100)
-    local powerDrop = button:CreateTexture(nil, "ARTWORK", nil, -7)
+    local powerDrop = button:CreateTexture(nil, "OVERLAY")
     button.powerDrop = powerDrop
     powerDrop:SetAllPoints()
     powerDrop:SetColorTexture(0.1, 0.1, 0.1, 0.8)
-    powerBar:GetStatusBarTexture():SetDrawLayer("ARTWORK", -7)
     return button
 end
 
 function Ether:SetupPrediction(button)
     if not button or not button.healthBar then return end
-    local player = CreateFrame('StatusBar', nil, button.healthBar:GetParent())
+    local player = CreateFrame("StatusBar", nil, button)
     button.myPrediction = player
-    player:SetAllPoints(button.healthBar)
-    player:SetFrameLevel(button:GetFrameLevel() + 0)
+    player:SetAllPoints(button)
     player:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     player:SetStatusBarColor(0.70, 0.13, 0.13)
     player:SetMinMaxValues(0, 1)
     player:SetValue(1)
     player:Hide()
-    local from = CreateFrame('StatusBar', nil, button.healthBar:GetParent())
+    player:SetFrameLevel(button:GetFrameLevel() + 1)
+    local from = CreateFrame("StatusBar", nil, button)
     button.otherPrediction = from
-    from:SetAllPoints(button.healthBar)
-    from:SetFrameLevel(button:GetFrameLevel() - 0)
+    from:SetAllPoints(button)
     from:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     from:SetStatusBarColor(0.80, 0.40, 1.00)
     from:SetMinMaxValues(0, 1)
     from:SetValue(1)
     from:Hide()
+    from:SetFrameLevel(button:GetFrameLevel() + 1)
     return button
 end
 
@@ -107,17 +102,16 @@ function Ether:SetupCastBar(button, number, iconS)
     local frame = CreateFrame("StatusBar", nil, UIParent)
     button.castBar = frame
     frame:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
-    local drop = frame:CreateTexture(nil, "ARTWORK", nil, -7)
+    local drop = frame:CreateTexture(nil, "OVERLAY")
     frame.drop = drop
     drop:SetAllPoints()
     local r, g, b = Ether:GetClassColors("player")
     frame:SetStatusBarColor(r, g, b, 1)
-    drop:SetColorTexture(0.2, 0.2, 0.4, .4)
+    drop:SetColorTexture(0.2, 0.2, 0.4, .5)
     local text = frame:CreateFontString(nil, "OVERLAY")
     frame.text = text
     text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     text:SetPoint("LEFT", 31, 0)
-
     local time = frame:CreateFontString(nil, "OVERLAY")
     frame.time = time
     time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
@@ -130,7 +124,7 @@ function Ether:SetupCastBar(button, number, iconS)
 
     local safeZone = frame:CreateTexture(nil, "OVERLAY")
     frame.safeZone = safeZone
-    safeZone:SetColorTexture(1, 0, 0)
+    safeZone:SetColorTexture(1, 0, 0, 1)
     frame.casting = nil
     frame.channeling = nil
     frame.duration = 0
@@ -448,36 +442,41 @@ function Ether:SoloAuraSetup(button)
     end
 end
 
-function Ether:AddBlackBorder(button, scale, r, g, b, a)
-    if not button then return end
-    local top = button:CreateTexture(nil, "BORDER")
-    top:SetColorTexture(r, g, b, a)
-    top:SetPoint("TOPLEFT", button, "TOPLEFT", -scale, scale)
-    top:SetPoint("TOPRIGHT", button, "TOPRIGHT", scale, scale)
-    local bottom = button:CreateTexture(nil, "BORDER")
-    bottom:SetColorTexture(r, g, b, a)
-    bottom:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", -scale, -scale)
-    bottom:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", scale, -scale)
-    local left = button:CreateTexture(nil, "BORDER")
-    left:SetColorTexture(r, g, b, a)
-    left:SetPoint("TOPLEFT", button, "TOPLEFT", -scale, scale)
-    left:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", -scale, -scale)
-    local right = button:CreateTexture(nil, "BORDER")
-    right:SetColorTexture(r, g, b, a)
-    right:SetPoint("TOPRIGHT", button, "TOPRIGHT", scale, scale)
-    right:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", scale, -scale)
+function Ether:DispelNameSetup(button, r, g, b, a)
+    if not button or not button.healthBar then return end
+    local top = button.healthBar:CreateTexture(nil, "BORDER")
     button.top = top
-    button.left = left
-    button.right = right
+    top:SetColorTexture(r, g, b, a)
+    top:SetPoint("TOPLEFT", button.healthBar, "TOPLEFT", -2, 2)
+    top:SetPoint("TOPRIGHT", button.healthBar, "TOPRIGHT", 2, 2)
+    top:SetHeight(2)
+    local bottom = button.healthBar:CreateTexture(nil, "BORDER")
     button.bottom = bottom
+    bottom:SetColorTexture(r, g, b, a)
+    bottom:SetPoint("BOTTOMLEFT", button.healthBar, "BOTTOMLEFT", -2, -2)
+    bottom:SetPoint("BOTTOMRIGHT", button.healthBar, "BOTTOMRIGHT", 2, -2)
+    bottom:SetHeight(2)
+    local left = button.healthBar:CreateTexture(nil, "BORDER")
+    button.left = left
+    left:SetColorTexture(r, g, b, a)
+    left:SetPoint("TOPLEFT", button.healthBar, "TOPLEFT", -2, 2)
+    left:SetPoint("BOTTOMLEFT", button.healthBar, "BOTTOMLEFT", -2, -2)
+    left:SetWidth(2)
+    local right = button.healthBar:CreateTexture(nil, "BORDER")
+    button.right = right
+    right:SetColorTexture(r, g, b, a)
+    right:SetPoint("TOPRIGHT", button.healthBar, "TOPRIGHT", 2, 2)
+    right:SetPoint("BOTTOMRIGHT", button.healthBar, "BOTTOMRIGHT", 2, -2)
+    right:SetWidth(2)
     return button
 end
 
 function Ether:DispelIconSetup(button)
-    local iconFrame = CreateFrame("Frame", nil, button)
+    local iconFrame = CreateFrame("Frame", nil, UIParent)
+    iconFrame:SetFrameLevel(button:GetFrameLevel() + 6)
     button.iconFrame = iconFrame
     iconFrame:SetSize(12, 12)
-    iconFrame:SetPoint("CENTER", 0, 10)
+    iconFrame:SetPoint("CENTER", button, "CENTER", 0, 10)
     iconFrame:Hide()
     local dispelIcon = iconFrame:CreateTexture(nil, "OVERLAY")
     button.dispelIcon = dispelIcon

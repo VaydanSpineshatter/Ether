@@ -2,6 +2,7 @@ local _, Ether = ...
 local UnitIsAFK = UnitIsAFK
 local UnitIsDND = UnitIsDND
 local UnitIsConnected = UnitIsConnected
+local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitHasIncomingResurrection = UnitHasIncomingResurrection
 local GetReadyCheckStatus = GetReadyCheckStatus
 local GetPartyAssignment = GetPartyAssignment
@@ -11,6 +12,7 @@ local pairs, ipairs = pairs, ipairs
 local UnitIsGroupLeader = UnitIsGroupLeader
 local UnitIsCharmed = UnitIsCharmed
 local UnitIsUnit = UnitIsUnit
+local deadIcon = "Interface\\Icons\\Spell_Holy_GuardianSpirit"
 local connectionIcon = "Interface\\CharacterFrame\\Disconnect-Icon"
 local ReadyCheck_Ready = "Interface\\RaidFrame\\ReadyCheck-Ready"
 local ReadyCheck_NotReady = "Interface\\RaidFrame\\ReadyCheck-NotReady"
@@ -208,9 +210,9 @@ local frame, frameUnit
 if not frame and not frameUnit then
     frame, frameUnit = CreateFrame("Frame"), CreateFrame("Frame")
 end
-
-local function OnAfk(self)
-    self.isActive = true
+Ether.unitIsAway = false
+local function OnAfk()
+    Ether.unitIsAway = true
     if Ether.DB[801][1] == 1 then
         Ether:CastBarDisable("player")
     end
@@ -240,8 +242,8 @@ local function OnAfk(self)
     end
 end
 
-local function NotAfk(self)
-    self.isActive = false
+local function NotAfk()
+    Ether.unitIsAway = false
     if Ether.DB[801][1] == 1 then
         Ether:CastBarEnable("player")
     end
@@ -273,7 +275,7 @@ local function NotAfk(self)
     end
 end
 
-local function IndicatorUnit(self, event, unit)
+local function IndicatorUnit(_, event, unit)
     if not unit then return end
     local button = Ether.unitButtons.raid[unit]
     if not button or not button.Indicators then return end
@@ -299,15 +301,25 @@ local function IndicatorUnit(self, event, unit)
             end
         end
     elseif event == "UNIT_FLAGS" then
-        if button.Indicators.UnitFlags then
+   if button.Indicators.UnitFlags then
+            button.Indicators.UnitFlags:Hide()
+            button.name:SetTextColor(1, 1, 1)
             local charmed = UnitIsCharmed(unit)
+            local dead = UnitIsDeadOrGhost(unit)
+                       button.Indicators.UnitFlags:Show()
             if charmed then
                 button.name:SetTextColor(1.00, 0.00, 0.00)
                 button.Indicators.UnitFlags:SetTexture(charmedIcon)
-                button.Indicators.UnitFlags:Show()
+            elseif  dead then
+                button.Indicators.UnitFlags:SetTexture(deadIcon)
+                if button.healthBar then
+                    button.healthBar:SetValue(0)
+                    button.healthBar:SetMinMaxValues(0, 0)
+                    Ether:updateDispelBorder(button, {0, 0, 0, 1})
+                end
             else
-                button.Indicators.UnitFlags:Hide()
-                button.name:SetTextColor(1, 1, 1)
+            button.Indicators.UnitFlags:Hide()
+            button.name:SetTextColor(1, 1, 1)
             end
         end
     elseif event == "PLAYER_FLAGS_CHANGED" then
@@ -326,12 +338,12 @@ local function IndicatorUnit(self, event, unit)
         end
         if Ether.DB[401][4] ~= 1 then return end
         if UnitIsAFK("player") then
-            if not self.isActive then
-                OnAfk(self)
+            if not Ether.unitIsAway then
+                OnAfk()
             end
         else
-            if self.isActive then
-                NotAfk(self)
+            if Ether.unitIsAway then
+                NotAfk()
             end
         end
     end
@@ -350,18 +362,28 @@ function Ether:IndicatorsUnitUpdate(unit)
         else
             button.Indicators.Connection:Hide()
         end
-    end
-    if button.Indicators.UnitFlags then
-        local charmed = UnitIsCharmed(unit)
-        if charmed then
-            button.name:SetTextColor(1.00, 0.00, 0.00)
-            button.Indicators.UnitFlags:SetTexture(charmedIcon)
-            button.Indicators.UnitFlags:Show()
-        else
+         end
+           if button.Indicators.UnitFlags then
             button.Indicators.UnitFlags:Hide()
             button.name:SetTextColor(1, 1, 1)
+            local charmed = UnitIsCharmed(unit)
+            local dead = UnitIsDeadOrGhost(unit)
+                       button.Indicators.UnitFlags:Show()
+            if charmed then
+                button.name:SetTextColor(1.00, 0.00, 0.00)
+                button.Indicators.UnitFlags:SetTexture(charmedIcon)
+            elseif  dead then
+                button.Indicators.UnitFlags:SetTexture(deadIcon)
+                if button.healthBar then
+                    button.healthBar:SetValue(0)
+                    button.healthBar:SetMinMaxValues(0, 0)
+                    Ether:updateDispelBorder(button, {0, 0, 0, 1})
+                end
+            else
+            button.Indicators.UnitFlags:Hide()
+            button.name:SetTextColor(1, 1, 1)
+            end
         end
-    end
     if button.Indicators.PlayerFlags then
         local away = UnitIsAFK(unit)
         local dnd = UnitIsDND(unit)
@@ -422,6 +444,16 @@ function Ether:IndicatorsUnitUpdate(unit)
             else
                 button.Indicators.RaidTarget:Hide()
             end
+        end
+    end
+    if Ether.DB[401][4] ~= 1 then return end
+    if UnitIsAFK("player") then
+        if not Ether.unitIsAway then
+            OnAfk()
+        end
+    else
+        if Ether.unitIsAway then
+            NotAfk()
         end
     end
 end

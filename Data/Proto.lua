@@ -48,8 +48,8 @@ Ether.PredefinedAuras = {
         },
     },
     ["Priest - Helpful"] = {
-        [10901] = {
-            name = "Power Word: Shield",
+        [25217] = {
+            name = "Shield 11",
             color = {0.93, 0.91, 0.67, 1},
             size = 6,
             position = "TOPLEFT",
@@ -58,8 +58,8 @@ Ether.PredefinedAuras = {
             enabled = true,
             isDebuff = false
         },
-        [25315] = {
-            name = "Renew",
+        [25221] = {
+            name = "Renew 11",
             color = {0.2, 1, 0.2, 1},
             size = 6,
             position = "TOPRIGHT",

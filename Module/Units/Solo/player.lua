@@ -76,14 +76,8 @@ function Ether:CreateUnitButtons(index)
         Ether:SetupPrediction(button)
         button:SetBackdrop({
             bgFile = Ether.DB[811]["background"],
-            edgeFile = Ether.DB[811]["border"],
-            tile = true,
-            tileSize = 16,
-            edgeSize = 16,
             insets = {left = -2, right = -2, top = -2, bottom = -2}
         })
-        button:SetBackdropColor(0.1, 0.1, 0.1, .9)
-        button:SetBackdropBorderColor(0.4, 0.4, 0.4)
         Ether:SetupName(button, 0)
         Ether:GetClassColor(button)
         Ether:SetupUpdateText(button, "health")

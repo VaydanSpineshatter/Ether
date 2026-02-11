@@ -70,9 +70,9 @@ local function OnAttributeChanged(self, name, unit)
             Ether:UpdateRaidIsHelpful(unit, true)
             Ether:UpdateRaidIsHarmful(unit, true)
         end
-    end
-    if Ether.DB and Ether.DB[401] and Ether.DB[401][6] == 1 then
-        Ether:IndicatorsUnitUpdate(unit)
+        if Ether.DB and Ether.DB[401] and Ether.DB[401][6] == 1 then
+            Ether:IndicatorsUnitUpdate(unit)
+        end
     end
     Update(self)
 end
@@ -96,42 +96,36 @@ end
 
 local function CreateChildren(headerName, buttonName)
     local button = _G[buttonName]
-    Ether:AddBlackBorder(button, 1, 0, 0, 0, 1)
     local w = headerName:GetAttribute("ButtonWidth")
     local h = headerName:GetAttribute("ButtonHeight")
+    button.Indicators = {}
     Ether:SetupHealthBar(button, "VERTICAL", w, h)
     Ether:SetupPrediction(button)
     Ether:SetupName(button, -5)
     Ether:GetClassColor(button)
+    Ether:DispelIconSetup(button)
+    Ether:DispelNameSetup(button, 0, 0, 0, 0)
     button:SetBackdrop({
         bgFile = Ether.DB[811]["background"],
-        edgeFile = Ether.DB[811]["border"],
-        tile = true,
-        tileSize = 16,
-        edgeSize = 16,
         insets = {left = -2, right = -2, top = -2, bottom = -2}
     })
-    button:SetBackdropColor(0.1, 0.1, 0.1, .9)
-    button:SetBackdropBorderColor(0.4, 0.4, 0.4)
+    button.Indicators.PlayerFlags = button.healthBar:CreateFontString(nil, "OVERLAY")
+    button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.expressway), 14, "OUTLINE")
+    button.Indicators.UnitFlags = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.ReadyCheck = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.Connection = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.Resurrection = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.RaidTarget = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.MasterLoot = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.GroupLeader = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.Indicators.PlayerRoles = button.healthBar:CreateTexture(nil, "OVERLAY")
     if headerName:GetAttribute("TypePet") then
         button.TypePet = true
     else
         Ether:SetupUpdateText(button, "health")
         Ether:SetupUpdateText(button, "power", true)
-        Ether:DispelIconSetup(button)
         Mixin(button.healthBar, SmoothStatusBarMixin)
-        button.Indicators = {}
         button.Smooth = true
-        button.Indicators.PlayerFlags = button.healthBar:CreateFontString(nil, "OVERLAY")
-        button.Indicators.PlayerFlags:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-        button.Indicators.UnitFlags = button.healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.ReadyCheck = button.healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.Connection = button.healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.Resurrection = button.healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.RaidTarget = button.healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.MasterLoot = button.healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.GroupLeader = button.healthBar:CreateTexture(nil, "OVERLAY")
-        button.Indicators.PlayerRoles = button.healthBar:CreateTexture(nil, "OVERLAY")
     end
     button:SetScript("OnShow", Show)
     button:SetScript("OnHide", Hide)

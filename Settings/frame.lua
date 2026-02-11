@@ -763,16 +763,23 @@ local function CreateEditor(parent)
     rgbText:SetPoint("LEFT", sizeSlider, "RIGHT", 40, 0)
     rgbText:SetText("Pick Color")
 
-    local preview = CreateFrame("Frame", nil, frame)
+    local preview = CreateFrame("Frame", nil, frame, "BackdropTemplate")
     frame.preview = preview
     preview:SetPoint("TOPLEFT", 15, -140)
     preview:SetSize(55, 55)
-
-    local healthBar = Ether:SetupPreviewBar(Editor, preview, 55, 55, 3, -5)
-    local icon = healthBar:CreateTexture(nil, "OVERLAY")
+    preview:SetBackdrop({
+        bgFile = Ether.DB[811]["background"],
+        edgeFile = Ether.DB[811]["border"],
+        edgeSize = 5,
+        insets = {left = -2, right = -2, top = -2, bottom = -2}
+    })
+    preview:SetBackdropColor(0, 0, 0, 1)
+    preview:SetBackdropBorderColor(0, 0, 0, 1)
+    Ether:SetupPreviewBar(preview, 55, 55, 3, -5)
+    local icon = preview.healthBar:CreateTexture(nil, "OVERLAY")
     frame.icon = icon
     icon:SetSize(6, 6)
-    icon:SetPoint("TOP", frame.healthBar, "TOP", 0, 0)
+    icon:SetPoint("TOP", preview.healthBar, "TOP", 0, 0)
     icon:SetColorTexture(1, 1, 0, 1)
 
     local positions = {
@@ -1080,7 +1087,7 @@ function Ether.UpdatePreview()
 
     local pos = posMap[data.position]
     if pos then
-        indicator:SetPoint(pos[1], Editor.healthBar, pos[1], pos[2], pos[3])
+        indicator:SetPoint(pos[1], Editor.preview.healthBar, pos[1], pos[2], pos[3])
     end
 end
 
@@ -1347,24 +1354,32 @@ function Ether.CreateIndicatorsSection(self)
     end
 
     local templateDropdown = CreateEtherDropdown(parent, 210, "Select Indicator", indicatorFunc)
-    templateDropdown:SetPoint("TOPLEFT", 10, -10)
+    templateDropdown:SetPoint("TOPLEFT", 5, -5)
 
-    local preview = CreateFrame("Frame", nil, parent)
+    local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    Indicator.preview = preview
     preview:SetPoint("TOP", 80, -90)
     preview:SetSize(55, 55)
 
-    local healthBar = Ether:SetupPreviewBar(Indicator, preview, 55, 55, 3, -5)
-
-    local icon = healthBar:CreateTexture(nil, "OVERLAY")
+    Ether:SetupPreviewBar(preview, 55, 55, 3, -5)
+    preview:SetBackdrop({
+        bgFile = Ether.DB[811]["background"],
+        edgeFile = Ether.DB[811]["border"],
+        edgeSize = 5,
+        insets = {left = -2, right = -2, top = -2, bottom = -2}
+    })
+    preview:SetBackdropColor(0, 0, 0, 1)
+    preview:SetBackdropBorderColor(0, 0, 0, 1)
+    local icon = preview.healthBar:CreateTexture(nil, "OVERLAY")
     Indicator.icon = icon
     icon:SetSize(12, 12)
     icon:SetPoint("TOP", preview.healthBar, "TOP", 0, 0)
     icon:SetTexture(iconTexture)
 
-    local textIndicator = healthBar:CreateFontString(nil, "OVERLAY")
+    local textIndicator = preview.healthBar:CreateFontString(nil, "OVERLAY")
     textIndicator:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     Indicator.text = textIndicator
-    textIndicator:SetPoint("TOP", healthBar, "TOP", 0, 0)
+    textIndicator:SetPoint("TOP", preview.healthBar, "TOP", 0, 0)
     textIndicator:Hide()
 
     local positions = {
@@ -1592,11 +1607,11 @@ function Ether.UpdateIndicators()
     if indicatorType == "texture" then
         Indicator.icon:SetSize(data[1], data[1])
         Indicator.icon:ClearAllPoints()
-        Indicator.icon:SetPoint(data[2], Indicator.healthBar, data[2], data[3], data[4])
+        Indicator.icon:SetPoint(data[2], Indicator.preview.healthBar, data[2], data[3], data[4])
     elseif indicatorType == "string" then
         Indicator.text:SetSize(data[1], data[1])
         Indicator.text:ClearAllPoints()
-        Indicator.text:SetPoint(data[2], Indicator.healthBar, data[2], data[3], data[4])
+        Indicator.text:SetPoint(data[2], Indicator.preview.healthBar, data[2], data[3], data[4])
     end
 end
 
@@ -1697,32 +1712,80 @@ end
 function Ether.CreateCastBarSection(self)
     local parent = self.Content.Children["CastBar"]
 
-    local preview = CreateFrame("Frame", nil, parent)
+    local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     preview:SetPoint("TOP", 0, -90)
     preview:SetSize(120, 50)
-
-    local healthBar = Ether:SetupPreviewBar(Indicator, preview, 120, 40, 10, 0)
+    Ether:SetupPreviewBar(preview, 120, 40, 10, 0)
+    preview:SetBackdrop({
+        bgFile = Ether.DB[811]["background"],
+        edgeFile = Ether.DB[811]["border"],
+        edgeSize = 5,
+        insets = {left = -2, right = -2, top = -2, bottom = -2}
+    })
+    preview:SetBackdropColor(0, 0, 0, 1)
+    preview:SetBackdropBorderColor(0, 0, 0, 1)
     local powerBar = CreateFrame("StatusBar", nil, preview)
-    powerBar:SetPoint("TOPLEFT", preview, "BOTTOMLEFT")
+    powerBar:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 0, 0)
     powerBar:SetSize(120, 8)
     powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
     powerBar:SetValue(44)
     powerBar:SetMinMaxValues(0, 100)
     local r, g, b = Ether:GetPowerColor("player")
     powerBar:SetStatusBarColor(r, g, b)
-    local indicator = CreateFrame("StatusBar", nil, preview)
-    indicator:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 0, -20)
-    indicator:SetSize(220, 15)
-    indicator:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
-    local drop = indicator:CreateTexture(nil, "ARTWORK", nil, -7)
+    local castBar = CreateFrame("StatusBar", nil, preview)
+    castBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
+    local drop = castBar:CreateTexture(nil, "ARTWORK", nil, -7)
     drop:SetAllPoints()
-    local _, classFilename = UnitClass("player")
-    local c = Ether.RAID_COLORS[classFilename]
-    indicator:SetStatusBarColor(c.r, c.g, c.b, .6)
-    drop:SetColorTexture(c.r * 0.3, c.g * 0.3, c.b * 0.3, 0.8)
-    local text = indicator:CreateFontString(nil, "OVERLAY")
-    text:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
+    local re, ge, be = Ether:GetClassColors("player")
+    castBar:SetStatusBarColor(re, ge, be, 1)
+    drop:SetColorTexture(0.2, 0.2, 0.4, .4)
+    local text = castBar:CreateFontString(nil, "OVERLAY")
+    text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     text:SetPoint("LEFT", 31, 0)
+    text:SetText("Fireball")
+    local time = castBar:CreateFontString(nil, "OVERLAY")
+    time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
+    time:SetPoint("RIGHT", castBar, "RIGHT", -12, 0)
+    time:SetFormattedText("%.1f", 1)
+    local icon = castBar:CreateTexture(nil, "OVERLAY")
+    icon:SetSize(18, 18)
+    icon:SetTexture(135812)
+    icon:SetPoint("LEFT")
+    local safeZone = castBar:CreateTexture(nil, "OVERLAY")
+    safeZone:SetColorTexture(1, 0, 0, 1)
+    safeZone:SetWidth(4)
+    safeZone:SetPoint(castBar:GetReverseFill() and "LEFT" or "RIGHT")
+    safeZone:SetPoint("TOP")
+    safeZone:SetPoint("BOTTOM")
+    castBar:SetSize(240, 15)
+    castBar:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 0, -30)
+    castBar:SetMinMaxValues(0, 100)
+    castBar:SetValue(44)
+    castBar:SetStatusBarColor(0.2, 0.6, 1.0, 0.8)
+
+    local castBarConfig = {
+        [1] = "Height",
+        [2] = "Width",
+        [3] = "Time",
+        [4] = "Text",
+        [5] = "Position",
+        [6] = "Icon",
+        [7] = "SafeZone",
+    }
+
+    local barOptions = {}
+    local auraDropdown
+    for _, configName in ipairs(castBarConfig) do
+        table.insert(barOptions, {
+            text = configName,
+            func = function()
+                auraDropdown.text:SetText(configName)
+            end
+        })
+    end
+
+    auraDropdown = CreateEtherDropdown(parent, 210, "Open Config", barOptions)
+    auraDropdown:SetPoint("TOPLEFT", 5, -5)
 end
 
 function Ether.CreateConfigSection(self)
@@ -1864,7 +1927,7 @@ function Ether.CreateConfigSection(self)
     end
 
     dropdowns.frame = CreateEtherDropdown(parent, 160, "Select Frame", frameOptions)
-    dropdowns.frame:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 10, -10)
+    dropdowns.frame:SetPoint("TOPLEFT", parent, "BOTTOMLEFT", 5, -5)
 
     sizeSlider:SetScript("OnValueChanged", function(self, value)
         local frame = DB[111].SELECTED
@@ -1899,15 +1962,10 @@ function Ether.CreateConfigSection(self)
     name:SetPoint("CENTER", preview.healthBar, "CENTER", 0, -5)
     name:SetText(Ether:ShortenName(Ether.playerName, 3))
     preview:SetBackdrop({
-        bgFile = Ether.DB[811].background or "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = Ether.DB[811].border or "Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile = true,
-        tileSize = 16,
-        edgeSize = 16,
-        insets = {left = -3, right = -3, top = -3, bottom = -3}
+        bgFile = Ether.DB[811]["background"],
+        insets = {left = -2, right = -2, top = -2, bottom = -2}
     })
-    preview:SetBackdropColor(0.1, 0.1, 0.1, .9)
-    preview:SetBackdropBorderColor(0.4, 0.4, 0.4)
+    preview:SetBackdropColor(0, 0, 0, 1)
 
     local classColor = EtherPanelButton(parent, 80, 25, "Class color", "TOP", preview, "BOTTOM", 0, -20)
     classColor:SetScript("OnClick", function()
@@ -2010,118 +2068,32 @@ function Ether.CreateConfigSection(self)
             end
             info.func = function(self)
                 UIDropDownMenu_SetText(backgroundMedia, backgroundName)
-                local edgeFile = DB[811]["border"]
                 DB[811]["background"] = self.value
                 if preview then
                     preview:SetBackdrop({
-                        bgFile = self.value,
-                        edgeFile = edgeFile,
-                        tile = true,
-                        tileSize = 16,
-                        edgeSize = 16,
+                        bgFile = Ether.DB[811]["background"],
                         insets = {left = -2, right = -2, top = -2, bottom = -2}
                     })
-                    preview:SetBackdropColor(0.1, 0.1, 0.1, .9)
-                    preview:SetBackdropBorderColor(0.4, 0.4, 0.4)
                 end
                 for _, button in pairs(Ether.unitButtons.solo) do
-                    button:SetBackdrop({
-                        bgFile = self.value,
-                        edgeFile = edgeFile,
-                        tile = true,
-                        tileSize = 16,
-                        edgeSize = 16,
-                        insets = {left = -2, right = -2, top = -2, bottom = -2}
-                    })
-                    button:SetBackdropColor(0.1, 0.1, 0.1, .9)
-                    button:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                    if button then
+                        button:SetBackdrop({
+                            bgFile = Ether.DB[811]["background"],
+                            insets = {left = -2, right = -2, top = -2, bottom = -2}
+                        })
+                    end
                 end
                 for _, button in pairs(Ether.unitButtons.raid) do
                     if button then
-                        button:SetBackdrop({
-                            bgFile = self.value,
-                            edgeFile = edgeFile,
-                            tile = true,
-                            tileSize = 16,
-                            edgeSize = 16,
-                            insets = {left = -2, right = -2, top = -2, bottom = -2}
-                        })
-                        button:SetBackdropColor(0.1, 0.1, 0.1, .9)
-                        button:SetBackdropBorderColor(0.4, 0.4, 0.4)
+                        if button then
+                            button:SetBackdrop({
+                                bgFile = Ether.DB[811]["background"],
+                                insets = {left = -2, right = -2, top = -2, bottom = -2}
+                            })
+                        end
                     end
                 end
             end
-            UIDropDownMenu_AddButton(info)
-        end
-    end)
-
-    local borderMedia = CreateFrame("Button", nil, parent, "UIDropDownMenuTemplate")
-    borderMedia:SetPoint("TOP", backgroundMedia, "BOTTOM")
-    UIDropDownMenu_SetWidth(borderMedia, 140)
-    UIDropDownMenu_SetText(borderMedia, "Select Border")
-
-    UIDropDownMenu_Initialize(borderMedia, function(self)
-        local border = LSM:HashTable("border")
-        local currentBorder = DB[811]["border"]
-
-        for borderName, borderPath in pairs(border) do
-            local info = UIDropDownMenu_CreateInfo()
-            info.text = borderName
-            info.value = borderPath
-
-            if currentBorder == borderPath then
-                info.checked = true
-                UIDropDownMenu_SetText(borderMedia, borderName)
-            end
-
-            info.func = function(self)
-                UIDropDownMenu_SetText(borderMedia, borderName)
-                DB[811]["border"] = self.value
-
-                local bgFile = DB[811]["background"]
-
-                if preview then
-                    preview:SetBackdrop({
-                        bgFile = bgFile,
-                        edgeFile = self.value,
-                        tile = true,
-                        tileSize = 16,
-                        edgeSize = 16,
-                        insets = {left = -2, right = -2, top = -2, bottom = -2}
-                    })
-                    preview:SetBackdropColor(0.1, 0.1, 0.1, .9)
-                    preview:SetBackdropBorderColor(0.4, 0.4, 0.4)
-                end
-
-                for _, button in pairs(Ether.unitButtons.solo) do
-                    button:SetBackdrop({
-                        bgFile = bgFile,
-                        edgeFile = self.value,
-                        tile = true,
-                        tileSize = 16,
-                        edgeSize = 16,
-                        insets = {left = -2, right = -2, top = -2, bottom = -2}
-                    })
-                    button:SetBackdropColor(0.1, 0.1, 0.1, .9)
-                    button:SetBackdropBorderColor(0.4, 0.4, 0.4)
-                end
-
-                for _, button in pairs(Ether.unitButtons.raid) do
-                    if button then
-                        button:SetBackdrop({
-                            bgFile = bgFile,
-                            edgeFile = self.value,
-                            tile = true,
-                            tileSize = 16,
-                            edgeSize = 16,
-                            insets = {left = -2, right = -2, top = -2, bottom = -2}
-                        })
-                        button:SetBackdropColor(0.1, 0.1, 0.1, .9)
-                        button:SetBackdropBorderColor(0.4, 0.4, 0.4)
-                    end
-                end
-            end
-
             UIDropDownMenu_AddButton(info)
         end
     end)

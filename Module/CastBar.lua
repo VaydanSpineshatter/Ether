@@ -330,6 +330,8 @@ function Ether:CastBarDisable(unit)
         UnregisterUpdateFrame(bar.castBar)
         bar.castBar:ClearAllPoints()
         bar.castBar:SetParent(nil)
+        bar.castBar:SetScript("OnDragStart", nil)
+        bar.castBar:SetScript("OnDragStop", nil)
         bar.castBar = nil
     end
     if not UpdateFrameInfo() then

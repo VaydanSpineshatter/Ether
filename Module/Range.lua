@@ -57,11 +57,7 @@ function Ether:UpdateAlpha(button)
         return
     end
     local inRange
-    if UnitPhaseReason(button.unit) then
-        button:SetAlpha(0.45)
-        return
-    end
-    if not UnitIsVisible(button.unit) then
+    if not UnitIsVisible(button.unit) or UnitPhaseReason(button.unit) then
         button:SetAlpha(0.45)
         return
     end

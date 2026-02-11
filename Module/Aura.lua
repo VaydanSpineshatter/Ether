@@ -10,6 +10,13 @@ local UnitExists = UnitExists
 local GetTime = GetTime
 local unpack = unpack
 
+local colors = {
+    ["Magic"] = {0.2, 0.6, 1.0, 1},
+    ["Disease"] = {0.6, 0.4, 0.0, 1},
+    ["Curse"] = {0.6, 0.2, 1.0, 1},
+    ["Poison"] = {0.2, 1.0, 0.2, 1}
+}
+
 local dispelClass = {
     MAGE = {["Curse"] = true},
     PRIEST = {["Magic"] = true, ["Disease"] = true},
@@ -33,11 +40,14 @@ local dispelByPlayer = {}
 dispelByPlayer = dispelClass[classFilename]
 local foundHelpful = {}
 local foundHarmful = {}
+local foundIcon = {}
 local raidAurasHelpful = {}
 local raidAurasHarmful = {}
 local raidAurasDispel = {}
+local raidAuraIcons = {}
 local raidBuffData = {}
 local raidDebuffData = {}
+local raidIconData = {}
 local getUnitBuffs = {}
 local getUnitDebuffs = {}
 local dispelCache = {}
@@ -82,10 +92,7 @@ local function ScanUnitAuras(unit)
     if not UnitExists(unit) then
         return nil, {}
     end
-    local dispel
-    if dispel then
-        dispel = nil
-    end
+    local dispel = nil
     local priority = 0
     local index = 1
     while true do
@@ -97,10 +104,10 @@ local function ScanUnitAuras(unit)
                 priority = order
                 dispel = {
                     name = auraData.name,
-                    icon = auraData.icon,
                     dispelName = auraData.dispelName,
-                    duration = auraData.duration,
                     spellId = auraData.spellId,
+                    icon = auraData.icon,
+                    duration = auraData.duration,
                     index = index
                 }
             end
@@ -118,29 +125,12 @@ local function GetCachedDispel(unit)
     if cached and (GetTime() - cached.timestamp) < 2 then
         return cached.dispel
     end
-
     local dispel = ScanUnitAuras(unit)
     dispelCache[guid] = {
         dispel = dispel,
         timestamp = GetTime()
     }
-
     return dispel
-end
-
-local function borderColor(button, color)
-    button.top:SetColorTexture(color[1], color[2], color[3], 1)
-    button.right:SetColorTexture(color[1], color[2], color[3], 1)
-    button.left:SetColorTexture(color[1], color[2], color[3], 1)
-    button.bottom:SetColorTexture(color[1], color[2], color[3], 1)
-end
-
-local function FindUnitButton(unit)
-    local button = Ether.unitButtons.raid[unit]
-    if button and button.unit == unit then
-        return button
-    end
-    return nil
 end
 
 function Ether:UpdateRaidIsHelpful(unit, force)
@@ -151,7 +141,7 @@ function Ether:UpdateRaidIsHelpful(unit, force)
     if not guid then
         return
     end
-    local button = FindUnitButton(unit)
+    local button = Ether.unitButtons.raid[unit]
     if not button then return end
     local config = Ether.DB[1003]
 
@@ -201,7 +191,7 @@ function Ether:UpdateRaidIsHarmful(unit, force)
     if not guid then
         return
     end
-    local button = FindUnitButton(unit)
+    local button = Ether.unitButtons.raid[unit]
     if not button then return end
     local config = Ether.DB[1003]
 
@@ -243,6 +233,14 @@ function Ether:UpdateRaidIsHarmful(unit, force)
     end
 end
 
+function Ether:updateDispelBorder(button, color)
+    if not button or not color or not button.healthBar then return end
+    button.top:SetColorTexture(unpack(color))
+    button.bottom:SetColorTexture(unpack(color))
+    button.left:SetColorTexture(unpack(color))
+    button.right:SetColorTexture(unpack(color))
+end
+
 function Ether:CleanupAuras(guid, unit)
     if raidBuffData[guid] then
         for _, texture in pairs(raidBuffData[guid]) do
@@ -253,7 +251,13 @@ function Ether:CleanupAuras(guid, unit)
         raidBuffData[guid] = nil
         foundHelpful[guid] = nil
     end
-
+    if raidIconData[guid] then
+        for _, icon in pairs(raidBuffData[guid]) do
+            Ether.StopBlink(icon)
+        end
+        raidIconData[guid] = nil
+        foundIcon[guid] = nil
+    end
     if raidDebuffData[guid] then
         for _, texture in pairs(raidDebuffData[guid]) do
             texture:Hide()
@@ -263,15 +267,10 @@ function Ether:CleanupAuras(guid, unit)
         raidDebuffData[guid] = nil
         foundHarmful[guid] = nil
     end
-
-    local button = FindUnitButton(unit)
+    local button = Ether.unitButtons.raid[unit]
     if not button then return end
     if button.top then
-        local color = {0, 0, 0}
-        borderColor(button, color)
-    end
-    if button.iconFrame then
-        Ether.StopBlink(button.iconFrame)
+        Ether:updateDispelBorder(button, {0, 0, 0, 1})
     end
 end
 
@@ -287,33 +286,18 @@ end
 
 local function UpdateButtonDispel(button)
     if not button or not button.unit then return end
-
     local dispel = GetCachedDispel(button.unit)
-
-    if dispel and button.dispelIcon then
-        if button.top then
-            local colors = {
-                ["Magic"] = {0.2, 0.6, 1.0},
-                ["Disease"] = {0.6, 0.4, 0.0},
-                ["Curse"] = {0.6, 0.2, 1.0},
-                ["Poison"] = {0.2, 1.0, 0.2}
-            }
-            local color = colors[dispel.dispelName] or {0, 0, 0}
-            borderColor(button, color)
-            button.dispelIcon:SetTexture(dispel.icon)
-            button.dispelBorder:SetColorTexture(color[1], color[2], color[3], 1)
-            Ether.StartBlink(button.iconFrame, dispel.duration, 0.3)
-        end
+    if dispel then
+        local color = colors[dispel.dispelName] or {0, 0, 0, 1}
+        Ether:updateDispelBorder(button, color)
+        --   button.dispelIcon:SetTexture(dispel.icon)
+        --  button.dispelBorder:SetColorTexture(unpack(color))
+        --  Ether.StartBlink(button.iconFrame,dispel.duration, 0.3)
         button.dispellableDebuff = dispel
     else
-        if button.iconFrame then
-            Ether.StopBlink(button.iconFrame)
-        end
-        if button.top then
-            local color = {0, 0, 0}
-            borderColor(button, color)
-        end
+        Ether:updateDispelBorder(button, {0, 0, 0, 1})
         button.dispellableDebuff = nil
+        --    Ether.StopBlink(button.iconFrame)
     end
 end
 
@@ -322,7 +306,8 @@ local function OnAuraDispelAdded(unit)
     if guid then
         dispelCache[guid] = nil
     end
-    local button = FindUnitButton(unit)
+    local button = Ether.unitButtons.raid[unit]
+    if not button then return end
     if button then
         UpdateButtonDispel(button)
     end
@@ -340,7 +325,7 @@ local function raidAuraUpdate(unit, updateInfo)
     end
 
     local config = Ether.DB[1003]
-    local buffAdded, debuffAdded, dispelAdded = false, false, false
+    local buffAdded, debuffAdded, iconAdded, dispelAdded = false, false, false, false
 
     if updateInfo.addedAuras then
         for _, aura in ipairs(updateInfo.addedAuras) do
@@ -354,6 +339,15 @@ local function raidAuraUpdate(unit, updateInfo)
             if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                 dispelAdded = true
                 raidAurasDispel[aura.auraInstanceID] = aura
+            end
+            if aura.isHarmful and aura.dispelName then
+                iconAdded = true
+                raidAuraIcons[aura.auraInstanceID] = {
+                    icon = aura.icon,
+                    duration = aura.duration,
+                    dispelName = aura.dispelName,
+                    guid = guid
+                }
             end
             if aura.isHarmful and config[aura.spellId] and config[aura.spellId].enabled and config[aura.spellId].isDebuff then
                 debuffAdded = true
@@ -380,6 +374,17 @@ local function raidAuraUpdate(unit, updateInfo)
                 end
                 raidAurasHarmful[auraInstanceID] = nil
             end
+            if raidAuraIcons[auraInstanceID] then
+                local auraData = raidAuraIcons[auraInstanceID]
+                local auraGuid = auraData.guid
+                local icon = auraData.icon
+                if raidIconData[auraGuid] and raidIconData[auraGuid][icon] then
+                    if raidIconData[auraGuid] and raidIconData[auraGuid][auraData.icon] then
+                        Ether.StopBlink(raidIconData[auraGuid][auraData.icon])
+                    end
+                end
+                raidAuraIcons[auraInstanceID] = nil
+            end
             if raidAurasHelpful[auraInstanceID] then
                 local auraData = raidAurasHelpful[auraInstanceID]
                 local auraGuid = auraData.guid
@@ -402,6 +407,32 @@ local function raidAuraUpdate(unit, updateInfo)
 
     if dispelAdded then
         OnAuraDispelAdded(unit)
+    end
+    if iconAdded then
+        local GUID = UnitGUID(unit)
+        if not GUID then
+            return
+        end
+        local button = Ether.unitButtons.raid[unit]
+        if not button then return end
+        if not raidIconData[GUID] then
+            raidIconData[GUID] = {}
+        end
+        if not foundIcon[GUID] then
+            foundIcon[GUID] = {}
+        end
+        wipe(foundIcon[GUID])
+        for _, data in pairs(raidAuraIcons) do
+            if not data then break end
+            if not raidIconData[GUID][data.icon] then
+                local color = colors[data.dispelName] or {0, 0, 0, 1}
+                button.dispelIcon:SetTexture(data.icon)
+                button.dispelBorder:SetColorTexture(unpack(color))
+                raidIconData[GUID][data.icon] = button.iconFrame
+            end
+            Ether.StartBlink(raidIconData[GUID][data.icon], data.duration, 0.3)
+            foundIcon[GUID][data.icon] = true
+        end
     end
 end
 
@@ -433,12 +464,6 @@ local function AuraPosition(i)
 end
 
 local function CheckDispelType(self, dispelName)
-    local colors = {
-        ["Magic"] = {0.2, 0.6, 1.0},
-        ["Disease"] = {0.6, 0.4, 0.0},
-        ["Curse"] = {0.6, 0.2, 1.0},
-        ["Poison"] = {0.2, 1.0, 0.2}
-    }
     local dispel = colors[dispelName]
     if dispel then
         self:SetColorTexture(unpack(dispel))
@@ -635,6 +660,8 @@ function Ether:AuraWipe()
     wipe(foundHelpful)
     wipe(foundHarmful)
     wipe(dispelCache)
+    wipe(raidAuraIcons)
+    wipe(raidIconData)
 end
 
 Ether.GetUnits = function()
@@ -722,6 +749,8 @@ function Ether:DisableHeaderAuras()
     wipe(foundHelpful)
     wipe(foundHarmful)
     wipe(dispelCache)
+    wipe(raidAuraIcons)
+    wipe(raidIconData)
 end
 
 function Ether:AuraDisable()
