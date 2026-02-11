@@ -452,6 +452,7 @@ local function CreateEtherDropdown(parent, width, text, options)
     return dropdown
 end
 
+local Editor
 local function CreateAuraList(parent)
 
     local auraWipe = {}
@@ -460,6 +461,9 @@ local function CreateAuraList(parent)
         table.insert(auraWipe, {
             text = templateName,
             func = function()
+                if not Editor:IsShown() then
+                    Editor:Show()
+                end
                 Ether:AddTemplateAuras(templateName, true)
             end
         })
@@ -488,6 +492,9 @@ local function CreateAuraList(parent)
     AuraList.scrollChild = scrollChild
     local addBtn = EtherPanelButton(frame, 60, 25, "New", "LEFT", auraDropdown, "RIGHT", 20, 0)
     addBtn:SetScript("OnClick", function(self)
+        if not Editor:IsShown() then
+            Editor:Show()
+        end
         Ether.AddNewAura()
     end)
     local confirm = EtherPanelButton(frame, 60, 25, "Confirm", "LEFT", addBtn, "RIGHT", 10, 0)
@@ -545,8 +552,6 @@ function Ether:AddTemplateAuras(templateName)
     selectedSpellId = nil
     Ether.UpdateEditor()
 end
-
-local Editor
 
 local colorPickerCallbacks = {
     currentSpellId = nil,
@@ -1039,9 +1044,12 @@ function Ether.UpdateEditor()
     Editor.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
     Editor.colorBtn:Enable()
     Editor.offsetXSlider:Enable()
+    Editor.offsetXSlider:Show()
     Editor.offsetYSlider:Enable()
+    Editor.offsetYSlider:Show()
     Editor.sizeSlider:SetValue(data.size)
     Editor.sizeSlider:Enable()
+    Editor.sizeSlider:Show()
     Editor.sizeValue:SetText(string_format("%.0f px", data.size))
     for pos, btn in pairs(Editor.posButtons) do
         if pos == data.position then
@@ -1336,6 +1344,22 @@ function Ether.CreateIndicatorsSection(self)
         table.insert(indicatorFunc, {
             text = name,
             func = function()
+                Indicator.sizeSlider:Show()
+                Indicator.sizeSlider:Enable()
+                Indicator.offsetYSlider:Show()
+                Indicator.offsetYSlider:Enable()
+                Indicator.offsetXSlider:Show()
+                Indicator.offsetXSlider:Enable()
+                Indicator.offsetXLabel:Show()
+                Indicator.sizeLabel:Show()
+                Indicator.offsetYLabel:Show()
+                Indicator.offsetXValue:Show()
+                Indicator.offsetYValue:Show()
+                Indicator.sizeValue:Show()
+                Indicator.preview:Show()
+                for _, btn in pairs(Indicator.posButtons) do
+                    btn:Enable()
+                end
                 number = indicators[name].id
                 if indicators[name].type == "texture" then
                     indicatorType = indicators[name].type
@@ -1353,7 +1377,7 @@ function Ether.CreateIndicatorsSection(self)
         })
     end
 
-    local templateDropdown = CreateEtherDropdown(parent, 210, "Select Indicator", indicatorFunc)
+    local templateDropdown = CreateEtherDropdown(parent, 160, "Select Indicator", indicatorFunc)
     templateDropdown:SetPoint("TOPLEFT", 5, -5)
 
     local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
@@ -1433,6 +1457,7 @@ function Ether.CreateIndicatorsSection(self)
     end
 
     local sizeLabel = parent:CreateFontString(nil, "OVERLAY")
+    Indicator.sizeLabel = sizeLabel
     sizeLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     sizeLabel:SetPoint("TOPLEFT", preview, "BOTTOMLEFT", 0, -50)
     sizeLabel:SetText("Size")
@@ -1475,6 +1500,7 @@ function Ether.CreateIndicatorsSection(self)
     sizeValue:SetText("6 px")
 
     local offsetXLabel = parent:CreateFontString(nil, "OVERLAY")
+    Indicator.offsetXLabel = offsetXLabel
     offsetXLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     offsetXLabel:SetPoint("TOPLEFT", sizeLabel, "BOTTOMLEFT", 0, -50)
     offsetXLabel:SetText("X Offset")
@@ -1510,6 +1536,7 @@ function Ether.CreateIndicatorsSection(self)
     offsetXValue:SetText("0")
 
     local offsetYLabel = parent:CreateFontString(nil, "OVERLAY")
+    Indicator.offsetYLabel = offsetYLabel
     offsetYLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     offsetYLabel:SetPoint("TOPLEFT", offsetXLabel, "BOTTOMLEFT", 0, -50)
     offsetYLabel:SetText("Y Offset")
@@ -1532,6 +1559,7 @@ function Ether.CreateIndicatorsSection(self)
             Ether.UpdateIndicatorsValue()
         end
     end)
+
     local offsetYBG = offsetYSlider:CreateTexture(nil, "BACKGROUND")
     offsetYBG:SetPoint("CENTER")
     offsetYBG:SetSize(100, 10)
@@ -1559,7 +1587,6 @@ function Ether.UpdateIndicatorsValue()
 
     Indicator.icon:Hide()
     Indicator.text:Hide()
-
     if indicatorType == "texture" then
         Indicator.icon:SetTexture(iconTexture)
         Indicator.icon:SetTexCoord(0, 1, 0, 1)
@@ -1726,7 +1753,7 @@ function Ether.CreateCastBarSection(self)
     preview:SetBackdropBorderColor(0, 0, 0, 1)
     local powerBar = CreateFrame("StatusBar", nil, preview)
     powerBar:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 0, 0)
-    powerBar:SetSize(120, 8)
+    powerBar:SetSize(120, 10)
     powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
     powerBar:SetValue(44)
     powerBar:SetMinMaxValues(0, 100)
@@ -1784,7 +1811,7 @@ function Ether.CreateCastBarSection(self)
         })
     end
 
-    auraDropdown = CreateEtherDropdown(parent, 210, "Open Config", barOptions)
+    auraDropdown = CreateEtherDropdown(parent, 140, "Open Config", barOptions)
     auraDropdown:SetPoint("TOPLEFT", 5, -5)
 end
 
@@ -2639,4 +2666,30 @@ function Ether.ResetProfile()
     Ether:RefreshFramePositions()
     return true, "Profile reset to default"
 end
+
+function Ether.CleanUpButtons()
+    Indicator.icon:Hide()
+    Indicator.text:Hide()
+    Indicator.sizeSlider:Hide()
+    Indicator.sizeSlider:Disable()
+    Indicator.offsetYSlider:Hide()
+    Indicator.offsetYSlider:Disable()
+    Indicator.offsetXSlider:Hide()
+    Indicator.offsetXSlider:Disable()
+    Indicator.offsetXLabel:Hide()
+    Indicator.sizeLabel:Hide()
+    Indicator.offsetYLabel:Hide()
+    Indicator.offsetXValue:Hide()
+    Indicator.offsetYValue:Hide()
+    Indicator.sizeValue:Hide()
+    Indicator.preview:Hide()
+    Editor:Hide()
+    for _, btn in pairs(Editor.posButtons) do
+        btn:Disable()
+    end
+    for _, btn in pairs(Indicator.posButtons) do
+        btn:Disable()
+    end
+end
+
 

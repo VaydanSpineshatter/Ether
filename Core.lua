@@ -332,6 +332,7 @@ function Ether.CreateMainSettings(self)
             if Ether.Anchor.raid.tex then
                 Ether.Anchor.raid.tex:SetShown(false)
             end
+            Ether.CleanUpButtons()
         end)
         tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
         RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")

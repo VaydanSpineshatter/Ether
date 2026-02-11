@@ -63,7 +63,7 @@ function Ether:SetupPowerBar(button)
     local powerBar = CreateFrame("StatusBar", nil, button)
     button.powerBar = powerBar
     powerBar:SetPoint("BOTTOMLEFT", button, "BOTTOMLEFT", 0, 0)
-    powerBar:SetSize(120, 8)
+    powerBar:SetSize(120, 10)
     powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
     powerBar:SetFrameLevel(button:GetFrameLevel() + 3)
     powerBar:SetMinMaxValues(0, 100)
