@@ -244,10 +244,10 @@ end
 
 local function NotAfk()
     Ether.unitIsAway = false
-    if Ether.DB[801][1] == 1 then
+    if Ether.DB[1201][1] == 1 then
         Ether:CastBarEnable("player")
     end
-    if Ether.DB[801][2] == 1 then
+    if Ether.DB[1201][2] == 1 then
         Ether:CastBarEnable("target")
     end
     Ether:NameEnable()

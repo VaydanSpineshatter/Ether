@@ -226,7 +226,7 @@ local function HealthChanged(_, event, unit)
         if Ether.DB[901][unit] then
             local button = Ether.unitButtons.solo[unit]
             if button then
-                if Ether.DB[801][3] == 1 then
+                if Ether.DB[801][1] == 1 then
                     Ether:UpdateHealth(button, true)
                 else
                     Ether:UpdateHealth(button)
@@ -239,7 +239,7 @@ local function HealthChanged(_, event, unit)
         if Ether.DB[901]["raid"] then
             local button = Ether.unitButtons.raid[unit]
             if button and button:IsVisible() then
-                if Ether.DB[801][5] == 1 then
+                if Ether.DB[801][3] == 1 then
                     Ether:UpdateHealth(button, true)
                 else
                     Ether:UpdateHealth(button)

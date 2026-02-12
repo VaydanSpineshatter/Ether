@@ -71,8 +71,8 @@ function Ether:CreateUnitButtons(index)
         button:SetAttribute("*type1", "target")
         button:SetAttribute("*type2", "togglemenu")
         Ether:SetupTooltip(button, button.unit)
-        Ether:SetupHealthBar(button, "HORIZONTAL", 120, 40)
-        Ether:SetupPowerBar(button)
+        Ether:SetupHealthBar(button, "HORIZONTAL", 120, 40, button.unit)
+        Ether:SetupPowerBar(button, button.unit)
         Ether:SetupPrediction(button)
         button:SetBackdrop({
             bgFile = Ether.DB[811]["background"],
@@ -113,12 +113,12 @@ function Ether:CreateUnitButtons(index)
         FullUpdate(button, true)
         Ether.unitButtons.solo[button.unit] = button
         if button.unit == "player" then
-            if Ether.DB[801][1] == 1 then
+            if Ether.DB[1201][1] == 1 then
                 Ether:CastBarEnable("player")
             end
         end
         if button.unit == "target" then
-            if Ether.DB[801][2] == 1 then
+            if Ether.DB[1201][2] == 1 then
                 Ether:CastBarEnable("target")
             end
         end
@@ -231,7 +231,7 @@ function Ether.CreateCustomUnit()
             custom:SetPoint("TOPLEFT", 20, -200)
             custom:SetSize(120, 50)
             local name, unit = ParseGUID("target")
-            if not name and not unit then
+            if not name or not unit then
                 return nil
             end
             custom.unit = unit

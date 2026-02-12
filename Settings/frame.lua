@@ -10,6 +10,92 @@ local function GetFont(_, target, tex, numb)
     return target.label
 end
 
+local function CreateEtherDropdown(parent, width, text, options, center)
+    local dropdown = CreateFrame("Button", nil, parent)
+    dropdown:SetSize(width, 25)
+    dropdown.bg = dropdown:CreateTexture(nil, "BACKGROUND")
+    dropdown.bg:SetAllPoints()
+    dropdown.bg:SetColorTexture(1, 1, 1, 0.1)
+    dropdown.bottom = dropdown:CreateTexture(nil, "BORDER")
+    dropdown.bottom:SetPoint("BOTTOMLEFT")
+    dropdown.bottom:SetPoint("BOTTOMRIGHT")
+    dropdown.bottom:SetHeight(1)
+    dropdown.bottom:SetColorTexture(0.80, 0.40, 1.00, 1)
+    dropdown.right = dropdown:CreateTexture(nil, "BORDER")
+    dropdown.right:SetPoint("TOPRIGHT")
+    dropdown.right:SetPoint("BOTTOMRIGHT")
+    dropdown.right:SetHeight(1)
+    dropdown.right:SetColorTexture(0.80, 0.40, 1.00, 1)
+    if center then
+        dropdown.left = dropdown:CreateTexture(nil, "BORDER")
+        dropdown.left:SetPoint("TOPLEFT")
+        dropdown.left:SetPoint("BOTTOMLEFT")
+        dropdown.left:SetHeight(1)
+        dropdown.left:SetColorTexture(0.80, 0.40, 1.00, 1)
+    end
+    dropdown.text = dropdown:CreateFontString(nil, "OVERLAY")
+    dropdown.text:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+    dropdown.text:SetPoint("LEFT", 8, 0)
+    dropdown.text:SetText(text)
+    local menu = CreateFrame("Button", nil, dropdown)
+    dropdown.menu = menu
+    menu:SetPoint("TOPLEFT")
+    menu:SetWidth(width)
+    menu.bg = menu:CreateTexture(nil, "BACKGROUND")
+    menu.bg:SetAllPoints()
+    menu.bg:SetColorTexture(0.2, 0.2, 0.2, 1)
+    menu:SetFrameLevel(parent:GetFrameLevel() + 10)
+    menu:Hide()
+    menu.bottom = menu:CreateTexture(nil, "BORDER")
+    menu.bottom:SetPoint("BOTTOMLEFT")
+    menu.bottom:SetPoint("BOTTOMRIGHT")
+    menu.bottom:SetHeight(1)
+    menu.bottom:SetColorTexture(0.00, 0.80, 1.00, 1)
+    menu.right = menu:CreateTexture(nil, "BORDER")
+    menu.right:SetPoint("TOPRIGHT")
+    menu.right:SetPoint("BOTTOMRIGHT")
+    menu.right:SetHeight(1)
+    menu.right:SetColorTexture(0.00, 0.80, 1.00, 1)
+    if center then
+        menu.left = menu:CreateTexture(nil, "BORDER")
+        menu.left:SetPoint("TOPLEFT")
+        menu.left:SetPoint("BOTTOMLEFT")
+        menu.left:SetHeight(1)
+        menu.left:SetColorTexture(0.00, 0.80, 1.00, 1)
+    end
+    local totalHeight = 4
+    for _, data in ipairs(options) do
+        local btn = CreateFrame("Button", nil, menu)
+        btn:SetSize(width - 8, 20)
+        btn:SetPoint("TOPLEFT", 4, -totalHeight)
+        btn.text = btn:CreateFontString(nil, "OVERLAY")
+        btn.text:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
+        btn.text:SetPoint("LEFT", 4, 0)
+        btn.text:SetText(data.text)
+        btn:SetScript("OnEnter", function()
+            btn.text:SetTextColor(0.00, 0.80, 1.00, 1)
+        end)
+        btn:SetScript("OnLeave", function()
+            btn.text:SetTextColor(1, 1, 1, 1)
+        end)
+        btn:SetScript("OnClick", function()
+            if data.func then
+                data.func()
+                menu:Hide()
+            end
+        end)
+        totalHeight = totalHeight + 20
+    end
+    menu:SetHeight(totalHeight + 4)
+    dropdown:SetScript("OnClick", function()
+        menu:SetShown(true)
+    end)
+    menu:SetScript("OnLeave", function(self)
+        self:Hide()
+    end)
+    return dropdown
+end
+
 local function SetupSliderText(slider, lowText, highText)
     slider.Low:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
     slider.Low:SetText(lowText)
@@ -384,79 +470,10 @@ local selectedSpellId = nil
 local AuraList
 local AuraButtons = {}
 
-local function CreateEtherDropdown(parent, width, text, options)
-    local dropdown = CreateFrame("Button", nil, parent)
-    dropdown:SetSize(width, 25)
-    dropdown.bg = dropdown:CreateTexture(nil, "BACKGROUND")
-    dropdown.bg:SetAllPoints()
-    dropdown.bg:SetColorTexture(1, 1, 1, 0.1)
-    dropdown.bottom = dropdown:CreateTexture(nil, "BORDER")
-    dropdown.bottom:SetPoint("BOTTOMLEFT")
-    dropdown.bottom:SetPoint("BOTTOMRIGHT")
-    dropdown.bottom:SetHeight(1)
-    dropdown.bottom:SetColorTexture(0.80, 0.40, 1.00, 1)
-    dropdown.right = dropdown:CreateTexture(nil, "BORDER")
-    dropdown.right:SetPoint("TOPRIGHT")
-    dropdown.right:SetPoint("BOTTOMRIGHT")
-    dropdown.right:SetHeight(1)
-    dropdown.right:SetColorTexture(0.80, 0.40, 1.00, 1)
-    dropdown.text = dropdown:CreateFontString(nil, "OVERLAY")
-    dropdown.text:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
-    dropdown.text:SetPoint("LEFT", 8, 0)
-    dropdown.text:SetText(text)
-    local menu = CreateFrame("Button", nil, dropdown)
-    dropdown.menu = menu
-    menu:SetPoint("TOPLEFT")
-    menu:SetWidth(width)
-    menu.bg = menu:CreateTexture(nil, "BACKGROUND")
-    menu.bg:SetAllPoints()
-    menu.bg:SetColorTexture(0.2, 0.2, 0.2, 1)
-    menu:SetFrameLevel(parent:GetFrameLevel() + 10)
-    menu:Hide()
-    menu.bottom = menu:CreateTexture(nil, "BORDER")
-    menu.bottom:SetPoint("BOTTOMLEFT")
-    menu.bottom:SetPoint("BOTTOMRIGHT")
-    menu.bottom:SetHeight(1)
-    menu.bottom:SetColorTexture(0.00, 0.80, 1.00, 1)
-    menu.right = menu:CreateTexture(nil, "BORDER")
-    menu.right:SetPoint("TOPRIGHT")
-    menu.right:SetPoint("BOTTOMRIGHT")
-    menu.right:SetHeight(1)
-    menu.right:SetColorTexture(0.00, 0.80, 1.00, 1)
-    local totalHeight = 4
-    for _, data in ipairs(options) do
-        local btn = CreateFrame("Button", nil, menu)
-        btn:SetSize(width - 8, 20)
-        btn:SetPoint("TOPLEFT", 4, -totalHeight)
-        btn.text = btn:CreateFontString(nil, "OVERLAY")
-        btn.text:SetFont(unpack(Ether.mediaPath.expressway), 11, "OUTLINE")
-        btn.text:SetPoint("LEFT", 4, 0)
-        btn.text:SetText(data.text)
-        btn:SetScript("OnEnter", function() btn.text:SetTextColor(0.00, 0.80, 1.00, 1) end)
-        btn:SetScript("OnLeave", function() btn.text:SetTextColor(1, 1, 1, 1) end)
-        btn:SetScript("OnClick", function()
-            if data.func then
-                data.func()
-                menu:Hide()
-            end
-        end)
-        totalHeight = totalHeight + 20
-    end
-    menu:SetHeight(totalHeight + 4)
-    dropdown:SetScript("OnClick", function()
-        menu:SetShown(true)
-    end)
-    menu:SetScript("OnLeave", function(self)
-        self:Hide()
-    end)
-    return dropdown
-end
-
 local Editor
 local function CreateAuraList(parent)
 
     local auraWipe = {}
-
     for templateName, _ in pairs(Ether.PredefinedAuras) do
         table.insert(auraWipe, {
             text = templateName,
@@ -469,7 +486,7 @@ local function CreateAuraList(parent)
         })
     end
 
-    local auraDropdown = CreateEtherDropdown(parent, 160, "Select Aura Template", auraWipe)
+    local auraDropdown = CreateEtherDropdown(parent, 160, "Predefined Auras", auraWipe)
     auraDropdown:SetPoint("TOPLEFT", 5, -5)
 
     local frame = CreateFrame("Frame", nil, parent)
@@ -774,13 +791,11 @@ local function CreateEditor(parent)
     preview:SetSize(55, 55)
     preview:SetBackdrop({
         bgFile = Ether.DB[811]["background"],
-        edgeFile = Ether.DB[811]["border"],
-        edgeSize = 5,
         insets = {left = -2, right = -2, top = -2, bottom = -2}
     })
-    preview:SetBackdropColor(0, 0, 0, 1)
-    preview:SetBackdropBorderColor(0, 0, 0, 1)
-    Ether:SetupPreviewBar(preview, 55, 55, 3, -5)
+    Ether:SetupHealthBar(preview, "HORIZONTAL", 55, 55, "player")
+    Ether:SetupName(preview, -5)
+    preview.name:SetText(Ether:ShortenName(Ether.playerName, 3))
     local icon = preview.healthBar:CreateTexture(nil, "OVERLAY")
     frame.icon = icon
     icon:SetSize(6, 6)
@@ -959,7 +974,7 @@ function Ether.UpdateAuraList()
         end)
 
         btn:SetScript("OnClick", function()
-             if not Editor:IsShown() then
+            if not Editor:IsShown() then
                 Editor:Show()
             end
             Ether.SelectAura(spellId)
@@ -1342,6 +1357,7 @@ function Ether.CreateIndicatorsSection(self)
         ["PlayerRoles"] = {icon = "Interface\\GroupFrame\\UI-Group-MainTankIcon", id = 8, type = "texture"},
         ["PlayerFlags"] = {type = "string", id = 9},
     }
+    local templateDropdown
     local indicatorFunc = {}
     for name in pairs(indicators) do
         table.insert(indicatorFunc, {
@@ -1368,35 +1384,34 @@ function Ether.CreateIndicatorsSection(self)
                     indicatorType = indicators[name].type
                     iconTexture = indicators[name].icon
                     coordinates = indicators[name].coordinates
-                    currentIndicator = name
                 end
                 if indicators[name].type == "string" then
                     indicatorType = indicators[name].type
                     coordinates = indicators[name].coordinates
-                    currentIndicator = name
                 end
+                currentIndicator = name
+                templateDropdown.text:SetText(currentIndicator)
                 Ether.UpdateIndicatorsValue()
             end
         })
     end
 
-    local templateDropdown = CreateEtherDropdown(parent, 160, "Select Indicator", indicatorFunc)
+    templateDropdown = CreateEtherDropdown(parent, 160, "Select Indicator", indicatorFunc)
+    Indicator.templateDropdown = templateDropdown
     templateDropdown:SetPoint("TOPLEFT", 5, -5)
 
     local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     Indicator.preview = preview
     preview:SetPoint("TOP", 80, -90)
     preview:SetSize(55, 55)
-
-    Ether:SetupPreviewBar(preview, 55, 55, 3, -5)
     preview:SetBackdrop({
         bgFile = Ether.DB[811]["background"],
-        edgeFile = Ether.DB[811]["border"],
-        edgeSize = 5,
         insets = {left = -2, right = -2, top = -2, bottom = -2}
     })
-    preview:SetBackdropColor(0, 0, 0, 1)
-    preview:SetBackdropBorderColor(0, 0, 0, 1)
+    Ether:SetupHealthBar(preview, "HORIZONTAL", 55, 55, "player")
+    Ether:SetupName(preview, -5)
+    preview.name:SetText(Ether:ShortenName(Ether.playerName, 3))
+
     local icon = preview.healthBar:CreateTexture(nil, "OVERLAY")
     Indicator.icon = icon
     icon:SetSize(12, 12)
@@ -1695,11 +1710,9 @@ function Ether.CreateLayoutSection(self)
     local parent = self.Content.Children["Layout"]
 
     local layoutValue = {
-        [1] = {text = "Player CastBar"},
-        [2] = {text = "Target CastBar"},
-        [3] = {text = "Smooth Health Solo"},
-        [4] = {text = "Smooth Power Solo"},
-        [5] = {text = "Smooth Header"}
+        [1] = {text = "Smooth Health Solo"},
+        [2] = {text = "Smooth Power Solo"},
+        [3] = {text = "Smooth Header"}
     }
 
     local layout = CreateFrame("Frame", nil, parent)
@@ -1720,79 +1733,46 @@ function Ether.CreateLayoutSection(self)
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[801][i] = checked and 1 or 0
-            if i == 1 then
-                if Ether.DB[801][1] == 1 then
-                    Ether:CastBarEnable("player")
-                else
-                    Ether:CastBarDisable("player")
-                end
-            elseif i == 2 then
-                if Ether.DB[801][2] == 1 then
-                    Ether:CastBarEnable("target")
-                else
-                    Ether:CastBarDisable("target")
-                end
-            end
         end)
         self.Content.Buttons.Layout.A[i] = btn
     end
-
 end
 
+local previewFrame
 function Ether.CreateCastBarSection(self)
     local parent = self.Content.Children["CastBar"]
 
     local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    preview:SetPoint("TOP", 0, -90)
+    previewFrame = preview
+    preview:SetPoint("CENTER", parent, "CENTER", 0, -150)
     preview:SetSize(120, 50)
-    Ether:SetupPreviewBar(preview, 120, 40, 10, 0)
+    Ether:SetupHealthBar(preview, "HORIZONTAL", 120, 40, "player")
+    Ether:SetupPowerBar(preview, "player")
     preview:SetBackdrop({
         bgFile = Ether.DB[811]["background"],
-        edgeFile = Ether.DB[811]["border"],
-        edgeSize = 5,
         insets = {left = -2, right = -2, top = -2, bottom = -2}
     })
-    preview:SetBackdropColor(0, 0, 0, 1)
-    preview:SetBackdropBorderColor(0, 0, 0, 1)
-    local powerBar = CreateFrame("StatusBar", nil, preview)
-    powerBar:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 0, 0)
-    powerBar:SetSize(120, 10)
-    powerBar:SetStatusBarTexture(unpack(Ether.mediaPath.powerBar))
-    powerBar:SetValue(44)
-    powerBar:SetMinMaxValues(0, 100)
-    local r, g, b = Ether:GetPowerColor("player")
-    powerBar:SetStatusBarColor(r, g, b)
-    local castBar = CreateFrame("StatusBar", nil, preview)
-    castBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
-    local drop = castBar:CreateTexture(nil, "ARTWORK", nil, -7)
-    drop:SetAllPoints()
-    local re, ge, be = Ether:GetClassColors("player")
-    castBar:SetStatusBarColor(re, ge, be, 1)
-    drop:SetColorTexture(0.2, 0.2, 0.4, .4)
-    local text = castBar:CreateFontString(nil, "OVERLAY")
-    text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
-    text:SetPoint("LEFT", 31, 0)
-    text:SetText("Fireball")
-    local time = castBar:CreateFontString(nil, "OVERLAY")
-    time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
-    time:SetPoint("RIGHT", castBar, "RIGHT", -12, 0)
-    time:SetFormattedText("%.1f", 1)
-    local icon = castBar:CreateTexture(nil, "OVERLAY")
-    icon:SetSize(18, 18)
-    icon:SetTexture(135812)
-    icon:SetPoint("LEFT")
-    local safeZone = castBar:CreateTexture(nil, "OVERLAY")
-    safeZone:SetColorTexture(1, 0, 0, 1)
-    safeZone:SetWidth(4)
-    safeZone:SetPoint(castBar:GetReverseFill() and "LEFT" or "RIGHT")
-    safeZone:SetPoint("TOP")
-    safeZone:SetPoint("BOTTOM")
-    castBar:SetSize(240, 15)
-    castBar:SetPoint("BOTTOMLEFT", preview, "BOTTOMLEFT", 0, -30)
-    castBar:SetMinMaxValues(0, 100)
-    castBar:SetValue(44)
-    castBar:SetStatusBarColor(0.2, 0.6, 1.0, 0.8)
+    Ether:SetupName(preview, 0)
+    preview.name:SetText(Ether:ShortenName(Ether.playerName, 10))
+    Ether:SetupCastBar(preview, 20)
+    preview.castBar.text:SetText("Fireball")
+    preview.castBar.time:SetFormattedText("%.1f", 1.1)
+    preview.castBar.icon:SetTexture(135812)
+    preview.castBar.safeZone:SetColorTexture(1, 0, 0, 1)
+    preview.castBar.safeZone:SetWidth(4)
+    preview.castBar.safeZone:SetPoint(preview.castBar:GetReverseFill() and "LEFT" or "RIGHT")
+    preview.castBar.safeZone:SetPoint("TOP")
+    preview.castBar.safeZone:SetPoint("BOTTOM")
+    preview.castBar:SetPoint("TOP", preview, "BOTTOM", 0, -30)
+    preview.castBar:SetSize(240, 15)
+    preview.castBar:SetMinMaxValues(0, 100)
+    preview.castBar:SetValue(44)
+    preview.castBar:SetStatusBarColor(0.2, 0.6, 1.0, 0.8)
 
+    local castBarId = {
+        [341] = "Player CastBar",
+        [342] = "Target CastBar"
+    }
     local castBarConfig = {
         [1] = "Height",
         [2] = "Width",
@@ -1801,21 +1781,80 @@ function Ether.CreateCastBarSection(self)
         [5] = "Position",
         [6] = "Icon",
         [7] = "SafeZone",
+        [8] = "Size",
+        [9] = "Alpha",
     }
-
-    local barOptions = {}
-    local auraDropdown
-    for _, configName in ipairs(castBarConfig) do
-        table.insert(barOptions, {
+    local barIdTbl = {}
+    local barConfigTbl = {}
+    local barDropdown
+    local configDropdown
+    for index, configName in pairs(castBarId) do
+        table.insert(barIdTbl, {
             text = configName,
             func = function()
-                auraDropdown.text:SetText(configName)
+                barDropdown.text:SetText(configName)
+                local pos = Ether.DB[5111][index]
+                preview.castBar:SetSize(pos[6], pos[7])
+                preview.castBar:SetScale(pos[8])
+                preview.castBar:SetAlpha(pos[9])
+                preview.castBar:Show()
             end
         })
     end
+    for _, configName in ipairs(castBarConfig) do
+        table.insert(barConfigTbl, {
+            text = configName,
+            func = function()
+                configDropdown.text:SetText(configName)
+            end
+        })
+    end
+    barDropdown = CreateEtherDropdown(parent, 120, "Select CastBar", barIdTbl)
+    previewFrame.text = barDropdown.text
+    barDropdown:SetPoint("TOPLEFT", 5, -5)
+    configDropdown = CreateEtherDropdown(parent, 120, "Config", barConfigTbl, true)
+    previewFrame.config = configDropdown.text
+    configDropdown:SetPoint("TOPLEFT", 200, -5)
 
-    auraDropdown = CreateEtherDropdown(parent, 140, "Open Config", barOptions)
-    auraDropdown:SetPoint("TOPLEFT", 5, -5)
+    local layoutValue = {
+        [1] = {text = "Player CastBar"},
+        [2] = {text = "Target CastBar"}
+    }
+
+    local layout = CreateFrame("Frame", nil, parent)
+    layout:SetSize(200, (#layoutValue * 30) + 60)
+
+    for i, opt in ipairs(layoutValue) do
+        local btn = CreateFrame("CheckButton", nil, layout, "InterfaceOptionsCheckButtonTemplate")
+
+        if i == 1 then
+            btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -300)
+        else
+            btn:SetPoint("TOPLEFT", self.Content.Buttons.CastBar.A[i - 1], "BOTTOMLEFT", 0, 0)
+        end
+        btn:SetSize(24, 24)
+        btn.label = GetFont(self, btn, opt.text, 12)
+        btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
+        btn:SetChecked(Ether.DB[1201][i] == 1)
+        btn:SetScript("OnClick", function(self)
+            local checked = self:GetChecked()
+            Ether.DB[1201][i] = checked and 1 or 0
+            if i == 1 then
+                if Ether.DB[1201][1] == 1 then
+                    Ether:CastBarEnable("player")
+                else
+                    Ether:CastBarDisable("player")
+                end
+            elseif i == 2 then
+                if Ether.DB[1201][2] == 1 then
+                    Ether:CastBarEnable("target")
+                else
+                    Ether:CastBarDisable("target")
+                end
+            end
+        end)
+        self.Content.Buttons.CastBar.A[i] = btn
+    end
 end
 
 function Ether.CreateConfigSection(self)
@@ -1945,6 +1984,16 @@ function Ether.CreateConfigSection(self)
         UpdateValueLabels()
     end
 
+    local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
+    preview:SetPoint("TOP", 20, -200)
+    preview:SetSize(55, 55)
+    Ether:SetupHealthBar(preview, "VERTICAL", 55, 55, "player")
+    preview:SetFrameLevel(preview.healthBar:GetFrameLevel() + 1)
+    Ether:SetupName(preview, -5)
+    Ether:SetupPowerBar(preview, "player")
+    preview:Hide()
+    preview.healthBar:Hide()
+    preview.powerBar:Hide()
     for frameID, frameData in pairs(frameKeys) do
         table.insert(frameOptions, {
             text = frameData,
@@ -1952,6 +2001,39 @@ function Ether.CreateConfigSection(self)
                 DB[111].SELECTED = frameID
                 UpdateSliders()
                 dropdowns.frame.text:SetText(frameKeys[frameID])
+                if DB[111].SELECTED ~= 338 then
+                    preview.name:Hide()
+                    preview.name:ClearAllPoints()
+                    preview.name:SetPoint("CENTER", preview.healthBar, "CENTER", 0, 3)
+                    preview.name:SetText(Ether:ShortenName(Ether.playerName, 10))
+                    preview.name:Show()
+                    preview.healthBar:SetSize(120, 50)
+                    preview:SetBackdrop({
+                        bgFile = Ether.DB[811]["background"],
+                        insets = {left = -2, right = -2, top = -2, bottom = -2}
+                    })
+                    preview:SetSize(120, 50)
+                    preview.powerBar:SetSize(120, 10)
+                    preview:Show()
+                    preview.healthBar:Show()
+                    preview.powerBar:Show()
+                else
+                    preview.name:Hide()
+                    preview.name:ClearAllPoints()
+                    preview.name:SetPoint("CENTER", preview.healthBar, "CENTER", 0, -5)
+                    preview.name:SetText(Ether:ShortenName(Ether.playerName, 3))
+                    preview.name:Show()
+                    preview.healthBar:SetSize(55, 55)
+                    preview:SetBackdrop({
+                        bgFile = Ether.DB[811]["background"],
+                        insets = {left = -2, right = -2, top = -2, bottom = -2}
+                    })
+                    preview:SetSize(55, 55)
+                    preview.powerBar:SetSize(55, 10)
+                    preview:Show()
+                    preview.healthBar:Show()
+                    preview.powerBar:Hide()
+                end
             end
         })
     end
@@ -1978,34 +2060,6 @@ function Ether.CreateConfigSection(self)
     end)
 
     UpdateSliders()
-
-    local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    preview:SetPoint("TOP", 20, -200)
-    preview:SetSize(55, 55)
-    Ether:SetupHealthBar(preview, "VERTICAL", 55, 55)
-    local _, classFilename = UnitClass("player")
-    local c = Ether.RAID_COLORS[classFilename]
-    preview.healthBar:SetStatusBarColor(c.r, c.g, c.b, .6)
-    preview:SetFrameLevel(preview.healthBar:GetFrameLevel() + 1)
-    local name = preview.healthBar:CreateFontString(nil, "OVERLAY")
-    name:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
-    name:SetPoint("CENTER", preview.healthBar, "CENTER", 0, -5)
-    name:SetText(Ether:ShortenName(Ether.playerName, 3))
-    preview:SetBackdrop({
-        bgFile = Ether.DB[811]["background"],
-        insets = {left = -2, right = -2, top = -2, bottom = -2}
-    })
-
-    local classColor = EtherPanelButton(parent, 80, 25, "Class color", "TOP", preview, "BOTTOM", 0, -20)
-    classColor:SetScript("OnClick", function()
-        if name then
-            local unit = "player"
-            local r, g, b = Ether:GetClassColors(unit)
-            name:Hide()
-            name:SetTextColor(r, g, b)
-            name:Show()
-        end
-    end)
 
     if not LibStub or not LibStub("LibSharedMedia-3.0", true) then return end
     local LSM = LibStub("LibSharedMedia-3.0")
@@ -2686,6 +2740,12 @@ function Ether.CleanUpButtons()
     Indicator.sizeValue:Hide()
     Indicator.preview:Hide()
     Editor:Hide()
+    if previewFrame and previewFrame.castBar then
+        previewFrame.castBar:Hide()
+        previewFrame.text:SetText("Select CastBar")
+        previewFrame.config:SetText("Config")
+    end
+    Indicator.templateDropdown.text:SetText("Select Indicator")
     for _, btn in pairs(Editor.posButtons) do
         btn:Disable()
     end

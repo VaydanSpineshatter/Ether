@@ -22,7 +22,7 @@ function Ether:SetupName(button, number)
     return button
 end
 
-function Ether:SetupHealthBar(button, orient, w, h)
+function Ether:SetupHealthBar(button, orient, w, h, unit)
     if not button then return end
     local healthBar = CreateFrame("StatusBar", nil, button)
     button.healthBar = healthBar
@@ -36,29 +36,15 @@ function Ether:SetupHealthBar(button, orient, w, h)
     local healthDrop = button:CreateTexture(nil, "OVERLAY")
     button.healthDrop = healthDrop
     healthDrop:SetAllPoints(healthBar)
+    if unit then
+        local r, g, b = Ether:GetClassColors(unit)
+        healthBar:SetStatusBarColor(r, g, b)
+        healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
+    end
     return button
 end
 
-function Ether:SetupPreviewBar(parent, w, h, number, number2)
-    local healthBar = CreateFrame("StatusBar", nil, parent)
-    parent.healthBar = healthBar
-    healthBar:SetFrameLevel(parent:GetFrameLevel() - 1)
-    healthBar:SetPoint("TOPLEFT")
-    healthBar:SetSize(w, h)
-    healthBar:SetStatusBarTexture(Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar))
-    healthBar:SetFrameLevel(parent:GetFrameLevel() + 1)
-    local _, classFilename = UnitClass("player")
-    local c = Ether.RAID_COLORS[classFilename]
-    healthBar:SetStatusBarColor(c.r, c.g, c.b, 1)
-    local name = healthBar:CreateFontString(nil, "OVERLAY")
-    parent.healthBar = healthBar
-    name:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    name:SetPoint("CENTER", healthBar, "CENTER", 0, number2)
-    name:SetText(Ether:ShortenName(Ether.playerName, number))
-    return parent
-end
-
-function Ether:SetupPowerBar(button)
+function Ether:SetupPowerBar(button, unit)
     if not button then return end
     local powerBar = CreateFrame("StatusBar", nil, button)
     button.powerBar = powerBar
@@ -69,8 +55,13 @@ function Ether:SetupPowerBar(button)
     powerBar:SetMinMaxValues(0, 100)
     local powerDrop = button:CreateTexture(nil, "OVERLAY")
     button.powerDrop = powerDrop
-    powerDrop:SetAllPoints()
+    powerDrop:SetAllPoints(powerBar)
     powerDrop:SetColorTexture(0.1, 0.1, 0.1, 0.8)
+    if unit then
+        local r, g, b = Ether:GetPowerColor(unit)
+        powerBar:SetStatusBarColor(r, g, b)
+        powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
+    end
     return button
 end
 
@@ -78,7 +69,7 @@ function Ether:SetupPrediction(button)
     if not button or not button.healthBar then return end
     local player = CreateFrame("StatusBar", nil, button)
     button.myPrediction = player
-    player:SetAllPoints(button)
+    player:SetAllPoints(button.healthBar)
     player:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     player:SetStatusBarColor(0.70, 0.13, 0.13)
     player:SetMinMaxValues(0, 1)
@@ -87,7 +78,7 @@ function Ether:SetupPrediction(button)
     player:SetFrameLevel(button:GetFrameLevel() + 1)
     local from = CreateFrame("StatusBar", nil, button)
     button.otherPrediction = from
-    from:SetAllPoints(button)
+    from:SetAllPoints(button.healthBar)
     from:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
     from:SetStatusBarColor(0.80, 0.40, 1.00)
     from:SetMinMaxValues(0, 1)
@@ -97,9 +88,9 @@ function Ether:SetupPrediction(button)
     return button
 end
 
-function Ether:SetupCastBar(button, number, iconS)
+function Ether:SetupCastBar(button, iconS, number)
     if not button then return end
-    local frame = CreateFrame("StatusBar", nil, UIParent)
+    local frame = CreateFrame("StatusBar", nil, button)
     button.castBar = frame
     frame:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
     local drop = frame:CreateTexture(nil, "OVERLAY")
@@ -130,13 +121,14 @@ function Ether:SetupCastBar(button, number, iconS)
     frame.duration = 0
     frame.delay = 0
     frame.timeToHold = 0.1
-    local pos = Ether.DB[5111][number]
-    frame:SetSize(pos[6], pos[7])
-    frame:SetScale(pos[8])
-    frame:SetAlpha(pos[9])
-    frame:SetPoint(pos[1], UIParent, pos[3], pos[4], pos[5])
-    Ether:SetupDrag(frame, number, 20)
-
+    if number then
+        local pos = Ether.DB[5111][number]
+        frame:SetSize(pos[6], pos[7])
+        frame:SetScale(pos[8])
+        frame:SetAlpha(pos[9])
+        frame:SetPoint(pos[1], UIParent, pos[3], pos[4], pos[5])
+        Ether:SetupDrag(frame, number, 20)
+    end
     frame:Hide()
 end
 

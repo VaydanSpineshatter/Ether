@@ -23,7 +23,7 @@ local Default = {
     [401] = {1, 0, 0, 0, 0, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
-    [801] = {1, 1, 0, 0, 0},
+    [801] = {0, 0, 0},
     [811] = {
         ["font"] = "Fonts\\FRIZQT__.TTF",
         ["bar"] = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
@@ -53,6 +53,7 @@ local Default = {
     },
     [1003] = {},
     [1101] = {1, 1, 1},
+    [1201] = {1, 1},
     [5111] = {
         [331] = {"CENTER", "UIParent", "CENTER", 0, 0, 180, 200, 1.0, 1.0},
         [332] = {"CENTER", "UIParent", "CENTER", -250, -200, 120, 50, 1.0, 1.0},
@@ -167,11 +168,13 @@ Ether.DataDefault = Default
 ---| Header Power 6
 
 ---@alias Layout_801 number
+---| smooth health Solo 1
+---| smooth Power Solo 2
+---| smooth health Header 3
+
+---@alias Layout_1201 number
 ---| playerCastBar 1
 ---| targetCastBar 2
----| smooth health Solo 3
----| smooth Power Solo 4
----| smooth health Header 5
 
 ---@alias Update_901 boolean
 ---| Player

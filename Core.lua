@@ -79,7 +79,8 @@ local Construct = {
             Indicators = {A = {}},
             Update = {A = {}, B = {}},
             Tooltip = {A = {}},
-            Layout = {A = {}}
+            Layout = {A = {}},
+            CastBar = {A = {}}
         }
     },
     Menu = {
@@ -647,6 +648,14 @@ function Ether:RefreshAllSettings()
             end
         end
     end
+    if Construct.Content.Buttons.CastBar and Construct.Content.Buttons.CastBar.A then
+        for i = 1, #Ether.DB[1201] do
+            local checkbox = Construct.Content.Buttons.CastBar.A[i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[1201][i] == 1)
+            end
+        end
+    end
     Construct.Frames["Main"]:Show()
 end
 
@@ -688,8 +697,8 @@ end
 
 local arraysLength = {
     [101] = 11, [201] = 6, [301] = 13, [401] = 6,
-    [501] = 9, [701] = 4, [801] = 5,
-    [1001] = 3, [1101] = 3
+    [501] = 9, [701] = 4, [801] = 3,
+    [1001] = 3, [1101] = 3, [1201] = 2
 }
 
 local currentVersion = nil
@@ -785,6 +794,14 @@ local function OnInitialize(self, event, ...)
                 for subkey in pairs(Ether.DataDefault[811]) do
                     if profile[811][subkey] == nil then
                         profile[811] = Ether.CopyTable(Ether.DataDefault[811])
+                        break
+                    end
+                end
+            end
+            if profile[1201] then
+                for subkey in pairs(Ether.DataDefault[1201]) do
+                    if profile[1201][subkey] == nil then
+                        profile[1201] = Ether.CopyTable(Ether.DataDefault[1201])
                         break
                     end
                 end

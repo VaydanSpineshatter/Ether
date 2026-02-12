@@ -102,6 +102,7 @@ function Ether:UpdatePower(button, smooth)
     end
     local r, g, b = Ether:GetPowerColor(button.unit)
     button.powerBar:SetStatusBarColor(r, g, b)
+    button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
 end
 
 local function PowerChanged(_, event, unit)
@@ -110,7 +111,7 @@ local function PowerChanged(_, event, unit)
         if Ether.DB[901][unit] then
             local button = Ether.unitButtons.solo[unit]
             if button then
-                if Ether.DB[801][4] == 1 then
+                if Ether.DB[801][2] == 1 then
                     Ether:UpdatePower(button, true)
                 else
                     Ether:UpdatePower(button)
