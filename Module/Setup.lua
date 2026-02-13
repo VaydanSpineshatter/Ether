@@ -22,7 +22,7 @@ function Ether:SetupName(button, number)
     return button
 end
 
-function Ether:SetupHealthBar(button, orient, w, h, unit)
+function Ether:SetupHealthBar(button, orient, w, h)
     if not button then return end
     local healthBar = CreateFrame("StatusBar", nil, button)
     button.healthBar = healthBar
@@ -36,15 +36,13 @@ function Ether:SetupHealthBar(button, orient, w, h, unit)
     local healthDrop = button:CreateTexture(nil, "OVERLAY")
     button.healthDrop = healthDrop
     healthDrop:SetAllPoints(healthBar)
-    if unit then
-        local r, g, b = Ether:GetClassColors(unit)
-        healthBar:SetStatusBarColor(r, g, b)
-        healthDrop:SetTexture(unpack(Ether.mediaPath.blankBar))
-        healthDrop:SetGradient("VERTICAL",
-                      CreateColor(r, g, b, .6),
-                      CreateColor(r * 0.3, g * 0.3, b * 0.4, .7)
-        )
-    end
+    local r, g, b = Ether:GetClassColors("player")
+    healthBar:SetStatusBarColor(r, g, b)
+    healthDrop:SetTexture(unpack(Ether.mediaPath.blankBar))
+    healthDrop:SetGradient(orient,
+                  CreateColor(r, g, b, .5),
+                  CreateColor(r * 0.3, g * 0.3, b * 0.4, .5)
+    )
     return button
 end
 function Ether:SetupPowerBar(button, unit)
