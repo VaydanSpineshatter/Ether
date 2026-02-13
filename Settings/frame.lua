@@ -1877,6 +1877,18 @@ function Ether.CreateConfigSection(self)
         [339] = "Debug"
     }
 
+    local frameGroup = {
+        [331] = Ether.Anchor.tooltip,
+        [332] = Ether.unitButtons.solo["player"],
+        [333] = Ether.unitButtons.solo["target"],
+        [334] = Ether.unitButtons.solo["targettarget"],
+        [335] = Ether.unitButtons.solo["pet"],
+        [336] = Ether.unitButtons.solo["pettarget"],
+        [337] = Ether.unitButtons.solo["focus"],
+        [338] = Ether.Anchor.raid,
+        [339] = Ether.DebugFrame,
+
+    }
     local sizeLabel = parent:CreateFontString(nil, "OVERLAY")
     sizeLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
     sizeLabel:SetPoint("TOPLEFT", 5, -50)
@@ -2051,7 +2063,7 @@ function Ether.CreateConfigSection(self)
         local frame = DB[111].SELECTED
         if DB[5111][frame] then
             DB[5111][frame][8] = self:GetValue()
-            Ether:ApplyFramePosition(frame)
+            Ether:ApplyFramePosition(frameGroup[frame], frame)
             UpdateValueLabels()
         end
     end)
@@ -2060,7 +2072,7 @@ function Ether.CreateConfigSection(self)
         local frame = DB[111].SELECTED
         if DB[5111][frame] then
             DB[5111][frame][9] = self:GetValue()
-            Ether:ApplyFramePosition(frame)
+            Ether:ApplyFramePosition(frameGroup[frame], frame)
             UpdateValueLabels()
         end
     end)
