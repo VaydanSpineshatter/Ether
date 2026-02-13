@@ -213,10 +213,10 @@ end
 Ether.unitIsAway = false
 local function OnAfk()
     Ether.unitIsAway = true
-    if Ether.DB[801][1] == 1 then
+    if Ether.DB[1201][1] == 1 then
         Ether:CastBarDisable("player")
     end
-    if Ether.DB[801][2] == 1 then
+    if Ether.DB[1201][2] == 1 then
         Ether:CastBarDisable("target")
     end
     Ether:NameDisable()
@@ -244,10 +244,10 @@ end
 
 local function NotAfk()
     Ether.unitIsAway = false
-    if Ether.DB[801][1] == 1 then
+    if Ether.DB[1201][1] == 1 then
         Ether:CastBarEnable("player")
     end
-    if Ether.DB[801][2] == 1 then
+    if Ether.DB[1201][2] == 1 then
         Ether:CastBarEnable("target")
     end
     Ether:NameEnable()
@@ -301,16 +301,16 @@ local function IndicatorUnit(_, event, unit)
             end
         end
     elseif event == "UNIT_FLAGS" then
-   if button.Indicators.UnitFlags then
+        if button.Indicators.UnitFlags then
             button.Indicators.UnitFlags:Hide()
             button.name:SetTextColor(1, 1, 1)
             local charmed = UnitIsCharmed(unit)
             local dead = UnitIsDeadOrGhost(unit)
-                       button.Indicators.UnitFlags:Show()
+            button.Indicators.UnitFlags:Show()
             if charmed then
                 button.name:SetTextColor(1.00, 0.00, 0.00)
                 button.Indicators.UnitFlags:SetTexture(charmedIcon)
-            elseif  dead then
+            elseif dead then
                 button.Indicators.UnitFlags:SetTexture(deadIcon)
                 if button.healthBar then
                     button.healthBar:SetValue(0)
@@ -318,8 +318,8 @@ local function IndicatorUnit(_, event, unit)
                     Ether:updateDispelBorder(button, {0, 0, 0, 1})
                 end
             else
-            button.Indicators.UnitFlags:Hide()
-            button.name:SetTextColor(1, 1, 1)
+                button.Indicators.UnitFlags:Hide()
+                button.name:SetTextColor(1, 1, 1)
             end
         end
     elseif event == "PLAYER_FLAGS_CHANGED" then
@@ -362,28 +362,28 @@ function Ether:IndicatorsUnitUpdate(unit)
         else
             button.Indicators.Connection:Hide()
         end
-         end
-           if button.Indicators.UnitFlags then
-            button.Indicators.UnitFlags:Hide()
-            button.name:SetTextColor(1, 1, 1)
-            local charmed = UnitIsCharmed(unit)
-            local dead = UnitIsDeadOrGhost(unit)
-                       button.Indicators.UnitFlags:Show()
-            if charmed then
-                button.name:SetTextColor(1.00, 0.00, 0.00)
-                button.Indicators.UnitFlags:SetTexture(charmedIcon)
-            elseif  dead then
-                button.Indicators.UnitFlags:SetTexture(deadIcon)
-                if button.healthBar then
-                    button.healthBar:SetValue(0)
-                    button.healthBar:SetMinMaxValues(0, 0)
-                    Ether:updateDispelBorder(button, {0, 0, 0, 1})
-                end
-            else
-            button.Indicators.UnitFlags:Hide()
-            button.name:SetTextColor(1, 1, 1)
+    end
+    if button.Indicators.UnitFlags then
+        button.Indicators.UnitFlags:Hide()
+        button.name:SetTextColor(1, 1, 1)
+        local charmed = UnitIsCharmed(unit)
+        local dead = UnitIsDeadOrGhost(unit)
+        button.Indicators.UnitFlags:Show()
+        if charmed then
+            button.name:SetTextColor(1.00, 0.00, 0.00)
+            button.Indicators.UnitFlags:SetTexture(charmedIcon)
+        elseif dead then
+            button.Indicators.UnitFlags:SetTexture(deadIcon)
+            if button.healthBar then
+                button.healthBar:SetValue(0)
+                button.healthBar:SetMinMaxValues(0, 0)
+                Ether:updateDispelBorder(button, {0, 0, 0, 1})
             end
+        else
+            button.Indicators.UnitFlags:Hide()
+            button.name:SetTextColor(1, 1, 1)
         end
+    end
     if button.Indicators.PlayerFlags then
         local away = UnitIsAFK(unit)
         local dnd = UnitIsDND(unit)
@@ -461,7 +461,7 @@ function Ether:IndicatorsUnitUpdate(unit)
 end
 
 function Ether:UpdateSoloTarget()
-        for unit, button in pairs(Ether.unitButtons.solo) do
+    for unit, button in pairs(Ether.unitButtons.solo) do
         if button and button.RaidTarget and UnitExists(unit) then
             local index = GetRaidTargetIndex(unit)
             if index then
@@ -490,7 +490,7 @@ function Ether:FullUpdateIndicators()
         end
     end
 
-   Ether:UpdateSoloTarget()
+    Ether:UpdateSoloTarget()
 
     for index, handlers in ipairs(IndicatorMap) do
         for _, button in pairs(Ether.unitButtons.raid) do
