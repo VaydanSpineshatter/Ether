@@ -641,7 +641,7 @@ function Ether:RefreshAllSettings()
 end
 
 function Ether:RefreshFramePositions()
-    local frameKey = {
+    local frame = {
         [331] = Ether.Anchor.tooltip,
         [332] = Ether.unitButtons.solo["player"],
         [333] = Ether.unitButtons.solo["target"],
@@ -653,7 +653,7 @@ function Ether:RefreshFramePositions()
         [339] = Ether.DebugFrame,
         [340] = EtherFrame.Frames["Main"]
     }
-    local frame = frameKey[frameID]
+
     for frameID in pairs(Ether.DB[5111]) do
         if frameID then
             Ether:ApplyFramePosition(frame[frameID], frameID)
@@ -895,10 +895,9 @@ local function OnInitialize(self, event, ...)
         Ether.Anchor.raid.tex:Hide()
         Ether:SetupDrag(Ether.Anchor.raid, 338, 40)
 
-        local tooltip = CreateFrame("Frame", nil, UIParent)
-        Ether.Anchor.tooltip = tooltip
-        tooltip:SetSize(280, 120)
-        Ether:ApplyFramePosition(tooltip, 331)
+        Ether.Anchor.tooltip = CreateFrame("Frame", nil, UIParent)
+        Ether.Anchor.tooltip:SetSize(280, 120)
+        Ether:ApplyFramePosition(Ether.Anchor.tooltip, 331)
         Ether.CreateMainSettings(EtherFrame)
 
         for index = 1, 7 do
