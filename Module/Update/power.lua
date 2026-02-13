@@ -102,7 +102,7 @@ function Ether:UpdatePower(button, smooth)
     end
     local r, g, b = Ether:GetPowerColor(button.unit)
     button.powerBar:SetStatusBarColor(r, g, b)
-    button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
+    button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3)
 end
 
 local function PowerChanged(_, event, unit)

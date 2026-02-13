@@ -5,6 +5,7 @@ local UnitCast = UnitCastingInfo
 local UnitChannel = UnitChannelInfo
 local timeStr = "%.1f|cffff0000-%.1f|r"
 local tStr = "%.1f"
+local IsEventValid = C_EventUtils.IsEventValid
 
 local function OnUpdate(self, elapsed)
     if (self.casting) then
@@ -49,7 +50,6 @@ end
 local RegisterUpdateFrame, UnregisterUpdateFrame, UpdateFrameInfo
 local RegisterCastBarEvent, UnregisterCastBarEvent
 do
-    local IsEventValid = C_EventUtils.IsEventValid
     local eventFrame
     local Events, Updates = {}, {}
     function RegisterCastBarEvent(castEvent, func)
@@ -311,9 +311,9 @@ function Ether:CastBarEnable(unit)
     if not bar then return
     elseif not bar.castBar then
         if unit == "player" then
-            Ether:SetupCastBar(bar, 20, 341)
+            Ether:SetupCastBar(bar,341)
         else
-            Ether:SetupCastBar(bar, 20, 342)
+            Ether:SetupCastBar(bar,342)
         end
         RegisterUpdateFrame(bar.castBar)
     end

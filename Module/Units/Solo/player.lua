@@ -80,10 +80,11 @@ function Ether:CreateUnitButtons(index)
         })
         Ether:SetupName(button, 0)
         Ether:GetClassColor(button)
-        Ether:SetupUpdateText(button, "health")
+        Ether:SetupUpdateText(button, "health", true)
         Ether:SetupUpdateText(button, "power", true)
         for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
             if button.unit == units[key] then
+                Ether:ApplyFramePosition(button, value)
                 Ether:SetupDrag(button, value, 20)
                 break
             end
@@ -124,11 +125,6 @@ function Ether:CreateUnitButtons(index)
         end
         if button.unit == "pet" then
             Ether:PetCondition(button)
-        end
-        for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
-            if Ether.DB[201][key] == 1 then
-                Ether:ApplyFramePosition(value)
-            end
         end
         return button
     end

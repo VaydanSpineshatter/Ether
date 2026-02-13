@@ -173,10 +173,9 @@ function Ether:UpdateHealth(button, smooth)
         button.healthBar:SetValue(h)
         button.healthBar:SetMinMaxValues(0, mh)
     end
-
     local r, g, b = Ether:GetClassColors(button.unit)
-    button.healthBar:SetStatusBarColor(r, g, b, 1)
-    button.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
+    button.healthBar:SetStatusBarColor(r, g, b)
+    button.healthDrop:SetGradient("VERTICAL", CreateColor(r, g, b, .6), CreateColor(r * 0.3, g * 0.3, b * 0.4, .7))
 end
 
 function Ether:UpdateHealthText(button)

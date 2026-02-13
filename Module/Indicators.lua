@@ -244,10 +244,10 @@ end
 
 local function NotAfk()
     Ether.unitIsAway = false
-    if Ether.DB[1201][1] == 1 then
+    if Ether.DB[801][1] == 1 then
         Ether:CastBarEnable("player")
     end
-    if Ether.DB[1201][2] == 1 then
+    if Ether.DB[801][2] == 1 then
         Ether:CastBarEnable("target")
     end
     Ether:NameEnable()
@@ -398,7 +398,9 @@ function Ether:IndicatorsUnitUpdate(unit)
         end
     end
     if button.Indicators.GroupLeader then
-        button.Indicators.MasterLoot:Hide()
+        if not UnitInAnyGroup("player") then
+            button.Indicators.GroupLeader:Hide()
+        end
         local IsLeader = UnitIsGroupLeader(unit)
         if (IsLeader) then
             button.Indicators.GroupLeader:SetTexture(leaderIcon)
@@ -458,6 +460,21 @@ function Ether:IndicatorsUnitUpdate(unit)
     end
 end
 
+function Ether:UpdateSoloTarget()
+        for unit, button in pairs(Ether.unitButtons.solo) do
+        if button and button.RaidTarget and UnitExists(unit) then
+            local index = GetRaidTargetIndex(unit)
+            if index then
+                button.RaidTarget:SetTexture(targetIcon)
+                SetRaidTargetIconTexture(button.RaidTarget, index)
+                button.RaidTarget:Show()
+            else
+                button.RaidTarget:Hide()
+            end
+        end
+    end
+end
+
 function Ether:FullUpdateIndicators()
     Indicator(frame, "RAID_TARGET_UPDATE")
     Indicator(frame, "PARTY_LEADER_CHANGED")
@@ -473,18 +490,7 @@ function Ether:FullUpdateIndicators()
         end
     end
 
-    for unit, button in pairs(Ether.unitButtons.solo) do
-        if button and button.RaidTarget and UnitExists(unit) then
-            local index = GetRaidTargetIndex(unit)
-            if index then
-                button.RaidTarget:SetTexture(targetIcon)
-                SetRaidTargetIconTexture(button.RaidTarget, index)
-                button.RaidTarget:Show()
-            else
-                button.RaidTarget:Hide()
-            end
-        end
-    end
+   Ether:UpdateSoloTarget()
 
     for index, handlers in ipairs(IndicatorMap) do
         for _, button in pairs(Ether.unitButtons.raid) do
@@ -514,6 +520,7 @@ function Ether:IndicatorsEnable()
         frame:SetScript("OnEvent", Indicator)
         frameUnit:SetScript("OnEvent", IndicatorUnit)
     end
+    Ether:UpdateSoloTarget()
 end
 
 function Ether:IndicatorsDisable()
