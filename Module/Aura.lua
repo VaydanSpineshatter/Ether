@@ -327,20 +327,20 @@ local function raidAuraUpdate(unit, updateInfo)
                 Ether:updateDispelBorder(raidDispelData[guid][aura.spellId], color)
                 raidAurasDispel[aura.auraInstanceID] = aura
             end
-            if aura.isHarmful and aura.spellId then
+            if aura.isHarmful and aura.icon then
                 raidIconData[guid] = raidIconData[guid] or {}
-                if not raidIconData[guid][aura.spellId] then
+                if not raidIconData[guid][aura.icon] then
                     local color = colors[aura.dispelName] or {0.80, 0.40, 1.00, 1}
                     button.dispelIcon:SetTexture(aura.icon)
                     button.dispelBorder:SetColorTexture(unpack(color))
-                    raidIconData[guid][aura.spellId] = button.iconFrame
-                end
-                if raidIconData[guid][aura.spellId] then
-                    Ether.StartBlink(raidIconData[guid][aura.spellId], aura.duration, 0.3)
+                    raidIconData[guid][aura.icon] = button.iconFrame
+                    Ether.StartBlink(raidIconData[guid][aura.icon], aura.duration, 0.3)
                     raidIconData[aura.auraInstanceID] = {
-                        spellId = aura.spellId,
+                        icon = aura.icon,
                         guid = guid
                     }
+                else
+                    Ether.StartBlink(raidIconData[guid][aura.icon], aura.duration, 0.3)
                 end
                 raidAuraIcons[aura.auraInstanceID] = aura
             end
@@ -389,9 +389,9 @@ local function raidAuraUpdate(unit, updateInfo)
                 local auraData = raidIconData[auraInstanceID]
                 if not auraData then return end
                 local auraGuid = auraData.guid
-                local spellId = auraData.spellId
-                if raidIconData[auraGuid] and raidIconData[auraGuid][spellId] then
-                    Ether.StopBlink(raidIconData[auraGuid][spellId])
+                local icon = auraData.icon
+                if raidIconData[auraGuid] and raidIconData[auraGuid][icon] then
+                    Ether.StopBlink(raidIconData[auraGuid][icon])
                 end
                 raidAuraIcons[auraInstanceID] = nil
             end
@@ -628,11 +628,12 @@ function Ether:AuraWipe()
     wipe(raidAurasHelpful)
     wipe(raidAurasHarmful)
     wipe(raidAurasDispel)
+    wipe(raidDispelData)
+    wipe(raidAuraIcons)
+    wipe(raidIconData)
     wipe(raidBuffData)
     wipe(raidDebuffData)
     wipe(dispelCache)
-    wipe(raidAuraIcons)
-    wipe(raidIconData)
 end
 
 local data = {}
@@ -671,6 +672,8 @@ local function auraTblReset(unit)
             button.Aura.Debuffs[i]:SetShown(false)
         end
     end
+    wipe(button.Aura.Buffs)
+    wipe(button.Aura.Debuffs)
     wipe(button.Aura.LastBuffs)
     wipe(button.Aura.LastDebuffs)
 end

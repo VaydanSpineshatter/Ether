@@ -109,7 +109,7 @@ Ether.DataDefault = Default
 ---| LastTab 3
 ---| SelectedFrame 4
 
----@alias HideBlizzard_101 number
+---@alias Blizzard_101 number
 ---| Player 1
 ---| Pet 2
 ---| Target 3
@@ -188,7 +188,7 @@ Ether.DataDefault = Default
 ---| Focus
 ---| Header
 
----@alias AuraEnable_1001 number
+---@alias Aura_1001 number
 ---| Enable 1
 ---| Solo 2
 ---| Header 3
@@ -260,6 +260,43 @@ function Ether.TableSize(t)
         count = count + 1
     end
     return count
+end
+
+local function EtherFrameChecked(number, data, number2)
+    if Ether.EtherFrame.Buttons[number] then
+        for i = 1, #Ether.DB[data] do
+            local checkbox = Ether.EtherFrame.Buttons[number][number2][i] or Ether.EtherFrame.Buttons[number][i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[data][i] == 1)
+            end
+        end
+    end
+end
+
+local numberTbl = {401, 101, 201, 1001, 501, 301, 801, 1201}
+
+function Ether:RefreshAllSettings()
+    if Ether.EtherFrame and Ether.EtherFrame.Frames and Ether.EtherFrame.Frames["Main"]:IsShown() then
+        Ether.EtherFrame.Frames["Main"]:Hide()
+    end
+    for index, value in ipairs(numberTbl) do
+        EtherFrameChecked(index, value, 2)
+    end
+    if Ether.EtherFrame.Buttons[4][2] then
+        for i, unit in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus", "raid"}) do
+            local checkbox = Ether.EtherFrame.Buttons[4][2][i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[901][unit] == true)
+            end
+        end
+    end
+    Ether.EtherFrame.Frames["Main"]:Show()
+end
+
+function Ether:EtherFrameSetClick(number, number2, number3)
+    local check = Ether.EtherFrame.Buttons[number][number2][number3] or Ether.EtherFrame.Buttons[number][number2]
+    check:SetChecked(not check:GetChecked())
+    check:GetScript("OnClick")(check)
 end
 
 function Ether.StringToTbl(str)

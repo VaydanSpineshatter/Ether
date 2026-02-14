@@ -240,6 +240,15 @@ local function OnAfk()
             Ether:RangeDisable()
         end)
     end
+    for _, handlers in ipairs(IndicatorMap) do
+        for _, button in pairs(Ether.unitButtons.raid) do
+            if button and button.Indicators then
+                if button.Indicators[handlers] and button.Indicators[handlers] ~= button.Indicators.PlayerFlags then
+                    button.Indicators[handlers]:Hide()
+                end
+            end
+        end
+    end
 end
 
 local function NotAfk()
@@ -273,6 +282,7 @@ local function NotAfk()
             Ether:RangeEnable()
         end)
     end
+    Ether:FullUpdateIndicators()
 end
 
 local function IndicatorUnit(_, event, unit)
@@ -520,7 +530,7 @@ function Ether:IndicatorsEnable()
         frame:SetScript("OnEvent", Indicator)
         frameUnit:SetScript("OnEvent", IndicatorUnit)
     end
-    Ether:UpdateSoloTarget()
+    Ether:FullUpdateIndicators()
 end
 
 function Ether:IndicatorsDisable()
@@ -529,5 +539,14 @@ function Ether:IndicatorsDisable()
         frameUnit:UnregisterAllEvents()
         frame:SetScript("OnEvent", nil);
         frameUnit:SetScript("OnEvent", nil)
+    end
+    for _, handlers in ipairs(IndicatorMap) do
+        for _, button in pairs(Ether.unitButtons.raid) do
+            if button and button.Indicators then
+                if button.Indicators[handlers] then
+                    button.Indicators[handlers]:Hide()
+                end
+            end
+        end
     end
 end

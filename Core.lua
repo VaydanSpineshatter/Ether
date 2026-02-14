@@ -37,13 +37,13 @@ Ether.unitButtons = {
 local function BuildContent(self)
     local success, msg = pcall(function()
         Ether.CreateModuleSection(self)
-        Ether.CreateInformationSection(self)
         Ether.CreateBlizzardSection(self)
-        Ether.CreateSection(self)
+        Ether.CreateAboutSection(self)
+        Ether.CreateCreationSection(self)
         Ether.CreateUpdateSection(self)
-        Ether.CreateAuraSettingsSection(self)
+        Ether.CreateAuraSection(self)
         Ether.CreateAuraCustomSection(self)
-        Ether.CreateAuraConfigSection(self)
+        Ether.CreateAuraHelperSection(self)
         Ether.CreateIndicatorsSection(self)
         Ether.CreateTooltipSection(self)
         Ether.CreateLayoutSection(self)
@@ -60,6 +60,17 @@ local function BuildContent(self)
     end
 end
 
+---@alias EtherFrame_Buttons number
+---| Module 1
+---| Blizzard 2
+---| Create 3
+---| Update 4,1,2
+---| Aura 5
+---| Indicators 6
+---| Tooltip 7
+---| Layout 8
+---| CastBar 9
+
 ---@class EtherSettings
 local EtherFrame = {
     IsLoaded = false,
@@ -69,16 +80,15 @@ local EtherFrame = {
     Borders = {},
     Buttons = {
         Menu = {},
-        Module = {A = {}},
-        Config = {},
-        Hide = {A = {}},
-        Create = {A = {}},
-        Auras = {A = {}, B = {}},
-        Indicators = {A = {}},
-        Update = {A = {}, B = {}},
-        Tooltip = {A = {}},
-        Layout = {A = {}},
-        CastBar = {A = {}}
+        [1] = {},
+        [2] = {},
+        [3] = {},
+        [4] = {[1] = {}, [2] = {}},
+        [5] = {},
+        [6] = {},
+        [7] = {},
+        [8] = {},
+        [9] = {},
     },
     Content = {
         Children = {},
@@ -96,7 +106,7 @@ local EtherFrame = {
         ["LEFT"] = {
             [1] = {"Info"},
             [2] = {"Units"},
-            [3] = {"Auras"},
+            [3] = {"Aura"},
             [4] = {"Indicators"},
             [5] = {"Tooltip"},
             [6] = {"Interface"},
@@ -104,6 +114,7 @@ local EtherFrame = {
         }
     }
 }
+Ether.EtherFrame = EtherFrame
 
 function Ether.ShowCategory(self, tab)
     if not self.IsLoaded then
@@ -547,99 +558,6 @@ do
     Ether.dataBroker = dataBroker
 end
 
-function Ether:RefreshAllSettings()
-
-    if not EtherFrame or not EtherFrame.Content then
-        return
-    end
-    EtherFrame.Frames["Main"]:Hide()
-    if EtherFrame.Buttons.Module and EtherFrame.Buttons.Module.A then
-        for i = 1, #Ether.DB[401] do
-            local checkbox = EtherFrame.Buttons.Module.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[401][i] == 1)
-            end
-        end
-    end
-
-    if EtherFrame.Buttons.Hide and EtherFrame.Buttons.Hide.A then
-        for i = 1, #Ether.DB[101] do
-            local checkbox = EtherFrame.Buttons.Hide.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[101][i] == 1)
-            end
-        end
-    end
-
-    if EtherFrame.Buttons.Create and EtherFrame.Buttons.Create.A then
-        for i = 1, #Ether.DB[201] do
-            local checkbox = EtherFrame.Buttons.Create.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[201][i] == 1)
-            end
-        end
-    end
-
-    if EtherFrame.Buttons.Tooltip and EtherFrame.Buttons.Tooltip.A then
-        for i = 1, #Ether.DB[301] do
-            local checkbox = EtherFrame.Buttons.Tooltip.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[301][i] == 1)
-            end
-        end
-    end
-
-    if EtherFrame.Buttons.Indicators and EtherFrame.Buttons.Indicators.A then
-        for i = 1, #Ether.DB[501] do
-            local checkbox = EtherFrame.Buttons.Indicators.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[501][i] == 1)
-            end
-        end
-    end
-
-    if EtherFrame.Buttons.Update and EtherFrame.Buttons.Update.A then
-        for i = 1, #Ether.DB[701] do
-            local checkbox = EtherFrame.Buttons.Update.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[701][i] == 1)
-            end
-        end
-    end
-
-    if EtherFrame.Buttons.Update and EtherFrame.Buttons.Update.B then
-        local units = {
-            "player", "target", "targettarget", "pet", "pettarget",
-            "focus", "raid"
-        }
-
-        for i, unitKey in ipairs(units) do
-            local checkbox = EtherFrame.Buttons.Update.B[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[901][unitKey] == true)
-            end
-        end
-    end
-
-    if EtherFrame.Buttons.Layout and EtherFrame.Buttons.Layout.A then
-        for i = 1, #Ether.DB[801] do
-            local checkbox = EtherFrame.Buttons.Layout.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[801][i] == 1)
-            end
-        end
-    end
-    if EtherFrame.Buttons.CastBar and EtherFrame.Buttons.CastBar.A then
-        for i = 1, #Ether.DB[1201] do
-            local checkbox = EtherFrame.Buttons.CastBar.A[i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[1201][i] == 1)
-            end
-        end
-    end
-    EtherFrame.Frames["Main"]:Show()
-end
-
 function Ether:RefreshFramePositions()
     local frame = {
         [331] = Ether.Anchor.tooltip,
@@ -838,11 +756,7 @@ local function OnInitialize(self, event, ...)
                     ReloadUI()
                 end
             elseif input == "msg" then
-                if EtherFrame.Buttons.Module.A[2] then
-                    local checkbox = EtherFrame.Buttons.Module.A[2]
-                    checkbox:SetChecked(not checkbox:GetChecked())
-                    checkbox:GetScript("OnClick")(checkbox)
-                end
+                Ether:EtherFrameSetClick(1, 2)
             else
                 for _, entry in ipairs(Ether.SlashInfo) do
                     Ether.DebugOutput(string_format("%s  –  %s", entry.cmd, entry.desc))
@@ -887,7 +801,7 @@ local function OnInitialize(self, event, ...)
             }
             StaticPopup_Show("ETHER_RELOAD_UI")
         end
-        Ether.Anchor.raid:SetSize(66, 66)
+        Ether.Anchor.raid:SetSize(85, 55)
         Ether:ApplyFramePosition(Ether.Anchor.raid, 338)
         Ether.Anchor.raid.tex = Ether.Anchor.raid:CreateTexture(nil, "BACKGROUND")
         Ether.Anchor.raid.tex:SetAllPoints()

@@ -133,15 +133,15 @@ end
 local function CreateGroupHeader()
     local header = CreateFrame("Frame", "EtherRaidGroupHeader", raidAnchor, "SecureGroupHeaderTemplate")
     Ether.Header.raid = header
-    header:SetPoint("BOTTOMRIGHT", raidAnchor, "BOTTOMRIGHT")
+    header:SetPoint("RIGHT", raidAnchor, "RIGHT")
     header:SetAttribute("template", "EtherUnitTemplate")
     header:SetAttribute("initial-unitWatch", true)
     header:SetAttribute("initialConfigFunction", initialConfigFunction)
     header.CreateChildren = CreateChildren
     header:SetAttribute("ButtonWidth", 55)
     header:SetAttribute("ButtonHeight", 55)
-    header:SetAttribute("columnAnchorPoint", "LEFT")
-    header:SetAttribute("point", "TOP")
+    header:SetAttribute("columnAnchorPoint", "RIGHT")
+    header:SetAttribute("point", "BOTTOM")
     header:SetAttribute("groupBy", "GROUP")
     header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset", 4)
@@ -164,45 +164,32 @@ end
 
 function Ether:InitializePetHeader()
     if _G["EtherRaidGroupHeader"] and not InCombatLockdown() then
-        local raidpet = CreateFrame("Frame", "EtherPetGroupHeader", raidAnchor, "SecureGroupPetHeaderTemplate")
-        Ether.Header.raidpet = raidpet
-        raidpet:SetPoint("BOTTOMLEFT", Ether.Header.raid, "TOPLEFT", 0, 10)
-        raidpet:SetAttribute("template", "EtherUnitTemplate")
-        raidpet:SetAttribute("initialConfigFunction", initialConfigFunction)
-        raidpet.CreateChildren = CreateChildren
-        raidpet:SetAttribute("TypePet", true)
-        raidpet:SetAttribute("ButtonHeight", 50)
-        raidpet:SetAttribute("ButtonWidth", 50)
-        raidpet:SetAttribute("xOffset", -2)
-        raidpet:SetAttribute("showRaid", true)
-        raidpet:SetAttribute("showParty", true)
-        raidpet:SetAttribute("showPlayer", true)
-        raidpet:SetAttribute("showSolo", true)
-        raidpet:SetAttribute("columnAnchorPoint", "LEFT")
-        raidpet:SetAttribute("point", "RIGHT")
-        raidpet:SetAttribute("useOwnerUnit", false)
-        raidpet:SetAttribute("filterOnPet", true)
-        raidpet:SetAttribute("unitsPerColumn", 10)
-        raidpet:SetAttribute("maxColumns", 1)
-        raidpet:Show()
+        local pet = CreateFrame("Frame", "EtherPetGroupHeader", raidAnchor, "SecureGroupPetHeaderTemplate")
+        Ether.Header.pet = pet
+        pet:SetPoint("BOTTOMLEFT", Ether.Header.raid, "TOPLEFT", 0, 10)
+        pet:SetAttribute("template", "EtherUnitTemplate")
+        pet:SetAttribute("initialConfigFunction", initialConfigFunction)
+        pet.CreateChildren = CreateChildren
+        pet:SetAttribute("TypePet", true)
+        pet:SetAttribute("ButtonHeight", 50)
+        pet:SetAttribute("ButtonWidth", 50)
+        pet:SetAttribute("xOffset", -2)
+        pet:SetAttribute("showRaid", true)
+        pet:SetAttribute("showParty", true)
+        pet:SetAttribute("showPlayer", true)
+        pet:SetAttribute("showSolo", true)
+        pet:SetAttribute("columnAnchorPoint", "LEFT")
+        pet:SetAttribute("point", "RIGHT")
+        pet:SetAttribute("useOwnerUnit", false)
+        pet:SetAttribute("filterOnPet", true)
+        pet:SetAttribute("unitsPerColumn", 10)
+        pet:SetAttribute("maxColumns", 1)
+        pet:Show()
     end
 end
 
 function Ether:RepositionHeaders()
     if true then return end
-    if InCombatLockdown() then return end
-    local spacing = Ether.Header.raid:GetAttribute("columnSpacing")
-    local lastHeader = nil
-    for i = 1, 8 do
-        if not lastHeader then
-            Ether.Header.raid:ClearAllPoints()
-            Ether.Header.raid:SetPoint("TOPLEFT", Ether.Anchor.raid, "TOPLEFT")
-        else
-            Ether.Header.raid:ClearAllPoints()
-            Ether.Header.raid:SetPoint("TOPLEFT", lastHeader, "TOPRIGHT", spacing, 0)
-        end
-        lastHeader = groupHeaders[i]
-    end
 end
 
 local function ResetChildren()

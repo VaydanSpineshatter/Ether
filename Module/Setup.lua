@@ -112,7 +112,7 @@ function Ether:SetupCastBar(button, number)
     local icon = frame:CreateTexture(nil, "OVERLAY")
     icon:SetSize(16, 16)
     frame.icon = icon
-    icon:SetPoint("LEFT")
+    icon:SetPoint("RIGHT", frame, "LEFT", 0, 0)
     local safeZone = frame:CreateTexture(nil, "OVERLAY")
     frame.safeZone = safeZone
     safeZone:SetColorTexture(1, 0, 0, 1)
@@ -393,49 +393,49 @@ function Ether:SoloAuraSetup(button)
             LastBuffs = {},
             LastDebuffs = {}
         }
-        local unit = button.unit
-        for i = 1, 16 do
-            local aura = CreateFrame("Frame", nil, button)
-            aura:SetSize(14, 14)
-            local xOffset, yOffset = AuraPosition(i)
-            aura:SetPoint("BOTTOMLEFT", button, "TOPLEFT", xOffset - 1, yOffset + 2)
-            aura:SetShown(false)
-            aura.icon = SetupAuraIcon(aura)
-            aura.count = SetupAuraCount(aura)
-            aura.timer = SetupAuraTimer(aura, aura.icon)
-            aura:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetUnitAura(unit, i, "HELPFUL")
-                GameTooltip:Show()
-            end)
-            aura:SetScript("OnLeave", function()
-                GameTooltip:Hide()
-            end)
-            button.Aura.Buffs[i] = aura
-        end
-        for i = 1, 16 do
-            local aura = CreateFrame("Frame", nil, button)
-            aura:SetSize(14, 14)
-            aura:SetShown(false)
-            aura.icon = SetupAuraIcon(aura)
-            aura.count = SetupAuraCount(aura)
-            aura.timer = SetupAuraTimer(aura, aura.icon)
-            local border = aura:CreateTexture(nil, "BORDER")
-            border:SetColorTexture(1, 0, 0, 1)
-            border:SetPoint("TOPLEFT", -1, 1)
-            border:SetPoint("BOTTOMRIGHT", 1, -1)
-            border:Hide()
-            aura:SetScript("OnEnter", function(self)
-                GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
-                GameTooltip:SetUnitAura(unit, i, "HARMFUL")
-                GameTooltip:Show()
-            end)
-            aura:SetScript("OnLeave", function()
-                GameTooltip:Hide()
-            end)
-            aura.border = border
-            button.Aura.Debuffs[i] = aura
-        end
+    end
+    local unit = button.unit
+    for i = 1, 16 do
+        local aura = CreateFrame("Frame", nil, button)
+        aura:SetSize(14, 14)
+        local xOffset, yOffset = AuraPosition(i)
+        aura:SetPoint("BOTTOMLEFT", button, "TOPLEFT", xOffset - 1, yOffset + 2)
+        aura:SetShown(false)
+        aura.icon = SetupAuraIcon(aura)
+        aura.count = SetupAuraCount(aura)
+        aura.timer = SetupAuraTimer(aura, aura.icon)
+        aura:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetUnitAura(unit, i, "HELPFUL")
+            GameTooltip:Show()
+        end)
+        aura:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+        button.Aura.Buffs[i] = aura
+    end
+    for i = 1, 16 do
+        local aura = CreateFrame("Frame", nil, button)
+        aura:SetSize(14, 14)
+        aura:SetShown(false)
+        aura.icon = SetupAuraIcon(aura)
+        aura.count = SetupAuraCount(aura)
+        aura.timer = SetupAuraTimer(aura, aura.icon)
+        local border = aura:CreateTexture(nil, "BORDER")
+        border:SetColorTexture(1, 0, 0, 1)
+        border:SetPoint("TOPLEFT", -1, 1)
+        border:SetPoint("BOTTOMRIGHT", 1, -1)
+        border:Hide()
+        aura:SetScript("OnEnter", function(self)
+            GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+            GameTooltip:SetUnitAura(unit, i, "HARMFUL")
+            GameTooltip:Show()
+        end)
+        aura:SetScript("OnLeave", function()
+            GameTooltip:Hide()
+        end)
+        aura.border = border
+        button.Aura.Debuffs[i] = aura
     end
 end
 

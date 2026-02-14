@@ -311,9 +311,9 @@ function Ether:CastBarEnable(unit)
     if not bar then return
     elseif not bar.castBar then
         if unit == "player" then
-            Ether:SetupCastBar(bar,341)
+            Ether:SetupCastBar(bar, 341)
         else
-            Ether:SetupCastBar(bar,342)
+            Ether:SetupCastBar(bar, 342)
         end
         RegisterUpdateFrame(bar.castBar)
     end
