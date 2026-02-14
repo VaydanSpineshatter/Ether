@@ -272,7 +272,7 @@ local function EtherFrameChecked(number, data, number2)
         end
     end
 end
-
+Ether.EtherFrameChecked = EtherFrameChecked
 local numberTbl = {401, 101, 201, 1001, 501, 301, 801, 1201}
 
 function Ether:RefreshAllSettings()

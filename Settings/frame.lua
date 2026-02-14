@@ -1963,7 +1963,7 @@ function Ether.CreateConfigSection(self)
             Ether.Anchor.raid.tex:SetShown(not isShown)
         end
     end)
-
+--[[
     local snap = {}
     unlock:SetScript("OnShow", function()
         wipe(snap)
@@ -1971,9 +1971,9 @@ function Ether.CreateConfigSection(self)
     end)
     unlock:SetScript("OnHide", function()
         Ether.DataRestore(Ether.DB[401], snap)
-        Ether:EtherFrameChecked(401, 1)
+        Ether.EtherFrameChecked(1, 401)
     end)
-
+]]
     local dropdowns = {}
     local frameOptions = {}
     local fontOptions = {}
