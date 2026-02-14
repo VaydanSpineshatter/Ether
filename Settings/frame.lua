@@ -799,6 +799,7 @@ local function CreateEditor(parent)
     })
     Ether:SetupHealthBar(preview, "HORIZONTAL", 55, 55, "player")
     Ether:SetupName(preview, -5)
+    Editor.preview.healthBar = preview.healthBar
     preview.name:SetText(Ether:ShortenName(Ether.playerName, 3))
     local icon = preview.healthBar:CreateTexture(nil, "OVERLAY")
     frame.icon = icon
@@ -1415,7 +1416,7 @@ function Ether.CreateIndicatorsSection(self)
     Ether:SetupHealthBar(preview, "HORIZONTAL", 55, 55, "player")
     Ether:SetupName(preview, -5)
     preview.name:SetText(Ether:ShortenName(Ether.playerName, 3))
-
+    Indicator.preview.healthBar = preview.healthBar
     local icon = preview.healthBar:CreateTexture(nil, "OVERLAY")
     Indicator.icon = icon
     icon:SetSize(12, 12)
@@ -1963,22 +1964,19 @@ function Ether.CreateConfigSection(self)
             Ether.Anchor.raid.tex:SetShown(not isShown)
         end
     end)
---[[
-    local snap = {}
-    unlock:SetScript("OnShow", function()
-        wipe(snap)
-        snap = Ether.DataSnapShot(Ether.DB[401])
-    end)
-    unlock:SetScript("OnHide", function()
-        Ether.DataRestore(Ether.DB[401], snap)
-        Ether.EtherFrameChecked(1, 401)
-    end)
-]]
-    local dropdowns = {}
-    local frameOptions = {}
-    local fontOptions = {}
-    local barOptions = {}
-    local bgOptions = {}
+    --[[
+        local snap = {}
+        unlock:SetScript("OnShow", function()
+            wipe(snap)
+            snap = Ether.DataSnapShot(Ether.DB[401])
+        end)
+        unlock:SetScript("OnHide", function()
+            Ether.DataRestore(Ether.DB[401], snap)
+            Ether.EtherFrameChecked(1, 401)
+        end)
+    ]]
+    local dropdowns, frameOptions = {}, {}
+    local fontOptions, barOptions, bgOptions, borderOptions = {}, {}, {}, {}
     local function UpdateValueLabels()
         local SELECTED = DB[111].SELECTED
         if not SELECTED or not DB[5111] or not DB[5111][SELECTED] then
@@ -2168,6 +2166,12 @@ function Ether.CreateConfigSection(self)
                 DB[811].bar = barPath
                 if preview.healthBar then
                     preview.healthBar:SetStatusBarTexture(barPath)
+                end
+                if Editor.preview.healthBar then
+                    Editor.preview.healthBar:SetStatusBarTexture(barPath)
+                end
+                if Indicator.preview.healthBar then
+                    Indicator.preview.healthBar:SetStatusBarTexture(barPath)
                 end
                 for _, button in pairs(Ether.unitButtons.raid) do
                     if button and button.healthBar then

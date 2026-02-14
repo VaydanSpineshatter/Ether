@@ -40,8 +40,8 @@ function Ether:SetupHealthBar(button, orient, w, h)
     healthBar:SetStatusBarColor(r, g, b)
     healthDrop:SetTexture(unpack(Ether.mediaPath.blankBar))
     healthDrop:SetGradient(orient,
-                  CreateColor(r, g, b, .5),
-                  CreateColor(r * 0.3, g * 0.3, b * 0.4, .5)
+                  CreateColor(r, g, b, .4),
+                  CreateColor(r * 0.3, g * 0.3, b * 0.4, .4)
     )
     return button
 end
@@ -526,68 +526,4 @@ function Ether:BuildGradientTable(colorDef)
     return steps
 end
 
-local ObjPool = {}
-function Ether:CreateObjPool(creatorFunc)
-    local obj = {
-        create = creatorFunc,
-        active = {},
-        inactive = {},
-        temp = {},
-        activeCount = 0,
-    }
-    setmetatable(obj, {__index = ObjPool})
-    return obj
-end
-function ObjPool:Acquire(...)
-    if self.activeCount >= 220 then
-        return nil
-    end
-    local obj = table.remove(self.inactive)
-    if not obj then
-        obj = self.create()
-    end
-    self.activeCount = self.activeCount + 1
-    self.active[self.activeCount] = obj
-    obj._poolIndex = self.activeCount
-    if obj.Setup then
-        obj:Setup(...)
-    end
-    return obj
-end
-function ObjPool:Release(obj)
-    if not obj or not obj._poolIndex then
-        return
-    end
-    local index = obj._poolIndex
-    if index <= 0 or index > self.activeCount then
-        return
-    end
-    local last = self.active[self.activeCount]
-    self.active[index] = last
-    self.active[self.activeCount] = nil
-    if last and last ~= obj then
-        last._poolIndex = index
-    end
-    obj._poolIndex = -1
-    self.activeCount = self.activeCount - 1
-    if obj.Reset then
-        obj:Reset()
-    end
-    if #self.inactive < 150 then
-        self.inactive[#self.inactive + 1] = obj
-    end
-end
-function ObjPool:ReleaseAll()
-    for i = 1, self.activeCount do
-        self.temp[i] = self.active[i]
-    end
-
-    for i = 1, #self.temp do
-        self:Release(self.temp[i])
-    end
-
-    for i = 1, #self.temp do
-        self.temp[i] = nil
-    end
-end
 ]]

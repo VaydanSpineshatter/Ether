@@ -10,12 +10,13 @@ local UnitExists = UnitExists
 local GetTime = GetTime
 local unpack = unpack
 local GetUnitAuraBySpellID = C_UnitAuras.GetUnitAuraBySpellID
+local tinsert = table.insert
 local colors = {
     ["Magic"] = {0.2, 0.6, 1.0, 1},
     ["Disease"] = {0.6, 0.4, 0.0, 1},
     ["Curse"] = {0.6, 0.2, 1.0, 1},
     ["Poison"] = {0.2, 1.0, 0.2, 1},
-    [""] = {0.80, 0.40, 1.00, 1}
+    [""] = {0, 0, 0, 0}
 }
 
 local dispelClass = {
@@ -39,17 +40,18 @@ local dispelPriority = {
 local _, classFilename = UnitClass("player")
 local dispelByPlayer = {}
 dispelByPlayer = dispelClass[classFilename]
-local raidAurasHelpful = {}
-local raidAurasHarmful = {}
-local raidAurasDispel = {}
+local raidAuraHelpful = {}
+local raidAuraHarmful = {}
+local raidAuraDispel = {}
 local raidAuraIcons = {}
 local raidBuffData = {}
 local raidDebuffData = {}
-local raidIconData = {}
 local raidDispelData = {}
+local raidIconData = {}
 local getUnitBuffs = {}
 local getUnitDebuffs = {}
 local dispelCache = {}
+local dataUnits = {}
 
 function Ether:CleanupTimerCache()
     local currentTime = GetTime()
@@ -155,7 +157,7 @@ function Ether:UpdateRaidIsHelpful(button, guid)
                 spellId = aura.spellId,
                 guid = guid
             }
-            raidAurasHelpful[aura.auraInstanceID] = aura
+            raidAuraHelpful[aura.auraInstanceID] = aura
         end
         index = index + 1
     end
@@ -186,7 +188,7 @@ function Ether:UpdateRaidIsHarmful(button, guid)
                 spellId = aura.spellId,
                 guid = guid
             }
-            raidAurasHarmful[aura.auraInstanceID] = aura
+            raidAuraHarmful[aura.auraInstanceID] = aura
         end
         index = index + 1
     end
@@ -236,20 +238,8 @@ function Ether:CleanupRaidIcons()
     Ether:CleanupTimerCache()
 end
 
-local function UpdateButtonDispel(button)
-    local dispel = GetCachedDispel(button.unit)
-    if dispel then
-        local color = colors[dispel.dispelName] or {0, 0, 0, 0}
-        Ether:updateDispelBorder(button, color)
-        button.dispellableDebuff = dispel
-    else
-        Ether:updateDispelBorder(button, {0, 0, 0, 0})
-        button.dispellableDebuff = nil
-    end
-end
-
 function Ether:UpdateBlink(unit, guid, spellId)
-    local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellId, "HELPFUL")
+    local aura = GetUnitAuraBySpellID(unit, spellId, "HELPFUL")
     if not aura then return end
     local button = Ether.unitButtons.raid[unit]
     if not button then return end
@@ -265,7 +255,7 @@ function Ether:UpdateBlink(unit, guid, spellId)
     Ether.StartBlink(raidIconData[guid][aura.spellId], aura.duration, 0.3)
 end
 function Ether:UpdateDispel(unit, guid, spellId)
-    local aura = C_UnitAuras.GetUnitAuraBySpellID(unit, spellId, "HELPFUL")
+    local aura = GetUnitAuraBySpellID(unit, spellId, "HELPFUL")
     if not aura then return end
     local button = Ether.unitButtons.raid[unit]
     if not button then return end
@@ -314,7 +304,7 @@ local function raidAuraUpdate(unit, updateInfo)
                     spellId = aura.spellId,
                     guid = guid
                 }
-                raidAurasHelpful[aura.auraInstanceID] = aura
+                raidAuraHelpful[aura.auraInstanceID] = aura
             end
             if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                 raidDispelData[guid] = raidDispelData[guid] or {}
@@ -325,12 +315,12 @@ local function raidAuraUpdate(unit, updateInfo)
                 local color = colors[aura.dispelName] or {0, 0, 0, 0}
                 raidDispelData[guid][aura.spellId] = button
                 Ether:updateDispelBorder(raidDispelData[guid][aura.spellId], color)
-                raidAurasDispel[aura.auraInstanceID] = aura
+                raidAuraDispel[aura.auraInstanceID] = aura
             end
             if aura.isHarmful and aura.icon then
                 raidIconData[guid] = raidIconData[guid] or {}
                 if not raidIconData[guid][aura.icon] then
-                    local color = colors[aura.dispelName] or {0.80, 0.40, 1.00, 1}
+                    local color = colors[aura.dispelName] or {0, 0, 0, 0}
                     button.dispelIcon:SetTexture(aura.icon)
                     button.dispelBorder:SetColorTexture(unpack(color))
                     raidIconData[guid][aura.icon] = button.iconFrame
@@ -340,7 +330,7 @@ local function raidAuraUpdate(unit, updateInfo)
                         guid = guid
                     }
                 else
-                    Ether.StartBlink(raidIconData[guid][aura.icon], aura.duration, 0.3)
+                    Ether.StartBlink(raidIconData[guid][aura.icon], aura.duration, 0.25)
                 end
                 raidAuraIcons[aura.auraInstanceID] = aura
             end
@@ -360,22 +350,22 @@ local function raidAuraUpdate(unit, updateInfo)
                     spellId = aura.spellId,
                     guid = guid
                 }
-                raidAurasHarmful[aura.auraInstanceID] = aura
+                raidAuraHarmful[aura.auraInstanceID] = aura
             end
         end
     end
     if updateInfo.removedAuraInstanceIDs then
         for _, auraInstanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-            if raidAurasDispel[auraInstanceID] then
+            if raidAuraDispel[auraInstanceID] then
                 local auraData = raidDispelData[auraInstanceID]
                 local auraGuid = auraData.guid
                 local spellId = auraData.spellId
                 if raidDispelData[auraGuid] and raidDispelData[auraGuid][spellId] then
                     Ether:updateDispelBorder(raidDispelData[auraGuid][spellId], {0, 0, 0, 0})
                 end
-                raidAurasDispel[auraInstanceID] = nil
+                raidAuraDispel[auraInstanceID] = nil
             end
-            if raidAurasHarmful[auraInstanceID] then
+            if raidAuraHarmful[auraInstanceID] then
                 local auraData = raidDebuffData[auraInstanceID]
                 if not auraData then return end
                 local auraGuid = auraData.guid
@@ -383,7 +373,7 @@ local function raidAuraUpdate(unit, updateInfo)
                 if raidDebuffData[auraGuid] and raidDebuffData[auraGuid][spellId] then
                     raidDebuffData[auraGuid][spellId]:Hide()
                 end
-                raidAurasHarmful[auraInstanceID] = nil
+                raidAuraHarmful[auraInstanceID] = nil
             end
             if raidAuraIcons[auraInstanceID] then
                 local auraData = raidIconData[auraInstanceID]
@@ -395,7 +385,7 @@ local function raidAuraUpdate(unit, updateInfo)
                 end
                 raidAuraIcons[auraInstanceID] = nil
             end
-            if raidAurasHelpful[auraInstanceID] then
+            if raidAuraHelpful[auraInstanceID] then
                 local auraData = raidBuffData[auraInstanceID]
                 if not auraData then return end
                 local auraGuid = auraData.guid
@@ -403,7 +393,7 @@ local function raidAuraUpdate(unit, updateInfo)
                 if raidBuffData[guid] and raidBuffData[auraGuid][spellId] then
                     raidBuffData[auraGuid][spellId]:Hide()
                 end
-                raidAurasHelpful[auraInstanceID] = nil
+                raidAuraHelpful[auraInstanceID] = nil
             end
         end
     end
@@ -623,42 +613,40 @@ if not update then
 end
 
 function Ether:AuraWipe()
-    wipe(getUnitBuffs)
-    wipe(getUnitDebuffs)
-    wipe(raidAurasHelpful)
-    wipe(raidAurasHarmful)
-    wipe(raidAurasDispel)
-    wipe(raidDispelData)
+    wipe(raidAuraHelpful)
+    wipe(raidAuraHarmful)
+    wipe(raidAuraDispel)
     wipe(raidAuraIcons)
+    wipe(raidDispelData)
     wipe(raidIconData)
     wipe(raidBuffData)
     wipe(raidDebuffData)
     wipe(dispelCache)
+    wipe(getUnitBuffs)
+    wipe(getUnitDebuffs)
 end
 
-local data = {}
-local tinsert = table.insert
 local function GetUnits()
-    wipe(data)
+    wipe(dataUnits)
     if UnitInParty("player") and not UnitInRaid("player") then
-        tinsert(data, "player")
+        tinsert(dataUnits, "player")
         for i = 1, GetNumSubgroupMembers() do
             local unit = "party" .. i
             if UnitExists(unit) then
-                tinsert(data, unit)
+                tinsert(dataUnits, unit)
             end
         end
     elseif UnitInRaid("player") then
         for i = 1, GetNumGroupMembers() do
             local unit = "raid" .. i
             if UnitExists(unit) then
-                tinsert(data, unit)
+                tinsert(dataUnits, unit)
             end
         end
     else
-        tinsert(data, "player")
+        tinsert(dataUnits, "player")
     end
-    return data
+    return dataUnits
 end
 
 local function auraTblReset(unit)

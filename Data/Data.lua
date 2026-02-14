@@ -27,6 +27,7 @@ local Default = {
     [811] = {
         ["font"] = "Fonts\\FRIZQT__.TTF",
         ["background"] = "Interface\\FrameGeneral\\UI-Background-Rock",
+        ["border"] = "Interface\\DialogFrame\\UI-DialogBox-Border",
         ["bar"] = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
     },
     [901] = {
