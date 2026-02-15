@@ -4,6 +4,7 @@ local L = Ether.L
 local pairs, ipairs = pairs, ipairs
 Ether.version = ""
 Ether.IsMovable = false
+Ether.IsShown = false
 local updatedChannel = false
 Ether.debug = false
 Ether.Header = {}
@@ -133,35 +134,35 @@ do
         end
 
         if category == "Module" then
-            Ether:CreateModuleSection(self)
+            Ether:CreateModuleSection(EtherFrame)
         elseif category == "Blizzard" then
-            Ether:CreateBlizzardSection(self)
+            Ether:CreateBlizzardSection(EtherFrame)
         elseif category == "About" then
-            Ether:CreateAboutSection(self)
+            Ether:CreateAboutSection(EtherFrame)
         elseif category == "Create" then
-            Ether:CreateCreationSection(self)
+            Ether:CreateCreationSection(EtherFrame)
         elseif category == "Update" then
-            Ether:CreateUpdateSection(self)
+            Ether:CreateUpdateSection(EtherFrame)
         elseif category == "Settings" then
-            Ether:CreateSettingsSection(self)
+            Ether:CreateSettingsSection(EtherFrame)
         elseif category == "Custom" then
-            Ether:CreateCustomSection(self)
+            Ether:CreateCustomSection(EtherFrame)
         elseif category == "Effects" then
-            Ether:CreateEffectsSection(self)
+            Ether:CreateEffectsSection(EtherFrame)
         elseif category == "Helper" then
-            Ether:CreateHelperSection(self)
+            Ether:CreateHelperSection(EtherFrame)
         elseif category == "Position" then
-            Ether:CreatePositionSection(self)
+            Ether:CreatePositionSection(EtherFrame)
         elseif category == "Tooltip" then
-            Ether:CreateTooltipSection(self)
+            Ether:CreateTooltipSection(EtherFrame)
         elseif category == "Layout" then
-            Ether:CreateLayoutSection(self)
+            Ether:CreateLayoutSection(EtherFrame)
         elseif category == "CastBar" then
-            Ether:CreateCastBarSection(self)
+            Ether:CreateCastBarSection(EtherFrame)
         elseif category == "Config" then
-            Ether:CreateConfigSection(self)
+            Ether:CreateConfigSection(EtherFrame)
         elseif category == "Edit" then
-            Ether:CreateEditSection(self)
+            Ether:CreateEditSection(EtherFrame)
         end
 
         local target = self["CONTENT"]["CHILDREN"][category]
@@ -271,7 +272,12 @@ do
             for _, value in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
                 self.Frames[value] = CreateFrame("Frame", nil, self.Frames["MAIN"])
             end
-
+            self.Frames["MAIN"]:SetScript("OnShow", function()
+                Ether.DB[111].SHOW = true
+            end)
+            self.Frames["MAIN"]:SetScript("OnHide", function()
+                Ether.DB[111].SHOW = false
+            end)
             self.Frames["TOP"]:SetPoint("TOPLEFT", 10, -15)
             self.Frames["TOP"]:SetPoint("TOPRIGHT", -10, 0)
             self.Frames["TOP"]:SetSize(0, 30)
@@ -335,7 +341,6 @@ do
             end)
             close:SetScript("OnClick", function()
                 self.Frames["MAIN"]:Hide()
-                Ether.DB[111].SHOW = 0
                 ShowHideSettings(false)
             end)
             InitializeLayer(self)
@@ -344,9 +349,11 @@ do
     function EtherToggle()
         CreateMainFrame(EtherFrame)
         if InCombatLockdown() then return end
-        local isShown = EtherFrame.Frames["MAIN"]:IsShown()
-        Ether.DB[111].SHOW = isShown
-        EtherFrame.Frames["MAIN"]:SetShown(not isShown)
+        if EtherFrame.Frames["MAIN"]:IsShown() then
+            EtherFrame.Frames["MAIN"]:Hide()
+        else
+            EtherFrame.Frames["MAIN"]:Show()
+        end
         local category = Ether.DB[111].LAST_TAB
         if EtherFrame["CONTENT"]["CHILDREN"][category] then
             ShowCategory(EtherFrame, category)
@@ -381,6 +388,7 @@ do
         end
     end
 end
+
 Ether.UIPanel = EtherFrame
 Ether.WrapSettingsColor = WrapSettingsColor
 Ether.ShowHideSettings = ShowHideSettings
@@ -711,6 +719,7 @@ local function OnInitialize(self, event, ...)
                 Ether:CreateUnitButtons(index)
             end
         end
+        local isShown = false
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
@@ -744,19 +753,19 @@ local function OnInitialize(self, event, ...)
     elseif (event == "PLAYER_REGEN_DISABLED") then
         self:UnregisterEvent("PLAYER_REGEN_DISABLED")
         self:RegisterEvent("PLAYER_REGEN_ENABLED")
-        if Ether.DB[111].SHOW == 1 then
+        if EtherFrame.Frames["MAIN"]:IsShown() then
             EtherFrame.Frames["MAIN"]:Hide()
             ShowHideSettings(false)
+            Ether.IsShown = true
         end
-        Ether.DB[111].SHOW = Ether.DB[111].SHOW and 1 or 0
     elseif (event == "PLAYER_REGEN_ENABLED") then
         self:UnregisterEvent("PLAYER_REGEN_ENABLED")
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
-        if Ether.DB[111].SHOW == 1 then
+        if Ether.IsShown then
             EtherFrame.Frames["MAIN"]:Show()
-            if Ether.IsMovable then
-                ShowHideSettings(true)
-            end
+            Ether.IsShown = false
+            --   ShowHideSettings(true)
+
         end
     end
 end

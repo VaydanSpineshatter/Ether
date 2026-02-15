@@ -446,7 +446,6 @@ function Ether:CreateModuleSection(self)
     local parent = self["CONTENT"]["CHILDREN"]["Module"]
     if parent.Created then return end
     parent.Created = true
-    print("asd")
     local modulesValue = {
         [1] = {name = "Icon"},
         [2] = {name = "Chat Bn & Msg Whisper"},
