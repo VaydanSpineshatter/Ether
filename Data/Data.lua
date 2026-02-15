@@ -58,6 +58,11 @@ local Default = {
         [341] = {16, 12, 12},
         [342] = {16, 12, 12}
     },
+    [1401] = {
+        [1] = {"TOPLEFT", 20, -200},
+        [2] = {"TOPLEFT", 20, -260},
+        [3] = {"TOPLEFT", 20, -320}
+    },
     [5111] = {
         [331] = {"RIGHT", "UIParent", "RIGHT", -340, -340, 180, 200, 1.0, 1.0},
         [332] = {"CENTER", "UIParent", "CENTER", -250, -200, 120, 50, 1.0, 1.0},
@@ -209,6 +214,11 @@ Ether.DataDefault = Default
 ---| Player CastBar Config 1
 ---| Target CastBar Config 2
 
+---@alias CastBarConfig_1401 number
+---| customButton 1
+---| customButton 2
+---| customButton 3
+
 function Ether.DataEnableAll(t)
     for i = 1, #t do
         t[i] = 1
@@ -289,35 +299,47 @@ function Ether:ArrayMigrateData(data)
     end
 end
 
-local function EtherFrameChecked(number, data, number2)
+function Ether:FrameChecked(number, data)
     if Ether.UIPanel.Buttons[number] then
         for i = 1, #Ether.DB[data] do
-            local checkbox = Ether.UIPanel.Buttons[number][number2][i] or Ether.UIPanel.Buttons[number][i]
+            local checkbox = Ether.UIPanel.Buttons[number][i]
             if checkbox then
                 checkbox:SetChecked(Ether.DB[data][i] == 1)
             end
         end
     end
 end
-Ether.EtherFrameChecked = EtherFrameChecked
-local numberTbl = {401, 101, 201, 1001, 501, 301, 801, 1201}
 
 function Ether:RefreshAllSettings()
-    if Ether.UIPanel and Ether.UIPanel.Frames and Ether.UIPanel.Frames["MAIN"]:IsShown() then
-        Ether.UIPanel.Frames["MAIN"]:Hide()
-    end
-    for index, value in ipairs(numberTbl) do
-        EtherFrameChecked(index, value, 2)
-    end
-    if Ether.UIPanel.Buttons[4][2] then
-        for i, unit in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus", "raid"}) do
-            local checkbox = Ether.UIPanel.Buttons[4][2][i]
+
+    Ether:FrameChecked(1, 401)
+    Ether:FrameChecked(2, 101)
+    Ether:FrameChecked(3, 201)
+    Ether:FrameChecked(5, 1001)
+    Ether:FrameChecked(6, 501)
+    Ether:FrameChecked(7, 301)
+    Ether:FrameChecked(8, 801)
+    Ether:FrameChecked(9, 1201)
+    if Ether.UIPanel.Buttons[4] and Ether.UIPanel.Buttons[4][1] then
+        for i = 1, #Ether.DB[701] do
+            local checkbox = Ether.UIPanel.Buttons[4][1][i]
             if checkbox then
-                checkbox:SetChecked(Ether.DB[901][unit] == true)
+                checkbox:SetChecked(Ether.DB[701][i] == 1)
             end
         end
     end
-    Ether.UIPanel.Frames["MAIN"]:Show()
+    if Ether.UIPanel.Buttons[4] and Ether.UIPanel.Buttons[4][2] then
+        local units = {
+            "player", "target", "targettarget", "pet", "pettarget",
+            "focus", "raid"
+        }
+        for i, unitKey in ipairs(units) do
+            local checkbox = Ether.UIPanel.Buttons[4][2][i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[901][unitKey] == true)
+            end
+        end
+    end
 end
 
 function Ether:EtherFrameSetClick(number, number2, number3)

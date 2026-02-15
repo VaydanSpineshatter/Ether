@@ -30,7 +30,6 @@ Ether.SlashInfo = {
 
 Ether.unitButtons = {
     raid = {},
-    party = {},
     solo = {}
 }
 
@@ -84,7 +83,7 @@ do
         Menu = {
             ["TOP"] = {
                 [1] = {"Module", "Blizzard", "About"},
-                [2] = {"Create", "Update"},
+                [2] = {"Create", "Fake", "Update"},
                 [3] = {"Settings", "Custom", "Effects", "Helper"},
                 [4] = {"Position"},
                 [5] = {"Tooltip"},
@@ -141,18 +140,20 @@ do
             Ether:CreateAboutSection(EtherFrame)
         elseif category == "Create" then
             Ether:CreateCreationSection(EtherFrame)
+        elseif category == "Fake" then
+            Ether:CreateFakeSection(EtherFrame)
         elseif category == "Update" then
             Ether:CreateUpdateSection(EtherFrame)
         elseif category == "Settings" then
             Ether:CreateSettingsSection(EtherFrame)
         elseif category == "Custom" then
-            Ether:CreateCustomSection(EtherFrame)
+            Ether:CreateCustomSection()
         elseif category == "Effects" then
             Ether:CreateEffectsSection(EtherFrame)
         elseif category == "Helper" then
             Ether:CreateHelperSection(EtherFrame)
         elseif category == "Position" then
-            Ether:CreatePositionSection(EtherFrame)
+            Ether:CreatePositionSection()
         elseif category == "Tooltip" then
             Ether:CreateTooltipSection(EtherFrame)
         elseif category == "Layout" then
@@ -173,7 +174,6 @@ do
 
     local function InitializeLayer(self)
         if not self.Created then
-            print("2")
             for layer = 1, 7 do
                 if self.Menu["TOP"][layer] then
                     for _, name in ipairs(self.Menu["TOP"][layer]) do
@@ -359,8 +359,13 @@ do
             ShowCategory(EtherFrame, category)
         end
     end
+    local snap = {}
     function ShowHideSettings(state)
         if InCombatLockdown() then return end
+        if state then
+            wipe(snap)
+            snap = Ether.DataSnapShot(Ether.DB[401])
+        end
         if not Ether.gridFrame then
             Ether:SetupGridFrame()
         end
@@ -371,12 +376,14 @@ do
         Ether.gridFrame:SetShown(state)
         if Ether.tooltipFrame and Ether.DB[401][3] == 1 then
             Ether.tooltipFrame:SetShown(state)
+            Ether.DB[401][3] = 0
         end
         Ether.debugFrame:SetShown(state)
         if Ether.Anchor.raid.tex then
             Ether.Anchor.raid.tex:SetShown(state)
         end
         if not state then
+            Ether.DataRestore(Ether.DB[401], snap)
             Ether.CleanUpButtons()
             Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
         end
@@ -547,7 +554,7 @@ function Ether:RefreshFramePositions()
         [337] = Ether.unitButtons.solo["focus"],
         [338] = Ether.Anchor.raid,
         [339] = Ether.DebugFrame,
-        [340] = EtherFrame.Frames["Main"]
+        [340] = EtherFrame.Frames["MAIN"]
     }
 
     for frameID in pairs(Ether.DB[5111]) do
@@ -601,7 +608,7 @@ local function OnInitialize(self, event, ...)
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
 
-        local charKey = Ether.GetCharacterKey() or "Unknown-Unknown"
+        local charKey = Ether:GetCharacterKey() or "Unknown-Unknown"
         local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
         Ether.version = version
 
@@ -630,17 +637,17 @@ local function OnInitialize(self, event, ...)
             local profile = ETHER_DATABASE_DX_AA.profiles[charKey]
             for key, value in pairs(Ether.DataDefault) do
                 if profile[key] == nil then
-                    profile[key] = Ether.CopyTable(value)
+                    profile[key] = Ether.CopyTable(Ether.DataDefault)
                 end
             end
-            for _, value in ipairs({111, 901, 811, 1002, 1201, 1301, 5111}) do
+            for _, value in ipairs({111, 901, 811, 1002, 1201, 1301, 1401, 5111}) do
                 Ether:NilCheckData(profile, value)
             end
             Ether:ArrayMigrateData(profile)
         end
 
         ETHER_DATABASE_DX_AA.currentProfile = charKey
-        Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
+        Ether.DB = Ether.CopyTable(Ether:GetCurrentProfile())
         Ether.REQUIREMENT_VERSION = REQUIREMENT_VERSION
         Ether:CreateSplitGroupHeader()
         HideBlizzard()
@@ -743,7 +750,7 @@ local function OnInitialize(self, event, ...)
             end
         end)
     elseif (event == "PLAYER_LOGOUT") then
-        local charKey = Ether.GetCharacterKey()
+        local charKey = Ether:GetCharacterKey()
         if charKey then
             ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
         end

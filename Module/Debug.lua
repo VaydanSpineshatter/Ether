@@ -6,7 +6,7 @@ local C_After = C_Timer.After
 local debugText = ""
 local function SendOutput(input)
     if not Ether.debugFrame then
-       Ether:SetupDebugFrame()
+        Ether:SetupDebugFrame()
     end
     Ether.debugFrame:Show()
     debugText = debugText .. '\n' .. input

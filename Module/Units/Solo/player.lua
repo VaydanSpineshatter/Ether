@@ -159,32 +159,37 @@ function Ether:DestroyUnitButtons(index)
     end
 end
 
-local custom = nil
 local updateTicker = nil
 local enabled = false
-
-local function updateCustom(self, token)
-    local health, healthMax = UnitHealth(token), UnitHealthMax(token)
-    if self.healthBar and healthMax > 0 then
-        self.healthBar:SetMinMaxValues(0, healthMax)
-        self.healthBar:SetValue(health)
+local customButtons = {
+    ["fake1"] = {},
+    ["fake2"] = {},
+    ["fake3"] = {}
+}
+local function updateCustom(button)
+    if not button then return end
+    local health, healthMax = UnitHealth(button.unit), UnitHealthMax(button.unit)
+    if button.healthBar and healthMax > 0 then
+        button.healthBar:SetMinMaxValues(0, healthMax)
+        button.healthBar:SetValue(health)
     end
-    local power, powerMax = UnitPower(token), UnitPowerMax(token)
-    if self.powerBar and powerMax > 0 then
-        self.powerBar:SetMinMaxValues(0, powerMax)
-        self.powerBar:SetValue(power)
+    local power, powerMax = UnitPower(button.unit), UnitPowerMax(button.unit)
+    if button.powerBar and powerMax > 0 then
+        button.powerBar:SetMinMaxValues(0, powerMax)
+        button.powerBar:SetValue(power)
     end
 end
 
-local function updateFunc(self, token)
+local function updateFunc(button)
+    if not button then return end
     if not updateTicker and not enabled then
         enabled = true
         updateTicker = C_Ticker(0.1, function()
-            updateCustom(self, token)
+            updateCustom(button)
         end)
     end
 end
-
+local custom = nil
 function Ether.stopUpdateFunc()
     if updateTicker and custom then
         updateTicker:Cancel()
@@ -224,7 +229,7 @@ function Ether.CreateCustomUnit()
     if not enabled and not custom then
         local success, msg = pcall(function()
             custom = CreateFrame("Button", "EtherCustomUnitButton", UIParent, "EtherUnitTemplate")
-            custom:SetPoint("TOPLEFT", 20, -200)
+            custom:SetPoint(Ether.DB[1401][1][1], Ether.DB[1401][1][2], Ether.DB[1401][1][3])
             custom:SetSize(120, 50)
             local name, unit = ParseGUID("target")
             if not name or not unit then
@@ -252,7 +257,7 @@ function Ether.CreateCustomUnit()
             Ether.stopUpdateFunc()
         else
             if not updateTicker then
-                updateFunc(custom, custom.unit)
+                updateFunc(custom)
                 enabled = true
             end
         end

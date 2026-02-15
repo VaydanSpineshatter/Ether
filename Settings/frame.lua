@@ -593,22 +593,79 @@ function Ether:CreateCreationSection(EtherFrame)
             Ether.DB[201][i] = checked and 1 or 0
             if Ether.DB[201][i] == 1 then
                 Ether:CreateUnitButtons(i)
+                if Ether.DB[1001][2] == 1 then
+                    Ether:EnableSoloUnitAura(i)
+                end
             else
+                if Ether.DB[1001][2] == 1 then
+                    Ether:DisableSoloUnitAura(i)
+                end
                 Ether:DestroyUnitButtons(i)
             end
         end)
         EtherFrame.Buttons[3][i] = btn
     end
 
-    local create = EtherPanelButton(parent, 100, 25, "Create Custom", "TOPLEFT", EtherFrame.Buttons[3][6], "BOTTOMLEFT", 10, -40)
+end
+
+function Ether:CreateFakeSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Fake"]
+    if parent.Created then return end
+    parent.Created = true
+    local create = EtherPanelButton(parent, 100, 25, "Create Custom 1", "TOPLEFT", parent, "TOPLEFT", 5, -5)
     create:SetScript("OnClick", function()
         Ether.CreateCustomUnit()
     end)
-
-    local destroy = EtherPanelButton(parent, 100, 25, "Destroy Custom", "LEFT", create, "RIGHT", 40, 0)
+    local create2 = EtherPanelButton(parent, 100, 25, "Create Custom 2", "TOPLEFT", create, "BOTTOMLEFT", 0, -5)
+    create2:SetScript("OnClick", function()
+        Ether.CreateCustomUnit()
+    end)
+    local create3 = EtherPanelButton(parent, 100, 25, "Create Custom 3", "TOPLEFT", create2, "BOTTOMLEFT", 0, -5)
+    create3:SetScript("OnClick", function()
+        Ether.CreateCustomUnit()
+    end)
+    local destroy = EtherPanelButton(parent, 100, 25, "Destroy Custom 1", "TOPLEFT", create3, "BOTTOMLEFT", 0, -5)
     destroy:SetScript("OnClick", function()
         Ether.stopUpdateFunc()
     end)
+    local destroy2 = EtherPanelButton(parent, 100, 25, "Destroy Custom 2", "TOPLEFT", destroy, "BOTTOMLEFT", 0, -5)
+    destroy2:SetScript("OnClick", function()
+        Ether.stopUpdateFunc()
+    end)
+    local destroy3 = EtherPanelButton(parent, 100, 25, "Destroy Custom 3", "TOPLEFT", destroy2, "BOTTOMLEFT", 0, -5)
+    destroy3:SetScript("OnClick", function()
+        Ether.stopUpdateFunc()
+    end)
+    create2:Disable();
+    create3:Disable();
+    destroy2:Disable();
+    destroy3:Disable();
+
+    local xLabel = parent:CreateFontString(nil, "OVERLAY")
+    xLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    xLabel:SetPoint("LEFT", create, "RIGHT", 60, 0)
+    xLabel:SetText("X Offset")
+    local xInput = CreateLineInput(parent, 70, 25)
+    xInput:SetPoint("TOPLEFT", xLabel, "BOTTOMLEFT", 0, -10)
+    xInput:SetScript("OnEnterPressed", function(self)
+        local offX = tonumber(self:GetText())
+        Ether.DB[1401][1][2] = offX
+        self:ClearFocus()
+    end)
+    local yLabel = parent:CreateFontString(nil, "OVERLAY")
+    yLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    yLabel:SetPoint("LEFT", xLabel, "RIGHT", 60, 0)
+    yLabel:SetText("Y Offset")
+    local yInput = CreateLineInput(parent, 70, 25)
+    yInput:SetPoint("TOPLEFT", yLabel, "BOTTOMLEFT", 0, -10)
+    yInput:SetScript("OnEnterPressed", function(self)
+        local offY = tonumber(self:GetText())
+        Ether.DB[1401][1][3] = offY
+        self:ClearFocus()
+    end)
+    xInput:Disable();
+    yInput:Disable();
+
 end
 
 function Ether:CreateUpdateSection(EtherFrame)
@@ -1184,8 +1241,8 @@ local function CreateEditor(parent)
     return frame
 end
 
-function Ether:CreateCustomSection(EtherFrame)
-    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Custom"]
+function Ether:CreateCustomSection()
+    local parent = Ether.UIPanel["CONTENT"]["CHILDREN"]["Custom"]
     if parent.Created then return end
     parent.Created = true
     if not AuraList then
@@ -1362,10 +1419,11 @@ function Ether:CreateHelperSection(EtherFrame)
     example:SetText(exampleText)
 end
 
-function Ether:CreatePositionSection(EtherFrame)
-    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Position"]
+function Ether:CreatePositionSection()
+    local parent = Ether.UIPanel["CONTENT"]["CHILDREN"]["Position"]
     if parent.Created then return end
     parent.Created = true
+
     local I_Register = {
         [1] = {text = "Ready check", texture = "Interface\\RaidFrame\\ReadyCheck-Ready", texture2 = "Interface\\RaidFrame\\ReadyCheck-NotReady", texture3 = "Interface\\RaidFrame\\ReadyCheck-Waiting"},
         [2] = {text = "Connection", texture = "Interface\\CharacterFrame\\Disconnect-Icon", size = 30},
@@ -1388,10 +1446,10 @@ function Ether:CreatePositionSection(EtherFrame)
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -100)
         else
-            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[6][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", Ether.UIPanel.Buttons[6][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
+        btn.label = GetFont(Ether.UIPanel, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn.texture = btn:CreateTexture(nil, "OVERLAY")
         btn.texture:SetSize(18, 18)
@@ -1423,10 +1481,10 @@ function Ether:CreatePositionSection(EtherFrame)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
         end)
-        EtherFrame.Buttons[6][i] = btn
+        Ether.UIPanel.Buttons[6][i] = btn
     end
 
-    local Indicator = EtherFrame.Frames["INDICATORS"]
+    local Indicator = Ether.UIPanel.Frames["INDICATORS"]
     Indicator.sizeValue = nil
     Indicator.offsetXValue = nil
     Indicator.offsetYValue = nil
@@ -1904,6 +1962,8 @@ function Ether:CreateConfigSection(EtherFrame)
     local parent = EtherFrame["CONTENT"]["CHILDREN"]["Config"]
     if parent.Created then return end
     parent.Created = true
+    Ether:CreateCustomSection()
+    Ether:CreatePositionSection()
     local DB = Ether.DB
     local frameKeys = {
         [331] = "Tooltip",
@@ -2264,6 +2324,8 @@ function Ether:CreateEditSection(EtherFrame)
     local parent = EtherFrame["CONTENT"]["CHILDREN"]["Edit"]
     if parent.Created then return end
     parent.Created = true
+    Ether:CreateCustomSection()
+    Ether:CreatePositionSection()
     local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
     dropdown:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -5)
     UIDropDownMenu_SetWidth(dropdown, 130)
@@ -2299,11 +2361,11 @@ function Ether:CreateEditSection(EtherFrame)
     local function RefreshDropdown()
         UIDropDownMenu_Initialize(dropdown, function(self, level)
             local info = UIDropDownMenu_CreateInfo()
-            for _, profileName in ipairs(Ether.GetProfileList()) do
+            for _, profileName in ipairs(Ether:GetProfileList()) do
                 info.text = profileName
                 info.value = profileName
                 info.func = function(self)
-                    local success, msg = Ether.SwitchProfile(self.value)
+                    local success, msg = Ether:SwitchProfile(self.value)
                     if success then
                         UIDropDownMenu_SetSelectedValue(dropdown, self.value)
                         UIDropDownMenu_SetText(dropdown, self.value)
@@ -2330,7 +2392,7 @@ function Ether:CreateEditSection(EtherFrame)
         okButton:SetScript("OnClick", function()
             local name = inputBox:GetText()
             if name and name ~= "" then
-                local success, msg = Ether.CreateProfile(name)
+                local success, msg = Ether:CreateProfile(name)
                 if success then
                     RefreshDropdown()
                     Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
@@ -2353,7 +2415,7 @@ function Ether:CreateEditSection(EtherFrame)
             local name = inputBox:GetText()
             if name and name ~= "" then
 
-                local success, msg = Ether.CopyProfile(ETHER_DATABASE_DX_AA.currentProfile, name)
+                local success, msg = Ether:CopyProfile(ETHER_DATABASE_DX_AA.currentProfile, name)
                 if success then
                     RefreshDropdown()
                     Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
@@ -2373,7 +2435,7 @@ function Ether:CreateEditSection(EtherFrame)
         okButton:SetScript("OnClick", function()
             local newName = inputBox:GetText()
             if newName and newName ~= "" then
-                local success, msg = Ether.RenameProfile(ETHER_DATABASE_DX_AA.currentProfile, newName)
+                local success, msg = Ether:RenameProfile(ETHER_DATABASE_DX_AA.currentProfile, newName)
                 if success then
                     RefreshDropdown()
                     Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
@@ -2397,7 +2459,7 @@ function Ether:CreateEditSection(EtherFrame)
             button1 = "Yes",
             button2 = "No",
             OnAccept = function()
-                local success, msg = Ether.DeleteProfile(profileToDelete)
+                local success, msg = Ether:DeleteProfile(profileToDelete)
                 if success then
                     RefreshDropdown()
                     Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
@@ -2421,7 +2483,7 @@ function Ether:CreateEditSection(EtherFrame)
             button1 = "Yes",
             button2 = "No",
             OnAccept = function()
-                local success, msg = Ether.ResetProfile()
+                local success, msg = Ether:ResetProfile()
                 if success then
                     Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
                     RefreshDropdown()
@@ -2445,15 +2507,15 @@ function Ether:CreateEditSection(EtherFrame)
     local importBtn = EtherPanelButton(transfer, 90, 25, "Import", "LEFT", createButton, "RIGHT", 100, 0)
     local exportBtn = EtherPanelButton(transfer, 90, 25, "Export", "LEFT", importBtn, "RIGHT", 5, 0)
     exportBtn:SetScript("OnClick", function()
-        local encoded = Ether.ExportProfileToClipboard()
+        local encoded = Ether:ExportProfileToClipboard()
         if encoded then
-            Ether.ShowExportPopup(encoded)
+            Ether:ShowExportPopup(encoded)
         end
     end)
     importBtn:SetScript("OnClick", function()
         local data = importBox:GetText()
         if data and data ~= "" and data ~= "Paste export data here..." then
-            local success, msg = Ether.ImportProfile(data)
+            local success, msg = Ether:ImportProfile(data)
             if success then
                 Ether.DebugOutput("|cff00ff00" .. msg .. "|r")
                 importBox:SetText("")
@@ -2482,6 +2544,7 @@ function Ether:CreateEditSection(EtherFrame)
     importBox:SetPoint("BOTTOMRIGHT", importBackdrop, "BOTTOMRIGHT", -8, 8)
     importBox:SetMultiLine(true)
     importBox:SetAutoFocus(false)
+    importBox:SetClipsChildren(true)
     importBox:SetFont(unpack(Ether.mediaPath.expressway), 9, "OUTLINE")
     importBox:SetText("Paste export data here...")
     importBox:SetTextColor(0.7, 0.7, 0.7)
@@ -2513,9 +2576,9 @@ function Ether:CreateEditSection(EtherFrame)
         self:ClearFocus()
     end)
 
-    function Ether.ShowExportPopup(encoded)
+    function Ether:ShowExportPopup(encoded)
         if not Ether.ExportPopup then
-            Ether.CreateExportPopup()
+            Ether:CreateExportPopup()
         end
 
         Ether.ExportPopup.EditBox:SetText(encoded)
@@ -2560,8 +2623,8 @@ function Ether:CreateEditSection(EtherFrame)
     end
 end
 
-function Ether.ExportCurrentProfile()
-    local charKey = Ether.GetCharacterKey()
+function Ether:ExportCurrentProfile()
+    local charKey = Ether:GetCharacterKey()
     if charKey then
         ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
     end
@@ -2589,7 +2652,7 @@ function Ether.ExportCurrentProfile()
     return encoded
 end
 
-function Ether.ImportProfile(encodedString)
+function Ether:ImportProfile(encodedString)
     if ETHER_DATABASE_DX_AA[101] < Ether.REQUIREMENT_VERSION then
         return false, "The import data is too old"
     end
@@ -2639,8 +2702,8 @@ function Ether.ImportProfile(encodedString)
     return true, "Successfully imported as: " .. importedName
 end
 
-function Ether.ExportProfileToClipboard()
-    local encoded, err = Ether.ExportCurrentProfile()
+function Ether:ExportProfileToClipboard()
+    local encoded, err = Ether:ExportCurrentProfile()
     if not encoded then
         Ether.DebugOutput("|cffff0000Export failed:|r " .. err)
         return
@@ -2662,7 +2725,7 @@ function Ether.ExportProfileToClipboard()
     return encoded
 end
 
-function Ether.CopyProfile(sourceName, targetName)
+function Ether:CopyProfile(sourceName, targetName)
     if not ETHER_DATABASE_DX_AA.profiles[sourceName] then
         return false, "Source profile not found"
     end
@@ -2673,7 +2736,7 @@ function Ether.CopyProfile(sourceName, targetName)
     return true, "Profile copied"
 end
 
-function Ether.SwitchProfile(name)
+function Ether:SwitchProfile(name)
     if not ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile not found"
     end
@@ -2687,14 +2750,10 @@ function Ether.SwitchProfile(name)
     Ether:RefreshFramePositions()
     Ether:UpdateAuraList()
     Ether:UpdateEditor(Editor)
-    if Ether.ConfigFrame and Ether.ConfigFrame:IsShown() then
-        Ether.ConfigFrame:Hide()
-        Ether.ConfigFrame:Show()
-    end
 
     return true, "Switched to " .. name
 end
-function Ether.DeleteProfile(name)
+function Ether:DeleteProfile(name)
     if not ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile not found"
     end
@@ -2716,7 +2775,7 @@ function Ether.DeleteProfile(name)
         if not otherProfile then
             return false, "No other profile available"
         end
-        local success, msg = Ether.SwitchProfile(otherProfile)
+        local success, msg = Ether:SwitchProfile(otherProfile)
         if not success then
             return false, "Failed to switch profile: " .. msg
         end
@@ -2729,15 +2788,15 @@ function Ether.DeleteProfile(name)
     return true, "Profile deleted"
 end
 
-function Ether.GetCharacterKey()
+function Ether:GetCharacterKey()
     return Ether.playerName .. "-" .. realmName
 end
 
-function Ether.GetCurrentProfile()
+function Ether:GetCurrentProfile()
     return ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile]
 end
 
-function Ether.GetProfileList()
+function Ether:GetProfileList()
     local list = {}
     for name in pairs(ETHER_DATABASE_DX_AA.profiles) do
         table.insert(list, name)
@@ -2758,7 +2817,7 @@ function Ether:CreateProfile(name)
     return true, "Profile created"
 end
 
-function Ether.RenameProfile(oldName, newName)
+function Ether:RenameProfile(oldName, newName)
     if not ETHER_DATABASE_DX_AA.profiles[oldName] then
         return false, "Profile not found"
     end
@@ -2773,7 +2832,7 @@ function Ether.RenameProfile(oldName, newName)
     return true, "Profile renamed"
 end
 
-function Ether.ResetProfile()
+function Ether:ResetProfile()
     ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DataDefault)
     Ether.DB = Ether.CopyTable(Ether.DataDefault)
     wipe(Ether.DB[1003])
@@ -2787,8 +2846,7 @@ end
 
 function Ether.CleanUpButtons()
     Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
-    Ether:CreateCustomSection(Ether.UIPanel)
-    Ether:CreatePositionSection(Ether.UIPanel)
+
     local Indicator = Ether.UIPanel.Frames["INDICATORS"]
     if not Indicator then return end
     if Indicator.icon then
@@ -2810,13 +2868,25 @@ function Ether.CleanUpButtons()
         Indicator.offsetXSlider:Hide()
         Indicator.offsetXSlider:Disable()
     end
+    if Indicator.offsetXLabel then
+        Indicator.offsetXLabel:Hide()
+    end
+    if Indicator.sizeLabel then
+        Indicator.sizeLabel:Hide()
+    end
+    if Indicator.offsetYLabel then
+        Indicator.offsetYLabel:Hide()
+    end
+    if Indicator.offsetXValue then
+        Indicator.offsetXValue:Hide()
+    end
+    if Indicator.offsetYValue then
+        Indicator.offsetYValue:Hide()
+    end
+    if Indicator.sizeValue then
+        Indicator.sizeValue:Hide()
 
-    Indicator.offsetXLabel:Hide()
-    Indicator.sizeLabel:Hide()
-    Indicator.offsetYLabel:Hide()
-    Indicator.offsetXValue:Hide()
-    Indicator.offsetYValue:Hide()
-    Indicator.sizeValue:Hide()
+    end
     if Indicator.preview then
         Indicator.preview:Hide()
     end

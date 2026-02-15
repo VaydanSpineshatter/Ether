@@ -663,6 +663,24 @@ function Ether:DisableSoloAuras()
     end
 end
 
+function Ether:EnableSoloUnitAura(info)
+    for index, unit in ipairs({"player", "target", "pet"}) do
+        if index == info then
+         Ether:SoloAuraFullInitial(unit)
+            break
+        end
+    end
+end
+
+function Ether:DisableSoloUnitAura(info)
+    for index, unit in ipairs({"player", "target", "pet"}) do
+        if index == info then
+            auraTblReset(unit)
+            break
+        end
+    end
+end
+
 function Ether:DisableHeaderAuras()
     Ether:CleanupRaidIcons()
     Ether:AuraWipe()
