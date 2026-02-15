@@ -270,10 +270,10 @@ local function CreateEtherDropdown(parent, width, text, options, position)
         menu:SetShown(false)
     end)
     menu:SetScript("OnShow", function()
-        Ether:WrapMainSettingsColor({0.00, 0.80, 1.00, 1})
+        Ether.WrapSettingsColor({0.00, 0.80, 1.00, 1})
     end)
     menu:SetScript("OnHide", function()
-        Ether:WrapMainSettingsColor({0.80, 0.40, 1.00, 1})
+        Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
         menu:SetShown(false)
     end)
     return dropdown
@@ -328,6 +328,26 @@ local function CreateLineInput(parent, width, height)
         self:ClearFocus()
     end)
     return input
+end
+
+local function ResetTblText(buttons, tbl)
+    for _, btn in pairs(buttons) do
+        if btn[tbl] then
+            btn[tbl]:SetText("")
+        end
+    end
+end
+
+local function resetHealthPowerText(value)
+    if value == 1 then
+        ResetTblText(Ether.unitButtons["solo"], "health")
+    elseif value == 2 then
+        ResetTblText(Ether.unitButtons["solo"], "power")
+    elseif value == 3 then
+        ResetTblText(Ether.unitButtons["raid"], "health")
+    elseif value == 4 then
+        ResetTblText(Ether.unitButtons["raid"], "power")
+    end
 end
 
 local function EtherPanelButton(parent, width, height, text, point, relto, rel, offX, offY)
@@ -422,9 +442,11 @@ local function UpdateIndicatorsValue(self)
     UpdateIndicators(self)
 end
 
-function Ether.CreateModuleSection(self)
+function Ether:CreateModuleSection(self)
     local parent = self["CONTENT"]["CHILDREN"]["Module"]
-
+    if parent.Created then return end
+    parent.Created = true
+    print("asd")
     local modulesValue = {
         [1] = {name = "Icon"},
         [2] = {name = "Chat Bn & Msg Whisper"},
@@ -479,8 +501,10 @@ function Ether.CreateModuleSection(self)
     end
 end
 
-function Ether.CreateBlizzardSection(self)
+function Ether:CreateBlizzardSection(self)
     local parent = self["CONTENT"]["CHILDREN"]["Blizzard"]
+    if parent.Created then return end
+    parent.Created = true
     local HideValue = {
         [1] = {name = "Player frame"},
         [2] = {name = "Pet frame"},
@@ -516,8 +540,10 @@ function Ether.CreateBlizzardSection(self)
     end
 end
 
-function Ether.CreateAboutSection(self)
+function Ether:CreateAboutSection(self)
     local parent = self["CONTENT"]["CHILDREN"]["About"]
+    if parent.Created then return end
+    parent.Created = true
     local slash = GetFont(self, parent, "Slash Commands", 15)
     slash:SetPoint("TOP", 0, -20)
     local lastY = -20
@@ -537,8 +563,10 @@ function Ether.CreateAboutSection(self)
     aurasInfo:SetPoint("TOP", auras, "BOTTOM", 0, -10)
 end
 
-function Ether.CreateCreationSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Create"]
+function Ether:CreateCreationSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Create"]
+    if parent.Created then return end
+    parent.Created = true
     local CreateUnits = {
         [1] = {name = "|cffCC66FFPlayer|r"},
         [2] = {name = "|cE600CCFFTarget|r"},
@@ -555,10 +583,10 @@ function Ether.CreateCreationSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", 5, -5)
         else
-            btn:SetPoint("TOP", self.Buttons[3][i - 1], "BOTTOM", 0, 0)
+            btn:SetPoint("TOP", EtherFrame.Buttons[3][i - 1], "BOTTOM", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(self, btn, opt.name, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.name, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 8, 1)
         btn:SetChecked(Ether.DB[201][i] == 1)
         btn:SetScript("OnClick", function(self)
@@ -570,10 +598,10 @@ function Ether.CreateCreationSection(self)
                 Ether:DestroyUnitButtons(i)
             end
         end)
-        self.Buttons[3][i] = btn
+        EtherFrame.Buttons[3][i] = btn
     end
 
-    local create = EtherPanelButton(parent, 100, 25, "Create Custom", "TOPLEFT", self.Buttons[3][6], "BOTTOMLEFT", 10, -40)
+    local create = EtherPanelButton(parent, 100, 25, "Create Custom", "TOPLEFT", EtherFrame.Buttons[3][6], "BOTTOMLEFT", 10, -40)
     create:SetScript("OnClick", function()
         Ether.CreateCustomUnit()
     end)
@@ -584,28 +612,10 @@ function Ether.CreateCreationSection(self)
     end)
 end
 
-local function GetTblText(buttons, tbl)
-    for _, btn in pairs(buttons) do
-        if btn[tbl] then
-            btn[tbl]:SetText("")
-        end
-    end
-end
-
-local function resetHealthPowerText(value)
-    if value == 1 then
-        GetTblText(Ether.unitButtons["solo"], "health")
-    elseif value == 2 then
-        GetTblText(Ether.unitButtons["solo"], "power")
-    elseif value == 3 then
-        GetTblText(Ether.unitButtons["raid"], "health")
-    elseif value == 4 then
-        GetTblText(Ether.unitButtons["raid"], "power")
-    end
-end
-
-function Ether.CreateUpdateSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Updates"]
+function Ether:CreateUpdateSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Update"]
+    if parent.Created then return end
+    parent.Created = true
     local UpdateValue = {
         [1] = {text = "Health Solo"},
         [2] = {text = "Power Solo"},
@@ -619,10 +629,10 @@ function Ether.CreateUpdateSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", 5, -5)
         else
-            btn:SetPoint("TOPLEFT", self.Buttons[4][1][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[4][1][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(self, btn, opt.text, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn:SetChecked(Ether.DB[701][i] == 1)
         btn:SetScript("OnClick", function(self)
@@ -630,7 +640,7 @@ function Ether.CreateUpdateSection(self)
             Ether.DB[701][i] = checked and 1 or 0
             resetHealthPowerText(i)
         end)
-        self.Buttons[4][1][i] = btn
+        EtherFrame.Buttons[4][1][i] = btn
     end
     local UnitUpdates = {
         [1] = {text = "Player", value = "player"},
@@ -648,22 +658,24 @@ function Ether.CreateUpdateSection(self)
         if i == 1 then
             btn:SetPoint("TOP", 40, -5)
         else
-            btn:SetPoint("TOPLEFT", self.Buttons[4][2][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[4][2][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(self, btn, opt.text, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn:SetChecked(Ether.DB[901][opt.value])
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[901][opt.value] = checked
         end)
-        self.Buttons[4][2][i] = btn
+        EtherFrame.Buttons[4][2][i] = btn
     end
 end
 
-function Ether.CreateAuraSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Settings"]
+function Ether:CreateSettingsSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Settings"]
+    if parent.Created then return end
+    parent.Created = true
     local CreateAura = {
         [1] = {text = "Enable/Disable Auras"},
         [2] = {text = "Solo Auras"},
@@ -676,10 +688,10 @@ function Ether.CreateAuraSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", 5, -5)
         else
-            btn:SetPoint("TOPLEFT", self.Buttons[5][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[5][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(self, btn, opt.text, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn:SetChecked(Ether.DB[1001][i] == 1)
         btn:SetScript("OnClick", function(self)
@@ -705,7 +717,7 @@ function Ether.CreateAuraSection(self)
                 end
             end
         end)
-        self.Buttons[5][i] = btn
+        EtherFrame.Buttons[5][i] = btn
     end
 end
 
@@ -1173,8 +1185,10 @@ local function CreateEditor(parent)
     return frame
 end
 
-function Ether.CreateAuraCustomSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Custom"]
+function Ether:CreateCustomSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Custom"]
+    if parent.Created then return end
+    parent.Created = true
     if not AuraList then
         CreateAuraList(parent)
     end
@@ -1279,9 +1293,16 @@ function Ether:UpdateAuraList()
     AuraList.scrollChild:SetHeight(math.max(1, index * 55))
 end
 
-function Ether.CreateAuraHelperSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Helper"]
+function Ether:CreateEffectsSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Effects"]
+    if parent.Created then return end
+    parent.Created = true
+end
 
+function Ether:CreateHelperSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Helper"]
+    if parent.Created then return end
+    parent.Created = true
     local spellIDPanel = CreateFrame("Frame", nil, parent)
     spellIDPanel:SetPoint("TOPLEFT", 10, -10)
     spellIDPanel:SetSize(250, 80)
@@ -1342,9 +1363,10 @@ function Ether.CreateAuraHelperSection(self)
     example:SetText(exampleText)
 end
 
-function Ether.CreateIndicatorsSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Position"]
-
+function Ether:CreatePositionSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Position"]
+    if parent.Created then return end
+    parent.Created = true
     local I_Register = {
         [1] = {text = "Ready check", texture = "Interface\\RaidFrame\\ReadyCheck-Ready", texture2 = "Interface\\RaidFrame\\ReadyCheck-NotReady", texture3 = "Interface\\RaidFrame\\ReadyCheck-Waiting"},
         [2] = {text = "Connection", texture = "Interface\\CharacterFrame\\Disconnect-Icon", size = 30},
@@ -1367,10 +1389,10 @@ function Ether.CreateIndicatorsSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -100)
         else
-            btn:SetPoint("TOPLEFT", self.Buttons[6][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[6][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(self, btn, opt.text, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn.texture = btn:CreateTexture(nil, "OVERLAY")
         btn.texture:SetSize(18, 18)
@@ -1402,10 +1424,10 @@ function Ether.CreateIndicatorsSection(self)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
         end)
-        self.Buttons[6][i] = btn
+        EtherFrame.Buttons[6][i] = btn
     end
 
-    local Indicator = self.Frames["INDICATORS"]
+    local Indicator = EtherFrame.Frames["INDICATORS"]
     Indicator.sizeValue = nil
     Indicator.offsetXValue = nil
     Indicator.offsetYValue = nil
@@ -1662,9 +1684,10 @@ function Ether.CreateIndicatorsSection(self)
     SetupSliderThump(offsetXSlider, 10, {0.8, 0.6, 0, 1})
 end
 
-function Ether.CreateTooltipSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Tooltip"]
-
+function Ether:CreateTooltipSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Tooltip"]
+    if parent.Created then return end
+    parent.Created = true
     local Tooltip = {
         [1] = {name = "AFK"},
         [2] = {name = "DND"},
@@ -1690,12 +1713,12 @@ function Ether.CreateTooltipSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 5, -5)
         else
-            btn:SetPoint("TOPLEFT", self.Buttons[7][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[7][i - 1], "BOTTOMLEFT", 0, 0)
         end
 
         btn:SetSize(24, 24)
 
-        btn.label = GetFont(self, btn, opt.name, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.name, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 8, 1)
         btn:SetChecked(Ether.DB[301][i] == 1)
 
@@ -1703,13 +1726,14 @@ function Ether.CreateTooltipSection(self)
             local checked = self:GetChecked()
             Ether.DB[301][i] = checked and 1 or 0
         end)
-        self.Buttons[7][i] = btn
+        EtherFrame.Buttons[7][i] = btn
     end
 end
 
-function Ether.CreateLayoutSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Layout"]
-
+function Ether:CreateLayoutSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Layout"]
+    if parent.Created then return end
+    parent.Created = true
     local layoutValue = {
         [1] = {text = "Smooth Health Solo"},
         [2] = {text = "Smooth Power Solo"},
@@ -1725,23 +1749,25 @@ function Ether.CreateLayoutSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", 5, -5)
         else
-            btn:SetPoint("TOPLEFT", self.Buttons[8][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[8][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(self, btn, opt.text, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn:SetChecked(Ether.DB[801][i] == 1)
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[801][i] = checked and 1 or 0
         end)
-        self.Buttons[8][i] = btn
+        EtherFrame.Buttons[8][i] = btn
     end
 end
 
 local previewFrame
-function Ether.CreateCastBarSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["CastBar"]
+function Ether:CreateCastBarSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["CastBar"]
+    if parent.Created then return end
+    parent.Created = true
     local function configUpdate(preview, input, unit)
         local pos = Ether.DB[5111][input]
         local config = Ether.DB[1301][input]
@@ -1848,10 +1874,10 @@ function Ether.CreateCastBarSection(self)
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -300)
         else
-            btn:SetPoint("TOPLEFT", self.Buttons[9][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[9][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
-        btn.label = GetFont(self, btn, opt.text, 12)
+        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
         btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
         btn:SetChecked(Ether.DB[1201][i] == 1)
         btn:SetScript("OnClick", function(self)
@@ -1871,14 +1897,15 @@ function Ether.CreateCastBarSection(self)
                 end
             end
         end)
-        self.Buttons[9][i] = btn
+        EtherFrame.Buttons[9][i] = btn
     end
 end
 
-function Ether.CreateConfigSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Config"]
+function Ether:CreateConfigSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Config"]
+    if parent.Created then return end
+    parent.Created = true
     local DB = Ether.DB
-
     local frameKeys = {
         [331] = "Tooltip",
         [332] = "Player",
@@ -1958,37 +1985,13 @@ function Ether.CreateConfigSection(self)
 
     local unlock = EtherPanelButton(parent, 100, 25, "Unlock frames", "TOPLEFT", sizeSlider, "BOTTOMLEFT", 0, -50)
     unlock:SetScript("OnClick", function()
-        if InCombatLockdown() then return end
-        if not Ether.gridFrame then
-            Ether:SetupGridFrame()
-        end
-        local isShown = Ether.gridFrame:IsShown()
-        Ether.IsMovable = not isShown
-        if Ether.gridFrame then
-            Ether.gridFrame:SetShown(not isShown)
-        end
-        if Ether.tooltipFrame then
-            Ether.DB[401][3] = not isShown and 0 or 1
-            Ether.tooltipFrame:SetShown(not isShown)
-        end
-        if Ether.debugFrame then
-            Ether.debugFrame:SetShown(not isShown)
-        end
-        if Ether.Anchor.raid.tex then
-            Ether.Anchor.raid.tex:SetShown(not isShown)
+        if not Ether.Anchor.raid.tex:IsShown() then
+            Ether.ShowHideSettings(true)
+        else
+            Ether.ShowHideSettings(false)
         end
     end)
-    --[[
-        local snap = {}
-        unlock:SetScript("OnShow", function()
-            wipe(snap)
-            snap = Ether.DataSnapShot(Ether.DB[401])
-        end)
-        unlock:SetScript("OnHide", function()
-            Ether.DataRestore(Ether.DB[401], snap)
-            Ether.EtherFrameChecked(1, 401)
-        end)
-    ]]
+
     local dropdowns, frameOptions = {}, {}
     local fontOptions, barOptions, bgOptions, borderOptions = {}, {}, {}, {}
     local function UpdateValueLabels()
@@ -2169,7 +2172,7 @@ function Ether.CreateConfigSection(self)
                 end
             end})
     end
-    local Indicator = self.Frames["INDICATORS"]
+    local Indicator = EtherFrame.Frames["INDICATORS"]
     dropdowns.font = CreateEtherDropdown(parent, 200, "Select Font", fontOptions, true)
     dropdowns.font:SetPoint("TOPRIGHT", 0, 0)
     local mediaBars = LSM:HashTable("statusbar")
@@ -2258,8 +2261,10 @@ function Ether.CreateConfigSection(self)
     dropdowns.bg:SetPoint("TOP", dropdowns.bar, "BOTTOM")
 end
 
-function Ether.CreateProfileSection(self)
-    local parent = self["CONTENT"]["CHILDREN"]["Edit"]
+function Ether:CreateEditSection(EtherFrame)
+    local parent = EtherFrame["CONTENT"]["CHILDREN"]["Edit"]
+    if parent.Created then return end
+    parent.Created = true
     local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
     dropdown:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -5)
     UIDropDownMenu_SetWidth(dropdown, 130)
@@ -2742,7 +2747,7 @@ function Ether.GetProfileList()
     return list
 end
 
-function Ether.CreateProfile(name)
+function Ether:CreateProfile(name)
     if ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile already exists"
     end
@@ -2782,8 +2787,11 @@ function Ether.ResetProfile()
 end
 
 function Ether.CleanUpButtons()
-    Ether:WrapMainSettingsColor({0.80, 0.40, 1.00, 1})
-    local Indicator = Ether.EtherFrame.Frames["INDICATORS"]
+    Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
+    Ether:CreateCustomSection(Ether.UIPanel)
+    Ether:CreatePositionSection(Ether.UIPanel)
+    local Indicator = Ether.UIPanel.Frames["INDICATORS"]
+    if not Indicator then return end
     if Indicator.icon then
         Indicator.icon:Hide()
     end

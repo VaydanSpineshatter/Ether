@@ -314,6 +314,7 @@ function Ether:SetupDrag(button, index, grid)
 end
 
 function Ether:SetupDebugFrame()
+    if Ether.debugFrame then return end
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
     Ether.debugFrame = frame
     frame:SetPoint("CENTER")

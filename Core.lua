@@ -3,7 +3,6 @@ local _, Ether = ...
 local L = Ether.L
 local pairs, ipairs = pairs, ipairs
 Ether.version = ""
-Ether.charKey = "Unknown-Unknown"
 Ether.IsMovable = false
 local updatedChannel = false
 Ether.debug = false
@@ -34,125 +33,6 @@ Ether.unitButtons = {
     solo = {}
 }
 
-local function BuildContent(self)
-    local success, msg = pcall(function()
-        Ether.CreateModuleSection(self)
-        Ether.CreateBlizzardSection(self)
-        Ether.CreateAboutSection(self)
-        Ether.CreateCreationSection(self)
-        Ether.CreateUpdateSection(self)
-        Ether.CreateAuraSection(self)
-        Ether.CreateAuraCustomSection(self)
-        Ether.CreateAuraHelperSection(self)
-        Ether.CreateIndicatorsSection(self)
-        Ether.CreateTooltipSection(self)
-        Ether.CreateLayoutSection(self)
-        Ether.CreateCastBarSection(self)
-        Ether.CreateConfigSection(self)
-        Ether.CreateProfileSection(self)
-    end)
-    if not success then
-        if Ether.DebugOutput then
-            Ether.DebugOutput("Content creation failed - ", msg)
-        else
-            print("Content creation failed - ", msg)
-        end
-    end
-end
-
----@alias EtherFrame_Buttons number
----| Module 1
----| Blizzard 2
----| Create 3
----| Update 4,1,2
----| Aura 5
----| Indicators 6
----| Tooltip 7
----| Layout 8
----| CastBar 9
-
----@class EtherSettings
-local EtherFrame = {
-    IsLoaded = false,
-    IsCreated = false,
-    IsSuccess = false,
-    Frames = {},
-    Borders = {},
-    Buttons = {
-        Menu = {},
-        [1] = {},
-        [2] = {},
-        [3] = {},
-        [4] = {[1] = {}, [2] = {}},
-        [5] = {},
-        [6] = {},
-        [7] = {},
-        [8] = {},
-        [9] = {},
-        [10] = {},
-        --[11] = {[1] = {}, [2] = {}}
-    },
-    ["CONTENT"] = {["CHILDREN"] = {}, },
-    Menu = {
-        ["TOP"] = {
-            [1] = {"Module", "Blizzard", "About"},
-            [2] = {"Create", "Updates"},
-            [3] = {"Settings", "Custom", "Effects", "Helper"},
-            [4] = {"Position"},
-            [5] = {"Tooltip"},
-            [6] = {"Layout", "CastBar", "Config"},
-            [7] = {"Edit"}
-        },
-        ["LEFT"] = {
-            [1] = {"Info"},
-            [2] = {"Units"},
-            [3] = {"Aura"},
-            [4] = {"Indicators"},
-            [5] = {"Tooltip"},
-            [6] = {"Interface"},
-            [7] = {"Profile"}
-        }
-    }
-}
-Ether.EtherFrame = EtherFrame
-
-function Ether.ShowCategory(self, tab)
-    if not self.IsLoaded then
-        return
-    end
-    local tabLayer
-    for layer = 1, 7 do
-        if self.Menu["TOP"][layer] then
-            for _, tabName in ipairs(self.Menu["TOP"][layer]) do
-                if tabName == tab then
-                    tabLayer = layer
-                    break
-                end
-            end
-        end
-        if tabLayer then
-            break
-        end
-    end
-    for _, layers in pairs(self.Buttons[10]) do
-        for _, topBtn in pairs(layers) do
-            topBtn:Hide()
-        end
-    end
-    if tabLayer and self.Buttons[10][tabLayer] then
-        for _, topBtn in pairs(self.Buttons[10][tabLayer]) do
-            topBtn:Show()
-        end
-    end
-    for _, child in pairs(self["CONTENT"]["CHILDREN"]) do
-        child:Hide()
-    end
-    local target = self["CONTENT"]["CHILDREN"][tab]
-    if target then
-        target:Show()
-    end
-end
-
 local function CreateSettingsButtons(name, parent, layer, onClick, isTopButton)
     local btn = CreateFrame("Button", nil, parent)
     if isTopButton then
@@ -178,236 +58,332 @@ local function CreateSettingsButtons(name, parent, layer, onClick, isTopButton)
     return btn
 end
 
-local function InitializeSettings(self)
-    if self.IsLoaded then
-        return
-    end
-    local success, msg = pcall(function()
+local EtherFrame, EtherToggle, WrapSettingsColor, ShowHideSettings
+do
+    ---@class EtherSettings
+    EtherFrame = {
+        Created = false,
+        Frames = {},
+        Borders = {},
+        Buttons = {
+            Menu = {},
+            [1] = {},
+            [2] = {},
+            [3] = {},
+            [4] = {[1] = {}, [2] = {}},
+            [5] = {},
+            [6] = {},
+            [7] = {},
+            [8] = {},
+            [9] = {},
+            [10] = {},
+            [11] = {[1] = {}, [2] = {}}
+        },
+        ["CONTENT"] = {["CHILDREN"] = {}, },
+        Menu = {
+            ["TOP"] = {
+                [1] = {"Module", "Blizzard", "About"},
+                [2] = {"Create", "Update"},
+                [3] = {"Settings", "Custom", "Effects", "Helper"},
+                [4] = {"Position"},
+                [5] = {"Tooltip"},
+                [6] = {"Layout", "CastBar", "Config"},
+                [7] = {"Edit"}
+            },
+            ["LEFT"] = {
+                [1] = {"Info"},
+                [2] = {"Units"},
+                [3] = {"Aura"},
+                [4] = {"Indicators"},
+                [5] = {"Tooltip"},
+                [6] = {"Interface"},
+                [7] = {"Profile"}
+            }
+        }
+    }
+
+    local function ShowCategory(self, category)
+        if self.Created ~= true then return end
+        local tabLayer
         for layer = 1, 7 do
             if self.Menu["TOP"][layer] then
-                for _, name in ipairs(self.Menu["TOP"][layer]) do
-                    self["CONTENT"]["CHILDREN"][name] = CreateFrame("Frame", nil, self.Frames["CONTENT"])
-                    self["CONTENT"]["CHILDREN"][name]:SetAllPoints(self.Frames["CONTENT"])
-                    self["CONTENT"]["CHILDREN"][name]:Hide()
-                end
-            end
-        end
-        self.Frames["INDICATORS"] = CreateFrame("Frame", nil, self["CONTENT"]["CHILDREN"]["Position"])
-        BuildContent(self)
-        for layer = 1, 7 do
-            if self.Menu["TOP"][layer] then
-                self.Buttons[10][layer] = {}
-                local BtnConfig = {}
-                for idx, itemName in ipairs(self.Menu["TOP"][layer]) do
-                    local btn = CreateSettingsButtons(itemName, self.Frames["TOP"], layer, function(btnName)
-                        Ether.ShowCategory(self, btnName)
-                    end, true)
-                    btn:Hide()
-                    BtnConfig[idx] = {
-                        btn = btn,
-                        name = itemName,
-                        width = btn:GetWidth()
-                    }
-                    self.Buttons[10][layer][itemName] = btn
-                end
-                if #BtnConfig > 0 then
-                    local spacing = 10
-                    local totalWidth = 0
-                    for _, data in ipairs(BtnConfig) do
-                        totalWidth = totalWidth + data.width
-                    end
-                    totalWidth = totalWidth + (#BtnConfig - 1) * spacing
-                    local startX = -totalWidth / 2
-                    local currentX = startX
-                    for _, data in ipairs(BtnConfig) do
-                        data.btn:SetPoint("CENTER", self.Frames["TOP"], "CENTER", currentX + data.width / 2, 5)
-                        currentX = currentX + data.width + spacing
+                for _, tabName in ipairs(self.Menu["TOP"][layer]) do
+                    if tabName == category then
+                        tabLayer = layer
+                        break
                     end
                 end
             end
-        end
-
-        local last = nil
-        for layer = 1, 7 do
-            if self.Menu["LEFT"][layer] then
-                for _, itemName in ipairs(self.Menu["LEFT"][layer]) do
-                    local btn = CreateSettingsButtons(itemName, self.Frames["LEFT"], layer, function(_, btnLayer)
-                        local firstTabName = self.Menu["TOP"][btnLayer][1]
-                        Ether.DB[111].LAST_TAB = firstTabName
-                        for _, layers in pairs(self.Buttons[10]) do
-                            for _, topBtn in pairs(layers) do
-                                topBtn:Hide()
-                            end
-                        end
-                        if self.Buttons[10][btnLayer] then
-                            for _, topBtn in pairs(self.Buttons[10][btnLayer]) do
-                                topBtn:Show()
-                            end
-                        end
-                        if self.Menu["TOP"][btnLayer] and self.Menu["TOP"][btnLayer][1] then
-                            Ether.ShowCategory(self, firstTabName)
-                        end
-                    end, false)
-
-                    if last then
-                        btn:SetPoint("TOPLEFT", last, "BOTTOMLEFT", 0, 0)
-                        btn:SetPoint("TOPRIGHT", last, "BOTTOMRIGHT", 0, -2)
-                    else
-                        btn:SetPoint("TOPLEFT", self.Frames["LEFT"], "TOPLEFT", 5, 0)
-                        btn:SetPoint("TOPRIGHT", self.Frames["LEFT"], "TOPRIGHT", -10, 0)
-                    end
-
-                    last = btn
-                end
+            if tabLayer then
+                break
             end
         end
-        self.IsLoaded = true
-    end)
-    if not success then
-        self.IsSuccess = false
-        if Ether.DebugOutput then
-            Ether.DebugOutput("Error in EtherFrame creation - ", msg)
-        else
-            Ether.DebugOutput("Error in EtherFrame creation - ", msg)
+        for _, layers in pairs(self.Buttons[10]) do
+            for _, topBtn in pairs(layers) do
+                topBtn:Hide()
+            end
         end
-    else
-        self.IsSuccess = true
+        if tabLayer and self.Buttons[10][tabLayer] then
+            for _, topBtn in pairs(self.Buttons[10][tabLayer]) do
+                topBtn:Show()
+            end
+        end
+        for _, child in pairs(self["CONTENT"]["CHILDREN"]) do
+            child:Hide()
+        end
+
+        if category == "Module" then
+            Ether:CreateModuleSection(self)
+        elseif category == "Blizzard" then
+            Ether:CreateBlizzardSection(self)
+        elseif category == "About" then
+            Ether:CreateAboutSection(self)
+        elseif category == "Create" then
+            Ether:CreateCreationSection(self)
+        elseif category == "Update" then
+            Ether:CreateUpdateSection(self)
+        elseif category == "Settings" then
+            Ether:CreateSettingsSection(self)
+        elseif category == "Custom" then
+            Ether:CreateCustomSection(self)
+        elseif category == "Effects" then
+            Ether:CreateEffectsSection(self)
+        elseif category == "Helper" then
+            Ether:CreateHelperSection(self)
+        elseif category == "Position" then
+            Ether:CreatePositionSection(self)
+        elseif category == "Tooltip" then
+            Ether:CreateTooltipSection(self)
+        elseif category == "Layout" then
+            Ether:CreateLayoutSection(self)
+        elseif category == "CastBar" then
+            Ether:CreateCastBarSection(self)
+        elseif category == "Config" then
+            Ether:CreateConfigSection(self)
+        elseif category == "Edit" then
+            Ether:CreateEditSection(self)
+        end
+
+        local target = self["CONTENT"]["CHILDREN"][category]
+        if target then
+            target:Show()
+        end
     end
-end
 
-function Ether:WrapMainSettingsColor(color)
-    if type(color) ~= "table" then return end
-    for _, borders in pairs(EtherFrame.Borders) do
-        borders:SetColorTexture(unpack(color))
+    local function InitializeLayer(self)
+        if not self.Created then
+            print("2")
+            for layer = 1, 7 do
+                if self.Menu["TOP"][layer] then
+                    for _, name in ipairs(self.Menu["TOP"][layer]) do
+                        self["CONTENT"]["CHILDREN"][name] = CreateFrame("Frame", nil, self.Frames["CONTENT"])
+                        self["CONTENT"]["CHILDREN"][name]:SetAllPoints(self.Frames["CONTENT"])
+                        self["CONTENT"]["CHILDREN"][name]:Hide()
+                    end
+                end
+            end
+            self.Frames["INDICATORS"] = CreateFrame("Frame", nil, self["CONTENT"]["CHILDREN"]["Position"])
+            for layer = 1, 7 do
+                if self.Menu["TOP"][layer] then
+                    self.Buttons[10][layer] = {}
+                    local BtnConfig = {}
+                    for idx, itemName in ipairs(self.Menu["TOP"][layer]) do
+                        local btn = CreateSettingsButtons(itemName, self.Frames["TOP"], layer, function(btnName)
+                            ShowCategory(self, btnName)
+                        end, true)
+                        btn:Hide()
+                        BtnConfig[idx] = {
+                            btn = btn,
+                            name = itemName,
+                            width = btn:GetWidth()
+                        }
+                        self.Buttons[10][layer][itemName] = btn
+                    end
+                    if #BtnConfig > 0 then
+                        local spacing = 10
+                        local totalWidth = 0
+                        for _, data in ipairs(BtnConfig) do
+                            totalWidth = totalWidth + data.width
+                        end
+                        totalWidth = totalWidth + (#BtnConfig - 1) * spacing
+                        local startX = -totalWidth / 2
+                        local currentX = startX
+                        for _, data in ipairs(BtnConfig) do
+                            data.btn:SetPoint("CENTER", self.Frames["TOP"], "CENTER", currentX + data.width / 2, 5)
+                            currentX = currentX + data.width + spacing
+                        end
+                    end
+                end
+            end
+            local last = nil
+            for layer = 1, 7 do
+                if self.Menu["LEFT"][layer] then
+                    for _, itemName in ipairs(self.Menu["LEFT"][layer]) do
+                        local btn = CreateSettingsButtons(itemName, self.Frames["LEFT"], layer, function(_, btnLayer)
+                            local firstTabName = self.Menu["TOP"][btnLayer][1]
+                            Ether.DB[111].LAST_TAB = firstTabName
+                            for _, layers in pairs(self.Buttons[10]) do
+                                for _, topBtn in pairs(layers) do
+                                    topBtn:Hide()
+                                end
+                            end
+                            if self.Buttons[10][btnLayer] then
+                                for _, topBtn in pairs(self.Buttons[10][btnLayer]) do
+                                    topBtn:Show()
+                                end
+                            end
+                            if self.Menu["TOP"][btnLayer] and self.Menu["TOP"][btnLayer][1] then
+                                ShowCategory(self, firstTabName)
+                            end
+                        end, false)
+
+                        if last then
+                            btn:SetPoint("TOPLEFT", last, "BOTTOMLEFT", 0, 0)
+                            btn:SetPoint("TOPRIGHT", last, "BOTTOMRIGHT", 0, -2)
+                        else
+                            btn:SetPoint("TOPLEFT", self.Frames["LEFT"], "TOPLEFT", 5, 0)
+                            btn:SetPoint("TOPRIGHT", self.Frames["LEFT"], "TOPRIGHT", -10, 0)
+                        end
+                        last = btn
+                    end
+                end
+            end
+            self.Created = true
+        end
     end
-end
-
-function Ether.CreateMainSettings(self)
-    if not self.IsCreated then
-        self.Frames["MAIN"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
-        self.Frames["MAIN"]:SetFrameLevel(500)
-        self.Frames["MAIN"]:SetSize(640, 480)
-        self.Frames["MAIN"]:SetBackdrop({
-            bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-            edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-            tile = true,
-            tileSize = 16,
-            edgeSize = 16,
-            insets = {left = 4, right = 4, top = 4, bottom = 4}
-        })
-        self.Frames["MAIN"]:SetBackdropColor(0.1, 0.1, 0.1, 1)
-        self.Frames["MAIN"]:SetBackdropBorderColor(0, 0.8, 1, .7)
-        self.Frames["MAIN"]:Hide()
-        self.Frames["MAIN"]:SetScript("OnHide", function()
-            Ether.DB[111].SHOW = false
-            Ether.IsMovable = false
-            if Ether.gridFrame then
-                Ether.gridFrame:SetShown(false)
-            end
-            if Ether.debugFrame then
-                Ether.debugFrame:SetShown(false)
-            end
-            if Ether.tooltipFrame then
-                Ether.tooltipFrame:SetShown(false)
-            end
-            if Ether.Anchor.raid.tex then
-                Ether.Anchor.raid.tex:SetShown(false)
-            end
-            Ether.CleanUpButtons()
-            Ether:WrapMainSettingsColor({0.80, 0.40, 1.00, 1})
-        end)
-        tinsert(UISpecialFrames, self.Frames["MAIN"]:GetName())
-        RegisterAttributeDriver(self.Frames["MAIN"], "state-visibility", "[combat]hide")
-        for _, value in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
-            self.Frames[value] = CreateFrame("Frame", nil, self.Frames["MAIN"])
-        end
-        self.Frames["TOP"]:SetPoint("TOPLEFT", 10, -15)
-        self.Frames["TOP"]:SetPoint("TOPRIGHT", -10, 0)
-        self.Frames["TOP"]:SetSize(0, 30)
-        self.Frames["BOTTOM"]:SetPoint("BOTTOMLEFT", 10, 10)
-        self.Frames["BOTTOM"]:SetPoint("BOTTOMRIGHT", -10, 0)
-        self.Frames["BOTTOM"]:SetSize(0, 30)
-        self.Frames["LEFT"]:SetPoint("TOPLEFT", self.Frames["TOP"], "BOTTOMLEFT")
-        self.Frames["LEFT"]:SetPoint("BOTTOMLEFT", self.Frames["BOTTOM"], "TOPLEFT")
-        self.Frames["LEFT"]:SetSize(100, 0)
-        self.Frames["RIGHT"]:SetPoint("TOPRIGHT", self.Frames["BOTTOM"], "TOPRIGHT")
-        self.Frames["RIGHT"]:SetPoint("BOTTOMRIGHT", self.Frames["BOTTOM"], "TOPRIGHT")
-        self.Frames["RIGHT"]:SetSize(10, 0)
-        self.Frames["CONTENT"] = CreateFrame("Frame", nil, self.Frames["TOP"])
-        self.Frames["CONTENT"]:SetPoint("TOP", self.Frames["TOP"], "BOTTOM")
-        self.Frames["CONTENT"]:SetPoint("BOTTOM", self.Frames["BOTTOM"], "TOP")
-        self.Frames["CONTENT"]:SetPoint("LEFT", self.Frames["LEFT"], "RIGHT")
-        self.Frames["CONTENT"]:SetPoint("RIGHT", self.Frames["RIGHT"], "LEFT")
-
-        for index, value in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
-            self.Borders[value] = self.Frames["CONTENT"]:CreateTexture(nil, "BORDER")
-            self.Borders[value]:SetColorTexture(0.80, 0.40, 1.00, 1)
-            if index == 1 or index == 2 then
-                self.Borders[value]:SetHeight(1)
-            else
-                self.Borders[value]:SetWidth(1)
-            end
-        end
-
-        self.Borders["TOP"]:SetPoint("TOPLEFT", -1, 1)
-        self.Borders["TOP"]:SetPoint("TOPRIGHT", 1, 1)
-        self.Borders["BOTTOM"]:SetPoint("BOTTOMLEFT", -1, -1)
-        self.Borders["BOTTOM"]:SetPoint("BOTTOMRIGHT", 1, -1)
-        self.Borders["LEFT"]:SetPoint("TOPLEFT", -1, 1)
-        self.Borders["LEFT"]:SetPoint("BOTTOMLEFT", -1, -1)
-        self.Borders["RIGHT"]:SetPoint("TOPRIGHT", 1, 1)
-        self.Borders["RIGHT"]:SetPoint("BOTTOMRIGHT", 1, -1)
-
-        local version = self.Frames["BOTTOM"]:CreateFontString(nil, "OVERLAY")
-        version:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
-        version:SetPoint("BOTTOMRIGHT", -10, 3)
-        version:SetText("Beta Build |cE600CCFF" .. Ether.version .. "|r")
-        local menuIcon = self.Frames["BOTTOM"]:CreateTexture(nil, "ARTWORK")
-        menuIcon:SetSize(32, 32)
-        menuIcon:SetTexture(unpack(Ether.mediaPath.etherIcon))
-        menuIcon:SetPoint("BOTTOMLEFT", 0, 5)
-        local name = self.Frames["BOTTOM"]:CreateFontString(nil, "OVERLAY")
-        name:SetFont(unpack(Ether.mediaPath.expressway), 20, "OUTLINE")
-        name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
-        name:SetText("|cffcc66ffEther|r")
-        Ether:ApplyFramePosition(self.Frames["MAIN"], 340)
-        Ether:SetupDrag(self.Frames["MAIN"], 340, 40)
-        local close = CreateFrame("Button", nil, self.Frames["BOTTOM"])
-        close:SetSize(100, 15)
-        close:SetPoint("BOTTOM", 0, 3)
-        close.text = close:CreateFontString(nil, "OVERLAY")
-        close.text:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
-        close.text:SetAllPoints()
-        close.text:SetText("Close")
-        close:SetScript("OnEnter", function(self)
-            self.text:SetTextColor(0.00, 0.80, 1.00, 1)
-        end)
-        close:SetScript("OnLeave", function(self)
-            self.text:SetTextColor(1, 1, 1, 1)
-        end)
-        close:SetScript("OnClick", function()
+    local function CreateMainFrame(self)
+        if not self.Created then
+            self.Frames["MAIN"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
+            self.Frames["MAIN"]:SetFrameLevel(500)
+            self.Frames["MAIN"]:SetSize(640, 480)
+            self.Frames["MAIN"]:SetBackdrop({
+                bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
+                edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+                tile = true,
+                tileSize = 16,
+                edgeSize = 16,
+                insets = {left = 4, right = 4, top = 4, bottom = 4}
+            })
+            self.Frames["MAIN"]:SetBackdropColor(0.1, 0.1, 0.1, 1)
+            self.Frames["MAIN"]:SetBackdropBorderColor(0, 0.8, 1, .7)
             self.Frames["MAIN"]:Hide()
-        end)
+            tinsert(UISpecialFrames, self.Frames["MAIN"]:GetName())
+            for _, value in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
+                self.Frames[value] = CreateFrame("Frame", nil, self.Frames["MAIN"])
+            end
 
-        self.IsCreated = true
+            self.Frames["TOP"]:SetPoint("TOPLEFT", 10, -15)
+            self.Frames["TOP"]:SetPoint("TOPRIGHT", -10, 0)
+            self.Frames["TOP"]:SetSize(0, 30)
+            self.Frames["BOTTOM"]:SetPoint("BOTTOMLEFT", 10, 10)
+            self.Frames["BOTTOM"]:SetPoint("BOTTOMRIGHT", -10, 0)
+            self.Frames["BOTTOM"]:SetSize(0, 30)
+            self.Frames["LEFT"]:SetPoint("TOPLEFT", self.Frames["TOP"], "BOTTOMLEFT")
+            self.Frames["LEFT"]:SetPoint("BOTTOMLEFT", self.Frames["BOTTOM"], "TOPLEFT")
+            self.Frames["LEFT"]:SetSize(100, 0)
+            self.Frames["RIGHT"]:SetPoint("TOPRIGHT", self.Frames["BOTTOM"], "TOPRIGHT")
+            self.Frames["RIGHT"]:SetPoint("BOTTOMRIGHT", self.Frames["BOTTOM"], "TOPRIGHT")
+            self.Frames["RIGHT"]:SetSize(10, 0)
+            self.Frames["CONTENT"] = CreateFrame("Frame", nil, self.Frames["TOP"])
+            self.Frames["CONTENT"]:SetPoint("TOP", self.Frames["TOP"], "BOTTOM")
+            self.Frames["CONTENT"]:SetPoint("BOTTOM", self.Frames["BOTTOM"], "TOP")
+            self.Frames["CONTENT"]:SetPoint("LEFT", self.Frames["LEFT"], "RIGHT")
+            self.Frames["CONTENT"]:SetPoint("RIGHT", self.Frames["RIGHT"], "LEFT")
+            for index, value in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
+                self.Borders[value] = self.Frames["CONTENT"]:CreateTexture(nil, "BORDER")
+                self.Borders[value]:SetColorTexture(0.80, 0.40, 1.00, 1)
+                if index == 1 or index == 2 then
+                    self.Borders[value]:SetHeight(1)
+                else
+                    self.Borders[value]:SetWidth(1)
+                end
+            end
+            self.Borders["TOP"]:SetPoint("TOPLEFT", -1, 1)
+            self.Borders["TOP"]:SetPoint("TOPRIGHT", 1, 1)
+            self.Borders["BOTTOM"]:SetPoint("BOTTOMLEFT", -1, -1)
+            self.Borders["BOTTOM"]:SetPoint("BOTTOMRIGHT", 1, -1)
+            self.Borders["LEFT"]:SetPoint("TOPLEFT", -1, 1)
+            self.Borders["LEFT"]:SetPoint("BOTTOMLEFT", -1, -1)
+            self.Borders["RIGHT"]:SetPoint("TOPRIGHT", 1, 1)
+            self.Borders["RIGHT"]:SetPoint("BOTTOMRIGHT", 1, -1)
+            local version = self.Frames["BOTTOM"]:CreateFontString(nil, "OVERLAY")
+            version:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
+            version:SetPoint("BOTTOMRIGHT", -10, 3)
+            version:SetText("Beta Build |cE600CCFF" .. Ether.version .. "|r")
+            local menuIcon = self.Frames["BOTTOM"]:CreateTexture(nil, "ARTWORK")
+            menuIcon:SetSize(32, 32)
+            menuIcon:SetTexture(unpack(Ether.mediaPath.etherIcon))
+            menuIcon:SetPoint("BOTTOMLEFT", 0, 5)
+            local name = self.Frames["BOTTOM"]:CreateFontString(nil, "OVERLAY")
+            name:SetFont(unpack(Ether.mediaPath.expressway), 20, "OUTLINE")
+            name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
+            name:SetText("|cffcc66ffEther|r")
+            Ether:ApplyFramePosition(self.Frames["MAIN"], 340)
+            Ether:SetupDrag(self.Frames["MAIN"], 340, 40)
+            local close = CreateFrame("Button", nil, self.Frames["BOTTOM"])
+            close:SetSize(100, 15)
+            close:SetPoint("BOTTOM", 0, 3)
+            close.text = close:CreateFontString(nil, "OVERLAY")
+            close.text:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
+            close.text:SetAllPoints()
+            close.text:SetText("Close")
+            close:SetScript("OnEnter", function(self)
+                self.text:SetTextColor(0.00, 0.80, 1.00, 1)
+            end)
+            close:SetScript("OnLeave", function(self)
+                self.text:SetTextColor(1, 1, 1, 1)
+            end)
+            close:SetScript("OnClick", function()
+                self.Frames["MAIN"]:Hide()
+                Ether.DB[111].SHOW = 0
+                ShowHideSettings(false)
+            end)
+            InitializeLayer(self)
+        end
+    end
+    function EtherToggle()
+        CreateMainFrame(EtherFrame)
+        if InCombatLockdown() then return end
+        local isShown = EtherFrame.Frames["MAIN"]:IsShown()
+        Ether.DB[111].SHOW = isShown
+        EtherFrame.Frames["MAIN"]:SetShown(not isShown)
+        local category = Ether.DB[111].LAST_TAB
+        if EtherFrame["CONTENT"]["CHILDREN"][category] then
+            ShowCategory(EtherFrame, category)
+        end
+    end
+    function ShowHideSettings(state)
+        if InCombatLockdown() then return end
+        if not Ether.gridFrame then
+            Ether:SetupGridFrame()
+        end
+        if not Ether.debugFrame then
+            Ether:SetupDebugFrame()
+        end
+        Ether.IsMovable = state
+        Ether.gridFrame:SetShown(state)
+        if Ether.tooltipFrame and Ether.DB[401][3] == 1 then
+            Ether.tooltipFrame:SetShown(state)
+        end
+        Ether.debugFrame:SetShown(state)
+        if Ether.Anchor.raid.tex then
+            Ether.Anchor.raid.tex:SetShown(state)
+        end
+        if not state then
+            Ether.CleanUpButtons()
+            Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
+        end
+    end
+    function WrapSettingsColor(color)
+        if type(color) ~= "table" then return end
+        for _, borders in pairs(EtherFrame.Borders) do
+            borders:SetColorTexture(unpack(color))
+        end
     end
 end
-
-local function ToggleSettings(self)
-    if not self.IsLoaded then
-        InitializeSettings(self)
-    end
-    if not self.IsSuccess then
-        return
-    end
-    self.Frames["MAIN"]:SetShown(Ether.DB[111].SHOW)
-    local category = Ether.DB[111].LAST_TAB
-
-    if self["CONTENT"]["CHILDREN"][category] then
-        Ether.ShowCategory(self, category)
-    end
-end
-
+Ether.UIPanel = EtherFrame
+Ether.WrapSettingsColor = WrapSettingsColor
+Ether.ShowHideSettings = ShowHideSettings
 local hiddenParent = CreateFrame("Frame", nil, UIParent)
 hiddenParent:SetAllPoints()
 hiddenParent:Hide()
@@ -505,18 +481,17 @@ local function UpdateSendChannel()
     end
 end
 
-local playerName = UnitName("player")
 local string_format = string.format
 local Comm = LibStub("AceComm-3.0")
 Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
-    if sender == playerName then
+    if sender == Ether.playerName then
         return
     end
     local theirVersion = tonumber(message)
     local myVersion = tonumber(Ether.version)
-    local lastCheck = Ether.DB[111].LAST_UPDATE_CHECK or 0
+    local lastCheck = Ether.DB[111].LAST_CHECK or 0
     if (time() - lastCheck >= 9200) and theirVersion and myVersion and myVersion < theirVersion then
-        Ether.DB[111].LAST_UPDATE_CHECK = time()
+        Ether.DB[111].LAST_CHECK = time()
         local msg = string_format("New version found (%d). Please visit %s to get the latest version.", theirVersion, "|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
         if Ether.DebugOutput then
             Ether.DebugOutput(msg)
@@ -528,8 +503,8 @@ end)
 
 local dataBroker
 do
-    if not LibStub or not LibStub("LibDataBroker-1.1") then return end
-    local LDB = LibStub("LibDataBroker-1.1", true)
+    if not LibStub or not LibStub("LibDataBroker-1.1", true) then return end
+    local LDB = LibStub("LibDataBroker-1.1")
 
     dataBroker = LDB:NewDataObject("EtherIcon", {
         type = "launcher",
@@ -538,12 +513,7 @@ do
 
     local function OnClick(_, button)
         if button == "RightButton" then
-            if Ether.DB[111].SHOW then
-                Ether.DB[111].SHOW = false
-            else
-                Ether.DB[111].SHOW = true
-            end
-            ToggleSettings(EtherFrame)
+            EtherToggle()
         end
     end
 
@@ -559,8 +529,6 @@ do
 end
 
 function Ether:RefreshFramePositions()
-
-
     local frame = {
         [331] = Ether.Anchor.tooltip,
         [332] = Ether.unitButtons.solo["player"],
@@ -625,16 +593,11 @@ local function OnInitialize(self, event, ...)
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
 
-        local charKey = Ether.GetCharacterKey()
-        if not charKey then
-            charKey = Ether.charKey
-        end
-
+        local charKey = Ether.GetCharacterKey() or "Unknown-Unknown"
         local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
         Ether.version = version
 
         local REQUIREMENT_VERSION = 26766
-        Ether.REQUIREMENT_VERSION = 26766
         local CURRENT_VERSION = ETHER_DATABASE_DX_AA[101]
 
         if CURRENT_VERSION < REQUIREMENT_VERSION then
@@ -662,7 +625,6 @@ local function OnInitialize(self, event, ...)
                     profile[key] = Ether.CopyTable(value)
                 end
             end
-
             for _, value in ipairs({111, 901, 811, 1002, 1201, 1301, 5111}) do
                 Ether:NilCheckData(profile, value)
             end
@@ -671,6 +633,7 @@ local function OnInitialize(self, event, ...)
 
         ETHER_DATABASE_DX_AA.currentProfile = charKey
         Ether.DB = Ether.CopyTable(Ether.GetCurrentProfile())
+        Ether.REQUIREMENT_VERSION = REQUIREMENT_VERSION
         Ether:CreateSplitGroupHeader()
         HideBlizzard()
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
@@ -681,12 +644,7 @@ local function OnInitialize(self, event, ...)
             input = string.lower(input or "")
             rest = string.lower(rest or "")
             if input == "settings" then
-                if Ether.DB[111].SHOW then
-                    Ether.DB[111].SHOW = false
-                else
-                    Ether.DB[111].SHOW = true
-                end
-                ToggleSettings(EtherFrame)
+                EtherToggle()
             elseif input == "debug" then
                 Ether.debug = not Ether.debug
                 Ether.DebugOutput(Ether.debug and "Debug On" or "Debug Off")
@@ -716,13 +674,10 @@ local function OnInitialize(self, event, ...)
             end
         end
 
-        if not Ether.debugFrame then
-            Ether:SetupDebugFrame()
-        end
-
         if Ether.DB[401][2] == 1 then
             Ether.EnableMsgEvents()
         end
+        EtherToggle()
         if type(currentVersion) ~= "nil" then
             StaticPopupDialogs["ETHER_RELOAD_UI"] = {
                 text = currentVersion,
@@ -751,20 +706,12 @@ local function OnInitialize(self, event, ...)
         Ether.Anchor.tooltip:SetSize(280, 120)
         Ether:ApplyFramePosition(Ether.Anchor.tooltip, 331)
         Ether.Tooltip:Initialize()
-        Ether.CreateMainSettings(EtherFrame)
-
         for index = 1, 7 do
             if Ether.DB[201][index] == 1 then
                 Ether:CreateUnitButtons(index)
             end
         end
-
-        ToggleSettings(EtherFrame)
-        C_Timer.After(0.1, function()
-            if Ether.CleanUpButtons then
-                Ether.CleanUpButtons()
-            end
-        end)
+        self:RegisterEvent("PLAYER_REGEN_DISABLED")
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if IsInGroup() and updatedChannel ~= true then
@@ -794,11 +741,26 @@ local function OnInitialize(self, event, ...)
         if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
             ETHER_DATABASE_DX_AA.currentProfile = charKey
         end
+    elseif (event == "PLAYER_REGEN_DISABLED") then
+        self:UnregisterEvent("PLAYER_REGEN_DISABLED")
+        self:RegisterEvent("PLAYER_REGEN_ENABLED")
+        if Ether.DB[111].SHOW == 1 then
+            EtherFrame.Frames["MAIN"]:Hide()
+            ShowHideSettings(false)
+        end
+        Ether.DB[111].SHOW = Ether.DB[111].SHOW and 1 or 0
+    elseif (event == "PLAYER_REGEN_ENABLED") then
+        self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+        self:RegisterEvent("PLAYER_REGEN_DISABLED")
+        if Ether.DB[111].SHOW == 1 then
+            EtherFrame.Frames["MAIN"]:Show()
+            if Ether.IsMovable then
+                ShowHideSettings(true)
+            end
+        end
     end
 end
 local Initialize = CreateFrame("Frame")
 Initialize:RegisterEvent("ADDON_LOADED")
 Initialize:SetScript("OnEvent", OnInitialize)
-
-
 
