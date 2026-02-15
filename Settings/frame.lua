@@ -2890,18 +2890,25 @@ function Ether.CleanUpButtons()
     if Indicator.preview then
         Indicator.preview:Hide()
     end
-    Editor:Hide()
+    if Editor then
+        Editor:Hide()
+    end
     if previewFrame and previewFrame.castBar then
         previewFrame.castBar:Hide()
         previewFrame.text:SetText("Select CastBar")
         previewFrame.config:SetText("Config")
     end
-
-    Indicator.templateDropdown.text:SetText("Select Indicator")
-    for _, btn in pairs(Editor.posButtons) do
-        btn:Disable()
+    if Indicator and Indicator.templateDropdown and Indicator.templateDropdown.text then
+        Indicator.templateDropdown.text:SetText("Select Indicator")
     end
-    for _, btn in pairs(Indicator.posButtons) do
-        btn:Disable()
+    if Editor and Editor.posButtons then
+        for _, btn in pairs(Editor.posButtons) do
+            btn:Disable()
+        end
+    end
+    if Indicator and Indicator.posButtons then
+        for _, btn in pairs(Indicator.posButtons) do
+            btn:Disable()
+        end
     end
 end
