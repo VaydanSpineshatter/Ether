@@ -9,11 +9,11 @@ local function FullUpdate(self)
     Ether:UpdateHealth(self)
     Ether:UpdateName(self)
     if Ether.DB[701][1] == 1 then
-        Ether:UpdateHealthText(self)
+        Ether:UpdateHealthTextRounded(self)
     end
     Ether:UpdatePower(self)
     if Ether.DB[701][2] == 1 then
-        Ether:UpdatePowerText(self)
+        Ether:UpdatePowerTextRounded(self)
     end
 end
 
@@ -39,12 +39,12 @@ local function Update(_, event, unit)
     elseif event == "UNIT_MAXHEALTH" or event == "UNIT_HEALTH" then
         Ether:UpdateHealth(Ether.unitButtons.solo["targettarget"])
         if Ether.DB[701][1] == 1 then
-            Ether:UpdateHealthText(Ether.unitButtons.solo["targettarget"])
+            Ether:UpdateHealthTextRounded(Ether.unitButtons.solo["targettarget"])
         end
     elseif event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
         Ether:UpdatePower(Ether.unitButtons.solo["targettarget"])
         if Ether.DB[701][2] == 1 then
-            Ether:UpdatePowerText(Ether.unitButtons.solo["targettarget"])
+            Ether:UpdatePowerTextRounded(Ether.unitButtons.solo["targettarget"])
         end
     end
 end
@@ -80,7 +80,7 @@ function Ether:CreateUnitButtons(index)
         })
         Ether:SetupName(button, 0)
         Ether:GetClassColor(button)
-        Ether:SetupUpdateText(button, "health", true)
+        Ether:SetupUpdateText(button, "health")
         Ether:SetupUpdateText(button, "power", true)
         for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
             if button.unit == units[key] then

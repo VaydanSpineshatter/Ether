@@ -10,6 +10,176 @@ local function GetFont(_, target, tex, numb)
     return target.label
 end
 
+local selectedSpellId = nil
+function Ether:UpdateEditor(self)
+    if not selectedSpellId or not Ether.DB[1003][selectedSpellId] then
+        self.nameInput:SetText("")
+        self.nameInput:Disable()
+        self.spellIdInput:SetText("")
+        self.spellIdInput:Disable()
+        self.colorBtn:Disable()
+        self.sizeSlider:Disable()
+        self.offsetXSlider:Disable()
+        self.offsetYSlider:Disable()
+        self.icon:Hide()
+        for _, btn in pairs(self.posButtons) do
+            btn:Disable()
+        end
+        return
+    end
+
+    local data = Ether.DB[1003][selectedSpellId]
+    self.nameInput:SetText(data.name or "")
+    self.nameInput:Enable()
+    self.icon:Show()
+    self.spellIdInput:SetText(tostring(selectedSpellId))
+    self.spellIdInput:Enable()
+    self.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
+    self.colorBtn:Enable()
+    self.offsetXSlider:Enable()
+    self.offsetXSlider:Show()
+    self.offsetYSlider:Enable()
+    self.offsetYSlider:Show()
+    self.sizeSlider:SetValue(data.size)
+    self.sizeSlider:Enable()
+    self.sizeSlider:Show()
+    self.sizeValue:SetText(string_format("%.0f px", data.size))
+    for pos, btn in pairs(self.posButtons) do
+        if pos == data.position then
+            btn.bg:SetColorTexture(0.8, 0.6, 0, 0.5)
+            btn:Enable()
+        else
+            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.5)
+            btn:Enable()
+        end
+    end
+    self.offsetXSlider:SetValue(data.offsetX)
+    self.offsetXValue:SetText(string_format("%.0f", data.offsetX))
+    self.offsetYSlider:SetValue(data.offsetY)
+    self.offsetYValue:SetText(string_format("%.0f", data.offsetY))
+
+    Ether:UpdatePreview(self)
+end
+
+function Ether:UpdatePreview(self)
+
+    local data = Ether.DB[1003][selectedSpellId]
+    local indicator = self.icon
+
+    indicator:SetSize(data.size, data.size)
+    indicator:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
+
+    indicator:ClearAllPoints()
+
+    local posMap = {
+        TOPLEFT = {"TOPLEFT", data.offsetX, data.offsetY},
+        TOP = {"TOP", data.offsetX, data.offsetY},
+        TOPRIGHT = {"TOPRIGHT", data.offsetX, data.offsetY},
+        LEFT = {"LEFT", data.offsetX, -data.offsetY},
+        CENTER = {"CENTER", data.offsetX, -data.offsetY},
+        RIGHT = {"RIGHT", data.offsetX, -data.offsetY},
+        BOTTOMLEFT = {"BOTTOMLEFT", data.offsetX, data.offsetY},
+        BOTTOM = {"BOTTOM", data.offsetX, data.offsetY},
+        BOTTOMRIGHT = {"BOTTOMRIGHT", data.offsetX, data.offsetY}
+    }
+
+    local pos = posMap[data.position]
+    if pos then
+        indicator:SetPoint(pos[1], self.preview.healthBar, pos[1], pos[2], pos[3])
+    end
+end
+
+local function SelectAura(self, spellId)
+    selectedSpellId = spellId
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(self)
+end
+
+local function AddCustomAura(self)
+    local newId = 1
+    while Ether.DB[1003][newId] do
+        newId = newId + 1
+    end
+    Ether.DB[1003][newId] = Ether.AuraTemplate(newId)
+    SelectAura(self, newId)
+end
+
+local function EtherSpellInfo(spellName, resultText, spellIcon)
+    if not resultText or not spellIcon then return end
+    spellName = spellName:trim()
+    if spellName == "" then
+        resultText:SetText("Enter spell name")
+        resultText:SetTextColor(1, 1, 1)
+        spellIcon:Hide()
+        return
+    end
+    local spellID = C_Spell.GetSpellIDForSpellIdentifier(spellName)
+    if not spellID then
+        local baseName = spellName:gsub("%s*%(%s*[Rr]ank%s+%d+%s*%)", ""):trim()
+        if baseName ~= spellName then
+            spellID = C_Spell.GetSpellIDForSpellIdentifier(baseName)
+        end
+    end
+    if not spellID then
+        resultText:SetText("Not found: " .. spellName)
+        resultText:SetTextColor(1, 0, 0)
+        spellIcon:Hide()
+        return
+    end
+    local name = C_Spell.GetSpellName(spellID)
+    local subtext = C_Spell.GetSpellSubtext(spellID) or ""
+    local iconID = C_Spell.GetSpellTexture(spellID)
+    local levelLearned = C_Spell.GetSpellLevelLearned(spellID)
+    local spellRank = 0
+    if subtext:match("Rank") then
+        spellRank = tonumber(subtext:match("Rank%s+(%d+)")) or 0
+    end
+    if iconID then
+        spellIcon:SetTexture(iconID)
+        spellIcon:Show()
+    else
+        spellIcon:Hide()
+    end
+    local resultStr = string_format("Spell Name: %s\nSpellID: %d", name, spellID)
+    if subtext ~= "" then
+        resultStr = resultStr .. string_format("\n%s", subtext)
+    end
+    if levelLearned > 0 then
+        resultStr = resultStr .. string_format("\nLearned at: Level %d", levelLearned)
+    end
+
+    resultText:SetText(resultStr)
+    resultText:SetTextColor(1, 1, 1)
+    Ether.DebugOutput(resultStr)
+
+    spellIcon:SetScript("OnEnter", function()
+        GameTooltip:SetOwner(spellIcon, "ANCHOR_RIGHT")
+        GameTooltip:AddLine(name, 1, 1, 1)
+        GameTooltip:AddLine("Spell ID: " .. spellID, 0.5, 1, 0.5)
+
+        if subtext ~= "" then
+            GameTooltip:AddLine(subtext, 1, 0.82, 0)
+        end
+
+        local level = C_Spell.GetSpellLevelLearned(spellID)
+        if level > 0 then
+            GameTooltip:AddLine("Learned at level " .. level, 0.7, 0.7, 1)
+        end
+
+        local desc = C_Spell.GetSpellDescription(spellID)
+        if desc and desc ~= "" then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(desc:sub(1, 200), 0.8, 0.8, 0.8, true)
+        end
+
+        GameTooltip:Show()
+    end)
+
+    spellIcon:SetScript("OnLeave", function()
+        GameTooltip:Hide()
+    end)
+end
+
 local function CreateEtherDropdown(parent, width, text, options, position)
     local dropdown = CreateFrame("Button", nil, parent)
     dropdown:SetSize(width, 25)
@@ -183,8 +353,77 @@ local function EtherPanelButton(parent, width, height, text, point, relto, rel, 
     return btn
 end
 Ether.EtherPanelButton = EtherPanelButton
+
+local number = nil
+local iconTexture = ""
+local coordinates = ""
+local indicatorType = ""
+local currentIndicator = nil
+
+local function UpdateIndicators(self)
+    if not number then return end
+    local data = Ether.DB[1002][number]
+    if not data then return end
+
+    if indicatorType == "texture" then
+        self.icon:SetSize(data[1], data[1])
+        self.icon:ClearAllPoints()
+        self.icon:SetPoint(data[2], self.preview.healthBar, data[2], data[3], data[4])
+    elseif indicatorType == "string" then
+        self.text:SetSize(data[1], data[1])
+        self.text:ClearAllPoints()
+        self.text:SetPoint(data[2], self.preview.healthBar, data[2], data[3], data[4])
+    end
+end
+
+local function UpdateIndicatorsValue(self)
+    if not number then return end
+    local data = Ether.DB[1002][number]
+    if not data then return end
+
+    self.icon:Hide()
+    self.text:Hide()
+    if indicatorType == "texture" then
+        self.icon:SetTexture(iconTexture)
+        self.icon:SetTexCoord(0, 1, 0, 1)
+        self.icon:Show()
+        if coordinates then
+            self.icon:SetTexCoord(unpack(coordinates))
+        end
+    elseif indicatorType == "string" then
+        self.text:Show()
+        self.text:SetText([[|cE600CCFFAFK|r]])
+    end
+
+    self.sizeSlider:SetValue(data[1])
+
+    if self.sizeValue then
+        self.sizeValue:SetText(string_format("%.0f px", data[1]))
+    end
+
+    for pos, btn in pairs(self.posButtons) do
+        if pos == data[2] then
+            btn.bg:SetColorTexture(0.8, 0.6, 0, 0.5)
+        else
+            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.5)
+        end
+    end
+
+    self.offsetXSlider:SetValue(data[3])
+    if self.offsetXValue then
+        self.offsetXValue:SetText(string_format("%.0f", data[3]))
+    end
+
+    self.offsetYSlider:SetValue(data[4])
+    if self.offsetYValue then
+        self.offsetYValue:SetText(string_format("%.0f", data[4]))
+    end
+
+    UpdateIndicators(self)
+end
+
 function Ether.CreateModuleSection(self)
-    local parent = self.Content.Children["Module"]
+    local parent = self["CONTENT"]["CHILDREN"]["Module"]
 
     local modulesValue = {
         [1] = {name = "Icon"},
@@ -241,7 +480,7 @@ function Ether.CreateModuleSection(self)
 end
 
 function Ether.CreateBlizzardSection(self)
-    local parent = self.Content.Children["Blizzard"]
+    local parent = self["CONTENT"]["CHILDREN"]["Blizzard"]
     local HideValue = {
         [1] = {name = "Player frame"},
         [2] = {name = "Pet frame"},
@@ -278,7 +517,7 @@ function Ether.CreateBlizzardSection(self)
 end
 
 function Ether.CreateAboutSection(self)
-    local parent = self.Content.Children["About"]
+    local parent = self["CONTENT"]["CHILDREN"]["About"]
     local slash = GetFont(self, parent, "Slash Commands", 15)
     slash:SetPoint("TOP", 0, -20)
     local lastY = -20
@@ -299,7 +538,7 @@ function Ether.CreateAboutSection(self)
 end
 
 function Ether.CreateCreationSection(self)
-    local parent = self.Content.Children["Create"]
+    local parent = self["CONTENT"]["CHILDREN"]["Create"]
     local CreateUnits = {
         [1] = {name = "|cffCC66FFPlayer|r"},
         [2] = {name = "|cE600CCFFTarget|r"},
@@ -366,7 +605,7 @@ local function resetHealthPowerText(value)
 end
 
 function Ether.CreateUpdateSection(self)
-    local parent = self.Content.Children["Updates"]
+    local parent = self["CONTENT"]["CHILDREN"]["Updates"]
     local UpdateValue = {
         [1] = {text = "Health Solo"},
         [2] = {text = "Power Solo"},
@@ -424,7 +663,7 @@ function Ether.CreateUpdateSection(self)
 end
 
 function Ether.CreateAuraSection(self)
-    local parent = self.Content.Children["Settings"]
+    local parent = self["CONTENT"]["CHILDREN"]["Settings"]
     local CreateAura = {
         [1] = {text = "Enable/Disable Auras"},
         [2] = {text = "Solo Auras"},
@@ -470,7 +709,6 @@ function Ether.CreateAuraSection(self)
     end
 end
 
-local selectedSpellId = nil
 local AuraList
 local AuraButtons = {}
 
@@ -516,7 +754,7 @@ local function CreateAuraList(parent)
         if not Editor:IsShown() then
             Editor:Show()
         end
-        Ether.AddNewAura()
+        AddCustomAura(Editor)
     end)
     local confirm = EtherPanelButton(frame, 60, 25, "Confirm", "LEFT", addBtn, "RIGHT", 10, 0)
     confirm:SetScript("OnClick", function(self)
@@ -531,9 +769,9 @@ local function CreateAuraList(parent)
     local clear = EtherPanelButton(frame, 60, 25, "Clear", "LEFT", confirm, "RIGHT", 10, 0)
     clear:SetScript("OnClick", function(self)
         wipe(Ether.DB[1003])
-        Ether.UpdateAuraList()
+        Ether:UpdateAuraList()
         selectedSpellId = nil
-        Ether.UpdateEditor()
+        Ether:UpdateEditor(Editor)
         Ether.DebugOutput("|cff00ccffAuras|r: Custom auras cleared")
         auraDropdown.menu:Hide()
     end)
@@ -559,7 +797,7 @@ function Ether:AddTemplateAuras(templateName)
         end
     end
 
-    Ether.UpdateAuraList()
+    Ether:UpdateAuraList()
 
     local msg = string_format("|cff00ccffAuras|r: Template '%s' loaded. ", templateName)
     if added > 0 then
@@ -571,7 +809,7 @@ function Ether:AddTemplateAuras(templateName)
     Ether.DebugOutput(msg)
 
     selectedSpellId = nil
-    Ether.UpdateEditor()
+    Ether:UpdateEditor(Editor)
 end
 
 local colorPickerCallbacks = {
@@ -590,8 +828,8 @@ local function GenericColorChanged()
 
         if state.editorFrame then
             state.editorFrame.colorBtn.bg:SetColorTexture(r, g, b, a)
-            Ether.UpdatePreview()
-            Ether.UpdateAuraList()
+            Ether:UpdatePreview(Editor)
+            Ether:UpdateAuraList()
         end
     end
 end
@@ -611,8 +849,8 @@ local function GenericCancel(prevValues)
         if state.editorFrame then
             local r, g, b, a = auraData.color[1], auraData.color[2], auraData.color[3], auraData.color[4]
             state.editorFrame.colorBtn.bg:SetColorTexture(r, g, b, a)
-            Ether.UpdatePreview()
-            Ether.UpdateAuraList()
+            Ether:UpdatePreview(Editor)
+            Ether:UpdateAuraList()
         end
     end
     colorPickerCallbacks.currentSpellId = nil
@@ -641,7 +879,7 @@ local function OnCancel(prevValues)
             a = originalColor[4]
         }
         currentEditor.colorBtn.bg:SetColorTexture(color.r, color.g, color.b, color.a)
-        Ether.UpdateAuraList()
+        Ether:UpdateAuraList()
     end
 end
 
@@ -675,7 +913,7 @@ local function CreateEditor(parent)
     nameInput:SetScript("OnEnterPressed", function(self)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].name = self:GetText()
-            Ether.UpdateAuraList()
+            Ether:UpdateAuraList()
         end
         self:ClearFocus()
     end)
@@ -697,8 +935,8 @@ local function CreateEditor(parent)
             Ether.DB[1003][selectedSpellId] = nil
             Ether.DB[1003][newId] = data
             selectedSpellId = newId
-            Ether.UpdateAuraList()
-            Ether.UpdateEditor()
+            Ether:UpdateAuraList()
+            Ether:UpdateEditor(Editor)
         end
         self:ClearFocus()
     end)
@@ -730,7 +968,7 @@ local function CreateEditor(parent)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].size = value
             frame.sizeValue:SetText(string_format("%.0f px", value))
-            Ether.UpdatePreview()
+            Ether:UpdatePreview(Editor)
         end
     end)
     local sizeSliderBG = sizeSlider:CreateTexture(nil, "BACKGROUND")
@@ -765,8 +1003,8 @@ local function CreateEditor(parent)
                 local auraData = Ether.DB[1003][selectedSpellId]
                 auraData.color[1], auraData.color[2], auraData.color[3], auraData.color[4] = r, g, b, a
                 currentEditor.colorBtn.bg:SetColorTexture(r, g, b, a)
-                Ether.UpdateAuraList()
-                Ether.UpdatePreview()
+                Ether:UpdateAuraList()
+                Ether:UpdatePreview(Editor)
             end
         end
 
@@ -837,8 +1075,8 @@ local function CreateEditor(parent)
             btn:SetScript("OnClick", function(self)
                 if selectedSpellId then
                     Ether.DB[1003][selectedSpellId].position = self.position
-                    Ether.UpdateEditor()
-                    Ether.UpdatePreview()
+                    Ether:UpdateEditor(Editor)
+                    Ether:UpdatePreview(Editor)
                 end
             end)
 
@@ -877,7 +1115,7 @@ local function CreateEditor(parent)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].offsetX = value
             frame.offsetXValue:SetText(string_format("%.0f", value))
-            Ether.UpdatePreview()
+            Ether:UpdatePreview(Editor)
         end
     end)
     local offsetXBG = offsetXSlider:CreateTexture(nil, "BACKGROUND")
@@ -905,7 +1143,7 @@ local function CreateEditor(parent)
         if selectedSpellId then
             Ether.DB[1003][selectedSpellId].offsetY = value
             frame.offsetYValue:SetText(string_format("%.0f", value))
-            Ether.UpdatePreview()
+            Ether:UpdatePreview(Editor)
         end
     end)
     local offsetYBG = offsetYSlider:CreateTexture(nil, "BACKGROUND")
@@ -935,19 +1173,19 @@ local function CreateEditor(parent)
     return frame
 end
 
-local IsCreated = false
 function Ether.CreateAuraCustomSection(self)
-    local parent = self.Content.Children["Custom"]
-    if not IsCreated then
-        IsCreated = true
+    local parent = self["CONTENT"]["CHILDREN"]["Custom"]
+    if not AuraList then
         CreateAuraList(parent)
-        CreateEditor(parent)
-        Ether.UpdateAuraList()
-        Ether.UpdateEditor()
     end
+    if not Editor then
+        CreateEditor(parent)
+    end
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Editor)
 end
 
-function Ether.UpdateAuraList()
+function Ether:UpdateAuraList()
     for _, btn in ipairs(AuraButtons) do
         btn:Hide()
         btn:SetParent(nil)
@@ -982,7 +1220,7 @@ function Ether.UpdateAuraList()
             if not Editor:IsShown() then
                 Editor:Show()
             end
-            Ether.SelectAura(spellId)
+            SelectAura(Editor, spellId)
             UpdateIsDebuff(Editor.isDebuff.bg, spellId)
         end)
 
@@ -1021,8 +1259,8 @@ function Ether.UpdateAuraList()
                 if selectedSpellId == spellId then
                     selectedSpellId = nil
                 end
-                Ether.UpdateAuraList()
-                Ether.UpdateEditor()
+                Ether:UpdateAuraList()
+                Ether:UpdateEditor(Editor)
             end,
             timeout = 0,
             whileDead = true,
@@ -1041,104 +1279,8 @@ function Ether.UpdateAuraList()
     AuraList.scrollChild:SetHeight(math.max(1, index * 55))
 end
 
-function Ether.UpdateEditor()
-    if not selectedSpellId or not Ether.DB[1003][selectedSpellId] then
-        Editor.nameInput:SetText("")
-        Editor.nameInput:Disable()
-        Editor.spellIdInput:SetText("")
-        Editor.spellIdInput:Disable()
-        Editor.colorBtn:Disable()
-        Editor.sizeSlider:Disable()
-        Editor.offsetXSlider:Disable()
-        Editor.offsetYSlider:Disable()
-        Editor.icon:Hide()
-        for _, btn in pairs(Editor.posButtons) do
-            btn:Disable()
-        end
-        return
-    end
-
-    local data = Ether.DB[1003][selectedSpellId]
-    Editor.nameInput:SetText(data.name or "")
-    Editor.nameInput:Enable()
-    Editor.icon:Show()
-    Editor.spellIdInput:SetText(tostring(selectedSpellId))
-    Editor.spellIdInput:Enable()
-    Editor.colorBtn.bg:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
-    Editor.colorBtn:Enable()
-    Editor.offsetXSlider:Enable()
-    Editor.offsetXSlider:Show()
-    Editor.offsetYSlider:Enable()
-    Editor.offsetYSlider:Show()
-    Editor.sizeSlider:SetValue(data.size)
-    Editor.sizeSlider:Enable()
-    Editor.sizeSlider:Show()
-    Editor.sizeValue:SetText(string_format("%.0f px", data.size))
-    for pos, btn in pairs(Editor.posButtons) do
-        if pos == data.position then
-            btn.bg:SetColorTexture(0.8, 0.6, 0, 0.5)
-            btn:Enable()
-        else
-            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.5)
-            btn:Enable()
-        end
-    end
-    Editor.offsetXSlider:SetValue(data.offsetX)
-    Editor.offsetXValue:SetText(string_format("%.0f", data.offsetX))
-    Editor.offsetYSlider:SetValue(data.offsetY)
-    Editor.offsetYValue:SetText(string_format("%.0f", data.offsetY))
-
-    Ether.UpdatePreview()
-end
-
-function Ether.UpdatePreview()
-    if not selectedSpellId then
-        return
-    end
-
-    local data = Ether.DB[1003][selectedSpellId]
-    local indicator = Editor.icon
-
-    indicator:SetSize(data.size, data.size)
-    indicator:SetColorTexture(data.color[1], data.color[2], data.color[3], data.color[4])
-
-    indicator:ClearAllPoints()
-
-    local posMap = {
-        TOPLEFT = {"TOPLEFT", data.offsetX, data.offsetY},
-        TOP = {"TOP", data.offsetX, data.offsetY},
-        TOPRIGHT = {"TOPRIGHT", data.offsetX, data.offsetY},
-        LEFT = {"LEFT", data.offsetX, -data.offsetY},
-        CENTER = {"CENTER", data.offsetX, -data.offsetY},
-        RIGHT = {"RIGHT", data.offsetX, -data.offsetY},
-        BOTTOMLEFT = {"BOTTOMLEFT", data.offsetX, data.offsetY},
-        BOTTOM = {"BOTTOM", data.offsetX, data.offsetY},
-        BOTTOMRIGHT = {"BOTTOMRIGHT", data.offsetX, data.offsetY}
-    }
-
-    local pos = posMap[data.position]
-    if pos then
-        indicator:SetPoint(pos[1], Editor.preview.healthBar, pos[1], pos[2], pos[3])
-    end
-end
-
-function Ether.SelectAura(spellId)
-    selectedSpellId = spellId
-    Ether.UpdateAuraList()
-    Ether.UpdateEditor()
-end
-
-function Ether:AddNewAura()
-    local newId = 1
-    while Ether.DB[1003][newId] do
-        newId = newId + 1
-    end
-    Ether.DB[1003][newId] = Ether.AuraTemplate(newId)
-    Ether:SelectAura(newId)
-end
-
 function Ether.CreateAuraHelperSection(self)
-    local parent = self.Content.Children["Helper"]
+    local parent = self["CONTENT"]["CHILDREN"]["Helper"]
 
     local spellIDPanel = CreateFrame("Frame", nil, parent)
     spellIDPanel:SetPoint("TOPLEFT", 10, -10)
@@ -1155,7 +1297,7 @@ function Ether.CreateAuraHelperSection(self)
     spellNameBox:SetPoint("TOPLEFT", spellIDPanel, "TOPLEFT", 10, -30)
     spellNameBox:SetAutoFocus(false)
     spellNameBox:SetScript("OnEnterPressed", function(self)
-        Ether:GetSpellInfo(spellNameBox:GetText(), resultText, spellIcon)
+        EtherSpellInfo(spellNameBox:GetText(), resultText, spellIcon)
     end)
 
     local spellInfo = EtherPanelButton(spellIDPanel, 80, 25, "Search", "LEFT", spellNameBox, "RIGHT", 10, 0)
@@ -1175,7 +1317,7 @@ function Ether.CreateAuraHelperSection(self)
     spellIcon:Hide()
 
     spellInfo:SetScript("OnClick", function(self)
-        Ether:GetSpellInfo(spellNameBox:GetText(), resultText, spellIcon)
+        EtherSpellInfo(spellNameBox:GetText(), resultText, spellIcon)
     end)
 
     local examples = {
@@ -1200,89 +1342,8 @@ function Ether.CreateAuraHelperSection(self)
     example:SetText(exampleText)
 end
 
-function Ether:GetSpellInfo(spellName, resultText, spellIcon)
-    if not resultText or not spellIcon then return end
-    spellName = spellName:trim()
-    if spellName == "" then
-        resultText:SetText("Enter spell name")
-        resultText:SetTextColor(1, 1, 1)
-        spellIcon:Hide()
-        return
-    end
-    local spellID = C_Spell.GetSpellIDForSpellIdentifier(spellName)
-    if not spellID then
-        local baseName = spellName:gsub("%s*%(%s*[Rr]ank%s+%d+%s*%)", ""):trim()
-        if baseName ~= spellName then
-            spellID = C_Spell.GetSpellIDForSpellIdentifier(baseName)
-        end
-    end
-    if not spellID then
-        resultText:SetText("Not found: " .. spellName)
-        resultText:SetTextColor(1, 0, 0)
-        spellIcon:Hide()
-        return
-    end
-    local name = C_Spell.GetSpellName(spellID)
-    local subtext = C_Spell.GetSpellSubtext(spellID) or ""
-    local iconID = C_Spell.GetSpellTexture(spellID)
-    local levelLearned = C_Spell.GetSpellLevelLearned(spellID)
-    local spellRank = 0
-    if subtext:match("Rank") then
-        spellRank = tonumber(subtext:match("Rank%s+(%d+)")) or 0
-    end
-    if iconID then
-        spellIcon:SetTexture(iconID)
-        spellIcon:Show()
-    else
-        spellIcon:Hide()
-    end
-    local resultStr = string_format("Spell Name: %s\nSpellID: %d", name, spellID)
-    if subtext ~= "" then
-        resultStr = resultStr .. string_format("\n%s", subtext)
-    end
-    if levelLearned > 0 then
-        resultStr = resultStr .. string_format("\nLearned at: Level %d", levelLearned)
-    end
-
-    resultText:SetText(resultStr)
-    resultText:SetTextColor(1, 1, 1)
-    Ether.DebugOutput(resultStr)
-
-    spellIcon:SetScript("OnEnter", function()
-        GameTooltip:SetOwner(spellIcon, "ANCHOR_RIGHT")
-        GameTooltip:AddLine(name, 1, 1, 1)
-        GameTooltip:AddLine("Spell ID: " .. spellID, 0.5, 1, 0.5)
-
-        if subtext ~= "" then
-            GameTooltip:AddLine(subtext, 1, 0.82, 0)
-        end
-
-        local level = C_Spell.GetSpellLevelLearned(spellID)
-        if level > 0 then
-            GameTooltip:AddLine("Learned at level " .. level, 0.7, 0.7, 1)
-        end
-
-        local desc = C_Spell.GetSpellDescription(spellID)
-        if desc and desc ~= "" then
-            GameTooltip:AddLine(" ")
-            GameTooltip:AddLine(desc:sub(1, 200), 0.8, 0.8, 0.8, true)
-        end
-
-        GameTooltip:Show()
-    end)
-
-    spellIcon:SetScript("OnLeave", function()
-        GameTooltip:Hide()
-    end)
-end
-local number = nil
-local iconTexture = ""
-local Indicator
-local coordinates = ""
-local indicatorType = ""
-local currentIndicator = nil
 function Ether.CreateIndicatorsSection(self)
-    local parent = self.Content.Children["Position"]
+    local parent = self["CONTENT"]["CHILDREN"]["Position"]
 
     local I_Register = {
         [1] = {text = "Ready check", texture = "Interface\\RaidFrame\\ReadyCheck-Ready", texture2 = "Interface\\RaidFrame\\ReadyCheck-NotReady", texture3 = "Interface\\RaidFrame\\ReadyCheck-Waiting"},
@@ -1344,9 +1405,7 @@ function Ether.CreateIndicatorsSection(self)
         self.Buttons[6][i] = btn
     end
 
-    local frame = CreateFrame("Frame", nil, parent)
-    Indicator = frame
-
+    local Indicator = self.Frames["INDICATORS"]
     Indicator.sizeValue = nil
     Indicator.offsetXValue = nil
     Indicator.offsetYValue = nil
@@ -1396,7 +1455,7 @@ function Ether.CreateIndicatorsSection(self)
                 end
                 currentIndicator = name
                 templateDropdown.text:SetText(currentIndicator)
-                Ether.UpdateIndicatorsValue()
+                UpdateIndicatorsValue(Indicator)
             end
         })
     end
@@ -1459,7 +1518,7 @@ function Ether.CreateIndicatorsSection(self)
             btn:SetScript("OnClick", function(self)
                 if number then
                     Ether.DB[1002][number][2] = self.position
-                    Ether.UpdateIndicatorsValue()
+                    UpdateIndicatorsValue(Indicator)
                 end
             end)
 
@@ -1507,7 +1566,7 @@ function Ether.CreateIndicatorsSection(self)
             if Indicator.sizeValue then
                 Indicator.sizeValue:SetText(string_format("%.0f px", value))
             end
-            Ether.UpdateIndicatorsValue()
+            UpdateIndicatorsValue(Indicator)
         end
     end)
     local sizeSliderBG = sizeSlider:CreateTexture(nil, "BACKGROUND")
@@ -1543,7 +1602,7 @@ function Ether.CreateIndicatorsSection(self)
             if Indicator.offsetXValue then
                 Indicator.offsetXValue:SetText(string_format("%.0f", value))
             end
-            Ether.UpdateIndicatorsValue()
+            UpdateIndicatorsValue(Indicator)
         end
     end)
     local offsetXBG = offsetXSlider:CreateTexture(nil, "BACKGROUND")
@@ -1579,7 +1638,7 @@ function Ether.CreateIndicatorsSection(self)
             if Indicator.offsetYValue then
                 Indicator.offsetYValue:SetText(string_format("%.0f", value))
             end
-            Ether.UpdateIndicatorsValue()
+            UpdateIndicatorsValue(Indicator)
         end
     end)
 
@@ -1603,70 +1662,8 @@ function Ether.CreateIndicatorsSection(self)
     SetupSliderThump(offsetXSlider, 10, {0.8, 0.6, 0, 1})
 end
 
-function Ether.UpdateIndicatorsValue()
-    if not number then return end
-    local data = Ether.DB[1002][number]
-    if not data then return end
-
-    Indicator.icon:Hide()
-    Indicator.text:Hide()
-    if indicatorType == "texture" then
-        Indicator.icon:SetTexture(iconTexture)
-        Indicator.icon:SetTexCoord(0, 1, 0, 1)
-        Indicator.icon:Show()
-        if coordinates then
-            Indicator.icon:SetTexCoord(unpack(coordinates))
-        end
-    elseif indicatorType == "string" then
-        Indicator.text:Show()
-        Indicator.text:SetText([[|cE600CCFFAFK|r]])
-    end
-
-    Indicator.sizeSlider:SetValue(data[1])
-
-    if Indicator.sizeValue then
-        Indicator.sizeValue:SetText(string_format("%.0f px", data[1]))
-    end
-
-    for pos, btn in pairs(Indicator.posButtons) do
-        if pos == data[2] then
-            btn.bg:SetColorTexture(0.8, 0.6, 0, 0.5)
-        else
-            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.5)
-        end
-    end
-
-    Indicator.offsetXSlider:SetValue(data[3])
-    if Indicator.offsetXValue then
-        Indicator.offsetXValue:SetText(string_format("%.0f", data[3]))
-    end
-
-    Indicator.offsetYSlider:SetValue(data[4])
-    if Indicator.offsetYValue then
-        Indicator.offsetYValue:SetText(string_format("%.0f", data[4]))
-    end
-
-    Ether.UpdateIndicators()
-end
-
-function Ether.UpdateIndicators()
-    if not number then return end
-    local data = Ether.DB[1002][number]
-    if not data then return end
-
-    if indicatorType == "texture" then
-        Indicator.icon:SetSize(data[1], data[1])
-        Indicator.icon:ClearAllPoints()
-        Indicator.icon:SetPoint(data[2], Indicator.preview.healthBar, data[2], data[3], data[4])
-    elseif indicatorType == "string" then
-        Indicator.text:SetSize(data[1], data[1])
-        Indicator.text:ClearAllPoints()
-        Indicator.text:SetPoint(data[2], Indicator.preview.healthBar, data[2], data[3], data[4])
-    end
-end
-
 function Ether.CreateTooltipSection(self)
-    local parent = self.Content.Children["Tooltip"]
+    local parent = self["CONTENT"]["CHILDREN"]["Tooltip"]
 
     local Tooltip = {
         [1] = {name = "AFK"},
@@ -1711,7 +1708,7 @@ function Ether.CreateTooltipSection(self)
 end
 
 function Ether.CreateLayoutSection(self)
-    local parent = self.Content.Children["Layout"]
+    local parent = self["CONTENT"]["CHILDREN"]["Layout"]
 
     local layoutValue = {
         [1] = {text = "Smooth Health Solo"},
@@ -1744,8 +1741,18 @@ end
 
 local previewFrame
 function Ether.CreateCastBarSection(self)
-    local parent = self.Content.Children["CastBar"]
-
+    local parent = self["CONTENT"]["CHILDREN"]["CastBar"]
+    local function configUpdate(preview, input, unit)
+        local pos = Ether.DB[5111][input]
+        local config = Ether.DB[1301][input]
+        local castBar = Ether.unitButtons.solo[unit].castBar
+        castBar.icon:SetSize(input, input)
+        preview.castBar.icon:SetSize(config[1], config[1])
+        preview.castBar:SetSize(pos[6], pos[7])
+        preview.castBar:Show()
+        preview.castBar.text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[2], "OUTLINE")
+        preview.castBar.time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[3], "OUTLINE")
+    end
     local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
     previewFrame = preview
     preview:SetPoint("CENTER", parent, "CENTER", 0, 50)
@@ -1774,20 +1781,16 @@ function Ether.CreateCastBarSection(self)
     preview.castBar:SetStatusBarColor(0.2, 0.6, 1.0, 0.8)
 
     local castBarId = {
-        [341] = "Player CastBar",
-        [342] = "Target CastBar"
+        [341] = "Player CastBar", token = "player",
+        [342] = "Target CastBar", token = "target"
     }
+
     local castBarConfig = {
         [1] = "Height",
         [2] = "Width",
-        [3] = "Time",
-        [4] = "Text",
-        [5] = "Position",
-        [6] = "Icon",
-        [7] = "SafeZone",
-        [8] = "Size",
-        [9] = "Alpha",
+        [3] = "Icon",
     }
+
     local barIdTbl = {}
     local barConfigTbl = {}
     local barDropdown
@@ -1797,14 +1800,11 @@ function Ether.CreateCastBarSection(self)
             text = configName,
             func = function()
                 barDropdown.text:SetText(configName)
-                local pos = Ether.DB[5111][index]
-                preview.castBar:SetSize(pos[6], pos[7])
-                preview.castBar:SetScale(pos[8])
-                preview.castBar:SetAlpha(pos[9])
-                preview.castBar:Show()
+
             end
         })
     end
+
     for _, configName in ipairs(castBarConfig) do
         table.insert(barConfigTbl, {
             text = configName,
@@ -1820,6 +1820,20 @@ function Ether.CreateCastBarSection(self)
     previewFrame.config = configDropdown.text
     configDropdown:SetPoint("TOPRIGHT")
 
+    local iconLabel = parent:CreateFontString(nil, "OVERLAY")
+    iconLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
+    iconLabel:SetPoint("BOTTOM", 0, 120)
+    iconLabel:SetText("Size")
+    local iconInput = CreateLineInput(parent, 70, 25)
+    iconInput:SetPoint("TOPLEFT", iconLabel, "BOTTOMLEFT", 0, -10)
+    iconInput:SetNumeric(true)
+    iconInput:SetScript("OnEnterPressed", function(self)
+        local size = tonumber(self:GetText())
+
+        self:ClearFocus()
+    end)
+    iconLabel:Hide()
+    iconInput:Hide()
     local layoutValue = {
         [1] = {text = "Player CastBar"},
         [2] = {text = "Target CastBar"}
@@ -1862,7 +1876,7 @@ function Ether.CreateCastBarSection(self)
 end
 
 function Ether.CreateConfigSection(self)
-    local parent = self.Content.Children["Config"]
+    local parent = self["CONTENT"]["CHILDREN"]["Config"]
     local DB = Ether.DB
 
     local frameKeys = {
@@ -2155,6 +2169,7 @@ function Ether.CreateConfigSection(self)
                 end
             end})
     end
+    local Indicator = self.Frames["INDICATORS"]
     dropdowns.font = CreateEtherDropdown(parent, 200, "Select Font", fontOptions, true)
     dropdowns.font:SetPoint("TOPRIGHT", 0, 0)
     local mediaBars = LSM:HashTable("statusbar")
@@ -2244,7 +2259,7 @@ function Ether.CreateConfigSection(self)
 end
 
 function Ether.CreateProfileSection(self)
-    local parent = self.Content.Children["Edit"]
+    local parent = self["CONTENT"]["CHILDREN"]["Edit"]
     local dropdown = CreateFrame("Frame", nil, parent, "UIDropDownMenuTemplate")
     dropdown:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, -5)
     UIDropDownMenu_SetWidth(dropdown, 130)
@@ -2549,8 +2564,8 @@ function Ether.ExportCurrentProfile()
     if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
         ETHER_DATABASE_DX_AA.currentProfile = charKey
     end
-    Ether.UpdateAuraList()
-    Ether.UpdateEditor()
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Editor)
     local profileName = ETHER_DATABASE_DX_AA.currentProfile
     local profileData = ETHER_DATABASE_DX_AA.profiles[profileName]
     if not profileData then
@@ -2615,8 +2630,8 @@ function Ether.ImportProfile(encodedString)
 
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
-    Ether.UpdateAuraList()
-    Ether.UpdateEditor()
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Editor)
     return true, "Successfully imported as: " .. importedName
 end
 
@@ -2666,8 +2681,8 @@ function Ether.SwitchProfile(name)
 
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
-    Ether.UpdateAuraList()
-    Ether.UpdateEditor()
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Editor)
     if Ether.ConfigFrame and Ether.ConfigFrame:IsShown() then
         Ether.ConfigFrame:Hide()
         Ether.ConfigFrame:Show()
@@ -2705,8 +2720,8 @@ function Ether.DeleteProfile(name)
     ETHER_DATABASE_DX_AA.profiles[name] = nil
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
-    Ether.UpdateAuraList()
-    Ether.UpdateEditor()
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Editor)
     return true, "Profile deleted"
 end
 
@@ -2734,8 +2749,8 @@ function Ether.CreateProfile(name)
     ETHER_DATABASE_DX_AA.profiles[name] = Ether.CopyTable(Ether.DataDefault)
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
-    Ether.UpdateAuraList()
-    Ether.UpdateEditor()
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Editor)
     return true, "Profile created"
 end
 
@@ -2758,9 +2773,9 @@ function Ether.ResetProfile()
     ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DataDefault)
     Ether.DB = Ether.CopyTable(Ether.DataDefault)
     wipe(Ether.DB[1003])
-    Ether.UpdateAuraList()
+    Ether:UpdateAuraList()
     selectedSpellId = nil
-    Ether.UpdateEditor()
+    Ether:UpdateEditor(Editor)
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
     return true, "Profile reset to default"
@@ -2768,27 +2783,43 @@ end
 
 function Ether.CleanUpButtons()
     Ether:WrapMainSettingsColor({0.80, 0.40, 1.00, 1})
-    Indicator.icon:Hide()
-    Indicator.text:Hide()
-    Indicator.sizeSlider:Hide()
-    Indicator.sizeSlider:Disable()
-    Indicator.offsetYSlider:Hide()
-    Indicator.offsetYSlider:Disable()
-    Indicator.offsetXSlider:Hide()
-    Indicator.offsetXSlider:Disable()
+    local Indicator = Ether.EtherFrame.Frames["INDICATORS"]
+    if Indicator.icon then
+        Indicator.icon:Hide()
+    end
+    if Indicator.text then
+        Indicator.text:Hide()
+    end
+    if Indicator.sizeSlider then
+        Indicator.sizeSlider:Hide()
+        Indicator.sizeSlider:Disable()
+    end
+    if Indicator.offsetYSlider then
+        Indicator.offsetYSlider:Hide()
+        Indicator.offsetYSlider:Disable()
+    end
+
+    if Indicator.offsetXSlider then
+        Indicator.offsetXSlider:Hide()
+        Indicator.offsetXSlider:Disable()
+    end
+
     Indicator.offsetXLabel:Hide()
     Indicator.sizeLabel:Hide()
     Indicator.offsetYLabel:Hide()
     Indicator.offsetXValue:Hide()
     Indicator.offsetYValue:Hide()
     Indicator.sizeValue:Hide()
-    Indicator.preview:Hide()
+    if Indicator.preview then
+        Indicator.preview:Hide()
+    end
     Editor:Hide()
     if previewFrame and previewFrame.castBar then
         previewFrame.castBar:Hide()
         previewFrame.text:SetText("Select CastBar")
         previewFrame.config:SetText("Config")
     end
+
     Indicator.templateDropdown.text:SetText("Select Indicator")
     for _, btn in pairs(Editor.posButtons) do
         btn:Disable()

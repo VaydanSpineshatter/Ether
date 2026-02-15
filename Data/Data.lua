@@ -263,6 +263,32 @@ function Ether.TableSize(t)
     return count
 end
 
+function Ether:NilCheckData(data, number)
+    if data[number] then
+        for subkey in pairs(Ether.DataDefault[number]) do
+            if data[number][subkey] == nil then
+                data[number] = Ether.CopyTable(Ether.DataDefault[number])
+                break
+            end
+        end
+    end
+end
+
+function Ether:ArrayMigrateData(data)
+    local arraysLength = {
+        [101] = 11, [201] = 6, [301] = 13, [401] = 6,
+        [501] = 9, [701] = 4, [801] = 3,
+        [1001] = 3, [1101] = 3, [1201] = 2
+    }
+    for arrayID, expectedLength in pairs(arraysLength) do
+        if data[arrayID] and type(data[arrayID]) == "table" then
+            if #data[arrayID] ~= expectedLength then
+                data[arrayID] = Ether.DataMigrate(data[arrayID], expectedLength, 1)
+            end
+        end
+    end
+end
+
 local function EtherFrameChecked(number, data, number2)
     if Ether.EtherFrame.Buttons[number] then
         for i = 1, #Ether.DB[data] do
@@ -277,8 +303,8 @@ Ether.EtherFrameChecked = EtherFrameChecked
 local numberTbl = {401, 101, 201, 1001, 501, 301, 801, 1201}
 
 function Ether:RefreshAllSettings()
-    if Ether.EtherFrame and Ether.EtherFrame.Frames and Ether.EtherFrame.Frames["Main"]:IsShown() then
-        Ether.EtherFrame.Frames["Main"]:Hide()
+    if Ether.EtherFrame and Ether.EtherFrame.Frames and Ether.EtherFrame.Frames["MAIN"]:IsShown() then
+        Ether.EtherFrame.Frames["MAIN"]:Hide()
     end
     for index, value in ipairs(numberTbl) do
         EtherFrameChecked(index, value, 2)
@@ -291,7 +317,7 @@ function Ether:RefreshAllSettings()
             end
         end
     end
-    Ether.EtherFrame.Frames["Main"]:Show()
+    Ether.EtherFrame.Frames["MAIN"]:Show()
 end
 
 function Ether:EtherFrameSetClick(number, number2, number3)

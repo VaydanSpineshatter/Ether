@@ -7,7 +7,9 @@ local math_max = math.max
 local math_min = math.min
 local UnitGetIncomingHeals = UnitGetIncomingHeals
 local string_format = string.format
+local math_floor = math.floor
 local fm = "%.1f"
+local f2m = "%s%d%%|r"
 
 local FACTION_COLORS = {
     [0] = {r = 1.0, g = 0, b = 0}, -- 255/255=1.0
@@ -175,10 +177,40 @@ function Ether:UpdateHealth(button, smooth)
     end
     local r, g, b = Ether:GetClassColors(button.unit)
     button.healthBar:SetStatusBarColor(r, g, b)
-    button.healthDrop:SetGradient("VERTICAL", CreateColor(r, g, b, .4), CreateColor(r * 0.3, g * 0.3, b * 0.4, .4))
+    button.healthDrop:SetGradient("VERTICAL", CreateColor(r, g, b, .3), CreateColor(r * 0.3, g * 0.3, b * 0.4, .3))
 end
 
-function Ether:UpdateHealthText(button)
+--[[
+
+local HealthColors = {
+    {0.0, 'ff0000'},
+    {0.3, 'ff4500'},
+    {0.5, 'ffa500'},
+    {0.7, 'ffd700'},
+    {0.9, 'adff2f'},
+    {1.0, '00ff00'},
+}
+local HealthGradient = Ether:BuildGradientTable(HealthColors)
+local lastHealth = {}
+
+function Ether:UpdateHealthTextRounded(button)
+    if not button or not button.unit or not button.health then return end
+
+    local unit = button.unit
+    local h, maxH = UnitHealth(unit), UnitHealthMax(unit)
+    local pct = maxH > 0 and h / maxH or 0
+    local roundedPct = math_floor(pct * 100 + 0.5)
+
+    if lastHealth[unit] == roundedPct then
+        return
+    end
+    lastHealth[unit] = roundedPct
+
+    local colorCode = HealthGradient[roundedPct]
+    button.health:SetText(string_format(f2m, colorCode, roundedPct))
+end
+]]
+function Ether:UpdateHealthTextRounded(button)
     if not button or not button.unit or not button.health then
         return
     end
@@ -231,7 +263,7 @@ local function HealthChanged(_, event, unit)
                     Ether:UpdateHealth(button)
                 end
                 if Ether.DB[701][1] == 1 then
-                    Ether:UpdateHealthText(button)
+                    Ether:UpdateHealthTextRounded(button)
                 end
             end
         end
@@ -244,7 +276,7 @@ local function HealthChanged(_, event, unit)
                     Ether:UpdateHealth(button)
                 end
                 if Ether.DB[701][3] == 1 then
-                    Ether:UpdateHealthText(button)
+                    Ether:UpdateHealthTextRounded(button)
                 end
             end
         end

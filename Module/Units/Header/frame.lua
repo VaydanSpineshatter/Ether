@@ -129,7 +129,15 @@ local function CreateChildren(headerName, buttonName)
     end
     return button
 end
+--[[
 
+local function CreateHeaders(type)
+end
+local function AttributeHeaders(type, Attribute)
+end
+local function PositionHeaders(type, Position)
+end
+]]
 local function CreateGroupHeader()
     local header = CreateFrame("Frame", "EtherRaidGroupHeader", raidAnchor, "SecureGroupHeaderTemplate")
     Ether.Header.raid = header
@@ -140,12 +148,12 @@ local function CreateGroupHeader()
     header.CreateChildren = CreateChildren
     header:SetAttribute("ButtonWidth", 55)
     header:SetAttribute("ButtonHeight", 55)
-    header:SetAttribute("columnAnchorPoint", "RIGHT")
+    header:SetAttribute("columnAnchorPoint", "LEFT")
     header:SetAttribute("point", "BOTTOM")
     header:SetAttribute("groupBy", "GROUP")
     header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
-    header:SetAttribute("xOffset", 4)
-    header:SetAttribute("yOffset", -4)
+    header:SetAttribute("xOffset", 5)
+    header:SetAttribute("yOffset", 4)
     header:SetAttribute("columnSpacing", 4)
     header:SetAttribute("unitsPerColumn", 5)
     header:SetAttribute("maxColumns", 8)

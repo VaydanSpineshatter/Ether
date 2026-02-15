@@ -4,8 +4,9 @@ local UnitPowerType = UnitPowerType
 local UnitPower = UnitPower
 local UnitPowerMax = UnitPowerMax
 local string_format = string.format
+local math_floor = math.floor
 local fm = "%.1f"
-
+local f2m = "%s%d%%|r"
 local RegisterPEvent, UnregisterPEvent
 do
     local IsEventValid = C_EventUtils.IsEventValid
@@ -56,21 +57,6 @@ function Ether:InitialPower(button)
     button.powerBar:SetMinMaxValues(0, ReturnMaxPower(button.unit))
 end
 
-function Ether:UpdatePowerText(button)
-    if not button or not button.unit or not button.power then
-        return
-    end
-    local p = UnitPower(button.unit)
-    if p <= 0 then
-        return
-    end
-    if p >= 1000 then
-        button.power:SetText(string_format(fm, p / 1000))
-    else
-        button.power:SetText(p)
-    end
-end
-
 function Ether:GetPowerColor(unit)
     local powerType, powerToken, altR, altG, altB = UnitPowerType(unit)
     local info = PowerBarColor[powerToken]
@@ -85,7 +71,49 @@ function Ether:GetPowerColor(unit)
     end
     return r, g, b
 end
+--[[
+local PowerColors = {
+    {0.0, 'e0f7ff'},
+    {0.2, '99ddff'},
+    {0.4, '66bbff'},
+    {0.6, '3399ff'},
+    {1.0, '1a75ff'},
+}
 
+local PowerGradient = Ether:BuildGradientTable(PowerColors)
+local lastPower = {}
+
+function Ether:UpdatePowerTextRounded(button)
+    if not button or not button.unit or not button.power then return end
+
+    local unit = button.unit
+    local pw, maxPw = UnitPower(unit), UnitPowerMax(unit)
+    local pct = maxPw > 0 and pw / maxPw or 0
+    local roundedPct = math_floor(pct * 100 + 0.5)
+
+    if lastPower[unit] == roundedPct then
+        return
+    end
+    lastPower[unit] = roundedPct
+
+    local colorCode = PowerGradient[roundedPct]
+    button.power:SetText(string_format(f2m, colorCode, roundedPct))
+end
+]]
+function Ether:UpdatePowerTextRounded(button)
+    if not button or not button.unit or not button.power then
+        return
+    end
+    local p = UnitPower(button.unit)
+    if p <= 0 then
+        return
+    end
+    if p >= 1000 then
+        button.power:SetText(string_format(fm, p / 1000))
+    else
+        button.power:SetText(p)
+    end
+end
 function Ether:UpdatePower(button, smooth)
     if not button or not button.unit or not button.powerBar then
         return
@@ -117,14 +145,14 @@ local function PowerChanged(_, event, unit)
                     Ether:UpdatePower(button)
                 end
                 if Ether.DB[701][2] == 1 then
-                    Ether:UpdatePowerText(button)
+                    Ether:UpdatePowerTextRounded(button)
                 end
             end
         end
         if Ether.DB[701][4] == 1 then
             local button = Ether.unitButtons.raid[unit]
             if button and button:IsVisible() then
-                Ether:UpdatePowerText(button)
+                Ether:UpdatePowerTextRounded(button)
             end
         end
     end

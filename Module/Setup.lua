@@ -1,7 +1,7 @@
 local _, Ether = ...
 local math_floor = math.floor
 local tinsert = table.insert
-
+local string_format = string.format
 function Ether:SetupUpdateText(button, tbl, p)
     if not button or not button.healthBar then return end
     local text = button.healthBar:CreateFontString(nil, "OVERLAY")
@@ -40,8 +40,8 @@ function Ether:SetupHealthBar(button, orient, w, h)
     healthBar:SetStatusBarColor(r, g, b)
     healthDrop:SetTexture(unpack(Ether.mediaPath.blankBar))
     healthDrop:SetGradient(orient,
-                  CreateColor(r, g, b, .4),
-                  CreateColor(r * 0.3, g * 0.3, b * 0.4, .4)
+                  CreateColor(r, g, b, .3),
+                  CreateColor(r * 0.3, g * 0.3, b * 0.4, .3)
     )
     return button
 end
@@ -485,7 +485,6 @@ function Ether:DispelIconSetup(button)
     button.dispelBorder = border
     return button
 end
-
 --[[
 local function HexToRGB(hex)
     hex = hex:gsub('#', '')

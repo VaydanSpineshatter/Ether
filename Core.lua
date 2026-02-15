@@ -89,10 +89,10 @@ local EtherFrame = {
         [7] = {},
         [8] = {},
         [9] = {},
+        [10] = {},
+        --[11] = {[1] = {}, [2] = {}}
     },
-    Content = {
-        Children = {},
-    },
+    ["CONTENT"] = {["CHILDREN"] = {}, },
     Menu = {
         ["TOP"] = {
             [1] = {"Module", "Blizzard", "About"},
@@ -134,26 +134,26 @@ function Ether.ShowCategory(self, tab)
             break
         end
     end
-    for _, layers in pairs(self.Buttons.Menu) do
+    for _, layers in pairs(self.Buttons[10]) do
         for _, topBtn in pairs(layers) do
             topBtn:Hide()
         end
     end
-    if tabLayer and self.Buttons.Menu[tabLayer] then
-        for _, topBtn in pairs(self.Buttons.Menu[tabLayer]) do
+    if tabLayer and self.Buttons[10][tabLayer] then
+        for _, topBtn in pairs(self.Buttons[10][tabLayer]) do
             topBtn:Show()
         end
     end
-    for _, child in pairs(self.Content.Children) do
+    for _, child in pairs(self["CONTENT"]["CHILDREN"]) do
         child:Hide()
     end
-    local target = self.Content.Children[tab]
+    local target = self["CONTENT"]["CHILDREN"][tab]
     if target then
         target:Show()
     end
 end
 
-local function CreateSettingsButtons(self, name, parent, layer, onClick, isTopButton)
+local function CreateSettingsButtons(name, parent, layer, onClick, isTopButton)
     local btn = CreateFrame("Button", nil, parent)
     if isTopButton then
         btn:SetHeight(20)
@@ -186,19 +186,20 @@ local function InitializeSettings(self)
         for layer = 1, 7 do
             if self.Menu["TOP"][layer] then
                 for _, name in ipairs(self.Menu["TOP"][layer]) do
-                    self.Content.Children[name] = CreateFrame("Frame", nil, self.Frames["Content"])
-                    self.Content.Children[name]:SetAllPoints(self.Frames["Content"])
-                    self.Content.Children[name]:Hide()
+                    self["CONTENT"]["CHILDREN"][name] = CreateFrame("Frame", nil, self.Frames["CONTENT"])
+                    self["CONTENT"]["CHILDREN"][name]:SetAllPoints(self.Frames["CONTENT"])
+                    self["CONTENT"]["CHILDREN"][name]:Hide()
                 end
             end
         end
+        self.Frames["INDICATORS"] = CreateFrame("Frame", nil, self["CONTENT"]["CHILDREN"]["Position"])
         BuildContent(self)
         for layer = 1, 7 do
             if self.Menu["TOP"][layer] then
-                self.Buttons.Menu[layer] = {}
+                self.Buttons[10][layer] = {}
                 local BtnConfig = {}
                 for idx, itemName in ipairs(self.Menu["TOP"][layer]) do
-                    local btn = CreateSettingsButtons(self, itemName, self.Frames["Top"], layer, function(btnName)
+                    local btn = CreateSettingsButtons(itemName, self.Frames["TOP"], layer, function(btnName)
                         Ether.ShowCategory(self, btnName)
                     end, true)
                     btn:Hide()
@@ -207,7 +208,7 @@ local function InitializeSettings(self)
                         name = itemName,
                         width = btn:GetWidth()
                     }
-                    self.Buttons.Menu[layer][itemName] = btn
+                    self.Buttons[10][layer][itemName] = btn
                 end
                 if #BtnConfig > 0 then
                     local spacing = 10
@@ -219,7 +220,7 @@ local function InitializeSettings(self)
                     local startX = -totalWidth / 2
                     local currentX = startX
                     for _, data in ipairs(BtnConfig) do
-                        data.btn:SetPoint("CENTER", self.Frames["Top"], "CENTER", currentX + data.width / 2, 5)
+                        data.btn:SetPoint("CENTER", self.Frames["TOP"], "CENTER", currentX + data.width / 2, 5)
                         currentX = currentX + data.width + spacing
                     end
                 end
@@ -230,16 +231,16 @@ local function InitializeSettings(self)
         for layer = 1, 7 do
             if self.Menu["LEFT"][layer] then
                 for _, itemName in ipairs(self.Menu["LEFT"][layer]) do
-                    local btn = CreateSettingsButtons(self, itemName, self.Frames["Left"], layer, function(_, btnLayer)
+                    local btn = CreateSettingsButtons(itemName, self.Frames["LEFT"], layer, function(_, btnLayer)
                         local firstTabName = self.Menu["TOP"][btnLayer][1]
                         Ether.DB[111].LAST_TAB = firstTabName
-                        for _, layers in pairs(self.Buttons.Menu) do
+                        for _, layers in pairs(self.Buttons[10]) do
                             for _, topBtn in pairs(layers) do
                                 topBtn:Hide()
                             end
                         end
-                        if self.Buttons.Menu[btnLayer] then
-                            for _, topBtn in pairs(self.Buttons.Menu[btnLayer]) do
+                        if self.Buttons[10][btnLayer] then
+                            for _, topBtn in pairs(self.Buttons[10][btnLayer]) do
                                 topBtn:Show()
                             end
                         end
@@ -252,8 +253,8 @@ local function InitializeSettings(self)
                         btn:SetPoint("TOPLEFT", last, "BOTTOMLEFT", 0, 0)
                         btn:SetPoint("TOPRIGHT", last, "BOTTOMRIGHT", 0, -2)
                     else
-                        btn:SetPoint("TOPLEFT", self.Frames["Left"], "TOPLEFT", 5, 0)
-                        btn:SetPoint("TOPRIGHT", self.Frames["Left"], "TOPRIGHT", -10, 0)
+                        btn:SetPoint("TOPLEFT", self.Frames["LEFT"], "TOPLEFT", 5, 0)
+                        btn:SetPoint("TOPRIGHT", self.Frames["LEFT"], "TOPRIGHT", -10, 0)
                     end
 
                     last = btn
@@ -283,10 +284,10 @@ end
 
 function Ether.CreateMainSettings(self)
     if not self.IsCreated then
-        self.Frames["Main"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
-        self.Frames["Main"]:SetFrameLevel(500)
-        self.Frames["Main"]:SetSize(640, 480)
-        self.Frames["Main"]:SetBackdrop({
+        self.Frames["MAIN"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
+        self.Frames["MAIN"]:SetFrameLevel(500)
+        self.Frames["MAIN"]:SetSize(640, 480)
+        self.Frames["MAIN"]:SetBackdrop({
             bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
             edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
             tile = true,
@@ -294,10 +295,10 @@ function Ether.CreateMainSettings(self)
             edgeSize = 16,
             insets = {left = 4, right = 4, top = 4, bottom = 4}
         })
-        self.Frames["Main"]:SetBackdropColor(0.1, 0.1, 0.1, 1)
-        self.Frames["Main"]:SetBackdropBorderColor(0, 0.8, 1, .7)
-        self.Frames["Main"]:Hide()
-        self.Frames["Main"]:SetScript("OnHide", function()
+        self.Frames["MAIN"]:SetBackdropColor(0.1, 0.1, 0.1, 1)
+        self.Frames["MAIN"]:SetBackdropBorderColor(0, 0.8, 1, .7)
+        self.Frames["MAIN"]:Hide()
+        self.Frames["MAIN"]:SetScript("OnHide", function()
             Ether.DB[111].SHOW = false
             Ether.IsMovable = false
             if Ether.gridFrame then
@@ -315,64 +316,63 @@ function Ether.CreateMainSettings(self)
             Ether.CleanUpButtons()
             Ether:WrapMainSettingsColor({0.80, 0.40, 1.00, 1})
         end)
-        tinsert(UISpecialFrames, self.Frames["Main"]:GetName())
-        RegisterAttributeDriver(self.Frames["Main"], "state-visibility", "[combat]hide")
-        self.Frames["Top"] = CreateFrame("Frame", nil, self.Frames["Main"])
-        self.Frames["Top"]:SetPoint("TOPLEFT", 10, -15)
-        self.Frames["Top"]:SetPoint("TOPRIGHT", -10, 0)
-        self.Frames["Top"]:SetSize(0, 30)
-        self.Frames["Bottom"] = CreateFrame('Frame', nil, self.Frames["Main"])
-        self.Frames["Bottom"]:SetPoint("BOTTOMLEFT", 10, 10)
-        self.Frames["Bottom"]:SetPoint("BOTTOMRIGHT", -10, 0)
-        self.Frames["Bottom"]:SetSize(0, 30)
-        self.Frames["Left"] = CreateFrame('Frame', nil, self.Frames["Main"])
-        self.Frames["Left"]:SetPoint("TOPLEFT", self.Frames["Top"], 'BOTTOMLEFT')
-        self.Frames["Left"]:SetPoint("BOTTOMLEFT", self.Frames["Bottom"], "TOPLEFT")
-        self.Frames["Left"]:SetSize(100, 0)
-        self.Frames["Right"] = CreateFrame("Frame", nil, self.Frames["Top"])
-        self.Frames["Right"]:SetPoint("TOPRIGHT", self.Frames["Bottom"], "TOPRIGHT")
-        self.Frames["Right"]:SetPoint("BOTTOMRIGHT", self.Frames["Bottom"], "TOPRIGHT")
-        self.Frames["Right"]:SetSize(10, 0)
-        self.Frames["Content"] = CreateFrame("Frame", nil, self.Frames["Top"])
-        self.Frames["Content"]:SetPoint("TOP", self.Frames["Top"], 'BOTTOM')
-        self.Frames["Content"]:SetPoint("BOTTOM", self.Frames["Bottom"], "TOP")
-        self.Frames["Content"]:SetPoint("LEFT", self.Frames["Left"], "RIGHT")
-        self.Frames["Content"]:SetPoint("RIGHT", self.Frames["Right"], "LEFT")
-        self.Borders["TOP"] = self.Frames["Content"]:CreateTexture(nil, "BORDER")
-        self.Borders["TOP"]:SetColorTexture(0.80, 0.40, 1.00, 1)
+        tinsert(UISpecialFrames, self.Frames["MAIN"]:GetName())
+        RegisterAttributeDriver(self.Frames["MAIN"], "state-visibility", "[combat]hide")
+        for _, value in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
+            self.Frames[value] = CreateFrame("Frame", nil, self.Frames["MAIN"])
+        end
+        self.Frames["TOP"]:SetPoint("TOPLEFT", 10, -15)
+        self.Frames["TOP"]:SetPoint("TOPRIGHT", -10, 0)
+        self.Frames["TOP"]:SetSize(0, 30)
+        self.Frames["BOTTOM"]:SetPoint("BOTTOMLEFT", 10, 10)
+        self.Frames["BOTTOM"]:SetPoint("BOTTOMRIGHT", -10, 0)
+        self.Frames["BOTTOM"]:SetSize(0, 30)
+        self.Frames["LEFT"]:SetPoint("TOPLEFT", self.Frames["TOP"], "BOTTOMLEFT")
+        self.Frames["LEFT"]:SetPoint("BOTTOMLEFT", self.Frames["BOTTOM"], "TOPLEFT")
+        self.Frames["LEFT"]:SetSize(100, 0)
+        self.Frames["RIGHT"]:SetPoint("TOPRIGHT", self.Frames["BOTTOM"], "TOPRIGHT")
+        self.Frames["RIGHT"]:SetPoint("BOTTOMRIGHT", self.Frames["BOTTOM"], "TOPRIGHT")
+        self.Frames["RIGHT"]:SetSize(10, 0)
+        self.Frames["CONTENT"] = CreateFrame("Frame", nil, self.Frames["TOP"])
+        self.Frames["CONTENT"]:SetPoint("TOP", self.Frames["TOP"], "BOTTOM")
+        self.Frames["CONTENT"]:SetPoint("BOTTOM", self.Frames["BOTTOM"], "TOP")
+        self.Frames["CONTENT"]:SetPoint("LEFT", self.Frames["LEFT"], "RIGHT")
+        self.Frames["CONTENT"]:SetPoint("RIGHT", self.Frames["RIGHT"], "LEFT")
+
+        for index, value in ipairs({"TOP", "BOTTOM", "LEFT", "RIGHT"}) do
+            self.Borders[value] = self.Frames["CONTENT"]:CreateTexture(nil, "BORDER")
+            self.Borders[value]:SetColorTexture(0.80, 0.40, 1.00, 1)
+            if index == 1 or index == 2 then
+                self.Borders[value]:SetHeight(1)
+            else
+                self.Borders[value]:SetWidth(1)
+            end
+        end
+
         self.Borders["TOP"]:SetPoint("TOPLEFT", -1, 1)
         self.Borders["TOP"]:SetPoint("TOPRIGHT", 1, 1)
-        self.Borders["TOP"]:SetHeight(1)
-        self.Borders["BOTTOM"] = self.Frames["Content"]:CreateTexture(nil, "BORDER")
-        self.Borders["BOTTOM"]:SetColorTexture(0.80, 0.40, 1.00, 1)
         self.Borders["BOTTOM"]:SetPoint("BOTTOMLEFT", -1, -1)
         self.Borders["BOTTOM"]:SetPoint("BOTTOMRIGHT", 1, -1)
-        self.Borders["BOTTOM"]:SetHeight(1)
-        self.Borders["LEFT"] = self.Frames["Content"]:CreateTexture(nil, "BORDER")
-        self.Borders["LEFT"]:SetColorTexture(0.80, 0.40, 1.00, 1)
         self.Borders["LEFT"]:SetPoint("TOPLEFT", -1, 1)
         self.Borders["LEFT"]:SetPoint("BOTTOMLEFT", -1, -1)
-        self.Borders["LEFT"]:SetWidth(1)
-        self.Borders["RIGHT"] = self.Frames["Content"]:CreateTexture(nil, "BORDER")
-        self.Borders["RIGHT"]:SetColorTexture(0.80, 0.40, 1.00, 1)
         self.Borders["RIGHT"]:SetPoint("TOPRIGHT", 1, 1)
         self.Borders["RIGHT"]:SetPoint("BOTTOMRIGHT", 1, -1)
-        self.Borders["RIGHT"]:SetWidth(1)
-        local version = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
+
+        local version = self.Frames["BOTTOM"]:CreateFontString(nil, "OVERLAY")
         version:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
         version:SetPoint("BOTTOMRIGHT", -10, 3)
         version:SetText("Beta Build |cE600CCFF" .. Ether.version .. "|r")
-        local menuIcon = self.Frames["Bottom"]:CreateTexture(nil, "ARTWORK")
+        local menuIcon = self.Frames["BOTTOM"]:CreateTexture(nil, "ARTWORK")
         menuIcon:SetSize(32, 32)
         menuIcon:SetTexture(unpack(Ether.mediaPath.etherIcon))
         menuIcon:SetPoint("BOTTOMLEFT", 0, 5)
-        local name = self.Frames["Bottom"]:CreateFontString(nil, "OVERLAY")
+        local name = self.Frames["BOTTOM"]:CreateFontString(nil, "OVERLAY")
         name:SetFont(unpack(Ether.mediaPath.expressway), 20, "OUTLINE")
         name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
         name:SetText("|cffcc66ffEther|r")
-        Ether:ApplyFramePosition(self.Frames["Main"], 340)
-        Ether:SetupDrag(self.Frames["Main"], 340, 40)
-        local close = CreateFrame("Button", nil, self.Frames["Bottom"])
+        Ether:ApplyFramePosition(self.Frames["MAIN"], 340)
+        Ether:SetupDrag(self.Frames["MAIN"], 340, 40)
+        local close = CreateFrame("Button", nil, self.Frames["BOTTOM"])
         close:SetSize(100, 15)
         close:SetPoint("BOTTOM", 0, 3)
         close.text = close:CreateFontString(nil, "OVERLAY")
@@ -386,7 +386,7 @@ function Ether.CreateMainSettings(self)
             self.text:SetTextColor(1, 1, 1, 1)
         end)
         close:SetScript("OnClick", function()
-            self.Frames["Main"]:Hide()
+            self.Frames["MAIN"]:Hide()
         end)
 
         self.IsCreated = true
@@ -400,10 +400,10 @@ local function ToggleSettings(self)
     if not self.IsSuccess then
         return
     end
-    self.Frames["Main"]:SetShown(Ether.DB[111].SHOW)
+    self.Frames["MAIN"]:SetShown(Ether.DB[111].SHOW)
     local category = Ether.DB[111].LAST_TAB
 
-    if self.Content.Children[category] then
+    if self["CONTENT"]["CHILDREN"][category] then
         Ether.ShowCategory(self, category)
     end
 end
@@ -559,6 +559,8 @@ do
 end
 
 function Ether:RefreshFramePositions()
+
+
     local frame = {
         [331] = Ether.Anchor.tooltip,
         [332] = Ether.unitButtons.solo["player"],
@@ -577,6 +579,7 @@ function Ether:RefreshFramePositions()
             Ether:ApplyFramePosition(frame[frameID], frameID)
         end
     end
+
 end
 
 function Ether:ApplyFramePosition(frame, index)
@@ -593,12 +596,6 @@ function Ether:ApplyFramePosition(frame, index)
         frame:SetAlpha(pos[9])
     end
 end
-
-local arraysLength = {
-    [101] = 11, [201] = 6, [301] = 13, [401] = 6,
-    [501] = 9, [701] = 4, [801] = 3,
-    [1001] = 3, [1101] = 3, [1201] = 2
-}
 
 local currentVersion = nil
 local function OnInitialize(self, event, ...)
@@ -648,7 +645,7 @@ local function OnInitialize(self, event, ...)
                 currentProfile = charKey
             }
             ETHER_DATABASE_DX_AA[101] = REQUIREMENT_VERSION
-            currentVersion = "The database is too old and will be reset.\nReload Interface."
+            currentVersion = "The database will be reset.\nReload Interface."
         elseif not ETHER_DATABASE_DX_AA.profiles then
             ETHER_DATABASE_DX_AA = {
                 profiles = {
@@ -665,69 +662,11 @@ local function OnInitialize(self, event, ...)
                     profile[key] = Ether.CopyTable(value)
                 end
             end
-            if profile[111] then
-                for subkey in pairs(Ether.DataDefault[111]) do
-                    if profile[111][subkey] == nil then
-                        profile[111] = Ether.CopyTable(Ether.DataDefault[111])
-                        break
-                    end
-                end
+
+            for _, value in ipairs({111, 901, 811, 1002, 1201, 1301, 5111}) do
+                Ether:NilCheckData(profile, value)
             end
-            if profile[901] then
-                for subkey in pairs(Ether.DataDefault[901]) do
-                    if profile[901][subkey] == nil then
-                        profile[901] = Ether.CopyTable(Ether.DataDefault[901])
-                        break
-                    end
-                end
-            end
-            if profile[1002] then
-                for subkey in pairs(Ether.DataDefault[1002]) do
-                    if profile[1002][subkey] == nil then
-                        profile[1002] = Ether.CopyTable(Ether.DataDefault[1002])
-                        break
-                    end
-                end
-            end
-            if profile[811] then
-                for subkey in pairs(Ether.DataDefault[811]) do
-                    if profile[811][subkey] == nil then
-                        profile[811] = Ether.CopyTable(Ether.DataDefault[811])
-                        break
-                    end
-                end
-            end
-            if profile[1201] then
-                for subkey in pairs(Ether.DataDefault[1201]) do
-                    if profile[1201][subkey] == nil then
-                        profile[1201] = Ether.CopyTable(Ether.DataDefault[1201])
-                        break
-                    end
-                end
-            end
-            if profile[1301] then
-                for subkey in pairs(Ether.DataDefault[1301]) do
-                    if profile[1301][subkey] == nil then
-                        profile[1301] = Ether.CopyTable(Ether.DataDefault[1301])
-                        break
-                    end
-                end
-            end
-            if profile[5111] then
-                for subkey in pairs(Ether.DataDefault[5111]) do
-                    if profile[5111][subkey] == nil then
-                        profile[5111] = Ether.CopyTable(Ether.DataDefault[5111])
-                        break
-                    end
-                end
-            end
-            for arrayID, expectedLength in pairs(arraysLength) do
-                if profile[arrayID] and type(profile[arrayID]) == "table" then
-                    if #profile[arrayID] ~= expectedLength then
-                        profile[arrayID] = Ether.DataMigrate(profile[arrayID], expectedLength, 1)
-                    end
-                end
-            end
+            Ether:ArrayMigrateData(profile)
         end
 
         ETHER_DATABASE_DX_AA.currentProfile = charKey
@@ -808,10 +747,10 @@ local function OnInitialize(self, event, ...)
         Ether.Anchor.raid.tex:SetColorTexture(0, 1, 0, .7)
         Ether.Anchor.raid.tex:Hide()
         Ether:SetupDrag(Ether.Anchor.raid, 338, 40)
-
         Ether.Anchor.tooltip = CreateFrame("Frame", nil, UIParent)
         Ether.Anchor.tooltip:SetSize(280, 120)
         Ether:ApplyFramePosition(Ether.Anchor.tooltip, 331)
+        Ether.Tooltip:Initialize()
         Ether.CreateMainSettings(EtherFrame)
 
         for index = 1, 7 do
@@ -820,10 +759,12 @@ local function OnInitialize(self, event, ...)
             end
         end
 
-        Ether.Tooltip:Initialize()
-
         ToggleSettings(EtherFrame)
-
+        C_Timer.After(0.1, function()
+            if Ether.CleanUpButtons then
+                Ether.CleanUpButtons()
+            end
+        end)
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if IsInGroup() and updatedChannel ~= true then
@@ -838,10 +779,10 @@ local function OnInitialize(self, event, ...)
             Ether:InitializePetHeader()
             for _, button in pairs(Ether.unitButtons.raid) do
                 if Ether.DB[701][3] == 1 then
-                    Ether:UpdateHealthText(button)
+                    Ether:UpdateHealthTextRounded(button)
                 end
                 if Ether.DB[701][4] == 1 then
-                    Ether:UpdatePowerText(button)
+                    Ether:UpdatePowerTextRounded(button)
                 end
             end
         end)
