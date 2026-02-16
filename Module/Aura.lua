@@ -666,7 +666,7 @@ end
 function Ether:EnableSoloUnitAura(info)
     for index, unit in ipairs({"player", "target", "pet"}) do
         if index == info then
-         Ether:SoloAuraFullInitial(unit)
+            Ether:SoloAuraFullInitial(unit)
             break
         end
     end

@@ -608,64 +608,250 @@ function Ether:CreateCreationSection(EtherFrame)
 
 end
 
+local updateTicker = nil
+local customButtons = {}
+local C_Ticker = C_Timer.NewTicker
+local function updateHealth(button)
+    if not button then return end
+    local health, healthMax = UnitHealth(button.unit), UnitHealthMax(button.unit)
+    if button.healthBar and healthMax > 0 then
+        button.healthBar:SetMinMaxValues(0, healthMax)
+        button.healthBar:SetValue(health)
+    end
+end
+local function updatePower(button)
+    if not button then return end
+    local power, powerMax = UnitPower(button.unit), UnitPowerMax(button.unit)
+    if button.powerBar and powerMax > 0 then
+        button.powerBar:SetMinMaxValues(0, powerMax)
+        button.powerBar:SetValue(power)
+    end
+end
+
+local function updateCustom()
+    for i = 1, 3 do
+        updateHealth(customButtons[i])
+        updatePower(customButtons[i])
+    end
+end
+
+local function updateFunc()
+    if not updateTicker then
+        updateTicker = C_Ticker(0.15, updateCustom)
+    end
+end
+
+local function DestroyCustom(numb)
+    if not customButtons[numb] then return end
+    local button = customButtons[numb]
+    button:Hide()
+    button:ClearAllPoints()
+    button:RegisterForClicks()
+    button:RegisterForDrag()
+    button:SetAttribute("unit", nil)
+    button:SetScript("OnDragStart", nil)
+    button:SetScript("OnDragStop", nil)
+    button:SetScript("OnEnter", nil)
+    button:SetScript("OnLeave", nil)
+    button = nil
+    customButtons[numb] = nil
+end
+
+local function CleanUpCustom(numb)
+    if not customButtons[numb] then return end
+    DestroyCustom(numb)
+    if not next(customButtons) and updateTicker then
+        updateTicker:Cancel()
+        if updateTicker:IsCancelled() then
+            updateTicker = nil
+        else
+            if Ether.DebugOutput then
+                Ether.DebugOutput("Custom Updater is not cancelled. Reload UI")
+            else
+                print("Custom Updater is not cancelled. Reload UI")
+            end
+        end
+    end
+end
+
+local function ParseGUID(unit)
+    local guid = UnitGUID(unit)
+    local name = UnitName(unit)
+    local tokenGuid = UnitTokenFromGUID(guid)
+    if guid and tokenGuid then
+        return name, tokenGuid
+    end
+end
+
+local function CreateCustomUnit(numb)
+    if InCombatLockdown() then
+        return
+    end
+    if not UnitGUID("target") or not UnitInAnyGroup("player") then
+        if Ether.DebugOutput then
+            Ether.DebugOutput("Target a group or raid member")
+        else
+            print("Target a group or raid member")
+        end
+        return
+    end
+    if customButtons[numb] then return end
+    local custom = CreateFrame("Button", "EtherCustomUnitButton", UIParent, "EtherUnitTemplate")
+    local pos = Ether.DB[1401][numb]
+    custom:SetPoint(pos[1], UIParent, pos[3], pos[4], pos[5])
+    custom:SetSize(120, 50)
+    local name, unit = ParseGUID("target")
+    if not name or not unit then
+        return nil
+    end
+    custom.unit = unit
+    Ether:SetupAttribute(custom, custom.unit)
+    Ether:SetupTooltip(custom, custom.unit)
+    Ether:SetupHealthBar(custom, "HORIZONTAL", 120, 40)
+    local background = custom:CreateTexture(nil, "BACKGROUND")
+    background:SetColorTexture(0, 0, 0, .6)
+    background:SetPoint("TOPLEFT", custom, "TOPLEFT", -2, 2)
+    background:SetPoint("BOTTOMRIGHT", custom, "BOTTOMRIGHT", 2, -2)
+    local r, g, b = Ether:GetClassColors(custom.unit)
+    custom.healthBar:SetStatusBarColor(r, g, b, .8)
+    custom.healthDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.4)
+    Ether:SetupPowerBar(custom)
+    Ether:SetupName(custom, 0)
+    custom.name:SetText(name)
+    local re, ge, be = Ether:GetPowerColor(custom.unit)
+    custom.powerBar:SetStatusBarColor(re, ge, be, .6)
+    customButtons[numb] = custom
+    updateFunc()
+end
+
+local function Drag(self)
+    if self:IsMovable() then
+        self:StartMoving()
+    end
+end
+
+local function StopDrag(self, dataNumber)
+    if self:IsMovable() then
+        self:StopMovingOrSizing()
+    end
+    local point, relTo, relPoint, x, y = self:GetPoint(1)
+    local relToName = "UIParent"
+    if relTo then
+        if relTo.GetName and relTo:GetName() then
+            relToName = relTo:GetName()
+        elseif relTo == UIParent then
+            relToName = "UIParent"
+        else
+            relToName = "UIParent"
+        end
+    end
+    local pos = Ether.DB[1401][dataNumber]
+    pos[1] = point
+    pos[2] = relToName
+    pos[3] = relPoint
+    pos[4] = x
+    pos[5] = y
+    local anchorRelTo = relToName
+    self:ClearAllPoints()
+    self:SetPoint(pos[1], anchorRelTo, pos[3], x, y)
+    if customButtons[dataNumber] and customButtons[dataNumber]:IsVisible() then
+        customButtons[dataNumber]:ClearAllPoints()
+        customButtons[dataNumber]:SetPoint(pos[1], UIParent, pos[3], pos[4], pos[5])
+    end
+end
+
 function Ether:CreateFakeSection(EtherFrame)
     local parent = EtherFrame["CONTENT"]["CHILDREN"]["Fake"]
     if parent.Created then return end
     parent.Created = true
-    local create = EtherPanelButton(parent, 100, 25, "Create Custom 1", "TOPLEFT", parent, "TOPLEFT", 5, -5)
+    local color = {
+        [1] = {0.2, 0.6, 1.0, 1},
+        [2] = {0.6, 0.4, 0.0, 1},
+        [3] = {0.6, 0.2, 1.0, 1}
+    }
+    local create = EtherPanelButton(parent, 140, 25, "Select Custom", "TOPLEFT", parent, "TOPLEFT", 5, -5)
+    local destroy = EtherPanelButton(parent, 140, 25, "Select Custom", "TOPLEFT", create, "BOTTOMLEFT", 0, -5)
+    local customConfig = {}
+    local customDropDown
+    local dataNumber = 0
+    local pug
+    for index, configName in ipairs({"Custom 1", "Custom 2", "Custom 3"}) do
+        table.insert(customConfig, {
+            text = configName,
+            func = function()
+                pug:Show()
+                dataNumber = index
+                create.text:SetText("Create " .. configName)
+                local pos = Ether.DB[1401][dataNumber]
+                pug:ClearAllPoints()
+                pug:SetPoint(pos[1], UIParent, pos[3], pos[4], pos[5])
+                pug.tex:SetColorTexture(unpack(color[dataNumber]))
+                destroy.text:SetText("Destroy " .. configName)
+                customDropDown.text:SetText("Selected " .. configName)
+            end
+        })
+    end
+
+    customDropDown = CreateEtherDropdown(parent, 140, "Select Custom", customConfig, true)
+    customDropDown:SetPoint("TOPRIGHT")
+    local box = CreateFrame("Frame", nil, parent)
+    box:SetSize(240, 240)
+    box:SetPoint("CENTER", parent, "CENTER", 60, 0)
+    box.l = box:CreateTexture(nil, "BORDER")
+    box.l:SetPoint("TOPLEFT")
+    box.l:SetPoint("BOTTOMLEFT")
+    box.l:SetWidth(2)
+    box.l:SetColorTexture(0.80, 0.40, 1.00, 1)
+    box.r = box:CreateTexture(nil, "BORDER")
+    box.r:SetPoint("TOPRIGHT")
+    box.r:SetPoint("BOTTOMRIGHT")
+    box.r:SetWidth(2)
+    box.r:SetColorTexture(0.80, 0.40, 1.00, 1)
+    box.t = box:CreateTexture(nil, "BORDER")
+    box.t:SetPoint("TOPLEFT")
+    box.t:SetPoint("TOPRIGHT")
+    box.t:SetHeight(2)
+    box.t:SetColorTexture(0.80, 0.40, 1.00, 1)
+    box.b = box:CreateTexture(nil, "BORDER")
+    box.b:SetPoint("BOTTOMLEFT")
+    box.b:SetPoint("BOTTOMRIGHT")
+    box.b:SetHeight(2)
+    box.b:SetColorTexture(0.80, 0.40, 1.00, 1)
+
+    pug = CreateFrame("Frame", nil, box)
+    pug:SetParent(box)
+    pug:SetSize(120, 50)
+    pug:SetClampedToScreen(true)
+    pug:SetFrameLevel(box:GetFrameLevel() + 3)
+    pug:SetPoint("CENTER")
+    pug:SetMovable(true)
+    pug:EnableMouse(true)
+    pug:RegisterForDrag("LeftButton")
+    pug.tex = pug:CreateTexture(nil, "OVERLAY")
+    pug.tex:SetAllPoints()
+    pug.tex:SetBlendMode("BLEND")
+    pug:Hide()
+    pug:SetScript("OnDragStart", Drag)
+    pug:SetScript("OnDragStop", function(self)
+        StopDrag(self, dataNumber)
+    end)
+
+    local show = EtherPanelButton(parent, 120, 25, "Show Pug", "TOP", parent, "TOP", 0, -5)
+    show:SetScript("OnClick", function()
+        if not pug:IsShown() then
+            pug:Show()
+        else
+            pug:Hide()
+        end
+    end)
     create:SetScript("OnClick", function()
-        Ether.CreateCustomUnit()
+        if dataNumber == 0 then return end
+        CreateCustomUnit(dataNumber)
     end)
-    local create2 = EtherPanelButton(parent, 100, 25, "Create Custom 2", "TOPLEFT", create, "BOTTOMLEFT", 0, -5)
-    create2:SetScript("OnClick", function()
-        Ether.CreateCustomUnit()
-    end)
-    local create3 = EtherPanelButton(parent, 100, 25, "Create Custom 3", "TOPLEFT", create2, "BOTTOMLEFT", 0, -5)
-    create3:SetScript("OnClick", function()
-        Ether.CreateCustomUnit()
-    end)
-    local destroy = EtherPanelButton(parent, 100, 25, "Destroy Custom 1", "TOPLEFT", create3, "BOTTOMLEFT", 0, -5)
     destroy:SetScript("OnClick", function()
-        Ether.stopUpdateFunc()
+        if dataNumber == 0 then return end
+        CleanUpCustom(dataNumber)
     end)
-    local destroy2 = EtherPanelButton(parent, 100, 25, "Destroy Custom 2", "TOPLEFT", destroy, "BOTTOMLEFT", 0, -5)
-    destroy2:SetScript("OnClick", function()
-        Ether.stopUpdateFunc()
-    end)
-    local destroy3 = EtherPanelButton(parent, 100, 25, "Destroy Custom 3", "TOPLEFT", destroy2, "BOTTOMLEFT", 0, -5)
-    destroy3:SetScript("OnClick", function()
-        Ether.stopUpdateFunc()
-    end)
-    create2:Disable();
-    create3:Disable();
-    destroy2:Disable();
-    destroy3:Disable();
-
-    local xLabel = parent:CreateFontString(nil, "OVERLAY")
-    xLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    xLabel:SetPoint("LEFT", create, "RIGHT", 60, 0)
-    xLabel:SetText("X Offset")
-    local xInput = CreateLineInput(parent, 70, 25)
-    xInput:SetPoint("TOPLEFT", xLabel, "BOTTOMLEFT", 0, -10)
-    xInput:SetScript("OnEnterPressed", function(self)
-        local offX = tonumber(self:GetText())
-        Ether.DB[1401][1][2] = offX
-        self:ClearFocus()
-    end)
-    local yLabel = parent:CreateFontString(nil, "OVERLAY")
-    yLabel:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    yLabel:SetPoint("LEFT", xLabel, "RIGHT", 60, 0)
-    yLabel:SetText("Y Offset")
-    local yInput = CreateLineInput(parent, 70, 25)
-    yInput:SetPoint("TOPLEFT", yLabel, "BOTTOMLEFT", 0, -10)
-    yInput:SetScript("OnEnterPressed", function(self)
-        local offY = tonumber(self:GetText())
-        Ether.DB[1401][1][3] = offY
-        self:ClearFocus()
-    end)
-    xInput:Disable();
-    yInput:Disable();
-
 end
 
 function Ether:CreateUpdateSection(EtherFrame)

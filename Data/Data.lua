@@ -59,9 +59,9 @@ local Default = {
         [342] = {16, 12, 12}
     },
     [1401] = {
-        [1] = {"TOPLEFT", 20, -200},
-        [2] = {"TOPLEFT", 20, -260},
-        [3] = {"TOPLEFT", 20, -320}
+        [1] = {"CENTER", "UIParent", "CENTER", 0, 90},
+        [2] = {"CENTER", "UIParent", "CENTER", 0, 0},
+        [3] = {"CENTER", "UIParent", "CENTER", 0, -90},
     },
     [5111] = {
         [331] = {"RIGHT", "UIParent", "RIGHT", -340, -340, 180, 200, 1.0, 1.0},
