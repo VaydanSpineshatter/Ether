@@ -2043,7 +2043,7 @@ function Ether:CreateHeaderSection(EtherFrame)
     if Ether.DB[1501][1] == 1 then
         changeLayout(parent, "VERTICAL")
     else
-        changeLayout(parent)
+      changeLayout(parent, "HORIZONTAL")
     end
     local layoutValue = {
         [1] = {text = "Sort order"},

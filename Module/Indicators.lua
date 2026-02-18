@@ -490,6 +490,35 @@ function Ether:UpdateSoloTarget()
         end
     end
 end
+function Ether:FullUpdateIndicators()
+    Indicator(frame, "RAID_TARGET_UPDATE")
+    Indicator(frame, "PARTY_LEADER_CHANGED")
+    Indicator(frame, "PARTY_LOOT_METHOD_CHANGED")
+    Indicator(frame, "PLAYER_ROLES_ASSIGNED")
+
+    for unit, button in pairs(Ether.unitButtons.raid) do
+        if button and button.Indicators and UnitExists(unit) then
+            IndicatorUnit(frameUnit, "UNIT_CONNECTION", unit)
+            IndicatorUnit(frameUnit, "INCOMING_RESURRECT_CHANGED", unit)
+            IndicatorUnit(frameUnit, "UNIT_FLAGS", unit)
+            IndicatorUnit(frameUnit, "PLAYER_FLAGS_CHANGED", unit)
+        end
+    end
+
+    Ether:UpdateSoloTarget()
+
+    for index, handlers in ipairs(IndicatorMap) do
+        for _, button in pairs(Ether.unitButtons.raid) do
+            if button and button.Indicators then
+                if Ether.DB[501][index] == 0 then
+                    if button.Indicators[handlers] then
+                        button.Indicators[handlers]:Hide()
+                    end
+                end
+            end
+        end
+    end
+end
 
 function Ether:IndicatorsEnable()
     if not frame:GetScript("OnEvent") and not frameUnit:GetScript("OnEvent") then

@@ -61,7 +61,7 @@ local function OnAttributeChanged(self, name, unit)
     end
     Ether.unitButtons.raid[newUnit] = self
     if newUnit and UnitExists(newUnit) then
-               Ether:IndicatorsUnitUpdate(newUnit)
+        Ether:IndicatorsUnitUpdate(newUnit)
         if Ether.DB[1001][3] == 1 then
             C_After(0.3, function()
                 if newGUID then
@@ -146,7 +146,7 @@ end
 ]]
 
 function Ether:CreateGroupHeader()
-    header:SetPoint("RIGHT", raidAnchor, "RIGHT")
+    header:SetPoint("BOTTOM", raidAnchor, "TOP", 0, 40)
     header:SetAttribute("template", "EtherUnitTemplate")
     header:SetAttribute("initial-unitWatch", true)
     header:SetAttribute("initialConfigFunction", initialConfigFunction)

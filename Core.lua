@@ -601,7 +601,7 @@ local function OnInitialize(self, event, ...)
         end
 
         if type(_G.ETHER_DATABASE_DX_AA["VERSION"]) ~= "number" then
-            _G.ETHER_DATABASE_DX_AA["VERSION"]= 0
+            _G.ETHER_DATABASE_DX_AA["VERSION"] = 0
         end
 
         if type(_G.ETHER_ICON) ~= "table" then
@@ -628,7 +628,7 @@ local function OnInitialize(self, event, ...)
                 },
                 currentProfile = charKey
             }
-            ETHER_DATABASE_DX_AA["VERSION"]= REQUIREMENT_VERSION
+            ETHER_DATABASE_DX_AA["VERSION"] = REQUIREMENT_VERSION
         elseif not ETHER_DATABASE_DX_AA.profiles then
             ETHER_DATABASE_DX_AA = {
                 profiles = {
@@ -655,7 +655,10 @@ local function OnInitialize(self, event, ...)
         Ether.DB = Ether.CopyTable(Ether:GetCurrentProfile())
         Ether.REQUIREMENT_VERSION = REQUIREMENT_VERSION
         Ether:CreateGroupHeader()
-         Ether:CreatePetHeader()
+        Ether:CreatePetHeader()
+        if Ether.DB[1501][1] == 1 then
+            Ether:ChangeDirectionHeader(false)
+        end
         HideBlizzard()
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -701,7 +704,7 @@ local function OnInitialize(self, event, ...)
 
         EtherToggle()
 
-        Ether.Anchor.raid:SetSize(85, 55)
+        Ether.Anchor.raid:SetSize(32, 32)
         Ether:ApplyFramePosition(Ether.Anchor.raid, 338)
         Ether.Anchor.raid.tex = Ether.Anchor.raid:CreateTexture(nil, "BACKGROUND")
         Ether.Anchor.raid.tex:SetAllPoints()
