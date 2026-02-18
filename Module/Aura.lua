@@ -79,7 +79,7 @@ local function updateAuraPos(tbl, spellId, spellConfig)
     end
 end
 
-function Ether.SaveAuraPos(spellId, debuff)
+function Ether:SaveAuraPos(spellId, debuff)
     local spellConfig = Ether.DB[1003][spellId]
     if not spellConfig then return end
     if debuff then

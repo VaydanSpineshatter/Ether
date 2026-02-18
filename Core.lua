@@ -58,13 +58,15 @@ local function CreateSettingsButtons(name, parent, layer, onClick, isTopButton)
     return btn
 end
 
-local EtherFrame, EtherToggle, WrapSettingsColor, ShowHideSettings
+local EtherToggle
 do
     ---@class EtherSettings
-    EtherFrame = {
+    local EtherFrame = {
         Created = false,
+        SpellId = nil,
         Frames = {},
         Borders = {},
+        Snap = {},
         Buttons = {
             Menu = {},
             [1] = {},
@@ -77,7 +79,8 @@ do
             [8] = {},
             [9] = {},
             [10] = {},
-            [11] = {[1] = {}, [2] = {}}
+            [11] = {},
+            [12] = {}
         },
         ["CONTENT"] = {["CHILDREN"] = {}, },
         Menu = {
@@ -87,7 +90,7 @@ do
                 [3] = {"Settings", "Custom", "Effects", "Helper"},
                 [4] = {"Position"},
                 [5] = {"Tooltip"},
-                [6] = {"Layout", "CastBar", "Config"},
+                [6] = {"Layout", "Header", "CastBar", "Config"},
                 [7] = {"Edit"}
             },
             ["LEFT"] = {
@@ -147,15 +150,17 @@ do
         elseif category == "Settings" then
             Ether:CreateSettingsSection(EtherFrame)
         elseif category == "Custom" then
-            Ether:CreateCustomSection()
+            Ether:CreateCustomSection(EtherFrame)
         elseif category == "Effects" then
             Ether:CreateEffectsSection(EtherFrame)
         elseif category == "Helper" then
             Ether:CreateHelperSection(EtherFrame)
         elseif category == "Position" then
-            Ether:CreatePositionSection()
+            Ether:CreatePositionSection(EtherFrame)
         elseif category == "Tooltip" then
             Ether:CreateTooltipSection(EtherFrame)
+        elseif category == "Header" then
+            Ether:CreateHeaderSection(EtherFrame)
         elseif category == "Layout" then
             Ether:CreateLayoutSection(EtherFrame)
         elseif category == "CastBar" then
@@ -183,7 +188,6 @@ do
                     end
                 end
             end
-            self.Frames["INDICATORS"] = CreateFrame("Frame", nil, self["CONTENT"]["CHILDREN"]["Position"])
             for layer = 1, 7 do
                 if self.Menu["TOP"][layer] then
                     self.Buttons[10][layer] = {}
@@ -252,6 +256,34 @@ do
             self.Created = true
         end
     end
+    local function ShowHideSettings(state)
+        if InCombatLockdown() then return end
+        if state then
+            wipe(EtherFrame.Snap)
+            EtherFrame.Snap = Ether.DataSnapShot(Ether.DB[401])
+        end
+        if not Ether.gridFrame then
+            Ether:SetupGridFrame()
+        end
+        if not Ether.debugFrame then
+            Ether:SetupDebugFrame()
+        end
+        Ether.IsMovable = state
+        Ether.gridFrame:SetShown(state)
+        if Ether.tooltipFrame and Ether.DB[401][3] == 1 then
+            Ether.tooltipFrame:SetShown(state)
+            Ether.DB[401][3] = 0
+        end
+        Ether.debugFrame:SetShown(state)
+        if Ether.Anchor.raid.tex then
+            Ether.Anchor.raid.tex:SetShown(state)
+        end
+        if not state then
+            Ether.DataRestore(Ether.DB[401], EtherFrame.Snap)
+            Ether.CleanUpButtons()
+            Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
+        end
+    end
     local function CreateMainFrame(self)
         if not self.Created then
             self.Frames["MAIN"] = CreateFrame("Frame", "EtherUnitFrameAddon", UIParent, "BackdropTemplate")
@@ -312,6 +344,11 @@ do
             self.Borders["LEFT"]:SetPoint("BOTTOMLEFT", -1, -1)
             self.Borders["RIGHT"]:SetPoint("TOPRIGHT", 1, 1)
             self.Borders["RIGHT"]:SetPoint("BOTTOMRIGHT", 1, -1)
+            self.Frames["INDICATORS"] = CreateFrame("Frame", nil, self.Frames["MAIN"])
+            self.Frames["AURAS"] = CreateFrame("Frame", nil, self.Frames["MAIN"])
+            self.Frames["EDITOR"] = CreateFrame("Frame", nil, self.Frames["MAIN"])
+            self.Frames["EDITOR"].Created = false
+            self.Frames["AURAS"].Created = false
             local version = self.Frames["BOTTOM"]:CreateFontString(nil, "OVERLAY")
             version:SetFont(unpack(Ether.mediaPath.expressway), 15, "OUTLINE")
             version:SetPoint("BOTTOMRIGHT", -10, 3)
@@ -342,6 +379,9 @@ do
             close:SetScript("OnClick", function()
                 self.Frames["MAIN"]:Hide()
                 ShowHideSettings(false)
+                if Ether.TableSize(EtherFrame.Snap) > 0 then
+                    Ether.DataRestore(Ether.DB[401], EtherFrame.Snap)
+                end
             end)
             InitializeLayer(self)
         end
@@ -359,46 +399,18 @@ do
             ShowCategory(EtherFrame, category)
         end
     end
-    local snap = {}
-    function ShowHideSettings(state)
-        if InCombatLockdown() then return end
-        if state then
-            wipe(snap)
-            snap = Ether.DataSnapShot(Ether.DB[401])
-        end
-        if not Ether.gridFrame then
-            Ether:SetupGridFrame()
-        end
-        if not Ether.debugFrame then
-            Ether:SetupDebugFrame()
-        end
-        Ether.IsMovable = state
-        Ether.gridFrame:SetShown(state)
-        if Ether.tooltipFrame and Ether.DB[401][3] == 1 then
-            Ether.tooltipFrame:SetShown(state)
-            Ether.DB[401][3] = 0
-        end
-        Ether.debugFrame:SetShown(state)
-        if Ether.Anchor.raid.tex then
-            Ether.Anchor.raid.tex:SetShown(state)
-        end
-        if not state then
-            Ether.DataRestore(Ether.DB[401], snap)
-            Ether.CleanUpButtons()
-            Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
-        end
-    end
-    function WrapSettingsColor(color)
+
+    local function WrapSettingsColor(color)
         if type(color) ~= "table" then return end
         for _, borders in pairs(EtherFrame.Borders) do
             borders:SetColorTexture(unpack(color))
         end
     end
+    Ether.UIPanel = EtherFrame
+    Ether.WrapSettingsColor = WrapSettingsColor
+    Ether.ShowHideSettings = ShowHideSettings
 end
 
-Ether.UIPanel = EtherFrame
-Ether.WrapSettingsColor = WrapSettingsColor
-Ether.ShowHideSettings = ShowHideSettings
 local hiddenParent = CreateFrame("Frame", nil, UIParent)
 hiddenParent:SetAllPoints()
 hiddenParent:Hide()
@@ -412,14 +424,7 @@ local function HiddenFrame(frame)
 end
 
 local function HideBlizzard()
-    if InCombatLockdown() then
-        if Ether.DebugOutput then
-            Ether.DebugOutput("Users in combat lockdown – Reload interface outside of combat")
-        else
-            print("Users in combat lockdown – Reload interface outside of combat")
-        end
-        return
-    end
+    if InCombatLockdown() then return end
     if Ether.DB[101][1] == 1 then
         HiddenFrame(PlayerFrame)
     end
@@ -554,7 +559,7 @@ function Ether:RefreshFramePositions()
         [337] = Ether.unitButtons.solo["focus"],
         [338] = Ether.Anchor.raid,
         [339] = Ether.DebugFrame,
-        [340] = EtherFrame.Frames["MAIN"]
+        [340] = Ether.UIPanel.Frames["MAIN"]
     }
 
     for frameID in pairs(Ether.DB[5111]) do
@@ -580,7 +585,6 @@ function Ether:ApplyFramePosition(frame, index)
     end
 end
 
-local currentVersion = nil
 local function OnInitialize(self, event, ...)
     if (event == "ADDON_LOADED") then
         local loadedAddon = ...
@@ -596,8 +600,8 @@ local function OnInitialize(self, event, ...)
             _G.ETHER_DATABASE_DX_AA = {}
         end
 
-        if type(_G.ETHER_DATABASE_DX_AA[101]) ~= "number" then
-            _G.ETHER_DATABASE_DX_AA[101] = 0
+        if type(_G.ETHER_DATABASE_DX_AA["VERSION"]) ~= "number" then
+            _G.ETHER_DATABASE_DX_AA["VERSION"]= 0
         end
 
         if type(_G.ETHER_ICON) ~= "table" then
@@ -608,12 +612,14 @@ local function OnInitialize(self, event, ...)
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
 
+        Ether:CreatePopupBox()
+
         local charKey = Ether:GetCharacterKey() or "Unknown-Unknown"
         local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
         Ether.version = version
 
         local REQUIREMENT_VERSION = 26766
-        local CURRENT_VERSION = ETHER_DATABASE_DX_AA[101]
+        local CURRENT_VERSION = ETHER_DATABASE_DX_AA["VERSION"]
 
         if CURRENT_VERSION < REQUIREMENT_VERSION then
             ETHER_DATABASE_DX_AA = {
@@ -622,8 +628,7 @@ local function OnInitialize(self, event, ...)
                 },
                 currentProfile = charKey
             }
-            ETHER_DATABASE_DX_AA[101] = REQUIREMENT_VERSION
-            currentVersion = "The database will be reset.\nReload Interface."
+            ETHER_DATABASE_DX_AA["VERSION"]= REQUIREMENT_VERSION
         elseif not ETHER_DATABASE_DX_AA.profiles then
             ETHER_DATABASE_DX_AA = {
                 profiles = {
@@ -640,7 +645,7 @@ local function OnInitialize(self, event, ...)
                     profile[key] = Ether.CopyTable(Ether.DataDefault)
                 end
             end
-            for _, value in ipairs({111, 901, 811, 1002, 1201, 1301, 1401, 5111}) do
+            for _, value in ipairs({111, 901, 811, 1002, 1201, 1301, 1401, 1501, 5111}) do
                 Ether:NilCheckData(profile, value)
             end
             Ether:ArrayMigrateData(profile)
@@ -649,7 +654,8 @@ local function OnInitialize(self, event, ...)
         ETHER_DATABASE_DX_AA.currentProfile = charKey
         Ether.DB = Ether.CopyTable(Ether:GetCurrentProfile())
         Ether.REQUIREMENT_VERSION = REQUIREMENT_VERSION
-        Ether:CreateSplitGroupHeader()
+        Ether:CreateGroupHeader()
+         Ether:CreatePetHeader()
         HideBlizzard()
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -692,24 +698,9 @@ local function OnInitialize(self, event, ...)
         if Ether.DB[401][2] == 1 then
             Ether.EnableMsgEvents()
         end
+
         EtherToggle()
-        if type(currentVersion) ~= "nil" then
-            StaticPopupDialogs["ETHER_RELOAD_UI"] = {
-                text = currentVersion,
-                button1 = "Yes",
-                button2 = "No",
-                OnAccept = function(self)
-                    if not InCombatLockdown() then
-                        ReloadUI()
-                    end
-                end,
-                timeout = 0,
-                whileDead = true,
-                hideOnEscape = true,
-                preferredIndex = 3,
-            }
-            StaticPopup_Show("ETHER_RELOAD_UI")
-        end
+
         Ether.Anchor.raid:SetSize(85, 55)
         Ether:ApplyFramePosition(Ether.Anchor.raid, 338)
         Ether.Anchor.raid.tex = Ether.Anchor.raid:CreateTexture(nil, "BACKGROUND")
@@ -726,7 +717,7 @@ local function OnInitialize(self, event, ...)
                 Ether:CreateUnitButtons(index)
             end
         end
-        local isShown = false
+
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
     elseif (event == "GROUP_ROSTER_UPDATE") then
         self:UnregisterEvent("GROUP_ROSTER_UPDATE")
@@ -736,19 +727,9 @@ local function OnInitialize(self, event, ...)
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, sendChannel, nil, "NORMAL")
         end
     elseif (event == "PLAYER_ENTERING_WORLD") then
+        Ether.Fire("CHANGE_ATTRIBUTE")
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
         Ether:RosterEnable()
-        C_Timer.After(0.8, function()
-            Ether:InitializePetHeader()
-            for _, button in pairs(Ether.unitButtons.raid) do
-                if Ether.DB[701][3] == 1 then
-                    Ether:UpdateHealthTextRounded(button)
-                end
-                if Ether.DB[701][4] == 1 then
-                    Ether:UpdatePowerTextRounded(button)
-                end
-            end
-        end)
     elseif (event == "PLAYER_LOGOUT") then
         local charKey = Ether:GetCharacterKey()
         if charKey then
@@ -760,16 +741,16 @@ local function OnInitialize(self, event, ...)
     elseif (event == "PLAYER_REGEN_DISABLED") then
         self:UnregisterEvent("PLAYER_REGEN_DISABLED")
         self:RegisterEvent("PLAYER_REGEN_ENABLED")
-        if EtherFrame.Frames["MAIN"]:IsShown() then
-            EtherFrame.Frames["MAIN"]:Hide()
-            ShowHideSettings(false)
+        if Ether.UIPanel.Frames["MAIN"]:IsShown() then
+            Ether.UIPanel.Frames["MAIN"]:Hide()
+            Ether.ShowHideSettings(false)
             Ether.IsShown = true
         end
     elseif (event == "PLAYER_REGEN_ENABLED") then
         self:UnregisterEvent("PLAYER_REGEN_ENABLED")
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
         if Ether.IsShown then
-            EtherFrame.Frames["MAIN"]:Show()
+            Ether.UIPanel.Frames["MAIN"]:Show()
             Ether.IsShown = false
             --   ShowHideSettings(true)
 

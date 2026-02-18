@@ -380,7 +380,7 @@ end
 local function SetupAuraCount(button)
     local count = button:CreateFontString(nil, "OVERLAY")
     count:SetFont(unpack(Ether.mediaPath.expressway), 10, "OUTLINE")
-    count:SetPoint('LEFT')
+    count:SetPoint("LEFT")
     count:Hide()
     return count
 end
@@ -486,6 +486,58 @@ function Ether:DispelIconSetup(button)
     button.dispelBorder = border
     return button
 end
+
+function Ether:CreatePopupBox()
+    if Ether.popupBox then return end
+    local frame = CreateFrame("Frame", nil, UIParent)
+    Ether.popupBox = frame
+    frame:Hide()
+    frame:SetSize(320, 200)
+    frame:SetPoint("CENTER")
+    frame.bg = frame:CreateTexture(nil, "BACKGROUND")
+    frame.bg:SetAllPoints()
+    frame.bg:SetTexture(unpack(Ether.mediaPath.etherEmblem))
+    frame.font = frame:CreateFontString(nil, "OVERLAY")
+    frame.font:SetFont(unpack(Ether.mediaPath.expressway), 14, "OUTLINE")
+    frame.font:SetPoint("TOP", 0, -20)
+    frame.font:SetIndentedWordWrap(true)
+    local left = CreateFrame("Button", nil, frame)
+    left:SetPoint("BOTTOMLEFT", 0, 5)
+    left:SetSize(50, 20)
+    left.font = left:CreateFontString(nil, "OVERLAY")
+    left.font:SetFont(unpack(Ether.mediaPath.expressway), 16, "OUTLINE")
+    left.font:SetPoint("CENTER")
+    left.font:SetText("Yes")
+    left:SetScript("OnEnter", function()
+        left.font:SetTextColor(0.00, 0.80, 1.00, 1)
+    end)
+    left:SetScript("OnLeave", function()
+        left.font:SetTextColor(1, 1, 1, 1)
+    end)
+    local right = CreateFrame("Button", nil, frame)
+    right:SetPoint("BOTTOMRIGHT", 0, 5)
+    right:SetSize(50, 20)
+    right.font = right:CreateFontString(nil, "OVERLAY")
+    right.font:SetFont(unpack(Ether.mediaPath.expressway), 16, "OUTLINE")
+    right.font:SetText("No")
+    right.font:SetPoint("CENTER")
+    right:SetScript("OnEnter", function()
+        right.font:SetTextColor(0.00, 0.80, 1.00, 1)
+    end)
+    right:SetScript("OnLeave", function()
+        right.font:SetTextColor(1, 1, 1, 1)
+    end)
+    right:SetScript("OnClick", function()
+        if Ether.popupBox:IsShown() then
+            Ether.popupBox:SetShown(false)
+            if Ether.UIPanel and Ether.UIPanel.Frames and Ether.UIPanel.Frames["MAIN"] then
+                Ether.UIPanel.Frames["MAIN"]:SetShown(true)
+            end
+        end
+    end)
+    Ether.popupCallback = left
+end
+
 --[[
 local function HexToRGB(hex)
     hex = hex:gsub('#', '')

@@ -10,7 +10,7 @@ local math_floor = math.floor
 local string_char = string.char
 
 local Default = {
-    [101] = 0,
+    ["VERSION"] = 0,
     [111] = {
         LAST_CHECK = 0,
         SHOW = false,
@@ -63,6 +63,7 @@ local Default = {
         [2] = {"CENTER", "UIParent", "CENTER", 0, 0},
         [3] = {"CENTER", "UIParent", "CENTER", 0, -90},
     },
+    [1501] = {1, 1, 1, 1, 1},
     [5111] = {
         [331] = {"RIGHT", "UIParent", "RIGHT", -340, -340, 180, 200, 1.0, 1.0},
         [332] = {"CENTER", "UIParent", "CENTER", -250, -200, 120, 50, 1.0, 1.0},
@@ -181,10 +182,6 @@ Ether.DataDefault = Default
 ---| smooth Power Solo 2
 ---| smooth health Header 3
 
----@alias Layout_1201 number
----| playerCastBar 1
----| targetCastBar 2
-
 ---@alias Update_901 boolean
 ---| Player
 ---| Target
@@ -210,6 +207,10 @@ Ether.DataDefault = Default
 ---| PLAYER_ROLES_ASSIGNED 8
 ---| PLAYER_FLAGS_CHANGED 9
 
+---@alias Layout_1201 number
+---| playerCastBar 1
+---| targetCastBar 2
+
 ---@alias CastBarConfig_1301 number
 ---| Player CastBar Config 1
 ---| Target CastBar Config 2
@@ -218,6 +219,13 @@ Ether.DataDefault = Default
 ---| customButton 1
 ---| customButton 2
 ---| customButton 3
+
+---@alias CastBarConfig_1501 number
+---| header 1
+---| header 2
+---| header 3
+---| header 4
+---| header 5
 
 function Ether.DataEnableAll(t)
     for i = 1, #t do
@@ -288,7 +296,7 @@ function Ether:ArrayMigrateData(data)
     local arraysLength = {
         [101] = 11, [201] = 6, [301] = 13, [401] = 6,
         [501] = 9, [701] = 4, [801] = 3,
-        [1001] = 3, [1101] = 3, [1201] = 2
+        [1001] = 3, [1101] = 3, [1201] = 2, [1501] = 5
     }
     for arrayID, expectedLength in pairs(arraysLength) do
         if data[arrayID] and type(data[arrayID]) == "table" then
@@ -320,6 +328,7 @@ function Ether:RefreshAllSettings()
     Ether:FrameChecked(7, 301)
     Ether:FrameChecked(8, 801)
     Ether:FrameChecked(9, 1201)
+    Ether:FrameChecked(11, 1501)
     if Ether.UIPanel.Buttons[4] and Ether.UIPanel.Buttons[4][1] then
         for i = 1, #Ether.DB[701] do
             local checkbox = Ether.UIPanel.Buttons[4][1][i]
@@ -618,32 +627,3 @@ function Ether.Base64Decode(data)
     end
     return tconcat(result)
 end
-
-
-
---[[
-    local AuraInfo = {
-        [1] = { Id = 10938, name = "Power Word: Fortitude: Rank 6", color = "|cffCC66FFEther Pink|r" },
-        [2] = { Id = 21564, name = "Prayer of Fortitude: Rank 2", color = "|cffCC66FFEther Pink|r" },
-        [3] = { Id = 27841, name = "Divine Spirit: Rank 4", color = "|cff00ffffCyan|r" },
-        [4] = { Id = 27681, name = "Prayer of Spirit: Rank 1", color = "|cff00ffffCyan|r" },
-        [5] = { Id = 10958, name = "Shadow Protection: Rank 3", color = "Black" },
-        [6] = { Id = 27683, name = "Prayer of Shadow Protection: Rank 1", color = "Black" },
-        [7] = { Id = 10157, name = "Arcane Intellect: Rank 5", color = "|cE600CCFFEther Blue|r" },
-        [8] = { Id = 23028, name = "Arcane Brilliance: Rank 1", color = "|cE600CCFFEther Blue|r" },
-        [9] = { Id = 9885, name = "Mark of the Wild: Rank 7", color = "|cffffa500Orange|r" },
-        [10] = { Id = 21850, name = "Gift of the Wild: Rank 2", color = "|cffffa500Orange|r" },
-        [11] = { Id = 25315, name = "Renew: Rank 10", color = "|cff00ff00Green|r" },
-        [12] = { Id = 10901, name = "Power Word Shield: Rank 3", color = "White" },
-        [13] = { Id = 6788, name = "Weakened Soul", color = "|cffff0000Red|r" },
-        [14] = { Id = 6346, name = "Fear Ward", color = "|cff8b4513Saddle Brown|r" },
-        [15] = { Id = 0, name = "Dynamic depending on class and skills" },
-        [16] = { Id = 0, name = "Magic: Border color: |cff3399FFAzure blue|r" },
-        [17] = { Id = 0, name = "Disease: Border color |cff996600Rust brown|r" },
-        [18] = { Id = 0, name = "Curse: Border color |cff9900FFViolet|r" },
-        [19] = { Id = 0, name = "Poison: Border color |cff009900Grass green|r" }
-    }
-    ["EtherPink"]   = { r = 0.80, g = 0.40, b = 1.00, str = "cffCC66FF" },
-	["EtherBlue"]   = { r = 0.00, g = 0.80, b = 1.00, str = "cE600CCFF" }
-]]
-

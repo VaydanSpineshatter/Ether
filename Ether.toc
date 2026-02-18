@@ -2,7 +2,7 @@
 ## Title: |cffcc66ffEther|r
 ## Notes: Ether Unit Frames
 ## Author: Vaydan-Spineshatter
-## Version: 34622
+## Version: 35666
 ## SavedVariables: ETHER_DATABASE_DX_AA, ETHER_ICON
 ## IconTexture: Interface\AddOns\Ether\Media\Texture\icon
 ## OptionalDeps: LibStub, CallbackHandler-1.0, LibDBIcon-1.0, ChatThrottleLib
@@ -16,6 +16,7 @@ Locale.lua
 Core.lua
 Locale.xml
 Data/Proto.lua
+Data/Profile.lua
 Data/Data.lua
 Module/Setup.lua
 Module/Indicators.lua

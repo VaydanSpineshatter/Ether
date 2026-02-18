@@ -185,7 +185,7 @@ local function Indicator(_, event)
     elseif event == "PLAYER_ROLES_ASSIGNED" then
         for unit, button in pairs(Ether.unitButtons.raid) do
             if button and button.Indicators then
-                if not IsInRaid() then
+                if not UnitInAnyGroup("player") then
                     button.Indicators.PlayerRoles:Hide()
                 else
                     if (GetPartyAssignment("MAINTANK", unit)) then
@@ -249,6 +249,13 @@ local function OnAfk()
             end
         end
     end
+    for _, button in pairs(Ether.unitButtons.solo) do
+        if button and button.Indicators then
+            if button.Indicators.RaidTarget then
+                button.Indicators.RaidTarget:Hide()
+            end
+        end
+    end
 end
 
 local function NotAfk()
@@ -282,7 +289,7 @@ local function NotAfk()
             Ether:RangeEnable()
         end)
     end
-    Ether:FullUpdateIndicators()
+
 end
 
 local function IndicatorUnit(_, event, unit)
@@ -325,7 +332,7 @@ local function IndicatorUnit(_, event, unit)
                 if button.healthBar then
                     button.healthBar:SetValue(0)
                     button.healthBar:SetMinMaxValues(0, 0)
-                    Ether:updateDispelBorder(button, {0, 0, 0, 1})
+                    Ether:updateDispelBorder(button, {0, 0, 0, 0})
                 end
             else
                 button.Indicators.UnitFlags:Hide()
@@ -387,7 +394,7 @@ function Ether:IndicatorsUnitUpdate(unit)
             if button.healthBar then
                 button.healthBar:SetValue(0)
                 button.healthBar:SetMinMaxValues(0, 0)
-                Ether:updateDispelBorder(button, {0, 0, 0, 1})
+                Ether:updateDispelBorder(button, {0, 0, 0, 0})
             end
         else
             button.Indicators.UnitFlags:Hide()
@@ -408,13 +415,12 @@ function Ether:IndicatorsUnitUpdate(unit)
         end
     end
     if button.Indicators.GroupLeader then
-        if not UnitInAnyGroup("player") then
-            button.Indicators.GroupLeader:Hide()
-        end
         local IsLeader = UnitIsGroupLeader(unit)
         if (IsLeader) then
             button.Indicators.GroupLeader:SetTexture(leaderIcon)
-            button.Indicators.GroupLeader:Show()
+            if UnitInAnyGroup("player") then
+                button.Indicators.GroupLeader:Show()
+            end
         else
             button.Indicators.GroupLeader:Hide()
         end
@@ -485,36 +491,6 @@ function Ether:UpdateSoloTarget()
     end
 end
 
-function Ether:FullUpdateIndicators()
-    Indicator(frame, "RAID_TARGET_UPDATE")
-    Indicator(frame, "PARTY_LEADER_CHANGED")
-    Indicator(frame, "PARTY_LOOT_METHOD_CHANGED")
-    Indicator(frame, "PLAYER_ROLES_ASSIGNED")
-
-    for unit, button in pairs(Ether.unitButtons.raid) do
-        if button and button.Indicators and UnitExists(unit) then
-            IndicatorUnit(frameUnit, "UNIT_CONNECTION", unit)
-            IndicatorUnit(frameUnit, "INCOMING_RESURRECT_CHANGED", unit)
-            IndicatorUnit(frameUnit, "UNIT_FLAGS", unit)
-            IndicatorUnit(frameUnit, "PLAYER_FLAGS_CHANGED", unit)
-        end
-    end
-
-    Ether:UpdateSoloTarget()
-
-    for index, handlers in ipairs(IndicatorMap) do
-        for _, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators then
-                if Ether.DB[501][index] == 0 then
-                    if button.Indicators[handlers] then
-                        button.Indicators[handlers]:Hide()
-                    end
-                end
-            end
-        end
-    end
-end
-
 function Ether:IndicatorsEnable()
     if not frame:GetScript("OnEvent") and not frameUnit:GetScript("OnEvent") then
         for _, events in ipairs(indicatorEvent) do
@@ -530,7 +506,18 @@ function Ether:IndicatorsEnable()
         frame:SetScript("OnEvent", Indicator)
         frameUnit:SetScript("OnEvent", IndicatorUnit)
     end
-    Ether:FullUpdateIndicators()
+    for index, handlers in ipairs(IndicatorMap) do
+        for _, button in pairs(Ether.unitButtons.raid) do
+            if button and button.Indicators then
+                if Ether.DB[501][index] == 0 then
+                    if button.Indicators[handlers] then
+                        button.Indicators[handlers]:Show()
+                    end
+                end
+            end
+        end
+        Ether:UpdateSoloTarget()
+    end
 end
 
 function Ether:IndicatorsDisable()
@@ -546,6 +533,13 @@ function Ether:IndicatorsDisable()
                 if button.Indicators[handlers] then
                     button.Indicators[handlers]:Hide()
                 end
+            end
+        end
+    end
+    for _, button in pairs(Ether.unitButtons.solo) do
+        if button and button.Indicators then
+            if button.Indicators.RaidTarget then
+               button.Indicators.RaidTarget:Hide()
             end
         end
     end

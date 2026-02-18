@@ -2,9 +2,7 @@
 local MAJOR, MINOR = "CallbackHandler-1.0", 8
 local CallbackHandler = LibStub:NewLibrary(MAJOR, MINOR)
 
-if not CallbackHandler then
-    return
-end -- No upgrade needed
+if not CallbackHandler then return end -- No upgrade needed
 
 local meta = {__index = function(tbl, key)
     tbl[key] = {}
@@ -18,9 +16,7 @@ local next, select, pairs, type, tostring = next, select, pairs, type, tostring
 
 local function Dispatch(handlers, ...)
     local index, method = next(handlers)
-    if not method then
-        return
-    end
+    if not method then return end
     repeat
         securecallfunction(method, ...)
         index, method = next(handlers, index)
@@ -54,9 +50,7 @@ function CallbackHandler.New(_self, target, RegisterName, UnregisterName, Unregi
 
     -- registry:Fire() - fires the given event/message into the registry
     function registry:Fire(eventname, ...)
-        if not rawget(events, eventname) or not next(events[eventname]) then
-            return
-        end
+        if not rawget(events, eventname) or not next(events[eventname]) then return end
         local oldrecurse = registry.recurse
         registry.recurse = oldrecurse + 1
 
@@ -114,13 +108,9 @@ function CallbackHandler.New(_self, target, RegisterName, UnregisterName, Unregi
             if select("#", ...) >= 1 then
                 -- this is not the same as testing for arg==nil!
                 local arg = select(1, ...)
-                regfunc = function(...)
-                    self[method](self, arg, ...)
-                end
+                regfunc = function(...) self[method](self, arg, ...) end
             else
-                regfunc = function(...)
-                    self[method](self, ...)
-                end
+                regfunc = function(...) self[method](self, ...) end
             end
         else
             -- function ref with self=object or self="addonId" or self=thread
@@ -131,9 +121,7 @@ function CallbackHandler.New(_self, target, RegisterName, UnregisterName, Unregi
             if select("#", ...) >= 1 then
                 -- this is not the same as testing for arg==nil!
                 local arg = select(1, ...)
-                regfunc = function(...)
-                    method(arg, ...)
-                end
+                regfunc = function(...) method(arg, ...) end
             else
                 regfunc = method
             end
