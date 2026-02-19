@@ -186,6 +186,7 @@ local function AddCustomAura(editor)
 end
 
 local function UpdateAuraStatus(spellId)
+    if Ether.DB[1001][3] ~= 1 then return end
     if not spellId then return end
     local debuff = Ether.DB[1003][spellId].isDebuff
     local active = Ether.DB[1003][spellId].isActive
@@ -197,8 +198,10 @@ local function UpdateAuraStatus(spellId)
     end
     if not active then
         editor.isActive.bg:SetColorTexture(0.80, 0.40, 1.00, 0.4)
+        Ether:ForceHelpfulNotActive()
     else
         editor.isActive.bg:SetColorTexture(0, 0, 0, 0)
+ Ether:ResetHeaderAuras()
     end
 end
 

@@ -44,7 +44,6 @@ dispelByPlayer = dispelClass[classFilename]
 local helpfulAuras = {}
 local dataHelpful = {}
 
-
 local raidAuraHarmful = {}
 local raidAuraDispel = {}
 local raidAuraIcons = {}
@@ -90,7 +89,7 @@ function Ether:SaveAuraPos(spellId)
     if debuff then
         updateAuraPos(raidDebuffData, spellId, c)
     else
-        updateAuraPos(dataActive, spellId, c)
+        updateAuraPos(dataHelpful, spellId, c)
     end
 end
 
@@ -159,9 +158,9 @@ function Ether:UpdateRaidIsHelpful(button, guid)
         local aura = GetBuffDataByIndex(button.unit, index)
         if not aura then break end
         if c[aura.spellId] and not c[aura.spellId].isDebuff and c[aura.spellId].isActive then
-            CreateAuraTexture(button,dataHelpful, guid, aura.spellId)
+            CreateAuraTexture(button, dataHelpful, guid, aura.spellId)
             dataHelpful[guid][aura.spellId]:Show()
-           dataHelpful[aura.auraInstanceID] = {
+            dataHelpful[aura.auraInstanceID] = {
                 spellId = aura.spellId,
                 guid = guid
             }
@@ -178,7 +177,7 @@ function Ether:UpdateHelpfulNotActive(button, guid)
         if not config.isActive and not config.isDebuff then
             local aura = GetUnitAuraBySpellID(button.unit, spellId, "HELPFUL")
             if not aura then
-                CreateAuraTexture(button, dataHelpful, guid, spellId)
+                 CreateAuraTexture(button, dataHelpful, guid, spellId)
                 dataHelpful[guid][spellId]:Show()
             end
         end
@@ -304,7 +303,7 @@ local function raidAuraUpdate(unit, updateInfo)
                 if c[aura.spellId].isActive then
                     dataHelpful[guid][aura.spellId]:Show()
                 else
-                     dataHelpful[guid][aura.spellId]:Hide()
+                    dataHelpful[guid][aura.spellId]:Hide()
                 end
                 dataHelpful[aura.auraInstanceID] = {
                     spellId = aura.spellId,
@@ -377,7 +376,7 @@ local function raidAuraUpdate(unit, updateInfo)
                     if c[spellId].isActive then
                         dataHelpful[auraGuid][spellId]:Hide()
                     else
-                         dataHelpful[auraGuid][spellId]:Show()
+                        dataHelpful[auraGuid][spellId]:Show()
                     end
                 end
                 helpfulAuras[auraInstanceID] = nil
@@ -635,6 +634,37 @@ local function GetUnits()
         tinsert(dataUnits, "player")
     end
     return dataUnits
+end
+
+function Ether:ForceHelpfulNotActive()
+    for _, unit in ipairs(GetUnits()) do
+        if UnitExists(unit) then
+            local button = Ether.unitButtons.raid[unit]
+            if not button then return end
+            local guid = UnitGUID(unit)
+            if guid and C_PlayerInfo.GUIDIsPlayer(guid) then
+                Ether:UpdateHelpfulNotActive(button, guid)
+            end
+        end
+    end
+end
+
+function Ether:ForceHelpfulActive()
+    for _, unit in ipairs(GetUnits()) do
+        if UnitExists(unit) then
+            local button = Ether.unitButtons.raid[unit]
+            if not button then return end
+            local guid = UnitGUID(unit)
+            if guid and C_PlayerInfo.GUIDIsPlayer(guid) then
+               Ether:UpdateRaidIsHelpful(button, guid)
+            end
+        end
+    end
+end
+function Ether:ResetHeaderAuras()
+    Ether:DisableHeaderAuras()
+    Ether:EnableHeaderAuras()
+    Ether:ForceHelpfulNotActive()
 end
 
 local function auraTblReset(unit)
