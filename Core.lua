@@ -657,7 +657,7 @@ local function OnInitialize(self, event, ...)
         Ether:CreateGroupHeader()
         Ether:CreatePetHeader()
         if Ether.DB[1501][1] == 1 then
-            Ether:ChangeDirectionHeader(false)
+            Ether:ChangeDirectionHeader(true)
         end
         HideBlizzard()
         self:RegisterEvent("GROUP_ROSTER_UPDATE")

@@ -47,14 +47,17 @@ local function OnAttributeChanged(self, name, unit)
     if name ~= "unit" or not unit then
         return
     end
-
     local oldUnit = self.unit
     local oldGUID = self.unitGUID
     local newUnit = unit or self:GetAttribute("unit")
     local newGUID = UnitGUID(unit)
     if newGUID and oldGUID ~= newGUID then
+        if oldGUID then
+            print("Cleanup for oldGUID:", oldGUID)
+            Ether:CleanupAuras(oldGUID)
+
+        end
         oldGUID = newGUID
-        Ether:CleanupAuras(oldGUID)
     end
     if oldUnit and oldUnit ~= newUnit then
         Ether.unitButtons.raid[oldUnit] = nil
@@ -67,6 +70,7 @@ local function OnAttributeChanged(self, name, unit)
                 if newGUID then
                     Ether:UpdateRaidIsHelpful(self, newGUID)
                     Ether:UpdateRaidIsHarmful(self, newGUID)
+                    Ether:UpdateHelpfulNotActive(self, newGUID)
                 end
             end)
         end

@@ -40,11 +40,15 @@ local dispelPriority = {
 local _, classFilename = UnitClass("player")
 local dispelByPlayer = {}
 dispelByPlayer = dispelClass[classFilename]
-local raidAuraHelpful = {}
+
+local helpfulAuras = {}
+local dataHelpful = {}
+
+
 local raidAuraHarmful = {}
 local raidAuraDispel = {}
 local raidAuraIcons = {}
-local raidBuffData = {}
+
 local raidDebuffData = {}
 local raidDispelData = {}
 local raidIconData = {}
@@ -62,30 +66,31 @@ function Ether:CleanupTimerCache()
     end
 end
 
-local function updateAuraPos(tbl, spellId, spellConfig)
-    for guid, _ in pairs(tbl) do
-        if tbl and tbl[guid] and tbl[guid][spellId] then
-            tbl[guid][spellId].IsActive = tbl[guid][spellId]:IsShown()
-            tbl[guid][spellId]:Hide()
-            tbl[guid][spellId]:ClearAllPoints()
-            tbl[guid][spellId]:SetColorTexture(unpack(spellConfig.color))
-            tbl[guid][spellId]:SetSize(spellConfig.size, spellConfig.size)
-            tbl[guid][spellId]:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
-            if tbl and tbl[guid] and tbl[guid][spellId] and tbl[guid][spellId].IsActive then
-                tbl[guid][spellId]:Show()
-                tbl[guid][spellId].IsActive = nil
+local function updateAuraPos(tbl, spell, c)
+    for guid in pairs(tbl) do
+        if tbl[guid] and tbl[guid][spell] then
+            tbl[guid][spell].IsActive = tbl[guid][spell]:IsShown()
+            tbl[guid][spell]:Hide()
+            tbl[guid][spell]:ClearAllPoints()
+            tbl[guid][spell]:SetColorTexture(unpack(c.color))
+            tbl[guid][spell]:SetSize(c.size, c.size)
+            tbl[guid][spell]:SetPoint(c.position, c.offsetX, c.offsetY)
+            if tbl and tbl[guid] and tbl[guid][spell] and tbl[guid][spell].IsActive then
+                tbl[guid][spell]:Show()
+                tbl[guid][spell].IsActive = nil
             end
         end
     end
 end
 
-function Ether:SaveAuraPos(spellId, debuff)
-    local spellConfig = Ether.DB[1003][spellId]
-    if not spellConfig then return end
+function Ether:SaveAuraPos(spellId)
+    if not spellId or type(spellId) ~= "number" then return end
+    local c = Ether.DB[1003][spellId]
+    local debuff = c.isDebuff
     if debuff then
-        updateAuraPos(raidDebuffData, spellId, spellConfig)
+        updateAuraPos(raidDebuffData, spellId, c)
     else
-        updateAuraPos(raidBuffData, spellId, spellConfig)
+        updateAuraPos(dataActive, spellId, c)
     end
 end
 
@@ -132,58 +137,64 @@ local function GetCachedDispel(unit)
     return dispel
 end
 
+local function CreateAuraTexture(button, tbl, guid, spellId)
+    if not tbl[guid] then tbl[guid] = {} end
+    local sc = Ether.DB[1003][spellId]
+    if not tbl[guid][spellId] then
+        tbl[guid][spellId] = button.healthBar:CreateTexture(nil, "OVERLAY")
+        tbl[guid][spellId]:SetColorTexture(unpack(sc.color))
+        tbl[guid][spellId]:SetSize(sc.size, sc.size)
+        tbl[guid][spellId]:SetPoint(sc.position, sc.offsetX, sc.offsetY)
+        tbl[guid][spellId]:Hide()
+    end
+end
+
 function Ether:UpdateRaidIsHelpful(button, guid)
     if not button or not guid then
         return
     end
-    local config = Ether.DB[1003]
+    local c = Ether.DB[1003]
     local index = 1
     while true do
         local aura = GetBuffDataByIndex(button.unit, index)
         if not aura then break end
-        if config[aura.spellId] and config[aura.spellId].enabled and not config[aura.spellId].isDebuff then
-            local spellConfig = config[aura.spellId]
-            raidBuffData[guid] = raidBuffData[guid] or {}
-            if not raidBuffData[guid][aura.spellId] then
-                raidBuffData[guid][aura.spellId] = button.healthBar:CreateTexture(nil, "OVERLAY")
-                raidBuffData[guid][aura.spellId]:SetColorTexture(unpack(spellConfig.color))
-                raidBuffData[guid][aura.spellId]:SetSize(spellConfig.size, spellConfig.size)
-                raidBuffData[guid][aura.spellId]:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
-                raidBuffData[guid][aura.spellId]:Show()
-            else
-                raidBuffData[guid][aura.spellId]:Show()
-            end
-            raidBuffData[aura.auraInstanceID] = {
+        if c[aura.spellId] and not c[aura.spellId].isDebuff and c[aura.spellId].isActive then
+            CreateAuraTexture(button,dataHelpful, guid, aura.spellId)
+            dataHelpful[guid][aura.spellId]:Show()
+           dataHelpful[aura.auraInstanceID] = {
                 spellId = aura.spellId,
                 guid = guid
             }
-            raidAuraHelpful[aura.auraInstanceID] = aura
+            helpfulAuras[aura.auraInstanceID] = aura
         end
         index = index + 1
     end
 end
 
-function Ether:UpdateRaidIsHarmful(button, guid)
-    if not button or not guid then
-        return
+function Ether:UpdateHelpfulNotActive(button, guid)
+    if not button or not guid then return end
+    local c = Ether.DB[1003]
+    for spellId, config in pairs(c) do
+        if not config.isActive and not config.isDebuff then
+            local aura = GetUnitAuraBySpellID(button.unit, spellId, "HELPFUL")
+            if not aura then
+                CreateAuraTexture(button, dataHelpful, guid, spellId)
+                dataHelpful[guid][spellId]:Show()
+            end
+        end
     end
-    local config = Ether.DB[1003]
+end
+
+function Ether:UpdateRaidIsHarmful(button, guid)
+    if not button or not guid then return end
+    local c = Ether.DB[1003]
     local index = 1
     while true do
         local aura = GetDebuffDataByIndex(button.unit, index)
         if not aura then break end
-        if config[aura.spellId] and config[aura.spellId].enabled and config[aura.spellId].isDebuff then
-            local spellConfig = config[aura.spellId]
-            raidDebuffData[guid] = raidDebuffData[guid] or {}
-            if not raidDebuffData[guid][aura.spellId] then
-                raidDebuffData[guid][aura.spellId] = button.healthBar:CreateTexture(nil, "OVERLAY")
-                raidDebuffData[guid][aura.spellId]:SetColorTexture(unpack(spellConfig.color))
-                raidDebuffData[guid][aura.spellId]:SetSize(spellConfig.size, spellConfig.size)
-                raidDebuffData[guid][aura.spellId]:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
-                raidDebuffData[guid][aura.spellId]:Show()
-            else
-                raidDebuffData[guid][aura.spellId]:Show()
-            end
+        if c[aura.spellId] and c[aura.spellId].enabled and c[aura.spellId].isDebuff and c[aura.spellId].isActive then
+            CreateAuraTexture(button, raidDebuffData, guid, aura.spellId)
+            raidDebuffData[guid][aura.spellId]:Show()
             raidDebuffData[aura.auraInstanceID] = {
                 spellId = aura.spellId,
                 guid = guid
@@ -202,14 +213,14 @@ function Ether:updateDispelBorder(button, color)
 end
 
 function Ether:CleanupAuras(guid)
-    if raidBuffData[guid] then
-        for _, texture in pairs(raidBuffData[guid]) do
+    if dataHelpful[guid] then
+        for _, texture in pairs(dataHelpful[guid]) do
             if type(texture) ~= "table" then return end
             texture:Hide()
             texture:ClearAllPoints()
             texture:SetParent(nil)
         end
-        raidBuffData[guid] = nil
+        dataHelpful[guid] = nil
     end
     if raidIconData[guid] then
         for _, icon in pairs(raidIconData[guid]) do
@@ -229,7 +240,7 @@ function Ether:CleanupAuras(guid)
 end
 
 function Ether:CleanupRaidIcons()
-    for guid, _ in pairs(raidBuffData) do
+    for guid, _ in pairs(dataHelpful) do
         Ether:CleanupAuras(guid)
     end
     for guid, _ in pairs(raidDebuffData) do
@@ -285,27 +296,23 @@ local function raidAuraUpdate(unit, updateInfo)
     if not button then return end
     local guid = UnitGUID(unit)
     if not guid then return end
-    local config = Ether.DB[1003]
+    local c = Ether.DB[1003]
     if updateInfo.addedAuras then
         for _, aura in ipairs(updateInfo.addedAuras) do
-            if aura.isHelpful and config[aura.spellId] and config[aura.spellId].enabled and not config[aura.spellId].isDebuff then
-                local spellConfig = config[aura.spellId]
-                raidBuffData[guid] = raidBuffData[guid] or {}
-                if not raidBuffData[guid][aura.spellId] then
-                    raidBuffData[guid][aura.spellId] = button.healthBar:CreateTexture(nil, "OVERLAY")
-                    raidBuffData[guid][aura.spellId]:SetColorTexture(unpack(spellConfig.color))
-                    raidBuffData[guid][aura.spellId]:SetSize(spellConfig.size, spellConfig.size)
-                    raidBuffData[guid][aura.spellId]:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
-                    raidBuffData[guid][aura.spellId]:Show()
+            if aura.isHelpful and c[aura.spellId] and not c[aura.spellId].isDebuff then
+                CreateAuraTexture(button, dataHelpful, guid, aura.spellId)
+                if c[aura.spellId].isActive then
+                    dataHelpful[guid][aura.spellId]:Show()
                 else
-                    raidBuffData[guid][aura.spellId]:Show()
+                     dataHelpful[guid][aura.spellId]:Hide()
                 end
-                raidBuffData[aura.auraInstanceID] = {
+                dataHelpful[aura.auraInstanceID] = {
                     spellId = aura.spellId,
                     guid = guid
                 }
-                raidAuraHelpful[aura.auraInstanceID] = aura
+                helpfulAuras[aura.auraInstanceID] = aura
             end
+
             if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                 raidDispelData[guid] = raidDispelData[guid] or {}
                 raidIconData[guid] = raidIconData[guid] or {}
@@ -326,18 +333,9 @@ local function raidAuraUpdate(unit, updateInfo)
                 Ether.StartBlink(raidIconData[guid][aura.spellId], aura.duration, 0.28)
                 raidAuraDispel[aura.auraInstanceID] = aura
             end
-            if aura.isHarmful and config[aura.spellId] and config[aura.spellId].enabled and config[aura.spellId].isDebuff then
-                local spellConfig = config[aura.spellId]
-                raidDebuffData[guid] = raidDebuffData[guid] or {}
-                if not raidDebuffData[guid][aura.spellId] then
-                    raidDebuffData[guid][aura.spellId] = button.healthBar:CreateTexture(nil, "OVERLAY")
-                    raidDebuffData[guid][aura.spellId]:SetColorTexture(unpack(spellConfig.color))
-                    raidDebuffData[guid][aura.spellId]:SetSize(spellConfig.size, spellConfig.size)
-                    raidDebuffData[guid][aura.spellId]:SetPoint(spellConfig.position, spellConfig.offsetX, spellConfig.offsetY)
-                    raidDebuffData[guid][aura.spellId]:Show()
-                else
-                    raidDebuffData[guid][aura.spellId]:Show()
-                end
+            if aura.isHarmful and c[aura.spellId] and c[aura.spellId].enabled and c[aura.spellId].isDebuff and c[aura.spellId].isActive then
+                CreateAuraTexture(button, raidDebuffData, guid, aura.spellId)
+                raidDebuffData[guid][aura.spellId]:Show()
                 raidDebuffData[aura.auraInstanceID] = {
                     spellId = aura.spellId,
                     guid = guid
@@ -370,15 +368,19 @@ local function raidAuraUpdate(unit, updateInfo)
                 end
                 raidAuraHarmful[auraInstanceID] = nil
             end
-            if raidAuraHelpful[auraInstanceID] then
-                local auraData = raidBuffData[auraInstanceID]
+            if helpfulAuras[auraInstanceID] then
+                local auraData = dataHelpful[auraInstanceID]
                 if not auraData then return end
                 local auraGuid = auraData.guid
                 local spellId = auraData.spellId
-                if raidBuffData[guid] and raidBuffData[auraGuid][spellId] then
-                    raidBuffData[auraGuid][spellId]:Hide()
+                if dataHelpful[guid] and dataHelpful[auraGuid][spellId] then
+                    if c[spellId].isActive then
+                        dataHelpful[auraGuid][spellId]:Hide()
+                    else
+                         dataHelpful[auraGuid][spellId]:Show()
+                    end
                 end
-                raidAuraHelpful[auraInstanceID] = nil
+                helpfulAuras[auraInstanceID] = nil
             end
         end
     end
@@ -598,13 +600,14 @@ if not update then
 end
 
 function Ether:AuraWipe()
-    wipe(raidAuraHelpful)
+
     wipe(raidAuraHarmful)
     wipe(raidAuraDispel)
     wipe(raidAuraIcons)
     wipe(raidDispelData)
     wipe(raidIconData)
-    wipe(raidBuffData)
+    wipe(helpfulAuras)
+    wipe(dataHelpful)
     wipe(raidDebuffData)
     wipe(dispelCache)
     wipe(getUnitBuffs)

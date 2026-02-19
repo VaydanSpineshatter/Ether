@@ -9,54 +9,59 @@ Ether.AuraTemplate = function(newId)
         offsetX = 0,
         offsetY = 0,
         enabled = true,
-        isDebuff = false
+        isDebuff = false,
+        isActive = true
     }
     return obj
 end
 
 Ether.PredefinedAuras = {
     ["Priest - Group Buffs"] = {
-        [21564] = {
-            name = "Prayer Fortitude Rank 2",
+        [25392] = {
+            name = "Prayer-Fortitude 3",
             color = {0.93, 0.91, 0.67, 1},
-            size = 6,
+            size = 8,
             position = "BOTTOMLEFT",
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
-        [27681] = {
-            name = "Prayer Spirit Rank 1",
-            color = {0.93, 0.91, 0.67, 1},
-            size = 6,
+        [32999] = {
+            name = "Prayer-Spirit 2",
+            color = {0, 0.7, 1, 1},
+            size = 8,
             position = "BOTTOMLEFT",
-            offsetX = 6,
+            offsetX = 8,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
-        [27683] = {
-            name = "Prayer Shadow",
+        [39374] = {
+            name = "Prayer-Shadow 2",
             color = {0, 0, 0, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 12,
+            size = 8,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
     },
     ["Priest - Helpful"] = {
-        [25217] = {
-            name = "Shield 11",
-            color = {0.93, 0.91, 0.67, 1},
-            size = 6,
+        [25218] = {
+            name = "Shield 12",
+            color = {1, 0, 1, 1},
+            size = 8,
             position = "TOPLEFT",
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
         [41635] = {
             name = "POM1",
@@ -66,17 +71,19 @@ Ether.PredefinedAuras = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
-        [25221] = {
-            name = "Renew 11",
+        [25222] = {
+            name = "Renew 12",
             color = {0.2, 1, 0.2, 1},
-            size = 6,
+            size = 8,
             position = "TOPRIGHT",
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = false
         },
         [6346] = {
             name = "Fear Ward",
@@ -86,7 +93,8 @@ Ether.PredefinedAuras = {
             offsetX = 0,
             offsetY = 6,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
     },
     ["Priest - Harmful"] = {
@@ -98,7 +106,8 @@ Ether.PredefinedAuras = {
             offsetX = 0,
             offsetY = -6,
             enabled = true,
-            isDebuff = true
+            isDebuff = true,
+            isActive = true
         }
     },
     ["Druid - Group Buffs"] = {
@@ -110,7 +119,8 @@ Ether.PredefinedAuras = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            debuff = false
+            isDebuff = false,
+            isActive = true
         },
         [21850] = {
             name = "GotW Rank 2",
@@ -120,7 +130,8 @@ Ether.PredefinedAuras = {
             offsetX = 8,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
     },
     ["Mage - Group Buffs"] = {
@@ -132,7 +143,8 @@ Ether.PredefinedAuras = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
         [23028] = {
             name = "Int Group Rank 1",
@@ -142,7 +154,8 @@ Ether.PredefinedAuras = {
             offsetX = 0,
             offsetY = 0,
             enabled = true,
-            isDebuff = false
+            isDebuff = false,
+            isActive = true
         },
     }
 }

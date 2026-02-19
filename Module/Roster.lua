@@ -62,6 +62,7 @@ local function Roster(_, event)
         refreshButtons()
     elseif event == "GROUP_ROSTER_UPDATE" then
         refreshButtons()
+
     elseif event == "PLAYER_TARGET_CHANGED" then
         if UnitExists("target") then
             local button = Ether.unitButtons.solo["target"]

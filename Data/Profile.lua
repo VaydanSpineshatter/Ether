@@ -123,11 +123,10 @@ function Ether:CopyProfile(sourceName, targetName)
 end
 
 function Ether:SwitchProfile(name)
-    local editor = Ether.UIPanel.Frames["EDITOR"]
-    local auras = Ether.UIPanel.Frames["AURAS"]
-    if not editor.Created or not auras.Created then
+      local editor = Ether.UIPanel.Frames["EDITOR"]
+    if not editor.Created  then
         Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created, auras.Created = true, true
+        editor.Created = true
     end
     if not ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile not found"
@@ -146,10 +145,9 @@ function Ether:SwitchProfile(name)
 end
 function Ether:DeleteProfile(name)
     local editor = Ether.UIPanel.Frames["EDITOR"]
-    local auras = Ether.UIPanel.Frames["AURAS"]
-    if not editor.Created or not auras.Created then
+    if not editor.Created  then
         Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created, auras.Created = true, true
+        editor.Created = true
     end
     if not ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile not found"

@@ -279,6 +279,7 @@ local function NotAfk()
             frameUnit:RegisterEvent(events)
         end
     end
+    Ether:UpdateGroupLeader()
     if Ether.DB[1001][1] == 1 then
         C_Timer.After(0.3, function()
             Ether:AuraEnable()
@@ -414,6 +415,7 @@ function Ether:IndicatorsUnitUpdate(unit)
             button.Indicators.PlayerFlags:Hide()
         end
     end
+
     if button.Indicators.GroupLeader then
         local IsLeader = UnitIsGroupLeader(unit)
         if (IsLeader) then
@@ -568,7 +570,22 @@ function Ether:IndicatorsDisable()
     for _, button in pairs(Ether.unitButtons.solo) do
         if button and button.Indicators then
             if button.Indicators.RaidTarget then
-               button.Indicators.RaidTarget:Hide()
+                button.Indicators.RaidTarget:Hide()
+            end
+        end
+    end
+end
+function Ether:UpdateGroupLeader()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button.Indicators.GroupLeader then
+            local IsLeader = UnitIsGroupLeader(button.unit)
+            if (IsLeader) then
+                button.Indicators.GroupLeader:SetTexture(leaderIcon)
+                if UnitInAnyGroup("player") then
+                    button.Indicators.GroupLeader:Show()
+                end
+            else
+                button.Indicators.GroupLeader:Hide()
             end
         end
     end

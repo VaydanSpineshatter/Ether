@@ -93,18 +93,6 @@ local function OnCancel(prevValues)
     end
 end
 
-local function UpdateIsDebuff(button, spellId)
-    if not button or not spellId then return end
-    local debuff = Ether.DB[1003][spellId].isDebuff
-    if debuff then
-        debuff = true
-        button:SetColorTexture(0.80, 0.40, 1.00, 0.4)
-    else
-        debuff = false
-        button:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-    end
-end
-
 function Ether:UpdateEditor(editor)
     if not Ether.DB[1003][Ether.UIPanel.SpellId] then
         editor.nameInput:SetText("")
@@ -195,6 +183,28 @@ local function AddCustomAura(editor)
     end
     Ether.DB[1003][newId] = Ether.AuraTemplate(newId)
     SelectAura(editor, newId)
+end
+
+local function UpdateAuraStatus(spellId)
+    if not spellId then return end
+    local debuff = Ether.DB[1003][spellId].isDebuff
+    local active = Ether.DB[1003][spellId].isActive
+    local editor = Ether.UIPanel.Frames["EDITOR"]
+    if debuff then
+        debuff = true
+        editor.isDebuff.bg:SetColorTexture(0.80, 0.40, 1.00, 0.4)
+    else
+        debuff = false
+        editor.isDebuff.bg:SetColorTexture(0, 0, 0, 0)
+    end
+    if not active then
+        active = false
+        editor.isActive.bg:SetColorTexture(0.80, 0.40, 1.00, 0.4)
+    else
+        active = true
+        editor.isActive.bg:SetColorTexture(0.80, 0.40, 1.00, 0.4)
+        editor.isActive.bg:SetColorTexture(0, 0, 0, 0)
+    end
 end
 
 local function EtherSpellInfo(spellName, resultText, spellIcon)
@@ -451,6 +461,9 @@ local function EtherPanelButton(parent, width, height, text, point, relto, rel, 
     btn.text:SetFont(unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
     btn.text:SetPoint("CENTER")
     btn.text:SetText(text)
+    btn.bg = btn:CreateTexture(nil, "BACKGROUND")
+    btn.bg:SetAllPoints()
+    btn.bg:SetColorTexture(0, 0, 0, 0)
     btn:SetScript("OnEnter", function(self)
         if self.text:GetText() == "Reset" or self.text:GetText() == "Wipe" then
             self.text:SetTextColor(1.00, 0.00, 0.00, 1)
@@ -463,7 +476,6 @@ local function EtherPanelButton(parent, width, height, text, point, relto, rel, 
     end)
     return btn
 end
-Ether.EtherPanelButton = EtherPanelButton
 
 local number = nil
 local iconTexture = ""
@@ -814,13 +826,7 @@ local function CreateCustomUnit(numb)
     customButtons[numb] = custom
     updateFunc()
 end
---[[
-local function SnapToGrid(x, y, gridSize)
-    local snappedX = x + gridSize / 2 / gridSize * gridSize
-    local snappedY = y + gridSize / 2 / gridSize * gridSize
-    return snappedX, snappedY
-end
-]]
+
 local function Drag(self)
     if self:IsMovable() then
         self:StartMoving()
@@ -1143,14 +1149,11 @@ function Ether:CreateCustomSection(EtherFrame)
         AddCustomAura(editor, auras)
     end)
     addBtn.text:SetPoint("LEFT")
+
     local confirm = EtherPanelButton(auras, 50, 25, "Confirm", "LEFT", addBtn, "RIGHT", 10, 0)
     confirm:SetScript("OnClick", function()
         if type(Ether.UIPanel.SpellId) ~= "nil" then
-            if Ether.DB[1003][Ether.UIPanel.SpellId].isDebuff then
-                Ether:SaveAuraPos(Ether.UIPanel.SpellId, true)
-            else
-                Ether:SaveAuraPos(Ether.UIPanel.SpellId)
-            end
+            Ether:SaveAuraPos(Ether.UIPanel.SpellId)
         end
     end)
     local clear = EtherPanelButton(auras, 50, 25, "Wipe", "TOPRIGHT", parent, "TOPRIGHT", 0, -5)
@@ -1225,10 +1228,17 @@ function Ether:CreateCustomSection(EtherFrame)
     isDebuff:SetScript("OnClick", function(self)
         if Ether.UIPanel.SpellId then
             Ether.DB[1003][Ether.UIPanel.SpellId].isDebuff = not Ether.DB[1003][Ether.UIPanel.SpellId].isDebuff
-            UpdateIsDebuff(editor.isDebuff.bg, Ether.UIPanel.SpellId)
+            UpdateAuraStatus(Ether.UIPanel.SpellId)
         end
     end)
-
+    local isActive = EtherPanelButton(editor, 50, 25, "Active", "BOTTOMLEFT", isDebuff, "TOPLEFT", 0, 10)
+    editor.isActive = isActive
+    isActive:SetScript("OnClick", function()
+        if Ether.UIPanel.SpellId then
+            Ether.DB[1003][Ether.UIPanel.SpellId].isActive = not Ether.DB[1003][Ether.UIPanel.SpellId].isActive
+            UpdateAuraStatus(Ether.UIPanel.SpellId)
+        end
+    end)
     local sizeLabel = editor:CreateFontString(nil, "OVERLAY", "GameFontWhiteSmall")
     editor.sizeLabel = sizeLabel
     sizeLabel:SetPoint("TOPLEFT", spellIdInput, "BOTTOMLEFT", 0, -120)
@@ -1310,6 +1320,7 @@ function Ether:CreateCustomSection(EtherFrame)
     local preview = CreateHeaderPreview(editor, Ether.playerName, 3, 55)
     editor.preview = preview
     preview:SetPoint("TOPLEFT", 15, -120)
+    preview.name:SetPoint("CENTER", 0, -5)
     local icon = preview.healthBar:CreateTexture(nil, "OVERLAY")
     editor.icon = icon
     icon:SetSize(6, 6)
@@ -1480,7 +1491,7 @@ function Ether:UpdateAuraList()
                 editor:Show()
             end
             SelectAura(editor, spellId)
-            UpdateIsDebuff(editor.isDebuff.bg, spellId)
+            UpdateAuraStatus(spellId)
         end)
 
         btn.name = btn:CreateFontString(nil, "OVERLAY")
@@ -2000,51 +2011,11 @@ function Ether:CreateLayoutSection(EtherFrame)
     end
 end
 
-local headerButtons = {}
-local function changeLayout(parent, mode)
-    local size = 30
-    local spacing = 4
-    local step = size + spacing
-    local totalButtons = 40
-    local cols, rows
-    if mode == "HORIZONTAL" then
-        cols = 5
-        rows = 8
-    else
-        cols = 8
-        rows = 5
-    end
-    local gridWidth = (cols - 1) * step
-    local gridHeight = (rows - 1) * step
-    local startX = -(gridWidth / 2)
-    local startY = (gridHeight / 2)
-    for i = 1, totalButtons do
-        local col, row
-        if mode == "HORIZONTAL" then
-            col = (i - 1) % cols
-            row = math.floor((i - 1) / cols)
-        else
-            row = (i - 1) % rows
-            col = math.floor((i - 1) / rows)
-        end
-        local xOffset = startX + (col * step)
-        local yOffset = startY - (row * step)
-        headerButtons[i]:ClearAllPoints()
-        headerButtons[i]:SetPoint("CENTER", parent, "CENTER", xOffset, yOffset)
-    end
-end
 function Ether:CreateHeaderSection(EtherFrame)
     local parent = EtherFrame["CONTENT"]["CHILDREN"]["Header"]
     if parent.Created then return end
     parent.Created = true
-    for i = 1, 40 do
-        headerButtons[i] = CreateHeaderPreview(parent, tostring(i), 2, 30)
-    end
-    if Ether.DB[1501][1] == 1 then
-        changeLayout(parent, "VERTICAL")
-    else
-      changeLayout(parent, "HORIZONTAL")
-    end
+    Ether:CreateHeaderPreview(parent)
     local layoutValue = {
         [1] = {text = "Sort order"},
         [2] = {text = "..."},
@@ -2071,11 +2042,12 @@ function Ether:CreateHeaderSection(EtherFrame)
             Ether.DB[1501][i] = checked and 1 or 0
             if i == 1 then
                 if Ether.DB[1501][1] == 1 then
-                    Ether:ChangeDirectionHeader(false)
-                    changeLayout(parent, "VERTICAL")
-                else
                     Ether:ChangeDirectionHeader(true)
-                    changeLayout(parent, "HORIZONTAL")
+                    Ether:ChangeHeaderPreview(parent, true)
+                else
+                    Ether:ChangeHeaderPreview(parent, false)
+                    Ether:ChangeDirectionHeader(false)
+
                 end
             end
         end)
