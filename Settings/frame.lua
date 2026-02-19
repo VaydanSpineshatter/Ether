@@ -191,18 +191,13 @@ local function UpdateAuraStatus(spellId)
     local active = Ether.DB[1003][spellId].isActive
     local editor = Ether.UIPanel.Frames["EDITOR"]
     if debuff then
-        debuff = true
         editor.isDebuff.bg:SetColorTexture(0.80, 0.40, 1.00, 0.4)
     else
-        debuff = false
         editor.isDebuff.bg:SetColorTexture(0, 0, 0, 0)
     end
     if not active then
-        active = false
         editor.isActive.bg:SetColorTexture(0.80, 0.40, 1.00, 0.4)
     else
-        active = true
-        editor.isActive.bg:SetColorTexture(0.80, 0.40, 1.00, 0.4)
         editor.isActive.bg:SetColorTexture(0, 0, 0, 0)
     end
 end

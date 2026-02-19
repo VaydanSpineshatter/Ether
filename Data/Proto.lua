@@ -83,7 +83,7 @@ Ether.PredefinedAuras = {
             offsetY = 0,
             enabled = true,
             isDebuff = false,
-            isActive = false
+            isActive = true
         },
         [6346] = {
             name = "Fear Ward",
