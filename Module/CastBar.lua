@@ -307,10 +307,9 @@ local function castBarEvents(status)
 end
 
 function Ether:CastBarEnable(unit)
-
     local bar = Ether.unitButtons.solo[unit]
-    if not bar then return
-    elseif not bar.castBar then
+    if not bar then return end
+    if not bar.castBar then
         if unit == "player" then
             Ether:SetupCastBar(bar, 341)
         else

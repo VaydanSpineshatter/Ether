@@ -721,6 +721,17 @@ local function OnInitialize(self, event, ...)
 
         for _, unit in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus"}) do
             Ether:CreateUnitButtons(unit)
+            if unit == "pet" then
+                Ether:PetCondition(Ether.unitButtons.solo[unit])
+            end
+        end
+
+        if Ether.DB[1201][1] == 1 then
+            Ether:CastBarEnable("player")
+        end
+
+        if Ether.DB[1201][2] == 1 then
+            Ether:CastBarEnable("target")
         end
 
         self:RegisterEvent("PLAYER_REGEN_DISABLED")

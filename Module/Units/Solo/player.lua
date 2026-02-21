@@ -73,7 +73,7 @@ function Ether:CreateUnitButtons(token)
     button.RaidTarget:SetSize(18, 18)
     button.RaidTarget:SetPoint("LEFT", button.healthBar, "LEFT", 5, 0)
 
-    if token ~= "player" then
+    if button.unit ~= "player" then
         RegisterUnitWatch(button)
     end
 
@@ -90,20 +90,6 @@ function Ether:CreateUnitButtons(token)
     button:SetMovable(true)
     FullUpdate(button)
 
-    if token == "player" then
-        if Ether.DB[1201][1] == 1 then
-            Ether:CastBarEnable(token)
-        end
-    end
-    if token == "target" then
-        if Ether.DB[1201][2] == 1 then
-            Ether:CastBarEnable(token)
-        end
-    end
-    if token == "pet" then
-        Ether:PetCondition(button)
-    end
-
     local key = {
         [1] = 332,
         [2] = 333,
@@ -113,7 +99,7 @@ function Ether:CreateUnitButtons(token)
         [6] = 337
     }
     for index, data in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus"}) do
-        if token == data then
+        if button.unit == data then
             Ether:ApplyFramePosition(button, key[index])
             Ether:SetupDrag(button, key[index], 20)
             break
