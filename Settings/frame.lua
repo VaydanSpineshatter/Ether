@@ -201,7 +201,7 @@ local function UpdateAuraStatus(spellId)
         Ether:ForceHelpfulNotActive()
     else
         editor.isActive.bg:SetColorTexture(0, 0, 0, 0)
- Ether:ResetHeaderAuras()
+        Ether:ForceHelpfulNotActive()
     end
 end
 
@@ -555,11 +555,11 @@ function Ether:CreateModuleSection(self)
         [5] = {name = "Range check"},
         [6] = {name = "Indicators"}
     }
+
     local mod = CreateFrame("Frame", nil, parent)
     mod:SetSize(200, (#modulesValue * 30) + 60)
     for i, opt in ipairs(modulesValue) do
         local btn = CreateFrame("CheckButton", nil, mod, "OptionsBaseCheckButtonTemplate")
-
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, 5, -5)
         else
@@ -738,7 +738,7 @@ end
 
 local function updateFunc()
     if not updateTicker then
-        updateTicker = C_Ticker(0.15, updateCustom)
+        updateTicker = C_Ticker(0.12, updateCustom)
     end
 end
 
@@ -972,7 +972,7 @@ function Ether:CreateUpdateSection(EtherFrame)
         if i == 1 then
             btn:SetPoint("TOPLEFT", 5, -5)
         else
-            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[4][1][i - 1], "BOTTOMLEFT", 0, 0)
+            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[4][i - 1], "BOTTOMLEFT", 0, 0)
         end
         btn:SetSize(24, 24)
         btn.label = GetFont(EtherFrame, btn, opt.text, 12)
@@ -983,35 +983,7 @@ function Ether:CreateUpdateSection(EtherFrame)
             Ether.DB[701][i] = checked and 1 or 0
             resetHealthPowerText(i)
         end)
-        EtherFrame.Buttons[4][1][i] = btn
-    end
-    local UnitUpdates = {
-        [1] = {text = "Player", value = "player"},
-        [2] = {text = "Target", value = "target"},
-        [3] = {text = "Target of Target", value = "targettarget"},
-        [4] = {text = "Pet", value = "pet"},
-        [5] = {text = "Pet Target", value = "pettarget"},
-        [6] = {text = "Focus", value = "focus"},
-        [7] = {text = "Header", value = "raid"}
-    }
-    local EventsToggle = CreateFrame("Frame", nil, parent)
-    EventsToggle:SetSize(200, (#UnitUpdates * 30) + 60)
-    for i, opt in ipairs(UnitUpdates) do
-        local btn = CreateFrame("CheckButton", nil, parent, "InterfaceOptionsCheckButtonTemplate")
-        if i == 1 then
-            btn:SetPoint("TOP", 40, -5)
-        else
-            btn:SetPoint("TOPLEFT", EtherFrame.Buttons[4][2][i - 1], "BOTTOMLEFT", 0, 0)
-        end
-        btn:SetSize(24, 24)
-        btn.label = GetFont(EtherFrame, btn, opt.text, 12)
-        btn.label:SetPoint("LEFT", btn, "RIGHT", 10, 0)
-        btn:SetChecked(Ether.DB[901][opt.value])
-        btn:SetScript("OnClick", function(self)
-            local checked = self:GetChecked()
-            Ether.DB[901][opt.value] = checked
-        end)
-        EtherFrame.Buttons[4][2][i] = btn
+        EtherFrame.Buttons[4][i] = btn
     end
 end
 
@@ -1813,7 +1785,7 @@ function Ether:CreatePositionSection(EtherFrame)
     sizeLabel:SetText("Size")
 
     local confirm = EtherPanelButton(preview, 60, 25, "Confirm", "BOTTOMLEFT", preview, "TOPRIGHT", 0, 40)
-    confirm:SetScript("OnClick", function(self)
+    confirm:SetScript("OnClick", function()
         if currentIndicator and number then
             Ether.SaveIndicatorsPos(currentIndicator, number)
         end
@@ -2013,15 +1985,10 @@ function Ether:CreateHeaderSection(EtherFrame)
     local parent = EtherFrame["CONTENT"]["CHILDREN"]["Header"]
     if parent.Created then return end
     parent.Created = true
-    Ether:CreateHeaderPreview(parent)
     local layoutValue = {
-        [1] = {text = "Sort order"},
-        [2] = {text = "..."},
-        [3] = {text = "..."},
-        [4] = {text = "..."},
-        [5] = {text = "..."}
+        [1] = {text = "Sort order"}
     }
-
+    Ether:InitializePreview()
     local header = CreateFrame("Frame", nil, parent)
     header:SetSize(200, (#layoutValue * 30) + 60)
     for i, opt in ipairs(layoutValue) do
@@ -2041,19 +2008,25 @@ function Ether:CreateHeaderSection(EtherFrame)
             if i == 1 then
                 if Ether.DB[1501][1] == 1 then
                     Ether:ChangeDirectionHeader(true)
-                    Ether:ChangeHeaderPreview(parent, true)
                 else
-                    Ether:ChangeHeaderPreview(parent, false)
                     Ether:ChangeDirectionHeader(false)
-
                 end
+                Ether:InitializePreview()
             end
         end)
         EtherFrame.Buttons[11][i] = btn
     end
+    local indicators = EtherPanelButton(parent, 100, 25, "Update Indicators", "TOPRIGHT", parent, "TOPRIGHT", -40, -10)
+    indicators:SetScript("OnClick", function()
+        Ether.Handler:FullUpdate()
+    end)
+    local reset = EtherPanelButton(parent, 100, 25, "Header Rest", "TOPLEFT", indicators, "BOTTOMLEFT", 0, 0)
+    reset:SetScript("OnClick", function()
+        Ether:ResetGroupHeader()
+        Ether:ResetPetHeader()
+    end)
 end
 
-local previewFrame
 function Ether:CreateCastBarSection(EtherFrame)
     local parent = EtherFrame["CONTENT"]["CHILDREN"]["CastBar"]
     if parent.Created then return end
@@ -2069,38 +2042,11 @@ function Ether:CreateCastBarSection(EtherFrame)
         preview.castBar.text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[2], "OUTLINE")
         preview.castBar.time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[3], "OUTLINE")
     end
-    local preview = CreateFrame("Frame", nil, parent, "BackdropTemplate")
-    previewFrame = preview
-    preview:SetPoint("CENTER", parent, "CENTER", 0, 50)
-    preview:SetSize(120, 50)
-    Ether:SetupHealthBar(preview, "HORIZONTAL", 120, 40, "player")
-    Ether:SetupPowerBar(preview, "player")
-    preview:SetBackdrop({
-        bgFile = Ether.DB[811]["background"],
-        insets = {left = -2, right = -2, top = -2, bottom = -2}
-    })
-    Ether:SetupName(preview, 0)
-    preview.name:SetText(Ether:ShortenName(Ether.playerName, 10))
-    Ether:SetupCastBar(preview)
-    preview.castBar.text:SetText("Fireball")
-    preview.castBar.time:SetFormattedText("%.1f", 1.1)
-    preview.castBar.icon:SetTexture(135812)
-    preview.castBar.safeZone:SetColorTexture(1, 0, 0, 1)
-    preview.castBar.safeZone:SetWidth(4)
-    preview.castBar.safeZone:SetPoint(preview.castBar:GetReverseFill() and "LEFT" or "RIGHT")
-    preview.castBar.safeZone:SetPoint("TOP")
-    preview.castBar.safeZone:SetPoint("BOTTOM")
-    preview.castBar:SetPoint("TOP", preview, "BOTTOM", 0, -30)
-    preview.castBar:SetSize(240, 15)
-    preview.castBar:SetMinMaxValues(0, 100)
-    preview.castBar:SetValue(44)
-    preview.castBar:SetStatusBarColor(0.2, 0.6, 1.0, 0.8)
 
     local castBarId = {
         [341] = "Player CastBar", token = "player",
         [342] = "Target CastBar", token = "target"
     }
-
     local castBarConfig = {
         [1] = "Height",
         [2] = "Width",
@@ -2130,10 +2076,8 @@ function Ether:CreateCastBarSection(EtherFrame)
         })
     end
     barDropdown = CreateEtherDropdown(parent, 120, "Select CastBar", barIdTbl)
-    previewFrame.text = barDropdown.text
     barDropdown:SetPoint("TOPLEFT")
     configDropdown = CreateEtherDropdown(parent, 120, "Config", barConfigTbl, true)
-    previewFrame.config = configDropdown.text
     configDropdown:SetPoint("TOPRIGHT")
 
     local iconLabel = parent:CreateFontString(nil, "OVERLAY")
@@ -2289,11 +2233,6 @@ function Ether:CreateConfigSection(EtherFrame)
     unlock:SetScript("OnClick", function()
         if not Ether.Anchor.raid.tex:IsShown() then
             Ether.ShowHideSettings(true)
-
-            local castBar = Ether.unitButtons.solo["player"].castBar
-            if castBar then
-                castBar:Show()
-            end
         else
             Ether.ShowHideSettings(false)
         end

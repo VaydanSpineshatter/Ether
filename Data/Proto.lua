@@ -18,7 +18,7 @@ end
 Ether.PredefinedAuras = {
     ["Priest - Group Buffs"] = {
         [25392] = {
-            name = "Prayer-Fortitude 3",
+            name = "Prayer Fortitude 3",
             color = {0.93, 0.91, 0.67, 1},
             size = 8,
             position = "BOTTOMLEFT",
@@ -29,7 +29,7 @@ Ether.PredefinedAuras = {
             isActive = true
         },
         [32999] = {
-            name = "Prayer-Spirit 2",
+            name = "Prayer Spirit 2",
             color = {0, 0.7, 1, 1},
             size = 8,
             position = "BOTTOMLEFT",
@@ -40,7 +40,7 @@ Ether.PredefinedAuras = {
             isActive = true
         },
         [39374] = {
-            name = "Prayer-Shadow 2",
+            name = "Prayer Shadow 2",
             color = {0, 0, 0, 1},
             size = 8,
             position = "BOTTOMRIGHT",
@@ -111,23 +111,12 @@ Ether.PredefinedAuras = {
         }
     },
     ["Druid - Group Buffs"] = {
-        [9885] = {
-            name = "MotW Rank 7",
-            color = {1, 0.4, 1, 1},
-            size = 6,
+        [22146] = {
+            name = "GOTW 3",
+            color = {0.2, 1, 0.2, 1},
+            size = 8,
             position = "BOTTOMLEFT",
             offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false,
-            isActive = true
-        },
-        [21850] = {
-            name = "GotW Rank 2",
-            color = {0.2, 1, 0.2, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 8,
             offsetY = 0,
             enabled = true,
             isDebuff = false,
@@ -135,19 +124,8 @@ Ether.PredefinedAuras = {
         },
     },
     ["Mage - Group Buffs"] = {
-        [10157] = {
-            name = "Int Rank 5",
-            color = {1, 1, 0.4, 1},
-            size = 6,
-            position = "BOTTOMLEFT",
-            offsetX = 0,
-            offsetY = 0,
-            enabled = true,
-            isDebuff = false,
-            isActive = true
-        },
-        [23028] = {
-            name = "Int Group Rank 1",
+        [22153] = {
+            name = "Int Group Rank 2",
             color = {0.6, 0.2, 0.6, 1},
             size = 6,
             position = "BOTTOMRIGHT",
@@ -157,10 +135,80 @@ Ether.PredefinedAuras = {
             isDebuff = false,
             isActive = true
         },
+    },
+    ["Pala - Blessing"] = {
+        [27143] = {
+            name = "Wisdom 3",
+            color = {0.6, 0.2, 0.6, 1},
+            size = 8,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true,
+            isDebuff = false,
+            isActive = true
+        },
+        [25898] = {
+            name = "Kings",
+            color = {0.6, 0.2, 0.6, 1},
+            size = 8,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
+            offsetY = 8,
+            enabled = true,
+            isDebuff = false,
+            isActive = true
+        },
+        [27141] = {
+            name = "Might 3",
+            color = {0.6, 0.2, 0.6, 1},
+            size = 8,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
+            offsetY = 16,
+            enabled = true,
+            isDebuff = false,
+            isActive = true
+        },
+    },
+    ["Warrior Shout"] = {
+        [2048] = {
+            name = "Battle Shout 7",
+            color = {0.6, 0.2, 0.6, 1},
+            size = 8,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true,
+            isDebuff = false,
+            isActive = true
+        },
+    },
+    ["Stance Ability"] = {
+        [871] = {
+            name = "Shield Wall",
+            color = {0.6, 0.2, 0.6, 1},
+            size = 8,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true,
+            isDebuff = false,
+            isActive = true
+        },
+        [1719] = {
+            name = "Recklessness",
+            color = {0.6, 0.2, 0.6, 1},
+            size = 8,
+            position = "BOTTOMRIGHT",
+            offsetX = 0,
+            offsetY = 0,
+            enabled = true,
+            isDebuff = false,
+            isActive = true
+        },
     }
 }
-
-
 
 
 --[[

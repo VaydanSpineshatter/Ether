@@ -123,8 +123,8 @@ function Ether:CopyProfile(sourceName, targetName)
 end
 
 function Ether:SwitchProfile(name)
-      local editor = Ether.UIPanel.Frames["EDITOR"]
-    if not editor.Created  then
+    local editor = Ether.UIPanel.Frames["EDITOR"]
+    if not editor.Created then
         Ether:CreateCustomSection(Ether.UIPanel)
         editor.Created = true
     end
@@ -145,7 +145,7 @@ function Ether:SwitchProfile(name)
 end
 function Ether:DeleteProfile(name)
     local editor = Ether.UIPanel.Frames["EDITOR"]
-    if not editor.Created  then
+    if not editor.Created then
         Ether:CreateCustomSection(Ether.UIPanel)
         editor.Created = true
     end

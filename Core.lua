@@ -72,7 +72,7 @@ do
             [1] = {},
             [2] = {},
             [3] = {},
-            [4] = {[1] = {}, [2] = {}},
+            [4] = {},
             [5] = {},
             [6] = {},
             [7] = {},
@@ -278,6 +278,8 @@ do
         if Ether.Anchor.raid.tex then
             Ether.Anchor.raid.tex:SetShown(state)
         end
+        Ether:HideCastBar("player", state)
+        Ether:HideCastBar("target", state)
         if not state then
             Ether.DataRestore(Ether.DB[401], EtherFrame.Snap)
             Ether.CleanUpButtons()
@@ -559,7 +561,9 @@ function Ether:RefreshFramePositions()
         [337] = Ether.unitButtons.solo["focus"],
         [338] = Ether.Anchor.raid,
         [339] = Ether.DebugFrame,
-        [340] = Ether.UIPanel.Frames["MAIN"]
+        [340] = Ether.UIPanel.Frames["MAIN"],
+        [341] = Ether.unitButtons.solo["player"].castBar,
+        [342] = Ether.unitButtons.solo["target"].castBar
     }
 
     for frameID in pairs(Ether.DB[5111]) do
@@ -567,7 +571,6 @@ function Ether:RefreshFramePositions()
             Ether:ApplyFramePosition(frame[frameID], frameID)
         end
     end
-
 end
 
 function Ether:ApplyFramePosition(frame, index)
@@ -640,13 +643,13 @@ local function OnInitialize(self, event, ...)
             ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DataDefault)
         else
             local profile = ETHER_DATABASE_DX_AA.profiles[charKey]
-            for key, value in pairs(Ether.DataDefault) do
-                if profile[key] == nil then
-                    profile[key] = Ether.CopyTable(Ether.DataDefault)
+            for info in pairs(Ether.DataDefault) do
+                if profile[info] == nil then
+                    profile[info] = Ether.CopyTable(Ether.DataDefault)
                 end
             end
-            for _, value in ipairs({111, 901, 811, 1002, 1201, 1301, 1401, 1501, 5111}) do
-                Ether:NilCheckData(profile, value)
+            for _, info in ipairs({111, 701, 811, 1002, 1201, 1301, 1401, 1501, 5111}) do
+                Ether:NilCheckData(profile, info)
             end
             Ether:ArrayMigrateData(profile)
         end
@@ -715,10 +718,9 @@ local function OnInitialize(self, event, ...)
         Ether.Anchor.tooltip:SetSize(280, 120)
         Ether:ApplyFramePosition(Ether.Anchor.tooltip, 331)
         Ether.Tooltip:Initialize()
-        for index = 1, 7 do
-            if Ether.DB[201][index] == 1 then
-                Ether:CreateUnitButtons(index)
-            end
+
+        for _, unit in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus"}) do
+            Ether:CreateUnitButtons(unit)
         end
 
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -730,7 +732,6 @@ local function OnInitialize(self, event, ...)
             Comm:SendCommMessage("ETHER_VERSION", Ether.version, sendChannel, nil, "NORMAL")
         end
     elseif (event == "PLAYER_ENTERING_WORLD") then
-        Ether.Fire("CHANGE_ATTRIBUTE")
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
         Ether:RosterEnable()
     elseif (event == "PLAYER_LOGOUT") then
@@ -763,4 +764,3 @@ end
 local Initialize = CreateFrame("Frame")
 Initialize:RegisterEvent("ADDON_LOADED")
 Initialize:SetScript("OnEvent", OnInitialize)
-

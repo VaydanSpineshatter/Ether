@@ -7,6 +7,8 @@ local UnitInAnyGroup = UnitInAnyGroup
 local UnitPhaseReason = UnitPhaseReason
 local UnitInRange = UnitInRange
 local IsSpellInRange = C_Spell.IsSpellInRange
+local UnitCanAssist = UnitCanAssist
+local UnitCanAttack = UnitCanAttack
 
 local classFriendly = {
     PRIEST = 2061, -- Flash Heal

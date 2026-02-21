@@ -1,7 +1,7 @@
 local _, Ether = ...
 local math_floor = math.floor
 local tinsert = table.insert
-local string_format = string.format
+
 function Ether:SetupUpdateText(button, tbl, p)
     if not button or not button.healthBar then return end
     local text = button.healthBar:CreateFontString(nil, "OVERLAY")
@@ -45,6 +45,7 @@ function Ether:SetupHealthBar(button, orient, w, h)
     )
     return button
 end
+
 function Ether:SetupPowerBar(button, unit)
     if not button then return end
     local powerBar = CreateFrame("StatusBar", nil, button)

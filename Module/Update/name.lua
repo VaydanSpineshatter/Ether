@@ -43,41 +43,7 @@ function Ether:UpdateName(button, IsRaid)
         if IsRaid then
             button.name:SetText(utf8sub(name, 1, 3))
         else
-            button.name:SetText(Ether:ShortenName(name, 10))
+            button.name:SetText(utf8sub(name, 1, 10))
         end
     end
-end
-
-local Name, Event
-do
-    Name = CreateFrame("Frame")
-    function Event(_, event, unit)
-        if not unit then return end
-        if event == "UNIT_NAME_UPDATE" then
-            if Ether.DB[901]["raid"] then
-                local button = Ether.unitButtons.raid[unit]
-                if button and button:IsVisible() then
-                    Ether:UpdateName(button, true)
-                end
-            end
-            if Ether.DB[901][unit] then
-                local button = Ether.unitButtons.solo[unit]
-                if button then
-                    Ether:UpdateName(button)
-                end
-            end
-        end
-    end
-end
-
-function Ether:NameEnable()
-    if not Name:GetScript("OnEvent") then
-        Name:RegisterEvent("UNIT_NAME_UPDATE")
-        Name:SetScript("OnEvent", Event)
-    end
-end
-
-function Ether:NameDisable()
-    Name:UnregisterEvent("UNIT_NAME_UPDATE")
-    Name:SetScript("OnEvent", nil)
 end

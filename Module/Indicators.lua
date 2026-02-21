@@ -6,7 +6,11 @@ local UnitIsDeadOrGhost = UnitIsDeadOrGhost
 local UnitHasIncomingResurrection = UnitHasIncomingResurrection
 local GetReadyCheckStatus = GetReadyCheckStatus
 local GetPartyAssignment = GetPartyAssignment
+local IsEventValid = C_EventUtils.IsEventValid
+local GetRaidTargetIndex = GetRaidTargetIndex
+local UnitExists = UnitExists
 local Enum = Enum
+local tinsert, tremove = table.insert, table.remove
 local GetLootMethod = C_PartyInfo.GetLootMethod
 local pairs, ipairs = pairs, ipairs
 local UnitIsGroupLeader = UnitIsGroupLeader
@@ -27,53 +31,105 @@ local charmedIcon = "Interface\\Icons\\Spell_Shadow_Charm"
 local AFK = [[|cE600CCFFAFK|r]]
 local DND = [[|cffCC66FFDND|r]]
 
-function Ether:HideIndicators(hide)
-    for _, button in pairs(Ether.unitButtons.raid) do
-        if button and button.Indicators and button.Indicators[hide] then
-            button.Indicators[hide]:Hide()
-        end
+Ether.Handler = {}
+local Updates = {}
+function Ether.Handler:FullUpdate()
+    for i = 1, #(Updates) do
+        Updates[i]()
     end
 end
 
-function Ether.SaveIndicatorsPos(icon, number)
-    for _, button in pairs(Ether.unitButtons.raid) do
-        if button and button.Indicators and button.Indicators[icon] then
-            button.Indicators[icon]:Hide()
-            button.Indicators[icon]:ClearAllPoints()
-            button.Indicators[icon]:SetPoint(Ether.DB[1002][number][2], button.healthBar, Ether.DB[1002][number][2], Ether.DB[1002][number][3], Ether.DB[1002][number][4])
-            button.Indicators[icon]:SetSize(Ether.DB[1002][number][1], Ether.DB[1002][number][1])
+function Ether.Handler:RegisterUpdater(func)
+    for i = 1, #(Updates) do
+        if (Updates[i] and Updates[i + 1] == func) then
+            return
         end
     end
-    Ether:FullUpdateIndicators()
+    tinsert(Updates, func)
 end
 
-local IndicatorMap = {
-    [1] = "ReadyCheck",
-    [2] = "Connection",
-    [3] = "RaidTarget",
-    [4] = "Resurrection",
-    [5] = "GroupLeader",
-    [6] = "MasterLoot",
-    [7] = "UnitFlags",
-    [8] = "PlayerRoles",
-    [9] = "PlayerFlags"
-}
-
-function Ether:InitialIndicatorsPos()
-    if InCombatLockdown() then return end
-    for _, button in pairs(Ether.unitButtons.raid) do
-        if button and button.Indicators then
-            for index, value in ipairs(IndicatorMap) do
-                local icon = button.Indicators[value]
-                local data = Ether.DB[1002][index]
-                if icon and data then
-                    icon:Hide()
-                    icon:ClearAllPoints()
-                    icon:SetPoint(data[2], button.healthBar, data[2], data[3], data[4])
-                    icon:SetSize(data[1], data[1])
-                    icon:Show()
+function Ether.Handler:UnregisterUpdater(func)
+    for i = #(Updates), 1, -1 do
+        if (Updates[i] and Updates[i + 1] == func) then
+            tremove(Updates, i + 1)
+        end
+    end
+end
+local Register, Unregister, UnregisterAll
+do
+    local frame
+    local Events = {}
+    function Register(indicator, func)
+        frame = CreateFrame("Frame")
+        frame:SetScript("OnEvent", function(self, event)
+            Events[event](self, event)
+        end)
+        if not Events[indicator] then
+            if IsEventValid(indicator) and not frame:IsEventRegistered(indicator) then
+                frame:RegisterEvent(indicator)
+                Ether.Handler:RegisterUpdater(func)
+            end
+        end
+        Events[indicator] = func
+    end
+    function Unregister(...)
+        for i = select("#", ...), 1, -1 do
+            local indicator = select(i, ...)
+            if IsEventValid(indicator) then
+                if Events[indicator] then
+                    frame:UnregisterEvent(indicator)
                 end
             end
+            Events[indicator] = nil
+        end
+    end
+    function UnregisterAll()
+        frame:UnregisterAllEvents()
+        wipe(Events)
+    end
+end
+
+local IndicatorMap = {"ReadyCheck", "Connection", "RaidTarget", "Resurrection", "GroupLeader", "MasterLoot", "UnitFlags", "PlayerRoles", "PlayerFlags"}
+
+function Ether:HideIndicators(indicator)
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button.Indicators and button.Indicators[indicator] then
+            button.Indicators[indicator]:Hide()
+        end
+    end
+end
+
+function Ether.SaveIndicatorsPos(indicator, number)
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button.Indicators and button.Indicators[indicator] then
+            button.Indicators[indicator]:Hide()
+            button.Indicators[indicator]:ClearAllPoints()
+            button.Indicators[indicator]:SetPoint(Ether.DB[1002][number][2], button.healthBar, Ether.DB[1002][number][2], Ether.DB[1002][number][3], Ether.DB[1002][number][4])
+            button.Indicators[indicator]:SetSize(Ether.DB[1002][number][1], Ether.DB[1002][number][1])
+        end
+    end
+    Ether.Handler:FullUpdate()
+end
+
+function Ether:InitialIndicatorsPosition()
+    for index, value in ipairs(IndicatorMap) do
+        Ether.SaveIndicatorsPos(value, index)
+    end
+end
+
+local function IndictorsTexture(b, tbl)
+    if not b then return end
+    if not b.Indicators then b.Indicators = {} end
+    local frame = CreateFrame("Frame", nil, UIParent)
+    frame:SetFrameLevel(b:GetFrameLevel() + 7)
+    if not b.Indicators[tbl] then
+        if tbl == "PlayerFlags" then
+            b.Indicators[tbl] = frame:CreateFontString(nil, "OVERLAY")
+            b.Indicators[tbl]:SetFont(unpack(Ether.mediaPath.expressway), 14, "OUTLINE")
+            b.Indicators[tbl]:Hide()
+        else
+            b.Indicators[tbl] = frame:CreateTexture(nil, "OVERLAY")
+            b.Indicators[tbl]:Hide()
         end
     end
 end
@@ -91,48 +147,203 @@ local function HideReadyCheckIcons()
     end
 end
 
-local function Indicator(_, event)
-    if event == "READY_CHECK" then
-        for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators then
-                local status = GetReadyCheckStatus(unit)
-                if (status) then
-                    if (status == "ready") then
-                        button.Indicators.ReadyCheck:SetTexture(ReadyCheck_Ready)
-                        button.Indicators.ReadyCheck:Show()
-                    elseif (status == "notready") then
-                        button.Indicators.ReadyCheck:SetTexture(ReadyCheck_NotReady)
-                        button.Indicators.ReadyCheck:Show()
-                    elseif (status == "waiting") then
-                        button.Indicators.ReadyCheck:SetTexture(ReadyCheck_Waiting)
-                        button.Indicators.ReadyCheck:Show()
-                    end
-                else
-                    button.Indicators.ReadyCheck:Hide()
-                end
+local function UpdateConnection()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            IndictorsTexture(button, "Connection")
+            local isConnected = UnitIsConnected(button.unit)
+            if not isConnected then
+                button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
+                button.Indicators.Connection:SetTexture(connectionIcon)
+                button.Indicators.Connection:Show()
+            else
+                button.Indicators.Connection:Hide()
             end
         end
-    elseif event == "READY_CHECK_CONFIRM" then
-        for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators then
-                local status = GetReadyCheckStatus(unit)
+    end
+end
+
+local function UpdateResurrection()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            IndictorsTexture(button, "Resurrection")
+            local Resurrection = UnitHasIncomingResurrection(button.unit)
+            if (Resurrection) then
+                button.Indicators.Resurrection:SetTexture(rezIcon)
+                button.Indicators.Resurrection:Show()
+            else
+                button.Indicators.Resurrection:Hide()
+            end
+        end
+    end
+end
+
+local function UpdateReady()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button then
+            IndictorsTexture(button, "ReadyCheck")
+            local status = GetReadyCheckStatus(button.unit)
+            if (status) then
                 if (status == "ready") then
                     button.Indicators.ReadyCheck:SetTexture(ReadyCheck_Ready)
                     button.Indicators.ReadyCheck:Show()
                 elseif (status == "notready") then
                     button.Indicators.ReadyCheck:SetTexture(ReadyCheck_NotReady)
                     button.Indicators.ReadyCheck:Show()
+                elseif (status == "waiting") then
+                    button.Indicators.ReadyCheck:SetTexture(ReadyCheck_Waiting)
+                    button.Indicators.ReadyCheck:Show()
+                end
+            else
+                button.Indicators.ReadyCheck:Hide()
+            end
+        end
+    end
+end
+
+local function UpdateConfirm()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button then
+            local status = GetReadyCheckStatus(button.unit)
+            if (status == "ready") then
+                button.Indicators.ReadyCheck:SetTexture(ReadyCheck_Ready)
+                button.Indicators.ReadyCheck:Show()
+            elseif (status == "notready") then
+                button.Indicators.ReadyCheck:SetTexture(ReadyCheck_NotReady)
+                button.Indicators.ReadyCheck:Show()
+            end
+        end
+    end
+end
+
+local function UpdateFinished()
+    if not updater then
+        updater = C_Timer.After(5, HideReadyCheckIcons)
+    end
+end
+
+local function UpdateUnitFlags()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            IndictorsTexture(button, "UnitFlags")
+            local charmed = UnitIsCharmed(button.unit)
+            local dead = UnitIsDeadOrGhost(button.unit)
+            if charmed then
+                button.name:SetTextColor(1.00, 0.00, 0.00)
+                button.Indicators.UnitFlags:SetTexture(charmedIcon)
+                button.Indicators.UnitFlags:Show()
+            elseif dead then
+                button.Indicators.UnitFlags:SetTexture(deadIcon)
+                if button.healthBar then
+                    button.healthBar:SetValue(0)
+                    button.healthBar:SetMinMaxValues(0, 0)
+                    Ether:updateDispelBorder(button, {0, 0, 0, 0})
+                end
+                button.Indicators.UnitFlags:Show()
+            else
+                button.Indicators.UnitFlags:Hide()
+                button.name:SetTextColor(1, 1, 1)
+            end
+        end
+    end
+end
+
+local function UpdatePlayerFlags()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            IndictorsTexture(button, "PlayerFlags")
+            local away = UnitIsAFK(button.unit)
+            local dnd = UnitIsDND(button.unit)
+            if away then
+                button.Indicators.PlayerFlags:SetText(AFK)
+                button.Indicators.PlayerFlags:Show()
+            elseif dnd then
+                button.Indicators.PlayerFlags:SetText(DND)
+                button.Indicators.PlayerFlags:Show()
+            else
+                button.Indicators.PlayerFlags:Hide()
+            end
+
+            if Ether.DB[401][4] ~= 1 then return end
+            if UnitIsAFK("player") then
+                if not Ether.unitIsAway then
+                    Ether:AFK()
+                end
+            else
+                if Ether.unitIsAway then
+                    Ether:NotAFK()
                 end
             end
         end
-    elseif event == "READY_CHECK_FINISHED" then
-        if not updater then
-            updater = C_Timer.After(5, HideReadyCheckIcons)
+    end
+end
+
+local function UpdateGroupLeader()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            IndictorsTexture(button, "GroupLeader")
+            if not UnitInAnyGroup("player") then
+                button.Indicators.GroupLeader:Hide()
+            end
+            local IsLeader = UnitIsGroupLeader(button.unit)
+            if (IsLeader) then
+                button.Indicators.GroupLeader:SetTexture(leaderIcon)
+                button.Indicators.GroupLeader:Show()
+            else
+                button.Indicators.GroupLeader:Hide()
+            end
         end
-    elseif event == "RAID_TARGET_UPDATE" then
-        for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators and UnitExists(unit) then
-                local index = GetRaidTargetIndex(unit)
+    end
+end
+
+local function UpdatePlayerRoles()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            IndictorsTexture(button, "PlayerRoles")
+            if not IsInRaid() then
+                button.Indicators.PlayerRoles:Hide()
+            else
+                if (GetPartyAssignment("MAINTANK", button.unit)) then
+                    button.Indicators.PlayerRoles:SetTexture(mainTankIcon)
+                    button.Indicators.PlayerRoles:Show()
+                elseif (GetPartyAssignment("MAINASSIST", button.unit)) then
+                    button.Indicators.PlayerRoles:SetTexture(mainAssistIcon)
+                    button.Indicators.PlayerRoles:Show()
+                else
+                    button.Indicators.PlayerRoles:Hide()
+                end
+            end
+        end
+    end
+end
+
+local function UpdateMasterLoot()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button and button:IsVisible() then
+            IndictorsTexture(button, "MasterLoot")
+            if not UnitInAnyGroup("player") then
+                button.Indicators.MasterLoot:Hide()
+            end
+            local lootType, partyID, raidID = GetLootMethod()
+            if lootType == Enum.LootMethod.Masterlooter then
+                local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
+                if masterLooterUnit and UnitIsUnit(button.unit, masterLooterUnit) then
+                    button.Indicators.MasterLoot:SetTexture(masterlootIcon)
+                    button.Indicators.MasterLoot:Show()
+                else
+                    button.Indicators.MasterLoot:Hide()
+                end
+            end
+        end
+    end
+end
+local targetTbl = {"player", "target", "targettarget"}
+local function UpdateRaidTarget()
+    for _, button in pairs(Ether.unitButtons.raid) do
+        if button then
+            IndictorsTexture(button, "RaidTarget")
+            if UnitExists(button.unit) then
+                local index = GetRaidTargetIndex(button.unit)
                 if index then
                     button.Indicators.RaidTarget:SetTexture(targetIcon)
                     SetRaidTargetIconTexture(button.Indicators.RaidTarget, index)
@@ -142,76 +353,14 @@ local function Indicator(_, event)
                 end
             end
         end
-        for unit, button in pairs(Ether.unitButtons.solo) do
-            if button and button.RaidTarget and UnitExists(unit) then
-                local index = GetRaidTargetIndex(unit)
-                if index then
-                    button.RaidTarget:SetTexture(targetIcon)
-                    SetRaidTargetIconTexture(button.RaidTarget, index)
-                    button.RaidTarget:Show()
-                else
-                    button.RaidTarget:Hide()
-                end
-            end
-        end
-    elseif event == "PARTY_LEADER_CHANGED" then
-        for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators then
-                local IsLeader = UnitIsGroupLeader(unit)
-                if (IsLeader) then
-                    button.Indicators.GroupLeader:SetTexture(leaderIcon)
-                    button.Indicators.GroupLeader:Show()
-                else
-                    button.Indicators.GroupLeader:Hide()
-                end
-            end
-        end
-    elseif event == "PARTY_LOOT_METHOD_CHANGED" then
-        for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators then
-                button.Indicators.MasterLoot:Hide()
-                local lootType, partyID, raidID = GetLootMethod()
-                if lootType == Enum.LootMethod.Masterlooter then
-                    local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
-                    if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
-                        button.Indicators.MasterLoot:SetTexture(masterlootIcon)
-                        button.Indicators.MasterLoot:Show()
-                    else
-                        button.Indicators.MasterLoot:Hide()
-                    end
-                end
-            end
-        end
-    elseif event == "PLAYER_ROLES_ASSIGNED" then
-        for unit, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators then
-                if not UnitInAnyGroup("player") then
-                    button.Indicators.PlayerRoles:Hide()
-                else
-                    if (GetPartyAssignment("MAINTANK", unit)) then
-                        button.Indicators.PlayerRoles:SetTexture(mainTankIcon)
-                        button.Indicators.PlayerRoles:Show()
-                    elseif (GetPartyAssignment("MAINASSIST", unit)) then
-                        button.Indicators.PlayerRoles:SetTexture(mainAssistIcon)
-                        button.Indicators.PlayerRoles:Show()
-                    else
-                        button.Indicators.PlayerRoles:Hide()
-                    end
-                end
-            end
-        end
+    end
+    for _, info in ipairs(targetTbl) do
+        Ether:UpdateSoloIndicator(info)
     end
 end
 
-local indicatorEvent = {"READY_CHECK", "READY_CHECK_CONFIRM", "READY_CHECK_FINISHED", "RAID_TARGET_UPDATE", "PARTY_LEADER_CHANGED", "PARTY_LOOT_METHOD_CHANGED", "PLAYER_ROLES_ASSIGNED"}
-local indicatorEventUnit = {"UNIT_CONNECTION", "INCOMING_RESURRECT_CHANGED", "UNIT_FLAGS", "PLAYER_FLAGS_CHANGED"}
-
-local frame, frameUnit
-if not frame and not frameUnit then
-    frame, frameUnit = CreateFrame("Frame"), CreateFrame("Frame")
-end
 Ether.unitIsAway = false
-local function OnAfk()
+function Ether:AFK()
     Ether.unitIsAway = true
     if Ether.DB[1201][1] == 1 then
         Ether:CastBarDisable("player")
@@ -219,19 +368,9 @@ local function OnAfk()
     if Ether.DB[1201][2] == 1 then
         Ether:CastBarDisable("target")
     end
-    Ether:NameDisable()
     Ether:HealthDisable()
     Ether:PowerDisable()
-    for _, events in ipairs(indicatorEvent) do
-        if frame:IsEventRegistered(events) then
-            frame:UnregisterEvent(events)
-        end
-    end
-    for _, events in ipairs({"UNIT_CONNECTION", "INCOMING_RESURRECT_CHANGED", "UNIT_FLAGS"}) do
-        if frameUnit:IsEventRegistered(events) then
-            frameUnit:UnregisterEvent(events)
-        end
-    end
+
     if Ether.DB[1001][1] == 1 then
         Ether:AuraDisable()
     end
@@ -258,7 +397,7 @@ local function OnAfk()
     end
 end
 
-local function NotAfk()
+function Ether:NotAFK()
     Ether.unitIsAway = false
     if Ether.DB[1201][1] == 1 then
         Ether:CastBarEnable("player")
@@ -266,20 +405,9 @@ local function NotAfk()
     if Ether.DB[1201][2] == 1 then
         Ether:CastBarEnable("target")
     end
-    Ether:NameEnable()
     Ether:HealthEnable()
     Ether:PowerEnable()
-    for _, events in ipairs(indicatorEvent) do
-        if not frame:IsEventRegistered(events) then
-            frame:RegisterEvent(events)
-        end
-    end
-    for _, events in ipairs({"UNIT_CONNECTION", "INCOMING_RESURRECT_CHANGED", "UNIT_FLAGS"}) do
-        if not frameUnit:IsEventRegistered(events) then
-            frameUnit:RegisterEvent(events)
-        end
-    end
-    Ether:UpdateGroupLeader()
+
     if Ether.DB[1001][1] == 1 then
         C_Timer.After(0.3, function()
             Ether:AuraEnable()
@@ -293,250 +421,37 @@ local function NotAfk()
 
 end
 
-local function IndicatorUnit(_, event, unit)
-    if not unit then return end
-    local button = Ether.unitButtons.raid[unit]
-    if not button or not button.Indicators then return end
-    if event == "UNIT_CONNECTION" then
-        if button.Indicators.Connection then
-            local isConnected = UnitIsConnected(unit)
-            if not isConnected then
-                button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
-                button.Indicators.Connection:SetTexture(connectionIcon)
-                button.Indicators.Connection:Show()
-            else
-                button.Indicators.Connection:Hide()
-            end
-        end
-    elseif event == "INCOMING_RESURRECT_CHANGED" then
-        if button.Indicators.Resurrection then
-            local Resurrection = UnitHasIncomingResurrection(unit)
-            if (Resurrection) then
-                button.Indicators.Resurrection:SetTexture(rezIcon)
-                button.Indicators.Resurrection:Show()
-            else
-                button.Indicators.Resurrection:Hide()
-            end
-        end
-    elseif event == "UNIT_FLAGS" then
-        if button.Indicators.UnitFlags then
-            button.Indicators.UnitFlags:Hide()
-            button.name:SetTextColor(1, 1, 1)
-            local charmed = UnitIsCharmed(unit)
-            local dead = UnitIsDeadOrGhost(unit)
-            button.Indicators.UnitFlags:Show()
-            if charmed then
-                button.name:SetTextColor(1.00, 0.00, 0.00)
-                button.Indicators.UnitFlags:SetTexture(charmedIcon)
-            elseif dead then
-                button.Indicators.UnitFlags:SetTexture(deadIcon)
-                if button.healthBar then
-                    button.healthBar:SetValue(0)
-                    button.healthBar:SetMinMaxValues(0, 0)
-                    Ether:updateDispelBorder(button, {0, 0, 0, 0})
-                end
-            else
-                button.Indicators.UnitFlags:Hide()
-                button.name:SetTextColor(1, 1, 1)
-            end
-        end
-    elseif event == "PLAYER_FLAGS_CHANGED" then
-        if button.Indicators.PlayerFlags then
-            local away = UnitIsAFK(button.unit)
-            local dnd = UnitIsDND(button.unit)
-            if away then
-                button.Indicators.PlayerFlags:SetText(AFK)
-                button.Indicators.PlayerFlags:Show()
-            elseif dnd then
-                button.Indicators.PlayerFlags:SetText(DND)
-                button.Indicators.PlayerFlags:Show()
-            else
-                button.Indicators.PlayerFlags:Hide()
-            end
-        end
-        if Ether.DB[401][4] ~= 1 then return end
-        if UnitIsAFK("player") then
-            if not Ether.unitIsAway then
-                OnAfk()
-            end
+function Ether:UpdateSoloIndicator(unit)
+    local button = Ether.unitButtons.solo[unit]
+    if not button or not button.RaidTarget then return end
+    if UnitExists(unit) then
+        local index = GetRaidTargetIndex(unit)
+        if index then
+            button.RaidTarget:SetTexture(targetIcon)
+            SetRaidTargetIconTexture(button.RaidTarget, index)
+            button.RaidTarget:Show()
         else
-            if Ether.unitIsAway then
-                NotAfk()
-            end
+            button.RaidTarget:Hide()
         end
     end
 end
 
-function Ether:IndicatorsUnitUpdate(unit)
-    if not unit then return end
-    local button = Ether.unitButtons.raid[unit]
-    if not button or not button.Indicators then return end
-    if button.Indicators.Connection then
-        local isConnected = UnitIsConnected(unit)
-        if not isConnected then
-            button.healthBar:SetStatusBarColor(0.5, 0.5, 0.5)
-            button.Indicators.Connection:SetTexture(connectionIcon)
-            button.Indicators.Connection:Show()
-        else
-            button.Indicators.Connection:Hide()
-        end
-    end
-    if button.Indicators.UnitFlags then
-        button.Indicators.UnitFlags:Hide()
-        button.name:SetTextColor(1, 1, 1)
-        local charmed = UnitIsCharmed(unit)
-        local dead = UnitIsDeadOrGhost(unit)
-        button.Indicators.UnitFlags:Show()
-        if charmed then
-            button.name:SetTextColor(1.00, 0.00, 0.00)
-            button.Indicators.UnitFlags:SetTexture(charmedIcon)
-        elseif dead then
-            button.Indicators.UnitFlags:SetTexture(deadIcon)
-            if button.healthBar then
-                button.healthBar:SetValue(0)
-                button.healthBar:SetMinMaxValues(0, 0)
-                Ether:updateDispelBorder(button, {0, 0, 0, 0})
-            end
-        else
-            button.Indicators.UnitFlags:Hide()
-            button.name:SetTextColor(1, 1, 1)
-        end
-    end
-    if button.Indicators.PlayerFlags then
-        local away = UnitIsAFK(unit)
-        local dnd = UnitIsDND(unit)
-        if away then
-            button.Indicators.PlayerFlags:SetText(AFK)
-            button.Indicators.PlayerFlags:Show()
-        elseif dnd then
-            button.Indicators.PlayerFlags:SetText(DND)
-            button.Indicators.PlayerFlags:Show()
-        else
-            button.Indicators.PlayerFlags:Hide()
-        end
-    end
-
-    if button.Indicators.GroupLeader then
-        local IsLeader = UnitIsGroupLeader(unit)
-        if (IsLeader) then
-            button.Indicators.GroupLeader:SetTexture(leaderIcon)
-            if UnitInAnyGroup("player") then
-                button.Indicators.GroupLeader:Show()
-            end
-        else
-            button.Indicators.GroupLeader:Hide()
-        end
-    end
-    if button.Indicators.PlayerRoles then
-        if not IsInRaid() then
-            button.Indicators.PlayerRoles:Hide()
-        else
-            if (GetPartyAssignment("MAINTANK", unit)) then
-                button.Indicators.PlayerRoles:SetTexture(mainTankIcon)
-                button.Indicators.PlayerRoles:Show()
-            elseif (GetPartyAssignment("MAINASSIST", unit)) then
-                button.Indicators.PlayerRoles:SetTexture(mainAssistIcon)
-                button.Indicators.PlayerRoles:Show()
-            else
-                button.Indicators.PlayerRoles:Hide()
-            end
-        end
-    end
-    if button.Indicators.MasterLoot then
-        local lootType, partyID, raidID = GetLootMethod()
-        if lootType == Enum.LootMethod.Masterlooter then
-            local masterLooterUnit = raidID and ((raidID == 0) and "player" or "raid" .. raidID) or partyID and ((partyID == 0) and "player" or "party" .. partyID)
-            if masterLooterUnit and UnitIsUnit(unit, masterLooterUnit) then
-                button.Indicators.MasterLoot:SetTexture(masterlootIcon)
-                button.Indicators.MasterLoot:Show()
-            else
-                button.Indicators.MasterLoot:Hide()
-            end
-        end
-    end
-    if button.Indicators.RaidTarget then
-        if UnitExists(unit) then
-            local index = GetRaidTargetIndex(unit)
-            if index then
-                button.Indicators.RaidTarget:SetTexture(targetIcon)
-                SetRaidTargetIconTexture(button.Indicators.RaidTarget, index)
-                button.Indicators.RaidTarget:Show()
-            else
-                button.Indicators.RaidTarget:Hide()
-            end
-        end
-    end
-    if Ether.DB[401][4] ~= 1 then return end
-    if UnitIsAFK("player") then
-        if not Ether.unitIsAway then
-            OnAfk()
-        end
-    else
-        if Ether.unitIsAway then
-            NotAfk()
-        end
-    end
-end
-
-function Ether:UpdateSoloTarget()
-    for unit, button in pairs(Ether.unitButtons.solo) do
-        if button and button.RaidTarget and UnitExists(unit) then
-            local index = GetRaidTargetIndex(unit)
-            if index then
-                button.RaidTarget:SetTexture(targetIcon)
-                SetRaidTargetIconTexture(button.RaidTarget, index)
-                button.RaidTarget:Show()
-            else
-                button.RaidTarget:Hide()
-            end
-        end
-    end
-end
-function Ether:FullUpdateIndicators()
-    Indicator(frame, "RAID_TARGET_UPDATE")
-    Indicator(frame, "PARTY_LEADER_CHANGED")
-    Indicator(frame, "PARTY_LOOT_METHOD_CHANGED")
-    Indicator(frame, "PLAYER_ROLES_ASSIGNED")
-
-    for unit, button in pairs(Ether.unitButtons.raid) do
-        if button and button.Indicators and UnitExists(unit) then
-            IndicatorUnit(frameUnit, "UNIT_CONNECTION", unit)
-            IndicatorUnit(frameUnit, "INCOMING_RESURRECT_CHANGED", unit)
-            IndicatorUnit(frameUnit, "UNIT_FLAGS", unit)
-            IndicatorUnit(frameUnit, "PLAYER_FLAGS_CHANGED", unit)
-        end
-    end
-
-    Ether:UpdateSoloTarget()
-
-    for index, handlers in ipairs(IndicatorMap) do
-        for _, button in pairs(Ether.unitButtons.raid) do
-            if button and button.Indicators then
-                if Ether.DB[501][index] == 0 then
-                    if button.Indicators[handlers] then
-                        button.Indicators[handlers]:Hide()
-                    end
-                end
-            end
-        end
-    end
-end
-
+--local indicatorEvents = {"UNIT_CONNECTION", "INCOMING_RESURRECT_CHANGED", "READY_CHECK", "READY_CHECK_CONFIRM", "READY_CHECK_FINISHED", "RAID_TARGET_UPDATE", "PARTY_LEADER_CHANGED", "PARTY_LOOT_METHOD_CHANGED", "PLAYER_ROLES_ASSIGNED", "PLAYER_FLAGS_CHANGED", "UNIT_FLAGS"}
+--local IndicatorHandler = {"UpdateConnection", "UpdateResurrection", "UpdateReadyCheck", "UpdateReadyConfirm", "UpdateReadyFinished", "UpdateRaidTarget", "UpdateGroupLeader", "UpdateMasterLoot", "UpdatePlayerRoles", "UpdatePlayerFlags", "UpdateUnitFlags"}
 function Ether:IndicatorsEnable()
-    if not frame:GetScript("OnEvent") and not frameUnit:GetScript("OnEvent") then
-        for _, events in ipairs(indicatorEvent) do
-            if not frame:IsEventRegistered(events) then
-                frame:RegisterEvent(events)
-            end
-        end
-        for _, events in ipairs(indicatorEventUnit) do
-            if not frameUnit:IsEventRegistered(events) then
-                frameUnit:RegisterEvent(events)
-            end
-        end
-        frame:SetScript("OnEvent", Indicator)
-        frameUnit:SetScript("OnEvent", IndicatorUnit)
-    end
+
+    Register("UNIT_CONNECTION", UpdateConnection)
+    Register("INCOMING_RESURRECT_CHANGED", UpdateResurrection)
+    Register("READY_CHECK", UpdateReady)
+    Register("READY_CHECK_CONFIRM", UpdateConfirm)
+    Register("READY_CHECK_FINISHED", UpdateFinished)
+    Register("RAID_TARGET_UPDATE", UpdateRaidTarget)
+    Register("PARTY_LEADER_CHANGED", UpdateGroupLeader)
+    Register("PARTY_LOOT_METHOD_CHANGED", UpdateMasterLoot)
+    Register("PLAYER_ROLES_ASSIGNED", UpdatePlayerRoles)
+    Register("PLAYER_FLAGS_CHANGED", UpdatePlayerFlags)
+    Register("UNIT_FLAGS", UpdateUnitFlags)
+
     for index, handlers in ipairs(IndicatorMap) do
         for _, button in pairs(Ether.unitButtons.raid) do
             if button and button.Indicators then
@@ -547,17 +462,16 @@ function Ether:IndicatorsEnable()
                 end
             end
         end
-        Ether:UpdateSoloTarget()
     end
+    Ether:UpdateSoloIndicator("player")
+    C_Timer.After(0.2, function()
+        Ether:InitialIndicatorsPosition()
+    end)
+
 end
 
 function Ether:IndicatorsDisable()
-    if frame:GetScript("OnEvent") and frameUnit:GetScript("OnEvent") then
-        frame:UnregisterAllEvents();
-        frameUnit:UnregisterAllEvents()
-        frame:SetScript("OnEvent", nil);
-        frameUnit:SetScript("OnEvent", nil)
-    end
+    UnregisterAll()
     for _, handlers in ipairs(IndicatorMap) do
         for _, button in pairs(Ether.unitButtons.raid) do
             if button and button.Indicators then
@@ -571,21 +485,6 @@ function Ether:IndicatorsDisable()
         if button and button.Indicators then
             if button.Indicators.RaidTarget then
                 button.Indicators.RaidTarget:Hide()
-            end
-        end
-    end
-end
-function Ether:UpdateGroupLeader()
-    for _, button in pairs(Ether.unitButtons.raid) do
-        if button.Indicators.GroupLeader then
-            local IsLeader = UnitIsGroupLeader(button.unit)
-            if (IsLeader) then
-                button.Indicators.GroupLeader:SetTexture(leaderIcon)
-                if UnitInAnyGroup("player") then
-                    button.Indicators.GroupLeader:Show()
-                end
-            else
-                button.Indicators.GroupLeader:Hide()
             end
         end
     end

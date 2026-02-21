@@ -88,12 +88,15 @@ do
     local frame
     local Events = {}
     function RegisterHEvent(castEvent, func)
-        if not frame then
-            frame = CreateFrame("Frame")
-            frame:SetScript("OnEvent", function(self, event, unit)
-                Events[event](self, event, unit)
-            end)
-        end
+        frame = CreateFrame("Frame")
+        frame:SetScript("OnEvent", function(_, event, unit)
+            local button = Ether.unitButtons.raid[unit]
+            if not button then return end
+            if not UnitExists(unit) then return end
+            if button:IsVisible() then
+                Events[event](button, event, unit)
+            end
+        end)
         if not Events[castEvent] then
             if IsEventValid(castEvent) and not frame:IsEventRegistered(castEvent) then
                 frame:RegisterEvent(castEvent)
@@ -102,16 +105,14 @@ do
         Events[castEvent] = func
     end
     function UnregisterHEvent(...)
-        if frame then
-            for i = select("#", ...), 1, -1 do
-                local event = select(i, ...)
-                if IsEventValid(event) then
-                    if Events[event] then
-                        frame:UnregisterEvent(event)
-                    end
+        for i = select("#", ...), 1, -1 do
+            local event = select(i, ...)
+            if IsEventValid(event) then
+                if Events[event] then
+                    frame:UnregisterEvent(event)
                 end
-                Events[event] = nil
             end
+            Events[event] = nil
         end
     end
 end
@@ -217,6 +218,10 @@ function Ether:UpdateHealthTextRounded(button)
     local unit = button.unit
     local h = UnitHealth(unit)
     if h <= 0 then
+        if button.myPrediction and button.otherPrediction then
+            button.myPrediction:Hide()
+            button.otherPrediction:Hide()
+        end
         return
     end
     if h >= 1000 then
@@ -251,53 +256,24 @@ function Ether:UpdatePrediction(button)
     end
 end
 
-local function HealthChanged(_, event, unit)
-    if not unit then return end
+local function HealthChanged(self, event, unit)
+    if self.unit ~= unit then return end
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
-        if Ether.DB[901][unit] then
-            local button = Ether.unitButtons.solo[unit]
-            if button then
-                if Ether.DB[801][1] == 1 then
-                    Ether:UpdateHealth(button, true)
-                else
-                    Ether:UpdateHealth(button)
-                end
-                if Ether.DB[701][1] == 1 then
-                    Ether:UpdateHealthTextRounded(button)
-                end
-            end
+        if Ether.DB[801][3] == 1 then
+            Ether:UpdateHealth(self, true)
+        else
+            Ether:UpdateHealth(self)
         end
-        if Ether.DB[901]["raid"] then
-            local button = Ether.unitButtons.raid[unit]
-            if button and button:IsVisible() then
-                if Ether.DB[801][3] == 1 then
-                    Ether:UpdateHealth(button, true)
-                else
-                    Ether:UpdateHealth(button)
-                end
-                if Ether.DB[701][3] == 1 then
-                    Ether:UpdateHealthTextRounded(button)
-                end
-            end
+        if Ether.DB[701][3] == 1 then
+            Ether:UpdateHealthTextRounded(self)
         end
     end
 end
 
-local function PredictionChanged(_, event, unit)
-    if not unit then return end
+local function PredictionChanged(self, event, unit)
+    if self.unit ~= unit then return end
     if event ~= "UNIT_HEAL_PREDICTION" then return end
-    if Ether.DB[901][unit] then
-        local button = Ether.unitButtons.solo[unit]
-        if button then
-            Ether:UpdatePrediction(button)
-        end
-    end
-    if Ether.DB[901]["raid"] then
-        local button = Ether.unitButtons.raid[unit]
-        if button and button:IsVisible() then
-            Ether:UpdatePrediction(button)
-        end
-    end
+    Ether:UpdatePrediction(self)
 end
 
 function Ether:HealthEnable()

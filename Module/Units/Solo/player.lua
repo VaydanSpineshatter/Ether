@@ -26,135 +26,125 @@ local function AttributeChanged(self)
     end
 end
 
-local function Show(self)
-    FullUpdate(self)
-end
-
-local function Update(_, event, unit)
-    if not unit or not UnitExists("targettarget") then return end
-    if not Ether.DB[901]["targettarget"] then return end
+local function Update(self, event)
+    if not UnitExists(self.unit) then return end
     if event == "UNIT_HEAL_PREDICTION" then
-        Ether:UpdatePrediction(Ether.unitButtons.solo["targettarget"])
+        Ether:UpdatePrediction(self)
     elseif event == "UNIT_MAXHEALTH" or event == "UNIT_HEALTH" then
-        Ether:UpdateHealth(Ether.unitButtons.solo["targettarget"])
+        Ether:UpdateHealth(self)
         if Ether.DB[701][1] == 1 then
-            Ether:UpdateHealthTextRounded(Ether.unitButtons.solo["targettarget"])
+            Ether:UpdateHealthTextRounded(self)
         end
     elseif event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
-        Ether:UpdatePower(Ether.unitButtons.solo["targettarget"])
+        Ether:UpdatePower(self)
         if Ether.DB[701][2] == 1 then
-            Ether:UpdatePowerTextRounded(Ether.unitButtons.solo["targettarget"])
+            Ether:UpdatePowerTextRounded(self)
         end
     end
 end
 
-local units = {
-    [1] = "player",
-    [2] = "target",
-    [3] = "targettarget",
-    [4] = "pet",
-    [5] = "pettarget",
-    [6] = "focus"
-}
+function Ether:CreateUnitButtons(token)
+    if InCombatLockdown() then return end
+    local button = CreateFrame("Button", "Ether_" .. token .. "_UnitButton", UIParent, "EtherUnitTemplate")
+    button.unit = token
+    button:SetSize(120, 50)
+    button:SetAttribute("unit", button.unit)
+    button:RegisterForClicks("AnyUp")
+    button:SetAttribute("*type1", "target")
+    button:SetAttribute("*type2", "togglemenu")
+    Ether:SetupTooltip(button, button.unit)
+    Ether:SetupHealthBar(button, "HORIZONTAL", 120, 40)
+    Ether:SetupPowerBar(button)
+    Ether:SetupPrediction(button)
+    button:SetBackdrop({
+        bgFile = Ether.DB[811]["background"],
+        insets = {left = -2, right = -2, top = -2, bottom = -2}
+    })
+    Ether:SetupName(button, 0)
+    Ether:GetClassColor(button)
+    Ether:SetupUpdateText(button, "health")
+    Ether:SetupUpdateText(button, "power", true)
 
-function Ether:CreateUnitButtons(index)
-    if InCombatLockdown() or type(index) ~= "number" then
-        return
+    Mixin(button.healthBar, SmoothStatusBarMixin)
+    Mixin(button.powerBar, SmoothStatusBarMixin)
+    button.Smooth = true
+
+    button.RaidTarget = button.healthBar:CreateTexture(nil, "OVERLAY")
+    button.RaidTarget:SetSize(18, 18)
+    button.RaidTarget:SetPoint("LEFT", button.healthBar, "LEFT", 5, 0)
+
+    if token ~= "player" then
+        RegisterUnitWatch(button)
     end
-    if not Ether.unitButtons.solo[units[index]] then
-        local button = CreateFrame("Button", "Ether_" .. units[index] .. "_UnitButton", UIParent, "EtherUnitTemplate")
-        button.unit = units[index]
-        button:SetSize(120, 50)
-        button:SetAttribute("unit", button.unit)
-        button:RegisterForClicks("AnyUp")
-        button:SetAttribute("*type1", "target")
-        button:SetAttribute("*type2", "togglemenu")
-        Ether:SetupTooltip(button, button.unit)
-        Ether:SetupHealthBar(button, "HORIZONTAL", 120, 40, button.unit)
-        Ether:SetupPowerBar(button, button.unit)
-        Ether:SetupPrediction(button)
-        button:SetBackdrop({
-            bgFile = Ether.DB[811]["background"],
-            insets = {left = -2, right = -2, top = -2, bottom = -2}
-        })
-        Ether:SetupName(button, 0)
-        Ether:GetClassColor(button)
-        Ether:SetupUpdateText(button, "health")
-        Ether:SetupUpdateText(button, "power", true)
-        for key, value in ipairs({332, 333, 334, 335, 336, 337}) do
-            if button.unit == units[key] then
-                Ether:ApplyFramePosition(button, value)
-                Ether:SetupDrag(button, value, 20)
-                break
-            end
+
+    button:RegisterUnitEvent("UNIT_HEALTH", token)
+    button:RegisterUnitEvent("UNIT_MAXHEALTH", token)
+    button:RegisterUnitEvent("UNIT_POWER_UPDATE", token)
+    button:RegisterUnitEvent("UNIT_MAXPOWER", token)
+    button:RegisterUnitEvent("UNIT_DISPLAYPOWER", token)
+    button:RegisterUnitEvent("UNIT_HEAL_PREDICTION", token)
+    button:HookScript("OnAttributeChanged", AttributeChanged)
+    button:HookScript("OnEvent", Update)
+    button:RegisterForDrag("LeftButton")
+    button:EnableMouse(true)
+    button:SetMovable(true)
+    FullUpdate(button)
+
+    if token == "player" then
+        if Ether.DB[1201][1] == 1 then
+            Ether:CastBarEnable(token)
         end
-        Mixin(button.healthBar, SmoothStatusBarMixin)
-        Mixin(button.powerBar, SmoothStatusBarMixin)
-        button.Smooth = true
-        if button.unit ~= "targettarget" then
-            button.RaidTarget = button.healthBar:CreateTexture(nil, "OVERLAY")
-            button.RaidTarget:SetSize(18, 18)
-            button.RaidTarget:SetPoint("LEFT", button.healthBar, "LEFT", 5, 0)
-        end
-        if button.unit ~= "player" then
-            RegisterUnitWatch(button)
-        end
-        if button.unit == "targettarget" then
-            for _, key in ipairs({"UNIT_HEALTH", "UNIT_MAXHEALTH", "UNIT_POWER_UPDATE", "UNIT_MAXPOWER", "UNIT_DISPLAYPOWER", "UNIT_HEAL_PREDICTION"}) do
-                button:RegisterUnitEvent(key, "targettarget")
-            end
-            button:SetScript("OnEvent", Update)
-        end
-        button:SetScript("OnAttributeChanged", AttributeChanged)
-        button:SetScript("OnShow", Show)
-        button:RegisterForDrag("LeftButton")
-        button:EnableMouse(true)
-        button:SetMovable(true)
-        FullUpdate(button, true)
-        Ether.unitButtons.solo[button.unit] = button
-        if button.unit == "player" then
-            if Ether.DB[1201][1] == 1 then
-                Ether:CastBarEnable("player")
-            end
-        end
-        if button.unit == "target" then
-            if Ether.DB[1201][2] == 1 then
-                Ether:CastBarEnable("target")
-            end
-        end
-        if button.unit == "pet" then
-            Ether:PetCondition(button)
-        end
-        return button
     end
+    if token == "target" then
+        if Ether.DB[1201][2] == 1 then
+            Ether:CastBarEnable(token)
+        end
+    end
+    if token == "pet" then
+        Ether:PetCondition(button)
+    end
+
+    local key = {
+        [1] = 332,
+        [2] = 333,
+        [3] = 334,
+        [4] = 335,
+        [5] = 336,
+        [6] = 337
+    }
+    for index, data in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus"}) do
+        if token == data then
+            Ether:ApplyFramePosition(button, key[index])
+            Ether:SetupDrag(button, key[index], 20)
+            break
+        end
+    end
+    Ether.unitButtons.solo[button.unit] = button
+    return button
+
 end
 
-function Ether:DestroyUnitButtons(index)
-    if Ether.unitButtons.solo[units[index]] then
-        local button = Ether.unitButtons.solo[units[index]]
-        button.unit = units[index]
-        if button.unit == "player" then
+function Ether:DestroyUnitButtons(unit)
+    if Ether.unitButtons.solo[unit] then
+        local button = Ether.unitButtons.solo[unit]
+        if unit == "player" then
             Ether:CastBarDisable("player")
         end
-        if button.unit == "target" then
+        if unit == "target" then
             Ether:CastBarDisable("target")
         end
         button:Hide()
         button:ClearAllPoints()
         button:SetAttribute("unit", nil)
         button:RegisterForClicks()
-        if button.unit ~= "player" then
+        if unit ~= "player" then
             UnregisterUnitWatch(button)
         end
-        if button.unit == "targettarget" then
-            button:UnregisterAllEvents()
-            button:SetScript("OnEvent", nil)
-        end
         button:SetScript("OnAttributeChanged", nil)
-        button:SetScript("OnShow", nil)
+        button:SetScript("OnEvent", nil)
         button:SetScript("OnDragStart", nil)
         button:SetScript("OnDragStop", nil)
-        Ether.unitButtons.solo[button.unit] = nil
+        Ether.unitButtons.solo[unit] = nil
     end
 end
 

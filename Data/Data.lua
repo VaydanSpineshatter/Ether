@@ -30,15 +30,6 @@ local Default = {
         ["border"] = "Interface\\DialogFrame\\UI-DialogBox-Border",
         ["bar"] = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
     },
-    [901] = {
-        player = true,
-        target = true,
-        targettarget = true,
-        pet = true,
-        pettarget = true,
-        focus = true,
-        raid = true,
-    },
     [1001] = {1, 1, 1},
     [1002] = {
         [1] = {12, "TOP", 0, 0},
@@ -72,7 +63,7 @@ local Default = {
         [335] = {"CENTER", "UIParent", "CENTER", -350, -100, 120, 50, 1.0, 1.0},
         [336] = {"CENTER", "UIParent", "CENTER", -270, -20, 120, 50, 1.0, 1.0},
         [337] = {"LEFT", "UIParent", "LEFT", 500, 100, 120, 50, 1.0, 1.0},
-        [338] = {"LEFT", "UIParent", "LEFT", 20, -200, 1, 1, 1.0, 1.0},
+        [338] = {"LEFT", "UIParent", "LEFT", 100, -200, 1, 1, 1.0, 1.0},
         [339] = {"TOP", "UIParent", "TOP", 80, -80, 320, 200, 1.0, 1.0},
         [340] = {"TOPLEFT", "UIParent", "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
         [341] = {"CENTER", "UIParent", "CENTER", 0, -180, 340, 15, 1.0, 1.0},
@@ -323,32 +314,13 @@ function Ether:RefreshAllSettings()
     Ether:FrameChecked(1, 401)
     Ether:FrameChecked(2, 101)
     Ether:FrameChecked(3, 201)
+    Ether:FrameChecked(4, 701)
     Ether:FrameChecked(5, 1001)
     Ether:FrameChecked(6, 501)
     Ether:FrameChecked(7, 301)
     Ether:FrameChecked(8, 801)
     Ether:FrameChecked(9, 1201)
     Ether:FrameChecked(11, 1501)
-    if Ether.UIPanel.Buttons[4] and Ether.UIPanel.Buttons[4][1] then
-        for i = 1, #Ether.DB[701] do
-            local checkbox = Ether.UIPanel.Buttons[4][1][i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[701][i] == 1)
-            end
-        end
-    end
-    if Ether.UIPanel.Buttons[4] and Ether.UIPanel.Buttons[4][2] then
-        local units = {
-            "player", "target", "targettarget", "pet", "pettarget",
-            "focus", "raid"
-        }
-        for i, unitKey in ipairs(units) do
-            local checkbox = Ether.UIPanel.Buttons[4][2][i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[901][unitKey] == true)
-            end
-        end
-    end
 end
 
 function Ether:EtherFrameSetClick(number, number2, number3)

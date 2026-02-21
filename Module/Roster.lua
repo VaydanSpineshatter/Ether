@@ -6,7 +6,6 @@ local IsEventValid = C_EventUtils.IsEventValid
 local ipairs = ipairs
 local UnitGUID = UnitGUID
 local C_PlayerInfo = C_PlayerInfo.GUIDIsPlayer
-local GetRaidTargetIndex = GetRaidTargetIndex
 local data = {}
 local function GetUnits()
     wipe(data)
@@ -31,13 +30,99 @@ local function GetUnits()
     return data
 end
 
+local unitCache = {
+    player = true,
+}
+
+local cacheSolo = {
+    player = true,
+    pet = true,
+    pettarget = true,
+    target = true,
+    targettarget = true,
+    focus = true
+}
+
+local cacheSoloAura = {
+    player = true,
+    pet = true,
+    target = true,
+}
+
+function Ether:UnitStatus(unit)
+    if unit == "player" then
+        unit = "raid1"
+    elseif unit == "party1" then
+        unit = "raid2"
+    elseif unit == "party2" then
+        unit = "raid3"
+    elseif unit == "party3" then
+        unit = "raid4"
+    elseif unit == "party4" then
+        unit = "raid5"
+    elseif unit == "pet" then
+        unit = "raidpet1"
+    elseif unit == "partypet1" then
+        unit = "raidpet2"
+    elseif unit == "partypet2" then
+        unit = "raidpet3"
+    elseif unit == "partypet3" then
+        unit = "raidpet4"
+    elseif unit == "partypet4" then
+        unit = "raidpet5"
+    end
+end
+
+local cacheParty = {
+    party1 = true,
+    party2 = true,
+    party3 = true,
+    party4 = true,
+    partypet1 = true,
+    partypet2 = true,
+    partypet3 = true,
+    partypet4 = true,
+}
+
+for i = 1, 40 do
+    unitCache["raid" .. i] = true
+end
+
+for i = 1, 40 do
+    unitCache["raidpet" .. i] = true
+end
+
+function Ether:IsValidSolo(unit)
+    return cacheSolo[unit]
+end
+
+function Ether:IsValidSoloAura(unit)
+    return cacheSoloAura[unit]
+end
+
+function Ether:IsValidParty(unit)
+    return cacheParty[unit]
+end
+
+function Ether:IsValidUnit(unit)
+    return unitCache[unit]
+end
+
 local status = false
 local function refreshButtons()
     if not status then
         status = true
         C_After(3, function()
+            if Ether.DB[401][6] == 1 then
+                Ether.Handler:FullUpdate()
+            end
             if Ether.DB[1001][3] == 1 then
-                Ether:CleanupTimerCache()
+                if not UnitInAnyGroup("player") then
+                    Ether:AuraDisable()
+                    Ether:AuraEnable()
+                    status = false
+                    return
+                end
                 for _, unit in ipairs(GetUnits()) do
                     if UnitExists(unit) then
                         local button = Ether.unitButtons.raid[unit]
@@ -62,22 +147,13 @@ local function Roster(_, event)
         refreshButtons()
     elseif event == "GROUP_ROSTER_UPDATE" then
         refreshButtons()
-
     elseif event == "PLAYER_TARGET_CHANGED" then
-        if UnitExists("target") then
-            local button = Ether.unitButtons.solo["target"]
-            if not button then return end
-            local index = GetRaidTargetIndex("target")
-            if index then
-                button.RaidTarget:SetTexture("Interface\\TargetingFrame\\UI-RaidTargetingIcons")
-                SetRaidTargetIconTexture(button.RaidTarget, index)
-                button.RaidTarget:Show()
-            else
-                button.RaidTarget:Hide()
-            end
-            if Ether.DB[1001][2] == 1 and button.Aura then
-                Ether:TargetAuraFullUpdate()
-            end
+        if Ether.DB[401][6] == 1 then
+            Ether:UpdateSoloIndicator("target")
+            Ether:UpdateSoloIndicator("targettarget")
+        end
+        if Ether.DB[1001][2] == 1 then
+            Ether:TargetAuraFullUpdate()
         end
     end
 end
@@ -98,10 +174,8 @@ function Ether:RosterEnable()
     end
     Ether:AuraEnable()
     if Ether.DB[401][6] == 1 then
-        Ether:InitialIndicatorsPos()
         Ether:IndicatorsEnable()
     end
-    Ether:NameEnable()
     Ether:HealthEnable()
     Ether:PowerEnable()
     if Ether.DB[401][5] == 1 then
@@ -128,7 +202,6 @@ function Ether:RosterDisable()
     end
     Ether:AuraDisable()
     Ether:IndicatorsDisable()
-    Ether:NameDisable()
     Ether:HealthDisable()
     Ether:PowerDisable()
     Ether:RangeDisable()

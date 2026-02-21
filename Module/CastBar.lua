@@ -307,6 +307,7 @@ local function castBarEvents(status)
 end
 
 function Ether:CastBarEnable(unit)
+
     local bar = Ether.unitButtons.solo[unit]
     if not bar then return
     elseif not bar.castBar then
@@ -319,6 +320,20 @@ function Ether:CastBarEnable(unit)
     end
     if UpdateFrameInfo() then
         castBarEvents(true)
+    end
+end
+
+function Ether:HideCastBar(unit, bool)
+    local bar = Ether.unitButtons.solo[unit]
+    if not bar then return end
+    if bar.castBar then
+        if bool and UpdateFrameInfo() then
+            UnregisterUpdateFrame(bar.castBar)
+            bar.castBar.text:SetText("Move CastBar")
+            bar.castBar:SetShown(bool)
+        else
+            RegisterUpdateFrame(bar.castBar)
+        end
     end
 end
 

@@ -13,12 +13,15 @@ do
     local frame
     local Events = {}
     function RegisterPEvent(castEvent, func)
-        if not frame then
-            frame = CreateFrame("Frame")
-            frame:SetScript("OnEvent", function(self, event, unit)
-                Events[event](self, event, unit)
-            end)
-        end
+        frame = CreateFrame("Frame")
+        frame:SetScript("OnEvent", function(_, event, unit)
+            local button = Ether.unitButtons.raid[unit]
+            if not button then return end
+            if not UnitExists(unit) then return end
+            if button:IsVisible() then
+                Events[event](button, event, unit)
+            end
+        end)
         if not Events[castEvent] then
             if IsEventValid(castEvent) and not frame:IsEventRegistered(castEvent) then
                 frame:RegisterEvent(castEvent)
@@ -27,16 +30,14 @@ do
         Events[castEvent] = func
     end
     function UnregisterPEvent(...)
-        if frame then
-            for i = select("#", ...), 1, -1 do
-                local event = select(i, ...)
-                if IsEventValid(event) then
-                    if Events[event] then
-                        frame:UnregisterEvent(event)
-                    end
+        for i = select("#", ...), 1, -1 do
+            local event = select(i, ...)
+            if IsEventValid(event) then
+                if Events[event] then
+                    frame:UnregisterEvent(event)
                 end
-                Events[event] = nil
             end
+            Events[event] = nil
         end
     end
 end
@@ -114,6 +115,7 @@ function Ether:UpdatePowerTextRounded(button)
         button.power:SetText(p)
     end
 end
+
 function Ether:UpdatePower(button, smooth)
     if not button or not button.unit or not button.powerBar then
         return
@@ -133,27 +135,11 @@ function Ether:UpdatePower(button, smooth)
     button.powerDrop:SetColorTexture(r * 0.3, g * 0.3, b * 0.3)
 end
 
-local function PowerChanged(_, event, unit)
-    if not unit then return end
+local function PowerChanged(self, event, unit)
+    if self.unit ~= unit then return end
     if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
-        if Ether.DB[901][unit] then
-            local button = Ether.unitButtons.solo[unit]
-            if button then
-                if Ether.DB[801][2] == 1 then
-                    Ether:UpdatePower(button, true)
-                else
-                    Ether:UpdatePower(button)
-                end
-                if Ether.DB[701][2] == 1 then
-                    Ether:UpdatePowerTextRounded(button)
-                end
-            end
-        end
         if Ether.DB[701][4] == 1 then
-            local button = Ether.unitButtons.raid[unit]
-            if button and button:IsVisible() then
-                Ether:UpdatePowerTextRounded(button)
-            end
+            Ether:UpdatePowerTextRounded(self.unit)
         end
     end
 end
