@@ -87,9 +87,9 @@ do
     local IsEventValid = C_EventUtils.IsEventValid
     local frame
     local Events = {}
-    function RegisterHEvent(castEvent, func)
-        frame = CreateFrame("Frame")
-        frame:SetScript("OnEvent", function(_, event, unit)
+    function RegisterHEvent(hEvent, func)
+         frame = CreateFrame("Frame")
+         frame:SetScript("OnEvent", function(_, event, unit)
             local button = Ether.unitButtons.raid[unit]
             if not button then return end
             if not UnitExists(unit) then return end
@@ -97,12 +97,12 @@ do
                 Events[event](button, event, unit)
             end
         end)
-        if not Events[castEvent] then
-            if IsEventValid(castEvent) and not frame:IsEventRegistered(castEvent) then
-                frame:RegisterEvent(castEvent)
+        if not Events[hEvent] then
+            if IsEventValid(hEvent) and not frame:IsEventRegistered(hEvent) then
+                frame:RegisterEvent(hEvent)
             end
         end
-        Events[castEvent] = func
+        Events[hEvent] = func
     end
     function UnregisterHEvent(...)
         for i = select("#", ...), 1, -1 do

@@ -314,9 +314,7 @@ local function UpdatePlayerRoles()
                     button.Indicators.PlayerRoles:Hide()
                 end
             end
-
         end
-
     end
 end
 

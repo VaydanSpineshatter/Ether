@@ -560,7 +560,7 @@ function Ether:RefreshFramePositions()
         [336] = Ether.unitButtons.solo["pettarget"],
         [337] = Ether.unitButtons.solo["focus"],
         [338] = Ether.Anchor.raid,
-        [339] = Ether.DebugFrame,
+        [339] = Ether.debugFrame,
         [340] = Ether.UIPanel.Frames["MAIN"],
         [341] = Ether.unitButtons.solo["player"].castBar,
         [342] = Ether.unitButtons.solo["target"].castBar
@@ -765,10 +765,8 @@ local function OnInitialize(self, event, ...)
         self:UnregisterEvent("PLAYER_REGEN_ENABLED")
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
         if Ether.IsShown then
-            Ether.UIPanel.Frames["MAIN"]:Show()
             Ether.IsShown = false
-            --   ShowHideSettings(true)
-
+            Ether.UIPanel.Frames["MAIN"]:Show()
         end
     end
 end

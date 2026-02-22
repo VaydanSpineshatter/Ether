@@ -24,7 +24,7 @@ local Default = {
     [801] = {0, 0, 0},
     [811] = {
         ["font"] = "Fonts\\FRIZQT__.TTF",
-        ["background"] = "Interface\\FrameGeneral\\UI-Background-Rock",
+        ["background"] = "",
         ["border"] = "Interface\\DialogFrame\\UI-DialogBox-Border",
         ["bar"] = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
     },
@@ -306,11 +306,21 @@ function Ether:FrameChecked(number, data)
         end
     end
 end
+function Ether:RefreshAllSettings()
+
+
+end
 
 function Ether:RefreshAllSettings()
-    for index, numbers in ipairs({401, 101, 201, 701, 1001, 501, 301, 801, 1201, 1501}) do
-        Ether:FrameChecked(index, numbers)
-    end
+    Ether:FrameChecked(1, 401)
+    Ether:FrameChecked(2, 101)
+    Ether:FrameChecked(3, 201)
+    Ether:FrameChecked(4, 701)
+    Ether:FrameChecked(5, 1001)
+    Ether:FrameChecked(6, 501)
+    Ether:FrameChecked(7, 301)
+    Ether:FrameChecked(8, 801)
+    Ether:FrameChecked(9, 1201)
     Ether:FrameChecked(11, 1501)
 end
 
