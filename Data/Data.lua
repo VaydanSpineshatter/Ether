@@ -1,14 +1,12 @@
 local _, Ether = ...
-local tinsert = table.insert
-local tconcat = table.concat
-local tsort = table.sort
+local tinsert, tsort, tconcat = table.insert, table.sort, table.concat
 local pairs, ipairs = pairs, ipairs
 local tostring = tostring
 local string_format = string.format
 local type = type
 local math_floor = math.floor
 local string_char = string.char
-
+local string_rep = string.rep
 local Default = {
     ["VERSION"] = 0,
     [111] = {
@@ -310,16 +308,9 @@ function Ether:FrameChecked(number, data)
 end
 
 function Ether:RefreshAllSettings()
-
-    Ether:FrameChecked(1, 401)
-    Ether:FrameChecked(2, 101)
-    Ether:FrameChecked(3, 201)
-    Ether:FrameChecked(4, 701)
-    Ether:FrameChecked(5, 1001)
-    Ether:FrameChecked(6, 501)
-    Ether:FrameChecked(7, 301)
-    Ether:FrameChecked(8, 801)
-    Ether:FrameChecked(9, 1201)
+    for index, numbers in ipairs({401, 101, 201, 701, 1001, 501, 301, 801, 1201, 1501}) do
+        Ether:FrameChecked(index, numbers)
+    end
     Ether:FrameChecked(11, 1501)
 end
 
@@ -519,7 +510,7 @@ function Ether.SerializeTbl(tbl, indent)
         local valueStr = serializeValue(value, indent + 2)
 
         if indent > 0 and type(value) == "table" and not isArray(value) and Ether.TableSize(value) > 2 then
-            tinsert(result, "\n" .. string.rep(" ", indent) .. keyStr .. " = " .. valueStr .. comma)
+            tinsert(result, "\n" .. string_rep(" ", indent) .. keyStr .. " = " .. valueStr .. comma)
         else
             tinsert(result, keyStr .. " = " .. valueStr .. comma .. " ")
         end

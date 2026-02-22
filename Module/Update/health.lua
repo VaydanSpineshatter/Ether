@@ -218,10 +218,6 @@ function Ether:UpdateHealthTextRounded(button)
     local unit = button.unit
     local h = UnitHealth(unit)
     if h <= 0 then
-        if button.myPrediction and button.otherPrediction then
-            button.myPrediction:Hide()
-            button.otherPrediction:Hide()
-        end
         return
     end
     if h >= 1000 then

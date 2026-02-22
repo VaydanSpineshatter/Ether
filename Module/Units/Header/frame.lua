@@ -79,7 +79,7 @@ local function Event(self, event)
 end
 
 local function OnAttributeChanged(self, name, unit)
-    if name ~= "unit" or not unit then return end
+    if not unit or name ~= "unit" then return end
     local oldUnit = self.unit
     local newUnit = unit or self:GetAttribute("unit")
     local GUID = UnitGUID(unit)
@@ -102,6 +102,7 @@ local function OnAttributeChanged(self, name, unit)
             end)
         end
     end
+    self.unit = unit
     CheckStatus(self)
 end
 

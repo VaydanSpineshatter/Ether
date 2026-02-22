@@ -1612,7 +1612,6 @@ function Ether:CreatePositionSection(EtherFrame)
 
     for i, opt in ipairs(I_Register) do
         local btn = CreateFrame("CheckButton", nil, iRegister, "InterfaceOptionsCheckButtonTemplate")
-
         if i == 1 then
             btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 10, -100)
         else
@@ -1650,6 +1649,7 @@ function Ether:CreatePositionSection(EtherFrame)
         btn:SetScript("OnClick", function(self)
             local checked = self:GetChecked()
             Ether.DB[501][i] = checked and 1 or 0
+            Ether:IndicatorsRegisterByIndex(i)
         end)
         EtherFrame.Buttons[6][i] = btn
     end

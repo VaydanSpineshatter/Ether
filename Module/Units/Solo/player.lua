@@ -16,7 +16,7 @@ local function FullUpdate(self)
     end
 end
 
-local function AttributeChanged(self)
+local function OnAttributeChanged(self)
     local guid = self.unit and UnitGUID(self.unit)
     if (guid ~= self.unitGUID) then
         self.unitGUID = guid
@@ -76,19 +76,17 @@ function Ether:CreateUnitButtons(token)
     if button.unit ~= "player" then
         RegisterUnitWatch(button)
     end
-
-    button:RegisterUnitEvent("UNIT_HEALTH", token)
-    button:RegisterUnitEvent("UNIT_MAXHEALTH", token)
-    button:RegisterUnitEvent("UNIT_POWER_UPDATE", token)
-    button:RegisterUnitEvent("UNIT_MAXPOWER", token)
-    button:RegisterUnitEvent("UNIT_DISPLAYPOWER", token)
-    button:RegisterUnitEvent("UNIT_HEAL_PREDICTION", token)
-    button:HookScript("OnAttributeChanged", AttributeChanged)
+    button:RegisterUnitEvent("UNIT_HEALTH", button.unit)
+    button:RegisterUnitEvent("UNIT_MAXHEALTH", button.unit)
+    button:RegisterUnitEvent("UNIT_POWER_UPDATE", button.unit)
+    button:RegisterUnitEvent("UNIT_MAXPOWER", button.unit)
+    button:RegisterUnitEvent("UNIT_DISPLAYPOWER", button.unit)
+    button:RegisterUnitEvent("UNIT_HEAL_PREDICTION", button.unit)
+    button:HookScript("OnAttributeChanged", OnAttributeChanged)
     button:HookScript("OnEvent", Update)
     button:RegisterForDrag("LeftButton")
     button:EnableMouse(true)
     button:SetMovable(true)
-    FullUpdate(button)
 
     local key = {
         [1] = 332,
@@ -105,6 +103,7 @@ function Ether:CreateUnitButtons(token)
             break
         end
     end
+    OnAttributeChanged(button)
     Ether.unitButtons.solo[button.unit] = button
     return button
 
