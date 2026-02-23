@@ -957,6 +957,7 @@ function Ether:CreateUpdateSection(EtherFrame)
         [3] = {text = "Health Header"},
         [4] = {text = "Power Header"},
     }
+
     local UpdateToggle = CreateFrame("Frame", nil, parent)
     UpdateToggle:SetSize(200, (#UpdateValue * 30) + 60)
     for i, opt in ipairs(UpdateValue) do
@@ -1578,6 +1579,11 @@ function Ether:CreateHelperSection(EtherFrame)
     example:SetJustifyH("LEFT")
     example:SetPoint("TOPLEFT", spellInfo, "BOTTOMLEFT", 20, -50)
     example:SetText(exampleText)
+
+    local pvp = EtherPanelButton(parent, 50, 25, "Check PVP Status", "BOTTOMLEFT", parent, "BOTTOMLEFT", 60, 40)
+    pvp:SetScript("OnClick", function()
+        Ether:CheckPvpStatus()
+    end)
 end
 
 function Ether:CreatePositionSection(EtherFrame)
@@ -2007,32 +2013,13 @@ function Ether:CreateHeaderSection(EtherFrame)
         end)
         EtherFrame.Buttons[11][i] = btn
     end
-    local indicators = EtherPanelButton(parent, 100, 25, "Update Indicators", "TOPRIGHT", parent, "TOPRIGHT", -40, -10)
-    indicators:SetScript("OnClick", function()
-        Ether.Handler:FullUpdate()
-    end)
-    local reset = EtherPanelButton(parent, 100, 25, "Header Rest", "TOPLEFT", indicators, "BOTTOMLEFT", 0, 0)
-    reset:SetScript("OnClick", function()
-        Ether:ResetGroupHeader()
-        Ether:ResetPetHeader()
-    end)
+
 end
 
 function Ether:CreateCastBarSection(EtherFrame)
     local parent = EtherFrame["CONTENT"]["CHILDREN"]["CastBar"]
     if parent.Created then return end
     parent.Created = true
-    local function configUpdate(preview, input, unit)
-        local pos = Ether.DB[5111][input]
-        local config = Ether.DB[1301][input]
-        local castBar = Ether.unitButtons.solo[unit].castBar
-        castBar.icon:SetSize(input, input)
-        preview.castBar.icon:SetSize(config[1], config[1])
-        preview.castBar:SetSize(pos[6], pos[7])
-        preview.castBar:Show()
-        preview.castBar.text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[2], "OUTLINE")
-        preview.castBar.time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[3], "OUTLINE")
-    end
 
     local castBarId = {
         [341] = "Player CastBar", token = "player",

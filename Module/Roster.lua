@@ -124,20 +124,40 @@ local function refreshButtons()
                     return
                 end
                 for _, unit in ipairs(GetUnits()) do
-                    if UnitExists(unit) then
-                        local button = Ether.unitButtons.raid[unit]
-                        if not button then return end
-                        local guid = UnitGUID(unit)
-                        if guid and C_PlayerInfo(guid) then
-                            Ether:UpdateRaidIsHelpful(button, guid)
-                            Ether:UpdateRaidIsHarmful(button, guid)
-                        end
+                    local button = Ether.unitButtons.raid[unit]
+                    if not button then return end
+                    local guid = UnitGUID(unit)
+                    if guid and C_PlayerInfo(guid) then
+                        Ether:UpdateRaidIsHelpful(button, guid)
+                        Ether:UpdateRaidIsHarmful(button, guid)
                     end
                 end
             end
             status = false
         end)
     end
+end
+
+local number = 0
+local pvpData = {}
+function Ether:CheckPvpStatus()
+    wipe(pvpData)
+    for _, unit in ipairs(GetUnits()) do
+        local name = UnitName(unit)
+        local pvp = UnitIsPVP(unit)
+        if pvp and name then
+            number = number + 1
+            table.insert(pvpData, name)
+        end
+    end
+    Ether:EtherInfo("|cffcc66ffPvP Mismatch found:|r")
+    for _, info in ipairs(pvpData) do
+        if info then
+            Ether:EtherInfo(string.format("%s", info))
+        end
+    end
+    Ether:EtherInfo("|cffcc66ffMismatch total:|r " .. tostring(number) .. "")
+    number = 0
 end
 
 local function Roster(_, event)

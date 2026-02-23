@@ -82,7 +82,7 @@ function Ether:SetupPrediction(button)
     button.otherPrediction = from
     from:SetAllPoints(button.healthBar)
     from:SetStatusBarTexture(unpack(Ether.mediaPath.blankBar))
-    from:SetStatusBarColor(0.80, 0.40, 1.00, .5)
+    from:SetStatusBarColor(1.00, 0.65, 0.00, .5)
     from:SetMinMaxValues(0, 1)
     from:SetValue(1)
     from:Hide()

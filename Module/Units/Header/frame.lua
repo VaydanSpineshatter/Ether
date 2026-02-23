@@ -223,6 +223,10 @@ function Ether:ChangeDirectionHeader(horizontal)
         header:Hide()
         header:Show()
     end
+    if Ether.DB[1001][3] == 1 then
+        Ether:AuraDisable()
+        Ether:AuraEnable()
+    end
 end
 
 function Ether:ResetGroupHeader()

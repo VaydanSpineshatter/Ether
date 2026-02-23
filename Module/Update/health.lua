@@ -237,14 +237,14 @@ function Ether:UpdatePrediction(button)
         myHeal = math_min(myHeal, otherHeal)
     end
     if button.myPrediction then
-        if myHeal > 0 then
+        if myHeal > 1 then
             button.myPrediction:Show()
         else
             button.myPrediction:Hide()
         end
     end
     if button.otherPrediction then
-        if other > 0 then
+        if other > 1 then
             button.otherPrediction:Show()
         else
             button.otherPrediction:Hide()

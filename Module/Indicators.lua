@@ -392,10 +392,6 @@ local map = {"ReadyCheck", "Connection", "RaidTarget", "Resurrection", "GroupLea
 local events = {"UNIT_CONNECTION", "INCOMING_RESURRECT_CHANGED", "READY_CHECK", "READY_CHECK_CONFIRM", "READY_CHECK_FINISHED", "RAID_TARGET_UPDATE", "PARTY_LEADER_CHANGED", "PARTY_LOOT_METHOD_CHANGED", "PLAYER_ROLES_ASSIGNED", "PLAYER_FLAGS_CHANGED", "UNIT_FLAGS"}
 local handler = {UpdateConnection, UpdateResurrection, UpdateReady, UpdateConfirm, UpdateFinished, UpdateRaidTarget, UpdateGroupLeader, UpdateMasterLoot, UpdatePlayerRoles, UpdatePlayerFlags, UpdateUnitFlags}
 
-function Ether:IndicatorsRegisterByIndex(index)
-
-end
-
 function Ether:IndicatorsRegister()
     for index, info in ipairs(events) do
         Register(info, handler[index])

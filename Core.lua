@@ -85,21 +85,23 @@ do
         Menu = {
             ["TOP"] = {
                 [1] = {"Module", "Blizzard", "About"},
-                [2] = {"Create", "Fake", "Update"},
-                [3] = {"Settings", "Custom", "Effects", "Helper"},
-                [4] = {"Position"},
-                [5] = {"Tooltip"},
-                [6] = {"Layout", "Header", "CastBar", "Config"},
-                [7] = {"Edit"}
+                [2] = {"Helper"},
+                [3] = {"Create", "Fake", "Update"},
+                [4] = {"Settings", "Custom", "Effects", "Helper"},
+                [5] = {"Position"},
+                [6] = {"Tooltip"},
+                [8] = {"Layout", "Header", "CastBar", "Config"},
+                [8] = {"Edit"}
             },
             ["LEFT"] = {
                 [1] = {"Info"},
-                [2] = {"Units"},
-                [3] = {"Aura"},
-                [4] = {"Indicators"},
-                [5] = {"Tooltip"},
-                [6] = {"Interface"},
-                [7] = {"Profile"}
+                [2] = {"Helper"},
+                [3] = {"Units"},
+                [4] = {"Aura"},
+                [5] = {"Indicators"},
+                [6] = {"Tooltip"},
+                [7] = {"Interface"},
+                [8] = {"Profile"}
             }
         }
     }
@@ -178,7 +180,7 @@ do
 
     local function InitializeLayer(self)
         if not self.Created then
-            for layer = 1, 7 do
+            for layer = 1, 8 do
                 if self.Menu["TOP"][layer] then
                     for _, name in ipairs(self.Menu["TOP"][layer]) do
                         self["CONTENT"]["CHILDREN"][name] = CreateFrame("Frame", nil, self.Frames["CONTENT"])
@@ -187,7 +189,7 @@ do
                     end
                 end
             end
-            for layer = 1, 7 do
+            for layer = 1, 8 do
                 if self.Menu["TOP"][layer] then
                     self.Buttons[10][layer] = {}
                     local BtnConfig = {}
@@ -220,7 +222,7 @@ do
                 end
             end
             local last = nil
-            for layer = 1, 7 do
+            for layer = 1, 8 do
                 if self.Menu["LEFT"][layer] then
                     for _, itemName in ipairs(self.Menu["LEFT"][layer]) do
                         local btn = CreateSettingsButtons(itemName, self.Frames["LEFT"], layer, function(_, btnLayer)
@@ -508,7 +510,7 @@ Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
         return
     end
     local theirVersion = tonumber(message)
-    local myVersion = Ether.version
+    local myVersion = tonumber(Ether.version)
     local lastCheck = Ether.DB[111].LAST_CHECK or 0
     if (time() - lastCheck >= 9200) and theirVersion and myVersion and myVersion < theirVersion then
         Ether.DB[111].LAST_CHECK = time()

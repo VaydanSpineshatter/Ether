@@ -75,6 +75,19 @@ local function CreateCastBarPreview()
 
 end
 
+local function configUpdate(preview, input, unit)
+    local pos = Ether.DB[5111][input]
+    local config = Ether.DB[1301][input]
+    local castBar = Ether.unitButtons.solo[unit].castBar
+    castBar.icon:SetSize(input, input)
+    preview.castBar.icon:SetSize(config[1], config[1])
+    preview.castBar:SetSize(pos[6], pos[7])
+    preview.castBar:Show()
+    preview.castBar.text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[2], "OUTLINE")
+    preview.castBar.time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[3], "OUTLINE")
+end
+
+
 local timer = false
 local function hide()
     if not Ether.previewFrame then return end
