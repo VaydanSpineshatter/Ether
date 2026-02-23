@@ -150,6 +150,7 @@ function Ether:CheckPvpStatus()
             table.insert(pvpData, name)
         end
     end
+    if number == 0 then return end
     Ether:EtherInfo("|cffcc66ffPvP Mismatch found:|r")
     for _, info in ipairs(pvpData) do
         if info then
