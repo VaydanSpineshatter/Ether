@@ -251,8 +251,7 @@ local function EtherSpellInfo(spellName, resultText, spellIcon)
 
     resultText:SetText(resultStr)
     resultText:SetTextColor(1, 1, 1)
-    Ether.DebugOutput(resultStr)
-
+    Ether:EtherInfo(resultStr)
     spellIcon:SetScript("OnEnter", function()
         GameTooltip:SetOwner(spellIcon, "ANCHOR_RIGHT")
         GameTooltip:AddLine(name, 1, 1, 1)
@@ -553,7 +552,8 @@ function Ether:CreateModuleSection(self)
         [3] = {name = "Tooltip"},
         [4] = {name = "Idle mode"},
         [5] = {name = "Range check"},
-        [6] = {name = "Indicators"}
+        [6] = {name = "Indicators"},
+        [7] = {name = "Info Frame"}
     }
 
     local mod = CreateFrame("Frame", nil, parent)
@@ -766,11 +766,7 @@ local function CleanUpCustom(numb)
         if updateTicker:IsCancelled() then
             updateTicker = nil
         else
-            if Ether.DebugOutput then
-                Ether.DebugOutput("Custom Updater is not cancelled. Reload UI")
-            else
-                print("Custom Updater is not cancelled. Reload UI")
-            end
+            Ether:EtherInfo("Custom Updater is not cancelled. Reload UI")
         end
     end
 end
@@ -789,11 +785,7 @@ local function CreateCustomUnit(numb)
         return
     end
     if not UnitGUID("target") or not UnitInAnyGroup("player") then
-        if Ether.DebugOutput then
-            Ether.DebugOutput("Target a group or raid member")
-        else
-            print("Target a group or raid member")
-        end
+        Ether:EtherInfo("Target a group or raid member")
         return
     end
     if customButtons[numb] then return end
@@ -1063,8 +1055,7 @@ function Ether:AddTemplateAuras(templateName)
     if skipped > 0 then
         msg = msg .. string_format(" (%d already existed)", skipped)
     end
-    Ether.DebugOutput(msg)
-
+    Ether:EtherInfo(msg)
     Ether.UIPanel.SpellId = nil
     Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
 end
@@ -1129,7 +1120,7 @@ function Ether:CreateCustomSection(EtherFrame)
     local clear = EtherPanelButton(auras, 50, 25, "Wipe", "TOPRIGHT", parent, "TOPRIGHT", 0, -5)
     clear:SetScript("OnClick", function()
         if Ether.TableSize(Ether.DB[1003]) == 0 then
-            Ether.DebugOutput("No auras available to delete")
+            Ether:EtherInfo("No auras available to delete")
             return
         end
         if not Ether.popupBox then return end
@@ -1146,7 +1137,7 @@ function Ether:CreateCustomSection(EtherFrame)
             Ether.UIPanel.SpellId = nil
             Ether:UpdateAuraList()
             Ether:UpdateEditor(editor)
-            Ether.DebugOutput("|cff00ccffAuras|r: Custom auras cleared")
+            Ether:EtherInfo("|cff00ccffAuras|r: Custom auras cleared")
             auraDropdown.menu:Hide()
             Ether.popupBox:SetShown(false)
             Ether.UIPanel.Frames["MAIN"]:SetShown(true)
@@ -1988,7 +1979,7 @@ function Ether:CreateHeaderSection(EtherFrame)
     local layoutValue = {
         [1] = {text = "Sort order"}
     }
-    Ether:InitializePreview()
+    -- Ether:InitializePreview()
     local header = CreateFrame("Frame", nil, parent)
     header:SetSize(200, (#layoutValue * 30) + 60)
     for i, opt in ipairs(layoutValue) do
@@ -2011,7 +2002,7 @@ function Ether:CreateHeaderSection(EtherFrame)
                 else
                     Ether:ChangeDirectionHeader(false)
                 end
-                Ether:InitializePreview()
+                --   Ether:InitializePreview()
             end
         end)
         EtherFrame.Buttons[11][i] = btn
@@ -2161,7 +2152,7 @@ function Ether:CreateConfigSection(EtherFrame)
         [336] = "Pet Target",
         [337] = "Focus",
         [338] = "Raid",
-        [339] = "Debug"
+        [339] = "Info Frame",
     }
 
     local frameGroup = {
@@ -2173,7 +2164,7 @@ function Ether:CreateConfigSection(EtherFrame)
         [336] = Ether.unitButtons.solo["pettarget"],
         [337] = Ether.unitButtons.solo["focus"],
         [338] = Ether.Anchor.raid,
-        [339] = Ether.DebugFrame,
+        [339] = Ether.infoFrame,
 
     }
     local sizeLabel = parent:CreateFontString(nil, "OVERLAY")
@@ -2473,12 +2464,6 @@ function Ether:CreateConfigSection(EtherFrame)
                         insets = {left = -2, right = -2, top = -2, bottom = -2}
                     })
                 end
-                if previewFrame then
-                    previewFrame:SetBackdrop({
-                        bgFile = bgPath,
-                        insets = {left = -2, right = -2, top = -2, bottom = -2}
-                    })
-                end
                 for _, button in pairs(Ether.unitButtons.solo) do
                     if button then
                         button:SetBackdrop({
@@ -2551,9 +2536,9 @@ function Ether:CreateEditSection(EtherFrame)
                     if success then
                         UIDropDownMenu_SetSelectedValue(dropdown, self.value)
                         UIDropDownMenu_SetText(dropdown, self.value)
-                        Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                        Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                     else
-                        Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                        Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                     end
                 end
                 info.checked = (profileName == Ether:GetCurrentProfileString())
@@ -2577,12 +2562,12 @@ function Ether:CreateEditSection(EtherFrame)
                 local success, msg = Ether:CreateProfile(name)
                 if success then
                     RefreshDropdown()
-                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 else
-                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 end
             else
-                Ether.DebugOutput("|cffcc66ffEther|r Enter name")
+                Ether:EtherInfo("|cffcc66ffEther|r Enter name")
             end
             inputDialog:Hide()
         end)
@@ -2599,9 +2584,9 @@ function Ether:CreateEditSection(EtherFrame)
                 local success, msg = Ether:CopyProfile(Ether:GetCurrentProfileString(), name)
                 if success then
                     RefreshDropdown()
-                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 else
-                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 end
             end
             inputDialog:Hide()
@@ -2619,9 +2604,9 @@ function Ether:CreateEditSection(EtherFrame)
                 local success, msg = Ether:RenameProfile(Ether:GetCurrentProfileString(), newName)
                 if success then
                     RefreshDropdown()
-                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 else
-                    Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                    Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 end
             end
             inputDialog:Hide()
@@ -2632,7 +2617,7 @@ function Ether:CreateEditSection(EtherFrame)
         local profileToDelete = Ether:GetCurrentProfileString()
         local profiles = Ether:GetProfileList()
         if #profiles <= 1 then
-            Ether.DebugOutput("|cffcc66ffEther|r Cannot delete the only profile")
+            Ether:EtherInfo("|cffcc66ffEther|r Cannot delete the only profile")
             return
         end
         if not Ether.popupBox then return end
@@ -2648,14 +2633,14 @@ function Ether:CreateEditSection(EtherFrame)
             local success, msg = Ether:DeleteProfile(profileToDelete)
             if success then
                 RefreshDropdown()
-                Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 if parent.RefreshConfig then
                     parent.RefreshConfig()
                 end
                 Ether.popupBox:SetShown(false)
                 Ether.UIPanel.Frames["MAIN"]:SetShown(true)
             else
-                Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 Ether.popupBox:SetShown(false)
                 Ether.UIPanel.Frames["MAIN"]:SetShown(true)
             end
@@ -2676,7 +2661,7 @@ function Ether:CreateEditSection(EtherFrame)
         Ether.popupCallback:SetScript("OnClick", function()
             local success, msg = Ether:ResetProfile()
             if success then
-                Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 RefreshDropdown()
                 if parent.RefreshConfig then
                     parent.RefreshConfig()
@@ -2684,7 +2669,7 @@ function Ether:CreateEditSection(EtherFrame)
                 Ether.popupBox:SetShown(false)
                 Ether.UIPanel.Frames["MAIN"]:SetShown(true)
             else
-                Ether.DebugOutput("|cffcc66ffEther|r " .. msg)
+                Ether:EtherInfo("|cffcc66ffEther|r " .. msg)
                 Ether.popupBox:SetShown(false)
                 Ether.UIPanel.Frames["MAIN"]:SetShown(true)
             end
@@ -2756,14 +2741,14 @@ function Ether:CreateEditSection(EtherFrame)
         if data and data ~= "" and data ~= "Paste export data here..." then
             local success, msg = Ether:ImportProfile(data)
             if success then
-                Ether.DebugOutput("|cff00ff00" .. msg .. "|r")
+                Ether:EtherInfo("|cff00ff00" .. msg .. "|r")
                 importBox:SetText("")
                 parent.Refresh()
             else
-                Ether.DebugOutput("|cffff0000" .. msg .. "|r")
+                Ether:EtherInfo("|cffff0000" .. msg .. "|r")
             end
         else
-            Ether.DebugOutput("|cffff0000No data to import|r")
+            Ether:EtherInfo("|cffff0000No data to import|r")
         end
     end)
 
@@ -2806,16 +2791,13 @@ function Ether:CreateEditSection(EtherFrame)
 end
 
 function Ether.CleanUpButtons()
+    Ether:CreateCustomSection(Ether.UIPanel)
+
+    Ether:CreatePositionSection(Ether.UIPanel)
+
     local editor = Ether.UIPanel.Frames["EDITOR"]
     local Indicator = Ether.UIPanel.Frames["INDICATORS"]
-    if not editor.Created then
-        Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created = true
-    end
-    if not Ether.UIPanel["CONTENT"]["CHILDREN"]["Position"].Created then
-        Ether:CreatePositionSection(Ether.UIPanel)
-        Ether.UIPanel["CONTENT"]["CHILDREN"]["Position"].Created = true
-    end
+
     Ether.WrapSettingsColor({0.80, 0.40, 1.00, 1})
 
     Indicator.icon:Hide()
@@ -2839,12 +2821,6 @@ function Ether.CleanUpButtons()
     Indicator.preview:Hide()
 
     editor:Hide()
-
-    if previewFrame and previewFrame.castBar then
-        previewFrame.castBar:Hide()
-        previewFrame.text:SetText("Select CastBar")
-        previewFrame.config:SetText("Config")
-    end
 
     Indicator.templateDropdown.text:SetText("Select Indicator")
 

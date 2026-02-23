@@ -54,7 +54,6 @@ local function Show(self)
     if self.TypePet then
         self:RegisterEvent("UNIT_PET")
     end
-
     CheckStatus(self)
 end
 

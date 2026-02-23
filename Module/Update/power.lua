@@ -15,6 +15,7 @@ do
     function RegisterPEvent(castEvent, func)
         frame = CreateFrame("Frame")
         frame:SetScript("OnEvent", function(_, event, unit)
+            if not unit then return end
             local button = Ether.unitButtons.raid[unit]
             if not button then return end
             if button:IsVisible() then
@@ -58,6 +59,7 @@ function Ether:InitialPower(button)
 end
 
 function Ether:GetPowerColor(unit)
+    if not unit then return end
     local powerType, powerToken, altR, altG, altB = UnitPowerType(unit)
     local info = PowerBarColor[powerToken]
     local r, g, b
@@ -135,7 +137,6 @@ function Ether:UpdatePower(button, smooth)
 end
 
 local function PowerChanged(self, event, unit)
-    if self.unit ~= unit then return end
     if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
         if Ether.DB[701][4] == 1 then
             Ether:UpdatePowerTextRounded(self.unit)

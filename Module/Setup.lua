@@ -162,7 +162,7 @@ function Ether:SetupCastBar(button, number)
         text:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[2], "OUTLINE")
         time:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), config[3], "OUTLINE")
         icon:SetSize(config[1], config[1])
-        Ether:SetupDrag(frame, number, 20)
+        Ether:SetupDrag(frame, number, 10)
     end
     frame:Hide()
 end
@@ -344,10 +344,10 @@ function Ether:SetupDrag(button, index, grid)
     end)
 end
 
-function Ether:SetupDebugFrame()
-    if Ether.debugFrame then return end
+function Ether:SetupInfoFrame()
+    if Ether.infoFrame then return end
     local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
-    Ether.debugFrame = frame
+    Ether.infoFrame = frame
     frame:SetPoint("CENTER")
     frame:SetSize(320, 200)
     frame:SetBackdrop({
@@ -369,7 +369,7 @@ function Ether:SetupDebugFrame()
     cF:SetSize(390, 111)
     sF:SetScrollChild(cF)
     local txt = cF:CreateFontString(nil, "OVERLAY")
-    Ether.DebugText = txt
+    Ether.infoText = txt
     txt:SetFont(unpack(Ether.mediaPath.expressway), 12, 'OUTLINE')
     txt:SetPoint("TOPLEFT")
     txt:SetWidth(290)
@@ -380,7 +380,8 @@ function Ether:SetupDebugFrame()
     top:SetText("|cE600CCFFEther|r")
     frame:Hide()
     Ether:ApplyFramePosition(frame, 339)
-    Ether:SetupDrag(frame, 339, 40)
+    Ether:SetupDrag(frame, 339, 10)
+    return frame
 end
 
 local function AuraPosition(i)

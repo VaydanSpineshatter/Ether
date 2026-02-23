@@ -5,12 +5,10 @@ local select, wipe = select, wipe
 local C_After = C_Timer.After
 local debugText = ""
 local function SendOutput(input)
-    if not Ether.debugFrame then
-        Ether:SetupDebugFrame()
-    end
-    Ether.debugFrame:Show()
+    if not Ether.infoFrame then return end
+    Ether.infoFrame:Show()
     debugText = debugText .. '\n' .. input
-    Ether.DebugText:SetText(debugText)
+    Ether.infoText:SetText(debugText)
 end
 local timer = false
 local function hide()
@@ -18,13 +16,16 @@ local function hide()
         timer = true
         C_After(7, function()
             debugText = ""
-            Ether.debugFrame:Hide()
+            Ether.infoFrame:Hide()
             timer = false
         end)
     end
 end
 local TEMP_CAT = {}
-function Ether.DebugOutput(...)
+function Ether:EtherInfo(...)
+    if not Ether.infoFrame then
+        print(...)
+    end
     local data = ...
     if type(data) ~= "string" then
         return
@@ -46,7 +47,7 @@ do
     local function Whisper(_, event, ...)
         if event == "CHAT_MSG_WHISPER" or event == "CHAT_MSG_BN_WHISPER" then
             local text, _, _, _, playerName2 = ...
-            Ether.DebugOutput(string.format("|cffcc66ffFrom %s:|r %s", playerName2, text))
+            Ether:EtherInfo(string.format("|cffcc66ffFrom %s:|r %s", playerName2, text))
         end
     end
     function enableWhisper()

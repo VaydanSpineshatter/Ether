@@ -3,21 +3,11 @@ local C_After = C_Timer.After
 
 local function CreatePreviewFrame()
     if Ether.previewFrame then return end
-    local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
+    local frame = CreateFrame("Frame", nil, UIParent)
     Ether.previewFrame = frame
     frame:SetPoint("TOP", -100, 0)
     frame:SetFrameLevel(500)
     frame:SetSize(480, 320)
-    frame:SetBackdrop({
-        bgFile = "Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile = true,
-        tileSize = 16,
-        edgeSize = 16,
-        insets = {left = 4, right = 4, top = 4, bottom = 4}
-    })
-    frame:SetBackdropColor(0.1, 0.1, 0.1, .8)
-    frame:SetBackdropBorderColor(0, 0.8, 1, 1)
     frame:Hide()
 end
 

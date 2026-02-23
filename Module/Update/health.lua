@@ -90,6 +90,7 @@ do
     function RegisterHEvent(hEvent, func)
         frame = CreateFrame("Frame")
         frame:SetScript("OnEvent", function(_, event, unit)
+            if not unit then return end
             local button = Ether.unitButtons.raid[unit]
             if not button then return end
             if button:IsVisible() then
@@ -252,7 +253,7 @@ function Ether:UpdatePrediction(button)
 end
 
 local function HealthChanged(self, event, unit)
-    if self.unit ~= unit then return end
+    if not unit or self.unit ~= unit then return end
     if event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
         if Ether.DB[801][3] == 1 then
             Ether:UpdateHealth(self, true)
@@ -266,7 +267,7 @@ local function HealthChanged(self, event, unit)
 end
 
 local function PredictionChanged(self, event, unit)
-    if self.unit ~= unit then return end
+    if not unit or self.unit ~= unit then return end
     if event ~= "UNIT_HEAL_PREDICTION" then return end
     Ether:UpdatePrediction(self)
 end

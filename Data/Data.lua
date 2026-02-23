@@ -18,7 +18,7 @@ local Default = {
     [101] = {1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
     [201] = {1, 1, 1, 1, 1, 1},
     [301] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    [401] = {1, 1, 1, 1, 0, 1},
+    [401] = {1, 1, 1, 1, 0, 1, 1},
     [501] = {1, 1, 1, 1, 1, 1, 1, 1, 1},
     [701] = {0, 0, 0, 0},
     [801] = {0, 0, 0},
@@ -61,7 +61,7 @@ local Default = {
         [335] = {"CENTER", "UIParent", "CENTER", -350, -100, 120, 50, 1.0, 1.0},
         [336] = {"CENTER", "UIParent", "CENTER", -270, -20, 120, 50, 1.0, 1.0},
         [337] = {"LEFT", "UIParent", "LEFT", 500, 100, 120, 50, 1.0, 1.0},
-        [338] = {"LEFT", "UIParent", "LEFT", 100, -200, 1, 1, 1.0, 1.0},
+        [338] = {"LEFT", "UIParent", "LEFT", 200, -200, 1, 1, 1.0, 1.0},
         [339] = {"TOP", "UIParent", "TOP", 80, -80, 320, 200, 1.0, 1.0},
         [340] = {"TOPLEFT", "UIParent", "TOPLEFT", 50, -100, 640, 480, 1.0, 1.0},
         [341] = {"CENTER", "UIParent", "CENTER", 0, -180, 340, 15, 1.0, 1.0},
@@ -94,7 +94,7 @@ Ether.DataDefault = Default
 ---| 336 pettarget
 ---| 337 focus
 ---| 338 raid
----| 339 Debug
+---| 339 Info Frame
 ---| 340 Settings
 ---| 341 PlayerCastBar
 ---| 342 TargetCastBar
@@ -148,6 +148,7 @@ Ether.DataDefault = Default
 ---| Idle mode 4
 ---| Range check 5
 ---| Indicators 6
+---| Info Frame 7
 
 ---@alias IndicatorRegister_501 number
 ---| READY_CHECK READY_CHECK_CONFIRM READY_FINISHED 1
@@ -250,14 +251,20 @@ function Ether.DataMigrate(old, newSize, default)
     return t
 end
 
-function Ether.CopyTable(src)
+function Ether.CopyTable(orig, seen)
+    if type(orig) ~= "table" then return orig end
+
+    seen = seen or {}
+    if seen[orig] then return seen[orig] end
+
     local copy = {}
-    for k, v in pairs(src) do
-        if type(v) == "table" then
-            copy[k] = Ether.CopyTable(v)
-        else
-            copy[k] = v
-        end
+    seen[orig] = copy
+    for k, v in pairs(orig) do
+        copy[Ether.CopyTable(k, seen)] = Ether.CopyTable(v, seen)
+    end
+    local mt = getmetatable(orig)
+    if mt then
+        setmetatable(copy, Ether.CopyTable(mt, seen))
     end
     return copy
 end
@@ -283,7 +290,7 @@ end
 
 function Ether:ArrayMigrateData(data)
     local arraysLength = {
-        [101] = 11, [201] = 6, [301] = 13, [401] = 6,
+        [101] = 11, [201] = 6, [301] = 13, [401] = 7,
         [501] = 9, [701] = 4, [801] = 3,
         [1001] = 3, [1101] = 3, [1201] = 2, [1501] = 5
     }
@@ -293,6 +300,31 @@ function Ether:ArrayMigrateData(data)
                 data[arrayID] = Ether.DataMigrate(data[arrayID], expectedLength, 1)
             end
         end
+    end
+end
+
+local MERGECACHE = {}
+function Ether:MergeToLeft(ORIG, NEW)
+    MERGECACHE[ORIG] = NEW
+    local LEFT = ORIG
+    while LEFT ~= nil do
+        local RIGHT = MERGECACHE[LEFT]
+        for NEW_KEY, NEW_VAL in pairs(RIGHT) do
+            local OLD_VAL = LEFT[NEW_KEY]
+            if OLD_VAL == nil then
+                LEFT[NEW_KEY] = NEW_VAL
+            else
+                local OLD_TYPE = type(OLD_VAL)
+                local NEW_TYPE = type(NEW_VAL)
+                if OLD_TYPE == "table" and NEW_TYPE == "table" then
+                    MERGECACHE[OLD_VAL] = NEW_VAL
+                else
+                    LEFT[NEW_KEY] = NEW_VAL
+                end
+            end
+        end
+        MERGECACHE[LEFT] = nil
+        LEFT = next(MERGECACHE)
     end
 end
 

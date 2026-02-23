@@ -26,7 +26,8 @@ local function OnAttributeChanged(self)
     end
 end
 
-local function Update(self, event)
+local function Update(self, event, unit)
+    if not unit then return end
     if not UnitExists(self.unit) then return end
     if event == "UNIT_HEAL_PREDICTION" then
         Ether:UpdatePrediction(self)
@@ -99,7 +100,7 @@ function Ether:CreateUnitButtons(token)
     for index, data in ipairs({"player", "target", "targettarget", "pet", "pettarget", "focus"}) do
         if button.unit == data then
             Ether:ApplyFramePosition(button, key[index])
-            Ether:SetupDrag(button, key[index], 20)
+            Ether:SetupDrag(button, key[index], 10)
             break
         end
     end

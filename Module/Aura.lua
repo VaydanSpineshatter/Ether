@@ -315,7 +315,8 @@ local function raidAuraUpdate(unit, updateInfo)
     if not guid then return end
     local c = Ether.DB[1003]
     if updateInfo.isFullUpdate then
-
+        Ether:UpdateRaidIsHarmful(button, guid)
+        Ether:UpdateRaidIsHelpful(button, guid)
     end
     if updateInfo.addedAuras then
         for _, aura in ipairs(updateInfo.addedAuras) do

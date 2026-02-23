@@ -2,49 +2,99 @@ local _, Ether = ...
 local realmName = GetRealmName()
 
 function Ether:ExportCurrentProfile()
-    local editor = Ether.UIPanel.Frames["EDITOR"]
-    if not editor.Created then
-        Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created = true
-    end
-    local charKey = Ether:GetCharacterKey()
-    if charKey then
-        ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
-    end
-    if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
-        ETHER_DATABASE_DX_AA.currentProfile = charKey
-    end
+    Ether:CreateCustomSection(Ether.UIPanel)
+    Ether:CreatePositionSection(Ether.UIPanel)
     Ether:UpdateAuraList()
-    Ether:UpdateEditor(editor)
-    local profileName = ETHER_DATABASE_DX_AA.currentProfile
-    local profileData = ETHER_DATABASE_DX_AA.profiles[profileName]
-    if not profileData then
+    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+    local profileName = Ether:GetCurrentProfileString()
+    local profile = Ether:GetCurrentProfile()
+    if not profile then
         return nil, "Current profile not found"
     end
     local exportData = {
-        version = 1.0,
-        addon = "Ether",
-        timestamp = time(),
         profileName = profileName,
-        data = Ether.CopyTable(profileData),
+        data = profile,
     }
     local serialized = Ether.TblToString(exportData)
     local encoded = Ether.Base64Encode(serialized)
-    Ether.DebugOutput("|cff00ff00Export ready:|r " .. profileName)
-    Ether.DebugOutput("|cff888888Size:|r " .. #encoded .. " characters")
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+    Ether:EtherInfo("|cff00ff00Export ready:|r " .. profileName)
+    Ether:EtherInfo("|cff888888Size:|r " .. #encoded .. " characters")
     return encoded
 end
 
-function Ether:ImportProfile(encodedString)
-    if ETHER_DATABASE_DX_AA["VERSION"] < Ether.REQUIREMENT_VERSION then
-        return false, "The import data is too old"
+function Ether:ExportProfileToClipboard()
+    local encoded, err = Ether:ExportCurrentProfile()
+    if not encoded then
+        Ether:EtherInfo("|cffff0000Export failed:|r " .. err)
+        return
     end
+    local editBox = CreateFrame("EditBox", nil, UIParent)
+    editBox:SetText(encoded)
+    editBox:SetFocus()
+    editBox:HighlightText()
+    editBox:SetScript("OnEscapePressed", function(self)
+        self:ClearFocus()
+        self:Hide()
+    end)
+    editBox:SetScript("OnEditFocusLost", function(self)
+        self:Hide()
+    end)
+    Ether:EtherInfo("|cff00ff00Profile copied to clipboard!|r")
+    Ether:EtherInfo("|cff888888You can now paste it anywhere|r")
+
+    return encoded
+end
+
+function Ether:CopyProfile(sourceName, targetName)
+    if not ETHER_DATABASE_DX_AA.profiles[sourceName] then
+        return false, "Source profile not found"
+    end
+    if ETHER_DATABASE_DX_AA.profiles[targetName] then
+        return false, "Target profile already exists"
+    end
+    ETHER_DATABASE_DX_AA.profiles[targetName] = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[sourceName])
+    return true, "Profile copied"
+end
+
+local function RefreshLayout(data)
+    if type(data) ~= "table" then return end
+    for _, button in pairs(data) do
+        if not button then return end
+        button:SetBackdrop({
+            bgFile = Ether.DB[811]["background"],
+            insets = {left = -2, right = -2, top = -2, bottom = -2}
+        })
+        if button.name then
+            button.name:SetFont(Ether.DB[811].font or unpack(Ether.mediaPath.expressway), 12, "OUTLINE")
+
+        end
+        if button.healthBar then
+            button.healthBar:SetStatusBarTexture((Ether.DB[811].bar or unpack(Ether.mediaPath.blankBar)))
+        end
+    end
+end
+
+function Ether:ProfileRefreshLayout()
+    if not Ether.unitButtons then return end
+    local raid = Ether.unitButtons.raid
+    local solo = Ether.unitButtons.solo
+    if solo then
+        RefreshLayout(solo)
+    end
+    if raid then
+        RefreshLayout(raid)
+    end
+end
+
+function Ether:ImportProfile(encodedString)
     if not encodedString or encodedString == "" then
         return false, "Empty import string"
     end
 
-    Ether:CreateCustomSection(Ether.UIPanel)
     Ether:CreatePositionSection(Ether.UIPanel)
+    Ether:CreateCustomSection(Ether.UIPanel)
 
     local decoded = Ether.Base64Decode(encodedString)
     if not decoded then
@@ -58,10 +108,6 @@ function Ether:ImportProfile(encodedString)
 
     if type(importedData) ~= "table" then
         return false, "Invalid data: expected table"
-    end
-
-    if importedData.addon ~= "Ether" then
-        return false, "Not an Ether profile"
     end
 
     if not importedData.data then
@@ -81,56 +127,24 @@ function Ether:ImportProfile(encodedString)
 
     ETHER_DATABASE_DX_AA.currentProfile = importedName
 
+    Ether.DB = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[importedName])
+
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
     Ether:UpdateAuraList()
     Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+    Ether:ProfileRefreshLayout()
     return true, "Successfully imported as: " .. importedName
 end
 
-function Ether:ExportProfileToClipboard()
-    local encoded, err = Ether:ExportCurrentProfile()
-    if not encoded then
-        Ether.DebugOutput("|cffff0000Export failed:|r " .. err)
-        return
-    end
-    local editBox = CreateFrame("EditBox", nil, UIParent)
-    editBox:SetText(encoded)
-    editBox:SetFocus()
-    editBox:HighlightText()
-    editBox:SetScript("OnEscapePressed", function(self)
-        self:ClearFocus()
-        self:Hide()
-    end)
-    editBox:SetScript("OnEditFocusLost", function(self)
-        self:Hide()
-    end)
-    Ether.DebugOutput("|cff00ff00Profile copied to clipboard!|r")
-    Ether.DebugOutput("|cff888888You can now paste it anywhere|r")
-
-    return encoded
-end
-
-function Ether:CopyProfile(sourceName, targetName)
-    if not ETHER_DATABASE_DX_AA.profiles[sourceName] then
-        return false, "Source profile not found"
-    end
-    if ETHER_DATABASE_DX_AA.profiles[targetName] then
-        return false, "Target profile already exists"
-    end
-    ETHER_DATABASE_DX_AA.profiles[targetName] = Ether.CopyTable(ETHER_DATABASE_DX_AA.profiles[sourceName])
-    return true, "Profile copied"
-end
-
 function Ether:SwitchProfile(name)
-    local editor = Ether.UIPanel.Frames["EDITOR"]
-    if not editor.Created then
-        Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created = true
-    end
+
     if not ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile not found"
     end
+    Ether:CreatePositionSection(Ether.UIPanel)
+    Ether:CreateCustomSection(Ether.UIPanel)
+    local editor = Ether.UIPanel.Frames["EDITOR"]
 
     ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DB)
 
@@ -141,14 +155,15 @@ function Ether:SwitchProfile(name)
     Ether:RefreshFramePositions()
     Ether:UpdateAuraList()
     Ether:UpdateEditor(editor)
+
+    Ether:ProfileRefreshLayout()
     return true, "Switched to " .. name
 end
 function Ether:DeleteProfile(name)
+
+    Ether:CreatePositionSection(Ether.UIPanel)
+    Ether:CreateCustomSection(Ether.UIPanel)
     local editor = Ether.UIPanel.Frames["EDITOR"]
-    if not editor.Created then
-        Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created = true
-    end
     if not ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile not found"
     end
@@ -216,16 +231,13 @@ function Ether:CreateProfile(name)
     if ETHER_DATABASE_DX_AA.profiles[name] then
         return false, "Profile already exists"
     end
-    local editor = Ether.UIPanel.Frames["EDITOR"]
-    if not editor.Created then
-        Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created = true
-    end
+
     ETHER_DATABASE_DX_AA.profiles[name] = Ether.CopyTable(Ether.DataDefault)
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
     Ether:UpdateAuraList()
-    Ether:UpdateEditor(editor)
+    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+    Ether:ProfileRefreshLayout()
     return true, "Profile created"
 end
 
@@ -245,19 +257,20 @@ function Ether:RenameProfile(oldName, newName)
 end
 
 function Ether:ResetProfile()
-    local editor = Ether.UIPanel.Frames["EDITOR"]
-    local auras = Ether.UIPanel.Frames["AURAS"]
-    if not editor.Created or not auras.Created then
-        Ether:CreateCustomSection(Ether.UIPanel)
-        editor.Created, auras.Created = true, true
-    end
-    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DataDefault)
+
     Ether.DB = Ether.CopyTable(Ether.DataDefault)
+
+    ETHER_DATABASE_DX_AA.profiles[ETHER_DATABASE_DX_AA.currentProfile] = Ether.CopyTable(Ether.DataDefault)
+
     wipe(Ether.DB[1003])
     Ether.UIPanel.SpellId = nil
+    Ether:CreatePositionSection(Ether.UIPanel)
+    Ether:CreateCustomSection(Ether.UIPanel)
+    local editor = Ether.UIPanel.Frames["EDITOR"]
     Ether:UpdateAuraList()
     Ether:UpdateEditor(editor)
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
+    Ether:ProfileRefreshLayout()
     return true, "Profile reset to default"
 end

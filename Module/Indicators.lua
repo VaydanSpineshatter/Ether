@@ -137,7 +137,7 @@ function Ether:CheckIndicatorsPosition(button)
         if button.Indicators[value] then
             button.Indicators[value]:Hide()
             button.Indicators[value]:ClearAllPoints()
-           button.Indicators[value]:SetPoint(Ether.DB[1002][index][2], button.healthBar, Ether.DB[1002][index][2], Ether.DB[1002][index][3], Ether.DB[1002][index][4])
+            button.Indicators[value]:SetPoint(Ether.DB[1002][index][2], button.healthBar, Ether.DB[1002][index][2], Ether.DB[1002][index][3], Ether.DB[1002][index][4])
             button.Indicators[value]:SetSize(Ether.DB[1002][index][1], Ether.DB[1002][index][1])
         end
     end
@@ -399,34 +399,19 @@ end
 function Ether:IndicatorsRegister()
     for index, info in ipairs(events) do
         Register(info, handler[index])
-
     end
-    --[[
-    Register("UNIT_CONNECTION", UpdateConnection)
-    Register("INCOMING_RESURRECT_CHANGED", UpdateResurrection)
-    Register("READY_CHECK", UpdateReady)
-    Register("READY_CHECK_CONFIRM", UpdateConfirm)
-    Register("READY_CHECK_FINISHED", UpdateFinished)
-    Register("RAID_TARGET_UPDATE", UpdateRaidTarget)
-    Register("PARTY_LEADER_CHANGED", UpdateGroupLeader)
-    Register("PARTY_LOOT_METHOD_CHANGED", UpdateMasterLoot)
-    Register("PLAYER_ROLES_ASSIGNED", UpdatePlayerRoles)
-    Register("PLAYER_FLAGS_CHANGED", UpdatePlayerFlags)
-    Register("UNIT_FLAGS", UpdateUnitFlags)
-    ]]
 end
 
 Ether.unitIsAway = false
 function Ether:AFK()
     Ether.unitIsAway = true
+
     if Ether.DB[1201][1] == 1 then
         Ether:CastBarDisable("player")
     end
     if Ether.DB[1201][2] == 1 then
         Ether:CastBarDisable("target")
     end
-    Ether:HealthDisable()
-    Ether:PowerDisable()
 
     if Ether.DB[1001][1] == 1 then
         Ether:AuraDisable()
@@ -449,8 +434,7 @@ function Ether:NotAFK()
     if Ether.DB[1201][2] == 1 then
         Ether:CastBarEnable("target")
     end
-    Ether:HealthEnable()
-    Ether:PowerEnable()
+
     if Ether.DB[1001][1] == 1 then
         C_Timer.After(0.3, function()
             Ether:AuraEnable()
@@ -465,7 +449,7 @@ function Ether:NotAFK()
 end
 
 function Ether:IndicatorsEnable()
-   -- Ether:InitialIndicatorsPosition()
+    -- Ether:InitialIndicatorsPosition()
     Ether:IndicatorsRegister()
     Ether:UpdateSoloIndicator("player")
     Ether.Handler:FullUpdate()

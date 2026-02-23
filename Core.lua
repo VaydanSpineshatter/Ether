@@ -2,9 +2,9 @@
 local _, Ether = ...
 local L = Ether.L
 local pairs, ipairs = pairs, ipairs
-Ether.version = ""
 Ether.IsMovable = false
 Ether.IsShown = false
+Ether.version = 0
 local updatedChannel = false
 Ether.debug = false
 Ether.Header = {}
@@ -23,9 +23,8 @@ Ether.mediaPath = {
 Ether.SlashInfo = {
     [1] = {cmd = "/ether", desc = "Toggle Commands"},
     [2] = {cmd = "/ether settings", desc = "Toggle settings"},
-    [3] = {cmd = "/ether debug", desc = "Toggle debug"},
-    [4] = {cmd = "/ether rl", desc = "Reload Interface"},
-    [5] = {cmd = "/ether Msg", desc = "Ether whisper enable"}
+    [3] = {cmd = "/ether rl", desc = "Reload Interface"},
+    [4] = {cmd = "/ether Msg", desc = "Ether whisper enable"}
 }
 
 Ether.unitButtons = {
@@ -265,16 +264,15 @@ do
         if not Ether.gridFrame then
             Ether:SetupGridFrame()
         end
-        if not Ether.debugFrame then
-            Ether:SetupDebugFrame()
-        end
         Ether.IsMovable = state
         Ether.gridFrame:SetShown(state)
         if Ether.tooltipFrame and Ether.DB[401][3] == 1 then
             Ether.tooltipFrame:SetShown(state)
             Ether.DB[401][3] = 0
         end
-        Ether.debugFrame:SetShown(state)
+        if Ether.infoFrame then
+            Ether.infoFrame:SetShown(state)
+        end
         if Ether.Anchor.raid.tex then
             Ether.Anchor.raid.tex:SetShown(state)
         end
@@ -364,7 +362,7 @@ do
             name:SetPoint("BOTTOMLEFT", menuIcon, "BOTTOMRIGHT", 7, 0)
             name:SetText("|cffcc66ffEther|r")
             Ether:ApplyFramePosition(self.Frames["MAIN"], 340)
-            Ether:SetupDrag(self.Frames["MAIN"], 340, 40)
+            Ether:SetupDrag(self.Frames["MAIN"], 340, 10)
             local close = CreateFrame("Button", nil, self.Frames["BOTTOM"])
             close:SetSize(100, 15)
             close:SetPoint("BOTTOM", 0, 3)
@@ -510,16 +508,12 @@ Comm:RegisterComm("ETHER_VERSION", function(prefix, message, channel, sender)
         return
     end
     local theirVersion = tonumber(message)
-    local myVersion = tonumber(Ether.version)
+    local myVersion = Ether.version
     local lastCheck = Ether.DB[111].LAST_CHECK or 0
     if (time() - lastCheck >= 9200) and theirVersion and myVersion and myVersion < theirVersion then
         Ether.DB[111].LAST_CHECK = time()
         local msg = string_format("New version found (%d). Please visit %s to get the latest version.", theirVersion, "|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
-        if Ether.DebugOutput then
-            Ether.DebugOutput(msg)
-        else
-            print(msg)
-        end
+        Ether:EtherInfo(msg)
     end
 end)
 
@@ -560,7 +554,7 @@ function Ether:RefreshFramePositions()
         [336] = Ether.unitButtons.solo["pettarget"],
         [337] = Ether.unitButtons.solo["focus"],
         [338] = Ether.Anchor.raid,
-        [339] = Ether.debugFrame,
+        [339] = Ether.infoFrame,
         [340] = Ether.UIPanel.Frames["MAIN"],
         [341] = Ether.unitButtons.solo["player"].castBar,
         [342] = Ether.unitButtons.solo["target"].castBar
@@ -596,7 +590,6 @@ local function OnInitialize(self, event, ...)
         assert(type(Ether.DataDefault) == "table", "Ether default database missing")
         assert(type(Ether.CopyTable) == "function", "Ether table func missing")
 
-        self:RegisterEvent("PLAYER_LOGIN")
         self:UnregisterEvent("ADDON_LOADED")
 
         if type(_G.ETHER_DATABASE_DX_AA) ~= "table" then
@@ -611,58 +604,72 @@ local function OnInitialize(self, event, ...)
             _G.ETHER_ICON = {}
         end
 
+        local charKey = Ether:GetCharacterKey() or "Unknown-Unknown"
+        local etherVersion = C_AddOns.GetAddOnMetadata("Ether", "Version")
+        Ether.version = etherVersion
+        local version = ETHER_DATABASE_DX_AA["VERSION"]
+
+        local function checkProfile()
+            if version == 0 then
+                ETHER_DATABASE_DX_AA = {
+                    profiles = {
+                        [charKey] = Ether.CopyTable(Ether.DataDefault)
+                    },
+                    currentProfile = charKey
+                }
+                ETHER_DATABASE_DX_AA["VERSION"] = tonumber(Ether.version)
+            end
+            if not ETHER_DATABASE_DX_AA.profiles[charKey] then
+                ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.DataDefault
+            end
+
+            local current = Ether:GetCurrentProfileString()
+
+            if ETHER_DATABASE_DX_AA.profiles[current] then
+                ETHER_DATABASE_DX_AA.profiles[current] = Ether.CopyTable(Ether:GetCurrentProfile())
+            end
+
+            Ether:MergeToLeft(Ether.CopyTable(Ether:GetCurrentProfile()), Ether.DataDefault)
+            Ether.DB = Ether.CopyTable(Ether:GetCurrentProfile())
+            return "Init successfully"
+        end
+
+        local function err(msg)
+            print("err called", msg)
+            ETHER_DATABASE_DX_AA = {
+                profiles = {
+                    [charKey] = Ether.CopyTable(Ether.DataDefault)
+                },
+                currentProfile = charKey
+            }
+            ETHER_DATABASE_DX_AA["VERSION"] = tonumber(Ether.version)
+
+            Ether.DB = ETHER_DATABASE_DX_AA.profiles[charKey]
+            return "Init failed"
+        end
+
+        local function callFunc()
+            return checkProfile()
+        end
+
+        local status, ret = xpcall(callFunc, err)
+        print(status)
+        print(ret)
+
+        self:RegisterEvent("PLAYER_LOGIN")
         self:RegisterEvent("PLAYER_LOGOUT")
     elseif (event == "PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
 
         Ether:CreatePopupBox()
 
-        local charKey = Ether:GetCharacterKey() or "Unknown-Unknown"
-        local version = C_AddOns.GetAddOnMetadata("Ether", "Version")
-        Ether.version = version
-
-        local REQUIREMENT_VERSION = 26766
-        local CURRENT_VERSION = ETHER_DATABASE_DX_AA["VERSION"]
-
-        if CURRENT_VERSION < REQUIREMENT_VERSION then
-            ETHER_DATABASE_DX_AA = {
-                profiles = {
-                    [charKey] = Ether.CopyTable(Ether.DataDefault)
-                },
-                currentProfile = charKey
-            }
-            ETHER_DATABASE_DX_AA["VERSION"] = REQUIREMENT_VERSION
-        elseif not ETHER_DATABASE_DX_AA.profiles then
-            ETHER_DATABASE_DX_AA = {
-                profiles = {
-                    [charKey] = Ether.CopyTable(Ether.DataDefault)
-                },
-                currentProfile = charKey
-            }
-        elseif not ETHER_DATABASE_DX_AA.profiles[charKey] then
-            ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DataDefault)
-        else
-            local profile = ETHER_DATABASE_DX_AA.profiles[charKey]
-            for info in pairs(Ether.DataDefault) do
-                if profile[info] == nil then
-                    profile[info] = Ether.CopyTable(Ether.DataDefault)
-                end
-            end
-            for _, info in ipairs({111, 701, 811, 1002, 1201, 1301, 1401, 1501, 5111}) do
-                Ether:NilCheckData(profile, info)
-            end
-            Ether:ArrayMigrateData(profile)
-        end
-
-        ETHER_DATABASE_DX_AA.currentProfile = charKey
-        Ether.DB = Ether.CopyTable(Ether:GetCurrentProfile())
-        Ether.REQUIREMENT_VERSION = REQUIREMENT_VERSION
         Ether:CreateGroupHeader()
         Ether:CreatePetHeader()
         if Ether.DB[1501][1] == 1 then
             Ether:ChangeDirectionHeader(true)
         end
         HideBlizzard()
+        Ether:SetupInfoFrame()
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
         SLASH_ETHER1 = "/ether"
@@ -672,9 +679,6 @@ local function OnInitialize(self, event, ...)
             rest = string.lower(rest or "")
             if input == "settings" then
                 EtherToggle()
-            elseif input == "debug" then
-                Ether.debug = not Ether.debug
-                Ether.DebugOutput(Ether.debug and "Debug On" or "Debug Off")
             elseif input == "rl" then
                 if not InCombatLockdown() then
                     ReloadUI()
@@ -683,7 +687,7 @@ local function OnInitialize(self, event, ...)
                 Ether:EtherFrameSetClick(1, 2)
             else
                 for _, entry in ipairs(Ether.SlashInfo) do
-                    Ether.DebugOutput(string_format("%s  –  %s", entry.cmd, entry.desc))
+                    Ether:EtherInfo(string_format("%s  –  %s", entry.cmd, entry.desc))
                 end
             end
         end
@@ -713,7 +717,7 @@ local function OnInitialize(self, event, ...)
         Ether.Anchor.raid.tex:SetAllPoints()
         Ether.Anchor.raid.tex:SetColorTexture(0, 1, 0, .7)
         Ether.Anchor.raid.tex:Hide()
-        Ether:SetupDrag(Ether.Anchor.raid, 338, 40)
+        Ether:SetupDrag(Ether.Anchor.raid, 338, 10)
         Ether.Anchor.tooltip = CreateFrame("Frame", nil, UIParent)
         Ether.Anchor.tooltip:SetSize(280, 120)
         Ether:ApplyFramePosition(Ether.Anchor.tooltip, 331)
@@ -746,12 +750,9 @@ local function OnInitialize(self, event, ...)
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
         Ether:RosterEnable()
     elseif (event == "PLAYER_LOGOUT") then
-        local charKey = Ether:GetCharacterKey()
-        if charKey then
-            ETHER_DATABASE_DX_AA.profiles[charKey] = Ether.CopyTable(Ether.DB)
-        end
-        if charKey and ETHER_DATABASE_DX_AA.profiles[charKey] then
-            ETHER_DATABASE_DX_AA.currentProfile = charKey
+        local current = Ether:GetCurrentProfileString()
+        if current then
+            ETHER_DATABASE_DX_AA.profiles[current] = Ether.CopyTable(Ether.DB)
         end
     elseif (event == "PLAYER_REGEN_DISABLED") then
         self:UnregisterEvent("PLAYER_REGEN_DISABLED")
