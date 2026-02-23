@@ -90,7 +90,7 @@ do
                 [4] = {"Settings", "Custom", "Effects", "Helper"},
                 [5] = {"Position"},
                 [6] = {"Tooltip"},
-                [8] = {"Layout", "Header", "CastBar", "Config"},
+                [7] = {"Layout", "Header", "CastBar", "Config"},
                 [8] = {"Edit"}
             },
             ["LEFT"] = {
