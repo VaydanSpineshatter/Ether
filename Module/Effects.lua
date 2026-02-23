@@ -19,7 +19,7 @@ end
 
 Ether.StartBlink = function(tex, duration, interval)
     if type(tex) == "nil" then
-        error("The element " .. tex .. " does not exist")
+        error("The element does not exist")
         return
     end
     if type(duration) ~= "number" or type(interval) ~= "number" then

@@ -1123,7 +1123,7 @@ function Ether:CreateCustomSection(EtherFrame)
     local confirm = EtherPanelButton(auras, 50, 25, "Confirm", "LEFT", addBtn, "RIGHT", 10, 0)
     confirm:SetScript("OnClick", function()
         if type(Ether.UIPanel.SpellId) ~= "nil" then
-            Ether:SaveAuraPos(Ether.UIPanel.SpellId)
+            Ether:SaveAuraPosition(Ether.UIPanel.SpellId)
         end
     end)
     local clear = EtherPanelButton(auras, 50, 25, "Wipe", "TOPRIGHT", parent, "TOPRIGHT", 0, -5)
@@ -1787,7 +1787,7 @@ function Ether:CreatePositionSection(EtherFrame)
     local confirm = EtherPanelButton(preview, 60, 25, "Confirm", "BOTTOMLEFT", preview, "TOPRIGHT", 0, 40)
     confirm:SetScript("OnClick", function()
         if currentIndicator and number then
-            Ether.SaveIndicatorsPos(currentIndicator, number)
+            Ether:SaveIndicatorsPosition(currentIndicator, number)
         end
     end)
 
@@ -2824,21 +2824,14 @@ function Ether.CleanUpButtons()
 
     Indicator.sizeSlider:Hide()
     Indicator.sizeSlider:Disable()
-
     Indicator.offsetYSlider:Hide()
     Indicator.offsetYSlider:Disable()
-
     Indicator.offsetXSlider:Hide()
     Indicator.offsetXSlider:Disable()
-
     Indicator.offsetXLabel:Hide()
-
     Indicator.sizeLabel:Hide()
-
     Indicator.offsetYLabel:Hide()
-
     Indicator.offsetXValue:Hide()
-
     Indicator.offsetYValue:Hide()
 
     Indicator.sizeValue:Hide()

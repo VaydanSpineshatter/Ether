@@ -34,6 +34,7 @@ local function Update(self)
     C_After(0.1, function()
         Ether:InitialHealth(self)
     end)
+    Ether.Handler:FullUpdate()
 end
 
 local function CheckStatus(button)
@@ -53,6 +54,7 @@ local function Show(self)
     if self.TypePet then
         self:RegisterEvent("UNIT_PET")
     end
+
     CheckStatus(self)
 end
 
@@ -117,6 +119,7 @@ local function CreateChildren(header, button)
     Ether:GetClassColor(b)
     Ether:DispelIconSetup(b)
     Ether:DispelNameSetup(b, 0, 0, 0, 0)
+    Ether:CheckIndicatorsPosition(b)
     b:SetBackdrop({
         bgFile = Ether.DB[811]["background"],
         insets = {left = -2, right = -2, top = -2, bottom = -2}

@@ -24,7 +24,7 @@ local Default = {
     [801] = {0, 0, 0},
     [811] = {
         ["font"] = "Fonts\\FRIZQT__.TTF",
-        ["background"] = "",
+        ["background"] = "Interface\\FrameGeneral\\UI-Background-Rock",
         ["border"] = "Interface\\DialogFrame\\UI-DialogBox-Border",
         ["bar"] = "Interface\\RaidFrame\\Raid-Bar-Hp-Fill",
     },
@@ -307,7 +307,6 @@ function Ether:FrameChecked(number, data)
     end
 end
 function Ether:RefreshAllSettings()
-
 
 end
 

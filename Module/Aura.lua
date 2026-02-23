@@ -82,7 +82,7 @@ local function updateAuraPos(tbl, spell, c)
     end
 end
 
-function Ether:SaveAuraPos(spellId)
+function Ether:SaveAuraPosition(spellId)
     if not spellId or type(spellId) ~= "number" then return end
     local c = Ether.DB[1003][spellId]
     local debuff = c.isDebuff
@@ -282,6 +282,7 @@ function Ether:UpdateBlink(unit, guid, spellId)
     end
     Ether.StartBlink(raidIconData[guid][aura.spellId], aura.duration, 0.3)
 end
+
 function Ether:UpdateDispel(unit, guid, spellId)
     local aura = GetUnitAuraBySpellID(unit, spellId, "HELPFUL")
     if not aura then return end
@@ -313,6 +314,9 @@ local function raidAuraUpdate(unit, updateInfo)
     local guid = UnitGUID(unit)
     if not guid then return end
     local c = Ether.DB[1003]
+    if updateInfo.isFullUpdate then
+
+    end
     if updateInfo.addedAuras then
         for _, aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful and c[aura.spellId] and not c[aura.spellId].isDebuff then

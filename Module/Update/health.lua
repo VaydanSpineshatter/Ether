@@ -88,11 +88,10 @@ do
     local frame
     local Events = {}
     function RegisterHEvent(hEvent, func)
-         frame = CreateFrame("Frame")
-         frame:SetScript("OnEvent", function(_, event, unit)
+        frame = CreateFrame("Frame")
+        frame:SetScript("OnEvent", function(_, event, unit)
             local button = Ether.unitButtons.raid[unit]
             if not button then return end
-            if not UnitExists(unit) then return end
             if button:IsVisible() then
                 Events[event](button, event, unit)
             end
