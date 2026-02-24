@@ -45,24 +45,26 @@ function Ether:ProfileRefreshLayout()
         RefreshLayout(raid)
     end
 end
-
 function Ether:ExportCurrentProfile()
-    CreateSections(Ether.UIPanel)
-    local profileName=Ether:GetCurrentProfileString()
-    local profile=Ether:GetCurrentProfile()
+    Ether:CreateCustomSection(Ether.UIPanel)
+    Ether:CreatePositionSection(Ether.UIPanel)
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+    local profileName = Ether:GetCurrentProfileString()
+    local profile = Ether:GetCurrentProfile()
     if not profile then
-        return nil,"Current profile not found"
+        return nil, "Current profile not found"
     end
-    local exportData={
-        profileName=profileName,
-        data=profile,
+    local exportData = {
+        profileName = profileName,
+        data = profile,
     }
-    local serialized=Ether:TblToString(exportData)
-    local encoded=Ether:Base64Encode(serialized)
-
-    ProfileRefresh(Ether.UIPanel.Frames["EDITOR"])
-    Ether:EtherInfo("|cff00ff00Export ready:|r "..profileName)
-    Ether:EtherInfo("|cff888888Size:|r "..#encoded.." characters")
+    local serialized = Ether:TblToString(exportData)
+    local encoded = Ether:Base64Encode(serialized)
+    Ether:UpdateAuraList()
+    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+    Ether:EtherInfo("|cff00ff00Export ready:|r " .. profileName)
+    Ether:EtherInfo("|cff888888Size:|r " .. #encoded .. " characters")
     return encoded
 end
 
@@ -85,7 +87,6 @@ function Ether:ExportProfileToClipboard()
     end)
     Ether:EtherInfo("|cff00ff00Profile copied to clipboard!|r")
     Ether:EtherInfo("|cff888888You can now paste it anywhere|r")
-
     return encoded
 end
 
@@ -103,7 +104,7 @@ end
 function Ether:ImportProfile(encodedString)
     if not encodedString or encodedString=="" then return false,"Empty import string" end
     CreateSections(Ether.UIPanel)
-    local decoded=Ether.Base64Decode(encodedString)
+    local decoded=Ether:Base64Decode(encodedString)
     if not decoded then return false,"Invalid Base64 encoding" end
     local success,importedData=Ether:StringToTbl(decoded)
     if not success then return false,"Invalid data format" end
@@ -114,7 +115,6 @@ function Ether:ImportProfile(encodedString)
     local importedName=importedData.profileName or "Imported"
     local baseName=importedName
     local counter=1
-
     while ETHER_DATABASE_DX_AA.profiles[importedName] do
         counter=counter+1
         importedName=baseName.."_"..counter
@@ -123,6 +123,7 @@ function Ether:ImportProfile(encodedString)
     ETHER_DATABASE_DX_AA.currentProfile=importedName
     Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA.profiles[importedName])
     ProfileRefresh(Ether.UIPanel.Frames["EDITOR"])
+
     return true,"Successfully imported as: "..importedName
 end
 

@@ -164,7 +164,7 @@ function Ether:ArrayMigrateData(data)
     for arrayID,expectedLength in pairs(arraysLength) do
         if data[arrayID] and type(data[arrayID])=="table" then
             if #data[arrayID]~=expectedLength then
-                data[arrayID]=Ether.DataMigrate(data[arrayID],expectedLength,1)
+                data[arrayID]=Ether:DataMigrate(data[arrayID],expectedLength,1)
             end
         end
     end
