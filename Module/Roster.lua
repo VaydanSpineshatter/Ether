@@ -1,25 +1,31 @@
-local _,Ether=...
-local C_After=C_Timer.After
-local UnitExists=UnitExists
-local tinsert=table.insert
-local IsEventValid=C_EventUtils.IsEventValid
-local ipairs=ipairs
-local UnitGUID=UnitGUID
-local C_PlayerInfo=C_PlayerInfo.GUIDIsPlayer
-local data={}
+local _,Ether = ...
+local C_After = C_Timer.After
+local UnitExists = UnitExists
+local tinsert = table.insert
+local IsEventValid = C_EventUtils.IsEventValid
+local ipairs = ipairs
+local UnitGUID = UnitGUID
+local data = {}
 local function GetUnits()
     wipe(data)
-    if UnitInParty("player") and not UnitInRaid("player") then
-        tinsert(data,"player")
-        for i=1,GetNumSubgroupMembers() do
-            local unit="party"..i
+    if UnitInParty("player") then
+        for i = 1,GetNumSubgroupMembers() do
+            tinsert(data,"player")
+            local unit = "party" .. i
             if UnitExists(unit) then
                 tinsert(data,unit)
             end
         end
     elseif UnitInRaid("player") then
-        for i=1,GetNumGroupMembers() do
-            local unit="raid"..i
+        for i = 1,GetNumGroupMembers() do
+            local unit = "raid" .. i
+            if UnitExists(unit) then
+                tinsert(data,unit)
+            end
+        end
+    elseif UnitInBattleground("player") and not UnitInRaid("player") then
+        for i = 1,GetNumGroupMembers() do
+            local unit = "raid" .. i
             if UnitExists(unit) then
                 tinsert(data,unit)
             end
@@ -30,66 +36,66 @@ local function GetUnits()
     return data
 end
 
-local unitCache={
-    player=true,
+local unitCache = {
+    player = true,
 }
 
-local cacheSolo={
-    player=true,
-    pet=true,
-    pettarget=true,
-    target=true,
-    targettarget=true,
-    focus=true
+local cacheSolo = {
+    player = true,
+    pet = true,
+    pettarget = true,
+    target = true,
+    targettarget = true,
+    focus = true
 }
 
-local cacheSoloAura={
-    player=true,
-    pet=true,
-    target=true,
+local cacheSoloAura = {
+    player = true,
+    pet = true,
+    target = true,
 }
 
 function Ether:UnitStatus(unit)
-    if unit=="player" then
-        unit="raid1"
-    elseif unit=="party1" then
-        unit="raid2"
-    elseif unit=="party2" then
-        unit="raid3"
-    elseif unit=="party3" then
-        unit="raid4"
-    elseif unit=="party4" then
-        unit="raid5"
-    elseif unit=="pet" then
-        unit="raidpet1"
-    elseif unit=="partypet1" then
-        unit="raidpet2"
-    elseif unit=="partypet2" then
-        unit="raidpet3"
-    elseif unit=="partypet3" then
-        unit="raidpet4"
-    elseif unit=="partypet4" then
-        unit="raidpet5"
+    if unit == "player" then
+        unit = "raid1"
+    elseif unit == "party1" then
+        unit = "raid2"
+    elseif unit == "party2" then
+        unit = "raid3"
+    elseif unit == "party3" then
+        unit = "raid4"
+    elseif unit == "party4" then
+        unit = "raid5"
+    elseif unit == "pet" then
+        unit = "raidpet1"
+    elseif unit == "partypet1" then
+        unit = "raidpet2"
+    elseif unit == "partypet2" then
+        unit = "raidpet3"
+    elseif unit == "partypet3" then
+        unit = "raidpet4"
+    elseif unit == "partypet4" then
+        unit = "raidpet5"
     end
 end
 
-local cacheParty={
-    party1=true,
-    party2=true,
-    party3=true,
-    party4=true,
-    partypet1=true,
-    partypet2=true,
-    partypet3=true,
-    partypet4=true,
+local cacheParty = {
+    party1 = true,
+    party2 = true,
+    party3 = true,
+    party4 = true,
+    partypet1 = true,
+    partypet2 = true,
+    partypet3 = true,
+    partypet4 = true,
 }
 
-for i=1,40 do
-    unitCache["raid"..i]=true
+for i = 1,40 do
+    unitCache["raid" .. i] = true
 end
 
-for i=1,40 do
-    unitCache["raidpet"..i]=true
+for i = 1,40 do
+    unitCache["raidpet" .. i] = true
 end
 
 function Ether:IsValidSolo(unit)
@@ -108,72 +114,88 @@ function Ether:IsValidUnit(unit)
     return unitCache[unit]
 end
 
-local status=false
+local roster = {}
+local status = false
 local function refreshButtons()
     if not status then
-        status=true
-        C_After(3,function()
-            if Ether.DB[401][6]==1 then
+        status = true
+        if not UnitInAnyGroup("player") then
+            for _,button in pairs(Ether.unitButtons.raid) do
+                if button then
+                    Ether:FullAuraReset()
+                    Ether:UpdateDispelBorder(button,{0,0,0,0})
+                    Ether:UpdatePrediction(button)
+                end
+            end
+        end
+        status = false
+        return
+    end
+    C_After(2,function()
+        wipe(roster)
+        roster = GetUnits()
+        for _,unit in ipairs(roster) do
+            local button = Ether.unitButtons.raid[unit]
+            if not button then
+                return
+            end
+            if Ether.DB[401][6] == 1 then
                 Ether.Handler:FullUpdate()
             end
-            if Ether.DB[1001][3]==1 then
-                if not UnitInAnyGroup("player") then
-                    Ether:AuraDisable()
-                    Ether:AuraEnable()
-                    status=false
+            if Ether.DB[1001][3] == 1 then
+                local guid = UnitGUID(unit)
+                if not guid then
                     return
                 end
-                for _,unit in ipairs(GetUnits()) do
-                    local button=Ether.unitButtons.raid[unit]
-                    if not button then return end
-                    local guid=UnitGUID(unit)
-                    if guid and C_PlayerInfo(guid) then
-                        Ether:UpdateRaidIsHelpful(button,guid)
-                        Ether:UpdateRaidIsHarmful(button,guid)
-                    end
+                Ether:UpdateRaidIsHelpful(button,guid)
+                Ether:UpdateRaidIsHarmful(button,guid)
+                if UnitInBattleground("player") then
+                    Ether:InitialHealth(button)
                 end
             end
-            status=false
-        end)
-    end
+        end
+        status = false
+    end)
 end
 
-local number=0
-local pvpData={}
+local number = 0
+local pvpData = {}
 function Ether:CheckPvpStatus()
     wipe(pvpData)
     for _,unit in ipairs(GetUnits()) do
-        local name=UnitName(unit)
-        local pvp=UnitIsPVP(unit)
+        local name = UnitName(unit)
+        local pvp = UnitIsPVP(unit)
         if pvp and name then
-            number=number+1
+            number = number + 1
             table.insert(pvpData,name)
         end
     end
-    if number==0 then return end
+    if number == 0 then
+        return
+    end
     Ether:EtherInfo("|cffcc66ffPvP Mismatch found:|r")
     for _,info in ipairs(pvpData) do
         if info then
             Ether:EtherInfo(string.format("%s",info))
         end
     end
-    Ether:EtherInfo("|cffcc66ffMismatch total:|r "..tostring(number).."")
-    number=0
+    Ether:EtherInfo("|cffcc66ffMismatch total:|r " .. tostring(number) .. "")
+    number = 0
 end
 
 local function Roster(_,event)
-    if event=="ZONE_CHANGED" then
+    if event == "ZONE_CHANGED" then
         refreshButtons()
-    elseif event=="PLAYER_UNGHOST" then
+    elseif event == "PLAYER_UNGHOST" then
         refreshButtons()
-    elseif event=="GROUP_ROSTER_UPDATE" then
+    elseif event == "GROUP_ROSTER_UPDATE" then
         refreshButtons()
-    elseif event=="PLAYER_TARGET_CHANGED" then
-        if Ether.DB[401][6]==1 then
+    elseif event == "PLAYER_TARGET_CHANGED" then
+        if Ether.DB[401][6] == 1 then
             Ether:UpdateSoloIndicator("target")
             Ether:UpdateSoloIndicator("targettarget")
         end
-        if Ether.DB[1001][2]==1 then
+        if Ether.DB[1001][2] == 1 then
             Ether:TargetAuraFullUpdate()
         end
     end
@@ -181,7 +203,7 @@ end
 
 local frame
 if not frame then
-    frame=CreateFrame("Frame")
+    frame = CreateFrame("Frame")
 end
 
 function Ether:RosterEnable()
@@ -193,23 +215,23 @@ function Ether:RosterEnable()
             end
         end
     end
-    Ether:AuraEnable()
-    if Ether.DB[401][6]==1 then
+    if Ether.DB[401][6] == 1 then
         Ether:IndicatorsEnable()
     end
     Ether:HealthEnable()
     Ether:PowerEnable()
-    if Ether.DB[401][5]==1 then
+    Ether:AuraEnable()
+    if Ether.DB[401][5] == 1 then
         C_After(0.1,function()
             Ether:RangeEnable()
         end)
     end
     C_Timer.After(0.8,function()
         for _,button in pairs(Ether.unitButtons.raid) do
-            if Ether.DB[701][3]==1 then
+            if Ether.DB[701][3] == 1 then
                 Ether:UpdateHealthTextRounded(button)
             end
-            if Ether.DB[701][4]==1 then
+            if Ether.DB[701][4] == 1 then
                 Ether:UpdatePowerTextRounded(button)
             end
         end
