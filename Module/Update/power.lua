@@ -1,24 +1,24 @@
-local _,Ether = ...
+local _,Ether=...
 
-local UnitPowerType = UnitPowerType
-local UnitPower = UnitPower
-local UnitPowerMax = UnitPowerMax
-local string_format = string.format
-local math_floor = math.floor
-local fm = "%.1f"
-local f2m = "%s%d%%|r"
+local UnitPowerType=UnitPowerType
+local UnitPower=UnitPower
+local UnitPowerMax=UnitPowerMax
+local string_format=string.format
+local math_floor=math.floor
+local fm="%.1f"
+local f2m="%s%d%%|r"
 local RegisterPEvent,UnregisterPEvent
 do
-    local IsEventValid = C_EventUtils.IsEventValid
+    local IsEventValid=C_EventUtils.IsEventValid
     local frame
-    local Events = {}
+    local Events={}
     function RegisterPEvent(castEvent,func)
-        frame = CreateFrame("Frame")
+        frame=CreateFrame("Frame")
         frame:SetScript("OnEvent",function(_,event,unit)
             if not unit then
                 return
             end
-            local button = Ether.unitButtons.raid[unit]
+            local button=Ether.unitButtons.raid[unit]
             if not button then
                 return
             end
@@ -31,17 +31,17 @@ do
                 frame:RegisterEvent(castEvent)
             end
         end
-        Events[castEvent] = func
+        Events[castEvent]=func
     end
     function UnregisterPEvent(...)
-        for i = select("#",...),1,-1 do
-            local event = select(i,...)
+        for i=select("#",...),1,-1 do
+            local event=select(i,...)
             if IsEventValid(event) then
                 if Events[event] then
                     frame:UnregisterEvent(event)
                 end
             end
-            Events[event] = nil
+            Events[event]=nil
         end
     end
 end
@@ -66,16 +66,16 @@ function Ether:GetPowerColor(unit)
     if not unit then
         return
     end
-    local powerType,powerToken,altR,altG,altB = UnitPowerType(unit)
-    local info = PowerBarColor[powerToken]
+    local powerType,powerToken,altR,altG,altB=UnitPowerType(unit)
+    local info=PowerBarColor[powerToken]
     local r,g,b
     if (info) then
-        r,g,b = info.r,info.g,info.b
+        r,g,b=info.r,info.g,info.b
     elseif (not altR) then
-        info = PowerBarColor[powerType] or PowerBarColor["MANA"]
-        r,g,b = info.r,info.g,info.b
+        info=PowerBarColor[powerType] or PowerBarColor["MANA"]
+        r,g,b=info.r,info.g,info.b
     else
-        r,g,b = altR,altG,altB;
+        r,g,b=altR,altG,altB;
     end
     return r,g,b
 end
@@ -112,12 +112,12 @@ function Ether:UpdatePowerTextRounded(button)
     if not button or not button.unit or not button.power then
         return
     end
-    local p = UnitPower(button.unit)
-    if p <= 0 then
+    local p=UnitPower(button.unit)
+    if p<=0 then
         return
     end
-    if p >= 1000 then
-        button.power:SetText(string_format(fm,p / 1000))
+    if p>=1000 then
+        button.power:SetText(string_format(fm,p/1000))
     else
         button.power:SetText(p)
     end
@@ -127,8 +127,8 @@ function Ether:UpdatePower(button,smooth)
     if not button or not button.unit or not button.powerBar then
         return
     end
-    local p = UnitPower(button.unit)
-    local mp = UnitPowerMax(button.unit)
+    local p=UnitPower(button.unit)
+    local mp=UnitPowerMax(button.unit)
 
     if smooth then
         button.powerBar:SetMinMaxSmoothedValue(0,mp)
@@ -137,14 +137,14 @@ function Ether:UpdatePower(button,smooth)
         button.powerBar:SetValue(p)
         button.powerBar:SetMinMaxValues(0,mp)
     end
-    local r,g,b = Ether:GetPowerColor(button.unit)
-    button.powerBar:SetStatusBarColor(r,g,b)
-    button.powerDrop:SetColorTexture(r * 0.3,g * 0.3,b * 0.3)
+    local r,g,b=Ether:GetPowerColor(button.unit)
+    button.powerBar:SetStatusBarColor(r,g,b,.6)
+    button.powerDrop:SetColorTexture(r*0.3,g*0.3,b*0.3)
 end
 
 local function PowerChanged(self,event,unit)
-    if event == "UNIT_POWER_UPDATE" or event == "UNIT_MAXPOWER" or event == "UNIT_DISPLAYPOWER" then
-        if Ether.DB[701][4] == 1 then
+    if event=="UNIT_POWER_UPDATE" or event=="UNIT_MAXPOWER" or event=="UNIT_DISPLAYPOWER" then
+        if Ether.DB[701][4]==1 then
             Ether:UpdatePowerTextRounded(self.unit)
         end
     end

@@ -1,7 +1,7 @@
 <Ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.blizzard.com/wow/ui/"
     xsi:schemaLocation="http://www.blizzard.com/wow/ui/ https://raw.githubusercontent.com/Gethe/wow-ui-source/live/Interface/FrameXML/UI_shared.xsd">
     <Button name="EtherUnitTemplate"
-            inherits="BackdropTemplate,SecureUnitButtonTemplate"
+            inherits="SecureUnitButtonTemplate"
             virtual="true">
     </Button>
 </Ui>
