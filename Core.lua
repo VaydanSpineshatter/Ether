@@ -263,6 +263,9 @@ do
         if Ether.Anchor.raid.tex then
             Ether.Anchor.raid.tex:SetShown(state)
         end
+        if Ether.Anchor.pet.tex then
+            Ether.Anchor.pet.tex:SetShown(state)
+        end
         Ether:HideCastBar("player",state)
         Ether:HideCastBar("target",state)
         if not state then
@@ -347,8 +350,8 @@ do
             name:SetFont(unpack(Ether.media.expressway),20,"OUTLINE")
             name:SetPoint("BOTTOMLEFT",menuIcon,"BOTTOMRIGHT",7,0)
             name:SetText("|cffcc66ffEther|r")
-            Ether:ApplyFramePosition(self.Frames["MAIN"],10)
-            Ether:SetupDrag(self.Frames["MAIN"],10,10)
+            Ether:ApplyFramePosition(self.Frames["MAIN"],13)
+            Ether:SetupDrag(self.Frames["MAIN"],13,10)
             local close=CreateFrame("Button",nil,self.Frames["BOTTOM"])
             close:SetSize(100,15)
             close:SetPoint("BOTTOM",0,3)
@@ -365,9 +368,6 @@ do
             close:SetScript("OnClick",function()
                 self.Frames["MAIN"]:Hide()
                 ShowHideSettings(false)
-                if Ether:TableSize(EtherFrame.Snap)>0 then
-                    Ether:DataRestore(Ether.DB[401],EtherFrame.Snap)
-                end
             end)
             InitializeLayer(self)
         end
@@ -522,7 +522,7 @@ local function OnInitialize(self,event,...)
         if Ether.DB[1501][1]==1 then
             Ether:ChangeDirectionHeader(true)
         end
-       Ether:HideBlizzard()
+        Ether:HideBlizzard()
         Ether:SetupInfoFrame()
         SLASH_ETHER1="/ether"
         SlashCmdList["ETHER"]=function(msg)
@@ -568,8 +568,15 @@ local function OnInitialize(self,event,...)
         Ether.Anchor.raid.tex:SetAllPoints()
         Ether.Anchor.raid.tex:SetColorTexture(0,1,0,.7)
         Ether.Anchor.raid.tex:Hide()
-        Ether:ApplyFramePosition(Ether.Anchor.raid,8)
-        Ether:SetupDrag(Ether.Anchor.raid,8,10)
+        Ether.Anchor.pet:SetSize(32,32)
+        Ether.Anchor.pet.tex=Ether.Anchor.pet:CreateTexture(nil,"BACKGROUND")
+        Ether.Anchor.pet.tex:SetAllPoints()
+        Ether.Anchor.pet.tex:SetColorTexture(0,1,0,.7)
+        Ether.Anchor.pet.tex:Hide()
+        Ether:ApplyFramePosition(Ether.Anchor.raid,9)
+        Ether:SetupDrag(Ether.Anchor.raid,9,10)
+        Ether:ApplyFramePosition(Ether.Anchor.pet,10)
+        Ether:SetupDrag(Ether.Anchor.pet,10,10)
         for _,unit in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
             Ether:CreateUnitButtons(unit)
         end

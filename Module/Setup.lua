@@ -34,65 +34,42 @@ function Ether:SetupButtonLayout(button)
     return button
 end
 
-function Ether:SetupBorderLayout(target)
-    local Offset=2
-    local top=target:CreateTexture(nil,"BORDER")
-    top:SetPoint("TOPLEFT",target,"TOPLEFT",-Offset,Offset)
-    top:SetPoint("TOPRIGHT",target,"TOPRIGHT",Offset,Offset)
-    top:SetHeight(Offset)
-    local bottom=target:CreateTexture(nil,"BORDER")
-    bottom:SetPoint("BOTTOMLEFT",target.powerBar or target,"BOTTOMLEFT",-Offset,-Offset)
-    bottom:SetPoint("BOTTOMRIGHT",target.powerBar or target,"BOTTOMRIGHT",Offset,-Offset)
-    bottom:SetHeight(Offset)
-    local left=target:CreateTexture(nil,"BORDER")
-    left:SetPoint("TOPLEFT",target,"TOPLEFT",-Offset,Offset)
-    left:SetPoint("BOTTOMLEFT",target.powerBar or target,"BOTTOMLEFT",-Offset,-Offset)
-    left:SetWidth(Offset)
-    local right=target:CreateTexture(nil,"BORDER")
-    right:SetPoint("TOPRIGHT",target,"TOPRIGHT",Offset,Offset)
-    right:SetPoint("BOTTOMRIGHT",target.powerBar or target,"BOTTOMRIGHT",Offset,-Offset)
-    right:SetWidth(Offset)
-    top:SetColorTexture(0,0,0,.8)
-    bottom:SetColorTexture(0,0,0,.8)
-    right:SetColorTexture(0,0,0,.8)
-    left:SetColorTexture(0,0,0,.8)
-end
---[[
-function Ether:SetupButtonLayout(button)
-    if not button then return end
-    local bg=button:CreateTexture(nil,"BACKGROUND")
-    button.background=bg
-    bg:SetTexture(Ether.DB[811][3])
-    bg:SetAllPoints()
-    button.border =button:CreateTexture(nil,"BORDER")
-    button.border:SetTexture(Ether.DB[811][3])
-    local top=button:CreateTexture(nil,"BORDER")
-    button.top=top
-    top:SetPoint("TOPLEFT")
-    top:SetPoint("TOPRIGHT")
-    top:SetHeight(2)
-    local bottom=button:CreateTexture(nil,"BORDER")
-    button.bottom=bottom
-    bottom:SetPoint("BOTTOMLEFT")
-    bottom:SetPoint("BOTTOMRIGHT")
-    bottom:SetHeight(2)
-    local left=button:CreateTexture(nil,"BORDER")
-    button.left=left
-    left:SetPoint("TOPLEFT")
-    left:SetPoint("BOTTOMLEFT")
-    left:SetWidth(2)
-    local right=button:CreateTexture(nil,"BORDER")
-    button.right=right
-    right:SetPoint("TOPRIGHT")
-    right:SetPoint("BOTTOMRIGHT")
-    right:SetWidth(2)
+function Ether:SetupBorderLayout(target,Offset)
+    local r,g,b,a=0,0,0,1
+    target.t=target:CreateTexture(nil,"BORDER")
+    target.t:SetPoint("TOPLEFT",target,"TOPLEFT",-Offset,Offset)
+    target.t:SetPoint("TOPRIGHT",target,"TOPRIGHT",Offset,Offset)
+    target.t:SetHeight(Offset)
+    target.t:SetColorTexture(r,g,b,a)
+    target.b=target:CreateTexture(nil,"BORDER")
+    target.b:SetPoint("BOTTOMLEFT",target.powerBar or target,"BOTTOMLEFT",-Offset,-Offset)
+    target.b:SetPoint("BOTTOMRIGHT",target.powerBar or target,"BOTTOMRIGHT",Offset,-Offset)
+    target.b:SetHeight(Offset)
+    target.b:SetColorTexture(r,g,b,a)
+    target.l=target:CreateTexture(nil,"BORDER")
+    target.l:SetPoint("TOPLEFT",target,"TOPLEFT",-Offset,Offset)
+    target.l:SetPoint("BOTTOMLEFT",target.powerBar or target,"BOTTOMLEFT",-Offset,-Offset)
+    target.l:SetWidth(Offset)
+    target.l:SetColorTexture(r,g,b,a)
+    target.r=target:CreateTexture(nil,"BORDER")
+    target.r:SetPoint("TOPRIGHT",target,"TOPRIGHT",Offset,Offset)
+    target.r:SetPoint("BOTTOMRIGHT",target.powerBar or target,"BOTTOMRIGHT",Offset,-Offset)
+    target.r:SetWidth(Offset)
+    target.r:SetColorTexture(r,g,b,a)
 
+    --[[
+    local br=target.r:GetTexelSnappingBias()
+    local bl=target.l:GetTexelSnappingBias()
+    local bt=target.t:GetTexelSnappingBias()
+    local bb=target.b:GetTexelSnappingBias()
+    target.r:SetTexelSnappingBias(br)
+    target.l:SetTexelSnappingBias(bl)
+    target.t:SetTexelSnappingBias(bt)
+    target.b:SetTexelSnappingBias(bb)
+    ]]
 
-    local left, top, right, bottom=button.border:GetTextureSliceMargins()
-    button.border:SetTextureSliceMargins(left, top, right, bottom)
-    return button
 end
-]]
+
 function Ether:SetupHealthBar(button,orient)
     if not button then return end
     local healthBar=CreateFrame("StatusBar",nil,button)
@@ -117,7 +94,6 @@ function Ether:SetupPowerBar(button)
     local powerBar=CreateFrame("StatusBar",nil,button)
     button.powerBar=powerBar
     powerBar:SetPoint("TOPLEFT",button,"BOTTOMLEFT")
-    local h=button:GetHeight()
     local w=button:GetWidth()
     powerBar:SetSize(w,8)
     powerBar:SetStatusBarTexture(unpack(Ether.media.blankBar))
@@ -150,36 +126,6 @@ function Ether:SetupPrediction(button)
     from:Hide()
     from:SetFrameLevel(button:GetFrameLevel()+1)
     return button
-end
-
-function Ether:SetupGreetings()
-    local anime=CreateFrame('Frame',nil,UIParent)
-    anime:SetSize(256,256)
-    anime:SetPoint("TOPRIGHT")
-    anime:SetFrameStrata("DIALOG")
-    local ether=anime:CreateTexture(nil,"ARTWORK")
-    ether:SetAllPoints(anime)
-    ether:SetTexture("Interface\\AddOns\\Ether\\Media\\Graphic\\Ether.png")
-    ether:SetVertexColor(1,1,1,1)
-    local group=anime:CreateAnimationGroup()
-    local fadeIn=group:CreateAnimation("Alpha")
-    fadeIn:SetDuration(1.5)
-    fadeIn:SetFromAlpha(0)
-    fadeIn:SetToAlpha(1)
-    fadeIn:SetOrder(0)
-    local slide=group:CreateAnimation("Translation")
-    slide:SetStartDelay(0.5)
-    slide:SetDuration(1.5)
-    slide:SetOffset(0,550)
-    slide:SetSmoothing("IN_OUT")
-    slide:SetOrder(1)
-    group:SetScript("OnFinished",function(self)
-        anime:Hide()
-        anime:ClearAllPoints()
-        anime:SetParent(nil)
-        self:SetScript(nil)
-    end)
-    group:Play()
 end
 
 function Ether:SetupCastBar(button,number)
@@ -398,7 +344,7 @@ local function onStop(self,index,grid)
     DB[5]=math.floor(snapY)
     local anchorRelTo=_G[relToName] or UIParent
     self:ClearAllPoints()
-    self:SetPoint(DB[1],anchorRelTo,DB[3],snapX,snapY)
+    self:SetPoint(point,anchorRelTo,relPoint,DB[4],DB[5])
 end
 
 function Ether:SetupDrag(button,index,grid)
@@ -455,8 +401,8 @@ function Ether:SetupInfoFrame()
     top:SetPoint("TOP",0,-10)
     top:SetText("|cE600CCFFEther|r")
     frame:Hide()
-    Ether:ApplyFramePosition(frame,9)
-    Ether:SetupDrag(frame,9,10)
+    Ether:ApplyFramePosition(frame,1)
+    Ether:SetupDrag(frame,1,10)
     return frame
 end
 
@@ -550,19 +496,31 @@ function Ether:SoloAuraSetup(button)
     end
 end
 
-function Ether:DispelIconSetup(button)
-    local aura=CreateFrame("Frame",nil,UIParent)
-    aura:SetFrameLevel(button:GetFrameLevel()+6)
-    aura:SetPoint("CENTER",button,"CENTER",0,8)
-    aura:SetSize(12,12)
-    local icon=aura:CreateTexture(nil,"OVERLAY")
+function Ether:DispelFrameSetup(button)
+    if not button then return end
+    local r,g,b,a=0,0,0,0
+    local frame=CreateFrame("Frame",nil,UIParent)
+    frame:SetFrameLevel(button:GetFrameLevel()+6)
+    frame:SetPoint("CENTER",button,"CENTER",0,8)
+    frame:SetSize(12,12)
+    local icon=frame:CreateTexture(nil,"OVERLAY")
     icon:SetAllPoints()
     icon:SetTexCoord(0.07,0.93,0.07,0.93)
-    local border=aura:CreateTexture(nil,"BORDER")
+    local border=frame:CreateTexture(nil,"BORDER")
     border:SetColorTexture(1,1,1,0)
-    border:SetPoint("TOPLEFT",aura,"TOPLEFT",-1,1)
-    border:SetPoint("BOTTOMRIGHT",aura,"BOTTOMRIGHT",1,-1)
-    button.iconFrame=aura
+    border:SetPoint("TOPLEFT",frame,"TOPLEFT",-1,1)
+    border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",1,-1)
+    local left=frame:CreateTexture(nil,"BORDER")
+    left:SetColorTexture(r,g,b,a)
+    left:SetPoint("TOPLEFT",button,"TOPLEFT",5,-5)
+    left:SetSize(5,40)
+    local right=frame:CreateTexture(nil,"BORDER")
+    right:SetColorTexture(r,g,b,a)
+    right:SetPoint("TOPRIGHT",button,"TOPRIGHT",-5,-5)
+    right:SetSize(5,40)
+    button.left=left
+    button.right=right
+    button.iconFrame=frame
     button.dispelIcon=icon
     button.dispelBorder=border
     return button
@@ -701,8 +659,8 @@ function Ether:CreateToolFrame()
     resting:SetPoint("CENTER",restBg)
     resting:SetAllPoints(restBg)
     frame:Hide()
-    Ether:ApplyFramePosition(frame,1)
-    Ether:SetupDrag(frame,1,10)
+    Ether:ApplyFramePosition(frame,2)
+    Ether:SetupDrag(frame,2,10)
 end
 --[[
 local function HexToRGB(hex)

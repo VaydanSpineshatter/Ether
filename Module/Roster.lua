@@ -115,13 +115,6 @@ local function refreshButtons()
             if UnitInAnyGroup("player") then
                 for _,unit in ipairs(GetUnits()) do
                     local button=Ether.unitButtons.raid[unit]
-                    if not button then return end
-                    if UnitInBattleground("player") then
-                        Ether:InitialHealth(button)
-                    end
-                    if Ether.DB[401][6]==1 then
-                        Ether.Handler:FullUpdate()
-                    end
                     if Ether.DB[1001][3]==1 then
                         local guid=UnitGUID(unit)
                         if not guid then return end
@@ -129,10 +122,13 @@ local function refreshButtons()
                         Ether:UpdateRaidIsHarmful(button,guid)
                     end
                 end
+                if Ether.DB[401][6]==1 then
+                    Ether.Handler:FullUpdate()
+                end
             else
                 for _,button in pairs(Ether.unitButtons.raid) do
                     if button and button:IsVisible() then
-                        Ether:UpdateDispelBorder(button,{0,0,0,0})
+                        Ether:UpdateDispelFrame(button,{0,0,0,0})
                         Ether:UpdatePrediction(button)
                     end
                 end
@@ -170,10 +166,13 @@ function Ether:CheckPvpStatus()
 end
 
 local function Roster(_,event)
-    if event=="ZONE_CHANGED" then
+    if event=="PLAYER_UNGHOST" then
         refreshButtons()
-    elseif event=="PLAYER_UNGHOST" then
-        refreshButtons()
+        for _,button in pairs(Ether.unitButtons.raid) do
+            if button then
+                Ether:InitialHealth(button)
+            end
+        end
     elseif event=="GROUP_ROSTER_UPDATE" then
         refreshButtons()
     elseif event=="PLAYER_TARGET_CHANGED" then
@@ -194,7 +193,7 @@ end
 
 function Ether:RosterEnable()
     if not frame:GetScript("OnEvent") then
-        for _,events in ipairs({"PLAYER_TARGET_CHANGED","PLAYER_UNGHOST","GROUP_ROSTER_UPDATE","ZONE_CHANGED"}) do
+        for _,events in ipairs({"PLAYER_TARGET_CHANGED","PLAYER_UNGHOST","GROUP_ROSTER_UPDATE"}) do
             if not frame:IsEventRegistered(events) and IsEventValid(events) then
                 frame:RegisterEvent(events)
                 frame:SetScript("OnEvent",Roster)

@@ -36,14 +36,17 @@ local function Leave()
 end
 
 local function Event(self,event,unit)
-    if event~="UNIT_POWER_UPDATE" or unit~="pet" then
+    if unit and unit ~= "pet" then
         return
     end
-    if Ether.unitButtons.solo["pet"]:IsVisible() then
-        local p=UnitPower("pet",Enum.PowerType.Happiness)
-        if p then
-            PetStatus(self)
-        end
+    local petButton = Ether.unitButtons.solo["pet"]
+    if not (petButton and petButton:IsVisible()) then
+        return
+    end
+    if event == "UNIT_HAPPINESS" then
+        PetStatus(self)
+    elseif event == "UNIT_PET" or event == "PET_UI_UPDATE" then
+        PetStatus(self)
     end
 end
 
@@ -51,13 +54,12 @@ function Ether:PetCondition(button)
     if not button or not button.healthBar then
         return
     end
-
     local _,classFileName=UnitClass("player")
     if classFileName~="HUNTER" then
         return
     end
-
-    local condition=CreateFrame("Frame","nil",button)
+    local condition=CreateFrame("Frame",nil,button)
+    condition:SetFrameLevel(button.healthBar:GetFrameLevel()+1)
     condition:SetSize(16,16)
     condition:SetPoint("BOTTOMRIGHT",button.healthBar,"BOTTOMRIGHT",0,0)
     local happy=condition:CreateTexture(nil,"OVERLAY")
@@ -66,6 +68,11 @@ function Ether:PetCondition(button)
     happy:SetAllPoints()
     condition:SetScript("OnEnter",Enter)
     condition:SetScript("OnLeave",Leave)
-    condition:RegisterUnitEvent("UNIT_POWER_UPDATE","pet")
+    condition:RegisterUnitEvent("UNIT_HAPPINESS","pet")
+    condition:RegisterUnitEvent("UNIT_PET","player")
+    condition:RegisterEvent("PET_UI_UPDATE")
     condition:SetScript("OnEvent",Event)
+    C_Timer.After(1, function()
+          PetStatus(condition)
+    end)
 end

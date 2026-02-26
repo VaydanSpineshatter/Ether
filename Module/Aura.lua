@@ -239,25 +239,6 @@ function Ether:UpdateRaidIsHarmful(button,guid)
     end
 end
 
-function Ether:UpdateDispelBorder(button,color)
-    if not button.top then
-        return
-    end
-    local c=unpack(color)
-    --  button.top:SetColorTexture(c)
-    --  button.bottom:SetColorTexture(c)
-    -- button.left:SetColorTexture(c)
-    -- button.right:SetColorTexture(c)
-end
-
-function Ether:UpdatePrediction(button)
-    if not button.myPrediction or not button.otherPrediction then
-        return
-    end
-    button.myPrediction:Hide()
-    button.otherPrediction:Hide()
-end
-
 function Ether:CleanupAuras(guid)
     if dataHelpful[guid] then
         for _,texture in pairs(dataHelpful[guid]) do
@@ -320,6 +301,20 @@ function Ether:UpdateBlink(unit,guid,spellId)
     Ether.StartBlink(raidIconData[guid][aura.spellId],aura.duration,0.3)
 end
 
+function Ether:UpdateDispelFrame(button,color)
+    if not button.left or not button.right then return end
+    button.left:SetColorTexture(unpack(color))
+    button.right:SetColorTexture(unpack(color))
+end
+
+function Ether:UpdatePrediction(button)
+    if not button.myPrediction or not button.otherPrediction then
+        return
+    end
+    button.myPrediction:Hide()
+    button.otherPrediction:Hide()
+end
+
 function Ether:UpdateDispel(unit,guid,spellId)
     local aura=GetUnitAuraBySpellID(unit,spellId,"HELPFUL")
     if not aura then
@@ -341,7 +336,7 @@ function Ether:UpdateDispel(unit,guid,spellId)
             dispel=aura.dispelName
             local color=colors[dispel] or {0,0,0,0}
             raidDispelData[guid][spellId]=button
-            Ether:updateDispelBorder(raidDispelData[guid][spellId],color)
+            Ether:UpdateDispelFrame(raidDispelData[guid][spellId],color)
         end
     else
         raidDispelData[guid][spellId]:Show()
@@ -394,7 +389,7 @@ local function raidAuraUpdate(unit,updateInfo)
                 }
                 local color=colors[aura.dispelName] or {0,0,0,0}
                 raidDispelData[guid][aura.spellId]=button
-                Ether:UpdateDispelBorder(raidDispelData[guid][aura.spellId],color)
+                Ether:UpdateDispelFrame(raidDispelData[guid][aura.spellId],color)
                 button.dispelIcon:SetTexture(aura.icon)
                 button.dispelBorder:SetColorTexture(unpack(color))
                 raidIconData[guid][aura.spellId]=button.iconFrame
@@ -419,7 +414,7 @@ local function raidAuraUpdate(unit,updateInfo)
                 local auraGuid=auraData.guid
                 local spellId=auraData.spellId
                 if raidDispelData[auraGuid] and raidDispelData[auraGuid][spellId] then
-                    Ether:UpdateDispelBorder(raidDispelData[auraGuid][spellId],{0,0,0,1})
+                    Ether:UpdateDispelFrame(raidDispelData[auraGuid][spellId],{0,0,0,0})
                 end
                 if raidIconData[auraGuid] and raidIconData[auraGuid][spellId] then
                     Ether.StopBlink(raidIconData[auraGuid][spellId])

@@ -62,7 +62,7 @@ function Ether:CreateUnitButtons(token)
     Ether:SetupPowerBar(button)
     Ether:SetupPrediction(button)
     Ether:SetupButtonLayout(button)
-    Ether:SetupBorderLayout(button)
+    Ether:SetupBorderLayout(button,2)
     Ether:SetupName(button,0)
     Ether:SetupUpdateText(button,"health")
     Ether:SetupUpdateText(button,"power",true)
@@ -87,25 +87,17 @@ function Ether:CreateUnitButtons(token)
     button:EnableMouse(true)
     button:SetMovable(true)
 
-    local key={
-        [1]=2,
-        [2]=3,
-        [3]=4,
-        [4]=5,
-        [5]=6,
-        [6]=7
-    }
-
     for index,data in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
         if button.unit==data then
-            Ether:ApplyFramePosition(button,key[index])
-            Ether:SetupDrag(button,key[index],10)
+            Ether:ApplyFramePosition(button,index+2)
+            Ether:SetupDrag(button,index+2,10)
             break
         end
     end
 
     OnAttributeChanged(button)
     Ether.unitButtons.solo[button.unit]=button
+
     return button
 end
 
@@ -125,8 +117,8 @@ function Ether:DestroyUnitButtons(unit)
         if unit~="player" then
             UnregisterUnitWatch(button)
         end
-        button:SetScript("OnAttributeChanged",nil)
-        button:SetScript("OnEvent",nil)
+        button:HookScript("OnAttributeChanged",nil)
+        button:HookScript("OnEvent",nil)
         button:SetScript("OnDragStart",nil)
         button:SetScript("OnDragStop",nil)
         Ether.unitButtons.solo[unit]=nil

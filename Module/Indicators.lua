@@ -244,8 +244,8 @@ local function UpdateUnitFlags()
     for _,button in pairs(Ether.unitButtons.raid) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"UnitFlags")
-            local charmed = UnitIsCharmed(button.unit)
-            local dead = UnitIsDeadOrGhost(button.unit)
+            local charmed=UnitIsCharmed(button.unit)
+            local dead=UnitIsDeadOrGhost(button.unit)
             if charmed then
                 button.name:SetTextColor(1.00,0.00,0.00)
                 button.Indicators.UnitFlags:SetTexture(charmedIcon)
@@ -256,7 +256,7 @@ local function UpdateUnitFlags()
                     button.healthBar:SetValue(0)
                     button.healthBar:SetMinMaxValues(0,0)
                 end
-                Ether:UpdateDispelBorder(button,{0,0,0,0})
+                Ether:UpdateDispelFrame(button,{0,0,0,0})
                 Ether:UpdatePrediction(button)
                 button.Indicators.UnitFlags:Show()
             else
@@ -408,59 +408,38 @@ end
 Ether.unitIsAway=false
 function Ether:AFK()
     Ether.unitIsAway=true
-
-    if Ether.DB[1201][1]==1 then
-        Ether:CastBarDisable("player")
-    end
-    if Ether.DB[1201][2]==1 then
-        Ether:CastBarDisable("target")
-    end
-
-    if Ether.DB[1001][1]==1 then
-        Ether:AuraDisable()
-    end
+    if Ether.DB[1201][1]==1 then Ether:CastBarDisable("player") end
+    if Ether.DB[1201][2]==1 then Ether:CastBarDisable("target") end
+    if Ether.DB[1001][1]==1 then Ether:AuraDisable() end
     if Ether.DB[401][5]==1 then
-        C_Timer.After(0.1,function()
-            Ether:RangeDisable()
-        end)
+        C_Timer.After(0.1,function() Ether:RangeDisable() end)
     end
-    for i=1,9 do
+    for i=1,#map do
         Ether:HideIndicators(map[i])
     end
 end
 
 function Ether:NotAFK()
     Ether.unitIsAway=false
-    if Ether.DB[1201][1]==1 then
-        Ether:CastBarEnable("player")
-    end
-    if Ether.DB[1201][2]==1 then
-        Ether:CastBarEnable("target")
-    end
-
+    if Ether.DB[1201][1]==1 then Ether:CastBarEnable("player") end
+    if Ether.DB[1201][2]==1 then Ether:CastBarEnable("target") end
     if Ether.DB[1001][1]==1 then
-        C_Timer.After(0.3,function()
-            Ether:AuraEnable()
-        end)
+        C_Timer.After(0.3,function() Ether:AuraEnable() end)
     end
     if Ether.DB[401][5]==1 then
-        C_Timer.After(0.1,function()
-            Ether:RangeEnable()
-        end)
+        C_Timer.After(0.1,function() Ether:RangeEnable() end)
     end
     Ether.Handler:FullUpdate()
 end
 
 function Ether:IndicatorsEnable()
-    -- Ether:InitialIndicatorsPosition()
     Ether:IndicatorsRegister()
     Ether:UpdateSoloIndicator("player")
     Ether.Handler:FullUpdate()
-
 end
 
 function Ether:IndicatorsDisable()
-
+    UnregisterAll()
     for i=1,9 do
         Ether:HideIndicators(map[i])
     end

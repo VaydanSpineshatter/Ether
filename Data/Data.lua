@@ -59,17 +59,18 @@ local Default={
     [1501]={1},
     [21]={
         [1]={"RIGHT","UIParent","RIGHT",-340,-340,120,280,1,1},
-        [2]={"CENTER","UIParent","CENTER",-250,-200,120,50,1,1},
-        [3]={"CENTER","UIParent","CENTER",250,-200,120,50,1,1},
-        [4]={"CENTER","UIParent","CENTER",0,-220,120,50,1,1},
-        [5]={"CENTER","UIParent","CENTER",-350,-100,120,50,1,1},
-        [6]={"CENTER","UIParent","CENTER",-270,-20,120,50,1,1},
-        [7]={"LEFT","UIParent","LEFT",500,100,120,50,1,1},
-        [8]={"LEFT","UIParent","LEFT",200,-200,1,1,1,1},
-        [9]={"TOP","UIParent","TOP",80,-80,320,200,1.0,1},
-        [10]={"TOPLEFT","UIParent","TOPLEFT",50,-100,640,480,1,1},
+        [2]={"TOP","UIParent","TOP",80,-80,320,200,1.0,1},
+        [3]={"CENTER","UIParent","CENTER",-250,-200,120,50,1,1},
+        [4]={"CENTER","UIParent","CENTER",250,-200,120,50,1,1},
+        [5]={"CENTER","UIParent","CENTER",0,-220,120,50,1,1},
+        [6]={"CENTER","UIParent","CENTER",-350,-100,120,50,1,1},
+        [7]={"CENTER","UIParent","CENTER",-270,-20,120,50,1,1},
+        [8]={"LEFT","UIParent","LEFT",500,100,120,50,1,1},
+        [9]={"LEFT","UIParent","LEFT",200,-200,1,1,1,1},
+        [10]={"LEFT","UIParent","LEFT",200,-200,1,1,1,1},
         [11]={"CENTER","UIParent","CENTER",0,-180,340,15,1,1},
-        [12]={"CENTER","UIParent","CENTER",360,-270,240,15,1,1}
+        [12]={"CENTER","UIParent","CENTER",360,-270,240,15,1,1},
+        [13]={"TOPLEFT","UIParent","TOPLEFT",50,-100,640,480,1,1}
     }
 }
 
@@ -223,20 +224,20 @@ function Ether:FrameChecked(number,data)
 end
 
 function Ether:RefreshFramePositions()
-    local solo=Ether.unitButtons.solo
     local frame={
-        [1]=Ether.toolFrame,
-        [2]=solo["player"],
-        [3]=solo["target"],
-        [4]=solo["targettarget"],
-        [5]=solo["pet"],
-        [6]=solo["pettarget"],
-        [7]=solo["focus"],
-        [8]=Ether.Anchor.raid,
-        [9]=Ether.infoFrame,
-        [10]=Ether.UIPanel.Frames["MAIN"],
-        [11]=solo["player"].castBar,
-        [12]=solo["target"].castBar
+        [1]=Ether.infoFrame,
+        [2]=Ether.toolFrame,
+        [3]=Ether.unitButtons.solo["player"],
+        [4]=Ether.unitButtons.solo["target"],
+        [5]=Ether.unitButtons.solo["targettarget"],
+        [6]=Ether.unitButtons.solo["pet"],
+        [7]=Ether.unitButtons.solo["pettarget"],
+        [8]=Ether.unitButtons.solo["focus"],
+        [9]=Ether.Anchor.raid,
+        [10]=Ether.Anchor.pet,
+        [11]=Ether.unitButtons.solo["player"].castBar,
+        [12]=Ether.unitButtons.solo["target"].castBar,
+        [13]=Ether.UIPanel.Frames["MAIN"]
     }
 
     for frameID in pairs(Ether.DB[21]) do

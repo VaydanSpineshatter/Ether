@@ -1,8 +1,6 @@
 local _,Ether=...
 local UnitName=UnitName
 local string_byte=string.byte
-local UnitIsUnit=UnitIsUnit
-local ME="|cffffd700ME|r"
 
 function Ether:ShortenName(name,maxLength)
     if not name then
@@ -15,14 +13,20 @@ function Ether:ShortenName(name,maxLength)
     end
 end
 
-local function utf8sub(name,start,numChars)
+function Ether:UTF8SUB(name,start,numChars)
+    if not name then return end
+    start = start or 1
+    numChars = numChars or 0
+    if start < 1 then start = 1 end
+    if numChars <= 0 then return "" end
+
     local byteIndex=start
     local charCount=0
     while charCount<numChars and byteIndex<=#name do
         local char=string_byte(name,byteIndex)
         if char>=240 then
             byteIndex=byteIndex+4
-        elseif char>=225 then
+        elseif char>=224 then
             byteIndex=byteIndex+3
         elseif char>=192 then
             byteIndex=byteIndex+2
@@ -35,17 +39,12 @@ local function utf8sub(name,start,numChars)
     return name:sub(start,endIndex)
 end
 
-function Ether:UpdateName(button,IsRaid)
+function Ether:UpdateName(button)
     if not button or not button.unit or not button.name then
         return
     end
-    local unit=button.unit
-    local name=UnitName(unit)
+    local name=UnitName(button.unit)
     if name then
-        if IsRaid then
-            button.name:SetText(utf8sub(name,1,3))
-        else
-            button.name:SetText(utf8sub(name,1,10))
-        end
+       button.name:SetText(Ether:UTF8SUB(name,1,3))
     end
 end

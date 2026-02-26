@@ -2159,18 +2159,21 @@ function Ether:CreateConfigSection(EtherFrame)
     end
 
     local DB=Ether.DB
-    local K={"Tooltip","player","target","targettarget","pet","pettarget","focus","Raid","InfoFrame"}
+    local K={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidFrame","PetFrame", "PlayerCastBar", "TargetCastBar"}
 
     local F={
-        [1]=Ether.toolFrame,
-        [2]=Ether.unitButtons.solo["player"],
-        [3]=Ether.unitButtons.solo["target"],
-        [4]=Ether.unitButtons.solo["targettarget"],
-        [5]=Ether.unitButtons.solo["pet"],
-        [6]=Ether.unitButtons.solo["pettarget"],
-        [7]=Ether.unitButtons.solo["focus"],
-        [8]=Ether.Anchor.raid,
-        [9]=Ether.infoFrame
+        [1]=Ether.infoFrame,
+        [2]=Ether.toolFrame,
+        [3]=Ether.unitButtons.solo["player"],
+        [4]=Ether.unitButtons.solo["target"],
+        [5]=Ether.unitButtons.solo["targettarget"],
+        [6]=Ether.unitButtons.solo["pet"],
+        [7]=Ether.unitButtons.solo["pettarget"],
+        [8]=Ether.unitButtons.solo["focus"],
+        [9]=Ether.Anchor.raid,
+        [10]=Ether.Anchor.pet,
+        [11]=Ether.unitButtons.solo["player"].castBar,
+        [12]=Ether.unitButtons.solo["target"].castBar
     }
     local sizeLabel=parent:CreateFontString(nil,"OVERLAY")
     sizeLabel:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
@@ -2278,7 +2281,7 @@ function Ether:CreateConfigSection(EtherFrame)
     dropdowns.frame=CreateEtherDropdown(parent,160,"Select Frame",frameOptions)
     dropdowns.frame:SetPoint("TOPLEFT")
 
-    sizeSlider:SetScript("OnValueChanged",function(self,value)
+    sizeSlider:SetScript("OnValueChanged",function(self)
         local frame=DB[111][4]
         if DB[21][frame] then
             DB[21][frame][8]=self:GetValue()
@@ -2287,7 +2290,7 @@ function Ether:CreateConfigSection(EtherFrame)
         end
     end)
 
-    alphaSlider:SetScript("OnValueChanged",function(self,value)
+    alphaSlider:SetScript("OnValueChanged",function(self)
         local frame=DB[111][4]
         if DB[21][frame] then
             DB[21][frame][9]=self:GetValue()

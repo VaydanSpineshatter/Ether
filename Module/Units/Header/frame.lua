@@ -1,6 +1,8 @@
 local _,Ether=...
-local anchor=CreateFrame("Frame","EtherRaidGroupAnchor",UIParent,"SecureFrameTemplate")
-Ether.Anchor.raid=anchor
+local raid=CreateFrame("Frame","EtherRaidGroupAnchor",UIParent,"SecureFrameTemplate")
+Ether.Anchor.raid=raid
+local pet=CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplate")
+Ether.Anchor.pet=pet
 local UnitExists=UnitExists
 local UnitGUID=UnitGUID
 local C_After=C_Timer.After
@@ -33,6 +35,7 @@ local function Leave()
 end
 
 local function Update(self)
+    self.unit=self:GetAttribute("unit")
     Ether:UpdateHealth(self)
     Ether:UpdateName(self,true)
     C_After(0.1,function()
@@ -41,18 +44,19 @@ local function Update(self)
     Ether.Handler:FullUpdate()
 end
 
-local function CheckStatus(button)
-    button.unit=button:GetAttribute("unit")
-    local guid=button.unit and UnitGUID(button.unit)
-    if (guid~=button.unitGUID) then
-        button.unitGUID=guid
+local function CheckStatus(self)
+    self.unit=self:GetAttribute("unit")
+    local guid=self.unit and UnitGUID(self.unit)
+    if (guid~=self.unitGUID) then
+        self.unitGUID=guid
         if guid then
-            Update(button)
+            Update(self)
         end
     end
 end
 
 local function Show(self)
+    self.unit=self:GetAttribute("unit")
     self:RegisterEvent("UNIT_NAME_UPDATE")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     if self.TypePet then
@@ -67,24 +71,24 @@ local function Hide(self)
     if self.TypePet then
         self:UnregisterEvent("UNIT_PET")
     end
-    Ether:UpdateDispelBorder(self,{0,0,0,0})
-    Ether:UpdatePrediction(self)
 end
 
-local function Event(self,event)
-    if event=="UNIT_NAME_UPDATE" or event=="UNIT_PET" then
-        self.unit=self:GetAttribute("unit")
-        if UnitExists(self.unit) then
-            Ether:UpdateName(self,true)
+local function Event(self,event,unit)
+    if self.unit~=unit then return end
+    if event=="UNIT_NAME_UPDATE" then
+        local name=UnitName(self  .unit)
+        if name then
+            self.name:SetText(Ether:UTF8SUB(name,1,3))
         end
     end
 end
+
 local function OnAttributeChanged(self,name,unit)
     if not unit or name~="unit" then
         return
     end
     local oldUnit=self.unit
-    local newUnit=unit or self:GetAttribute("unit")
+    local newUnit=unit
     local GUID=UnitGUID(unit)
     if self.unitGUID~=GUID then
         Ether:CleanupAuras(self.unitGUID)
@@ -100,12 +104,10 @@ local function OnAttributeChanged(self,name,unit)
                 if GUID then
                     Ether:UpdateRaidIsHelpful(self,GUID)
                     Ether:UpdateRaidIsHarmful(self,GUID)
-                    Ether:UpdateNotActive(self,GUID)
                 end
             end)
         end
     end
-    self.unit=newUnit
     CheckStatus(self)
 end
 
@@ -115,7 +117,7 @@ local function CreateChildren(header,button)
     Ether:SetupHealthBar(b,"VERTICAL")
     Ether:SetupPrediction(b)
     Ether:SetupName(b,-5)
-    Ether:DispelIconSetup(b)
+    Ether:DispelFrameSetup(b)
     Ether:CheckIndicatorsPosition(b)
     Ether:SetupButtonLayout(b)
     if header:GetAttribute("TypePet") then
@@ -135,81 +137,73 @@ local function CreateChildren(header,button)
     if not InCombatLockdown() then
         b:RegisterForClicks("AnyUp")
     end
-    return b
+    return
 end
 
 function Ether:CreateGroupHeader()
-    local group=CreateFrame("Frame","EtherGroupHeader",anchor,"SecureGroupHeaderTemplate")
-    Ether.Header.raid=group
-    group:SetPoint("BOTTOM",anchor,"TOP")
-    group:SetAttribute("template","EtherUnitTemplate")
-    group:SetAttribute("initial-unitWatch",true)
-    group:SetAttribute("initialConfigFunction",initialConfigFunction)
-    group.CreateChildren=CreateChildren
-    group:SetAttribute("ButtonWidth",55)
-    group:SetAttribute("ButtonHeight",55)
-    group:SetAttribute("columnAnchorPoint","LEFT")
-    group:SetAttribute("point","TOP")
-    group:SetAttribute("groupBy","GROUP")
-    group:SetAttribute("groupingOrder","1,2,3,4,5,6,7,8")
-    group:SetAttribute("xOffset",1)
-    group:SetAttribute("yOffset",-1)
-    group:SetAttribute("columnSpacing",1)
-    group:SetAttribute("unitsPerColumn",5)
-    group:SetAttribute("maxColumns",8)
-    group:SetAttribute("showRaid",true)
-    group:SetAttribute("showParty",false)
-    group:SetAttribute("showPlayer",false)
-    group:SetAttribute("showSolo",true)
-    group:Show()
-
-    Ether:SetupBorderLayout(group)
+    local header=CreateFrame("Frame","EtherGroupHeader",raid,"SecureGroupHeaderTemplate")
+    Ether.Header.raid=header
+    header:SetPoint("BOTTOM",raid,"TOP")
+    header:SetAttribute("template","EtherUnitTemplate")
+    header:SetAttribute("initial-unitWatch",true)
+    header:SetAttribute("initialConfigFunction",initialConfigFunction)
+    header.CreateChildren=CreateChildren
+    header:SetAttribute("ButtonWidth",55)
+    header:SetAttribute("ButtonHeight",55)
+    header:SetAttribute("columnAnchorPoint","LEFT")
+    header:SetAttribute("point","TOP")
+    header:SetAttribute("groupBy","GROUP")
+    header:SetAttribute("groupingOrder","1,2,3,4,5,6,7,8")
+    header:SetAttribute("xOffset",0)
+    header:SetAttribute("yOffset",0)
+    header:SetAttribute("unitsPerColumn",5)
+    header:SetAttribute("maxColumns",8)
+    header:SetAttribute("showRaid",true)
+    header:SetAttribute("showParty",false)
+    header:SetAttribute("showPlayer",false)
+    header:SetAttribute("showSolo",true)
+    header:Show()
+    Ether:SetupBorderLayout(header,3)
 end
 
 function Ether:CreatePetHeader()
-    local pet=CreateFrame("Frame","EtherPetGroupHeader",anchor,"SecureGroupPetHeaderTemplate")
-    Ether.Header.pet=pet
-    pet:SetPoint("BOTTOMLEFT",Ether.Header.raid,"TOPLEFT",0,10)
-    pet:SetAttribute("template","EtherUnitTemplate")
-    pet:SetAttribute("initialConfigFunction",initialConfigFunction)
-    pet.CreateChildren=CreateChildren
-    pet:SetAttribute("TypePet",true)
-    pet:SetAttribute("ButtonHeight",50)
-    pet:SetAttribute("ButtonWidth",50)
-    pet:SetAttribute("xOffset",-2)
-    pet:SetAttribute("showRaid",true)
-    pet:SetAttribute("showParty",false)
-    pet:SetAttribute("showPlayer",true)
-    pet:SetAttribute("showSolo",true)
-    pet:SetAttribute("columnAnchorPoint","LEFT")
-    pet:SetAttribute("point","RIGHT")
-    pet:SetAttribute("useOwnerUnit",false)
-    pet:SetAttribute("filterOnPet",true)
-    pet:SetAttribute("unitsPerColumn",10)
-    pet:SetAttribute("maxColumns",1)
-    pet:Show()
+    local header=CreateFrame("Frame","EtherPetGroupHeader",pet,"SecureGroupPetHeaderTemplate")
+    Ether.Header.pet=header
+    header:SetPoint("BOTTOMLEFT",pet,"TOPLEFT",0,10)
+    header:SetAttribute("template","EtherUnitTemplate")
+    header:SetAttribute("initialConfigFunction",initialConfigFunction)
+    header.CreateChildren=CreateChildren
+    header:SetAttribute("TypePet",true)
+    header:SetAttribute("ButtonHeight",50)
+    header:SetAttribute("ButtonWidth",50)
+    header:SetAttribute("xOffset",0)
+    header:SetAttribute("yOffset",0)
+    header:SetAttribute("showRaid",true)
+    header:SetAttribute("showParty",false)
+    header:SetAttribute("showPlayer",true)
+    header:SetAttribute("showSolo",true)
+    header:SetAttribute("columnAnchorPoint","LEFT")
+    header:SetAttribute("point","RIGHT")
+    header:SetAttribute("useOwnerUnit",false)
+    header:SetAttribute("filterOnPet",true)
+    header:SetAttribute("unitsPerColumn",10)
+    header:SetAttribute("maxColumns",1)
+    header:Hide()
+    Ether:SetupBorderLayout(header,3)
+    RegisterAttributeDriver(header,"state-visibility","[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
 end
 
 function Ether:ChangeDirectionHeader(horizontal)
-    if InCombatLockdown() then
-        return
-    end
-    local header=Ether.Header.raid
+    if InCombatLockdown() then return end
     if horizontal then
-        header:SetAttribute("point","LEFT")
-        header:SetAttribute("columnAnchorPoint","TOP")
-        header:SetAttribute("xOffset",1)
-        header:SetAttribute("yOffset",-1)
-        header:SetAttribute("columnSpacing",1)
+        Ether.Header.raid:SetAttribute("point","LEFT")
+        Ether.Header.raid:SetAttribute("columnAnchorPoint","TOP")
     else
-        header:SetAttribute("columnAnchorPoint","LEFT")
-        header:SetAttribute("point","TOP")
-        header:SetAttribute("xOffset",1)
-        header:SetAttribute("yOffset",-1)
-        header:SetAttribute("columnSpacing",1)
+        Ether.Header.raid:SetAttribute("columnAnchorPoint","LEFT")
+        Ether.Header.raid:SetAttribute("point","TOP")
     end
 
-    local name=header:GetName().."UnitButton"
+    local name=Ether.Header.raid:GetName().."UnitButton"
     local index=1
     local child=_G[name..index]
     while (child) do
@@ -217,54 +211,15 @@ function Ether:ChangeDirectionHeader(horizontal)
         index=index+1
         child=_G[name..index]
     end
-    if header:IsShown() then
-        header:Hide()
-        header:Show()
+    if Ether.Header.raid:IsShown() then
+        Ether.Header.raid:Hide()
+        Ether.Header.raid:Show()
     end
-    if Ether.DB[1001][3]==1 then
+    if Ether.DB[1001][1]==1 then
         Ether:AuraDisable()
         Ether:AuraEnable()
     end
 end
-
-function Ether:ResetGroupHeader()
-    if InCombatLockdown() then
-        return
-    end
-    local header=Ether.Header.raid
-    local name=header:GetName().."UnitButton"
-    local index=1
-    local child=_G[name..index]
-    while (child) do
-        child:ClearAllPoints()
-        index=index+1
-        child=_G[name..index]
-    end
-    if header:IsShown() then
-        header:Hide()
-        header:Show()
-    end
-end
-
-function Ether:ResetPetHeader()
-    if InCombatLockdown() then
-        return
-    end
-    local header=Ether.Header.pet
-    local name=header:GetName().."UnitButton"
-    local index=1
-    local child=_G[name..index]
-    while (child) do
-        child:ClearAllPoints()
-        index=index+1
-        child=_G[name..index]
-    end
-    if header:IsShown() then
-        header:Hide()
-        header:Show()
-    end
-end
-
 
 --[[
 order = 'DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR',
