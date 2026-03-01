@@ -8,7 +8,7 @@ Ether.AuraTemplate=function(newId)
         position="TOP",
         offsetX=0,
         offsetY=0,
-        enabled=true,
+        isEnabled=true,
         isDebuff=false,
         isActive=true
     }
@@ -24,7 +24,7 @@ Ether.PredefinedAuras={
             position="BOTTOMLEFT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -35,7 +35,7 @@ Ether.PredefinedAuras={
             position="BOTTOMLEFT",
             offsetX=8,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -46,7 +46,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -59,7 +59,7 @@ Ether.PredefinedAuras={
             position="TOPLEFT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -70,7 +70,7 @@ Ether.PredefinedAuras={
             position="RIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -81,7 +81,7 @@ Ether.PredefinedAuras={
             position="TOPRIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -92,7 +92,7 @@ Ether.PredefinedAuras={
             position="BOTTOM",
             offsetX=0,
             offsetY=6,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -105,7 +105,7 @@ Ether.PredefinedAuras={
             position="TOP",
             offsetX=0,
             offsetY=-6,
-            enabled=true,
+            isEnabled=true,
             isDebuff=true,
             isActive=true
         }
@@ -118,7 +118,7 @@ Ether.PredefinedAuras={
             position="BOTTOMLEFT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -131,7 +131,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -144,7 +144,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -155,7 +155,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=8,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -166,7 +166,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=16,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -179,7 +179,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -192,7 +192,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },
@@ -203,7 +203,7 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            enabled=true,
+            isEnabled=true,
             isDebuff=false,
             isActive=true
         },

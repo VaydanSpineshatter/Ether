@@ -6,7 +6,9 @@ function Ether:RefreshLayout(data)
         return
     end
     for _,button in pairs(data) do
-        if not button then return end
+        if not button then
+            return
+        end
         if button.background then
             button.background:SetTexture(Ether.DB[811][3])
         end

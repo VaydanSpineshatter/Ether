@@ -70,10 +70,10 @@ local Default={
         [10]={"LEFT","UIParent","LEFT",200,-200,1,1,1,1},
         [11]={"CENTER","UIParent","CENTER",0,-180,340,15,1,1},
         [12]={"CENTER","UIParent","CENTER",360,-270,240,15,1,1},
-        [13]={"TOPLEFT","UIParent","TOPLEFT",50,-100,640,480,1,1}
+        [13]={"TOPRIGHT","Minimap","TOPLEFT",-5,0,31,31,1,1},
+        [14]={"TOPLEFT","UIParent","TOPLEFT",50,-100,640,480,1,1}
     }
 }
-
 Ether.DataDefault=Default
 
 function Ether:DataEnableAll(t)
@@ -237,7 +237,8 @@ function Ether:RefreshFramePositions()
         [10]=Ether.Anchor.pet,
         [11]=Ether.unitButtons.solo["player"].castBar,
         [12]=Ether.unitButtons.solo["target"].castBar,
-        [13]=Ether.UIPanel.Frames["MAIN"]
+        [13]=Ether.EtherIcon,
+        [14]=Ether.UIPanel.Frames["MAIN"]
     }
 
     for frameID in pairs(Ether.DB[21]) do

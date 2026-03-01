@@ -36,16 +36,16 @@ local function Leave()
 end
 
 local function Event(self,event,unit)
-    if unit and unit ~= "pet" then
+    if unit and unit~="pet" then
         return
     end
-    local petButton = Ether.unitButtons.solo["pet"]
+    local petButton=Ether.unitButtons.solo["pet"]
     if not (petButton and petButton:IsVisible()) then
         return
     end
-    if event == "UNIT_HAPPINESS" then
+    if event=="UNIT_HAPPINESS" then
         PetStatus(self)
-    elseif event == "UNIT_PET" or event == "PET_UI_UPDATE" then
+    elseif event=="UNIT_PET" or event=="PET_UI_UPDATE" then
         PetStatus(self)
     end
 end
@@ -72,7 +72,7 @@ function Ether:PetCondition(button)
     condition:RegisterUnitEvent("UNIT_PET","player")
     condition:RegisterEvent("PET_UI_UPDATE")
     condition:SetScript("OnEvent",Event)
-    C_Timer.After(1, function()
-          PetStatus(condition)
+    C_Timer.After(1,function()
+        PetStatus(condition)
     end)
 end

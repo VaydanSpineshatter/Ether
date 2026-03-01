@@ -74,9 +74,11 @@ local function Hide(self)
 end
 
 local function Event(self,event,unit)
-    if self.unit~=unit then return end
+    if self.unit~=unit then
+        return
+    end
     if event=="UNIT_NAME_UPDATE" then
-        local name=UnitName(self  .unit)
+        local name=UnitName(self.unit)
         if name then
             self.name:SetText(Ether:UTF8SUB(name,1,3))
         end
@@ -98,16 +100,7 @@ local function OnAttributeChanged(self,name,unit)
         Ether.unitButtons.raid[oldUnit]=nil
     end
     Ether.unitButtons.raid[newUnit]=self
-    if newUnit and UnitExists(newUnit) then
-        if Ether.DB[1001][3]==1 then
-            C_After(0.3,function()
-                if GUID then
-                    Ether:UpdateRaidIsHelpful(self,GUID)
-                    Ether:UpdateRaidIsHarmful(self,GUID)
-                end
-            end)
-        end
-    end
+    self.unit = newUnit
     CheckStatus(self)
 end
 
@@ -194,7 +187,9 @@ function Ether:CreatePetHeader()
 end
 
 function Ether:ChangeDirectionHeader(horizontal)
-    if InCombatLockdown() then return end
+    if InCombatLockdown() then
+        return
+    end
     if horizontal then
         Ether.Header.raid:SetAttribute("point","LEFT")
         Ether.Header.raid:SetAttribute("columnAnchorPoint","TOP")

@@ -1,6 +1,5 @@
 ---@class Ether
 local _,Ether=...
-local L=Ether.L
 local pairs,ipairs=pairs,ipairs
 Ether.IsMovable=false
 Ether.IsShown=false
@@ -350,8 +349,8 @@ do
             name:SetFont(unpack(Ether.media.expressway),20,"OUTLINE")
             name:SetPoint("BOTTOMLEFT",menuIcon,"BOTTOMRIGHT",7,0)
             name:SetText("|cffcc66ffEther|r")
-            Ether:ApplyFramePosition(self.Frames["MAIN"],13)
-            Ether:SetupDrag(self.Frames["MAIN"],13,10)
+            Ether:ApplyFramePosition(self.Frames["MAIN"],14)
+            Ether:SetupDrag(self.Frames["MAIN"],14,10)
             local close=CreateFrame("Button",nil,self.Frames["BOTTOM"])
             close:SetSize(100,15)
             close:SetPoint("BOTTOM",0,3)
@@ -399,6 +398,7 @@ do
     Ether.UIPanel=EtherFrame
     Ether.WrapSettingsColor=WrapSettingsColor
     Ether.ShowHideSettings=ShowHideSettings
+    Ether.EtherToggle=EtherToggle
 end
 
 local sendChannel
@@ -428,33 +428,6 @@ Comm:RegisterComm("ETHER_VERSION",function(prefix,message,channel,sender)
     end
 end)
 
-local dataBroker
-do
-    if not LibStub or not LibStub("LibDataBroker-1.1",true) then
-        return
-    end
-    local LDB=LibStub("LibDataBroker-1.1")
-
-    dataBroker=LDB:NewDataObject("EtherIcon",{
-        type="launcher",
-        icon=unpack(Ether.media.etherIcon)
-    })
-
-    local function OnClick(_,button)
-        if button=="RightButton" then
-            EtherToggle()
-        end
-    end
-    local function ShowTooltip(GameTooltip)
-        GameTooltip:SetText("Ether",0,0.8,1)
-        GameTooltip:AddLine(L.MINIMAP_TOOLTIP_RIGHT,1,1,1,1)
-        GameTooltip:AddLine(L.MINIMAP_TOOLTIP_LOCALE,1,1,1,1)
-    end
-    dataBroker.OnTooltipShow=ShowTooltip
-    dataBroker.OnClick=OnClick
-    Ether.dataBroker=dataBroker
-end
-
 local function OnInitialize(self,event,...)
     if (event=="ADDON_LOADED") then
         local addon=...
@@ -468,9 +441,7 @@ local function OnInitialize(self,event,...)
         if type(_G.ETHER_DATABASE_DX_AA[1])~="number" then
             _G.ETHER_DATABASE_DX_AA[1]=0
         end
-        if type(_G.ETHER_ICON)~="table" then
-            _G.ETHER_ICON={}
-        end
+
         Ether.charKey=Ether:GetCharacterKey() or "Unknown-Unknown"
         Ether.version=C_AddOns.GetAddOnMetadata("Ether","Version")
         local function f()
@@ -546,11 +517,9 @@ local function OnInitialize(self,event,...)
         if IsInGuild() then
             Comm:SendCommMessage("ETHER_VERSION",Ether.version,"GUILD",nil,"NORMAL")
         end
-        if LibStub and LibStub("LibDBIcon-1.0",true) and LibStub("LibSharedMedia-3.0",true) then
+        if LibStub and LibStub("LibSharedMedia-3.0",true) then
             if not soundsRegistered then
                 soundsRegistered=true
-                local LDI=LibStub("LibDBIcon-1.0")
-                LDI:Register("EtherIcon",Ether.dataBroker,_G.ETHER_ICON)
                 local LSM=LibStub("LibSharedMedia-3.0")
                 LSM:Register("font","Expressway",[[Interface\AddOns\Ether\Media\Font\expressway.ttf]])
                 LSM:Register("statusbar","BlankBar",[[Interface\AddOns\Ether\Media\StatusBar\BlankBar.tga]])
@@ -577,6 +546,10 @@ local function OnInitialize(self,event,...)
         Ether:SetupDrag(Ether.Anchor.raid,9,10)
         Ether:ApplyFramePosition(Ether.Anchor.pet,10)
         Ether:SetupDrag(Ether.Anchor.pet,10,10)
+        if Ether.EtherIcon then
+             Ether.EtherIcon:ClearAllPoints()
+             Ether.EtherIcon:SetPoint("CENTER", Minimap, "CENTER", Ether.DB[21][13][4], Ether.DB[21][13][5])
+        end
         for _,unit in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
             Ether:CreateUnitButtons(unit)
         end

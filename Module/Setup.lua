@@ -27,7 +27,9 @@ function Ether:SetupName(button,number)
 end
 
 function Ether:SetupButtonLayout(button)
-    if not button then return end
+    if not button then
+        return
+    end
     button.background=button:CreateTexture(nil,"BACKGROUND")
     button.background:SetTexture(Ether.DB[811][3])
     button.background:SetAllPoints(button)
@@ -71,7 +73,9 @@ function Ether:SetupBorderLayout(target,Offset)
 end
 
 function Ether:SetupHealthBar(button,orient)
-    if not button then return end
+    if not button then
+        return
+    end
     local healthBar=CreateFrame("StatusBar",nil,button)
     button.healthBar=healthBar
     healthBar:SetAllPoints(button)
@@ -90,7 +94,9 @@ function Ether:SetupHealthBar(button,orient)
 end
 
 function Ether:SetupPowerBar(button)
-    if not button or not button.healthBar then return end
+    if not button or not button.healthBar then
+        return
+    end
     local powerBar=CreateFrame("StatusBar",nil,button)
     button.powerBar=powerBar
     powerBar:SetPoint("TOPLEFT",button,"BOTTOMLEFT")
@@ -106,7 +112,9 @@ function Ether:SetupPowerBar(button)
 end
 
 function Ether:SetupPrediction(button)
-    if not button or not button.healthBar then return end
+    if not button or not button.healthBar then
+        return
+    end
     local player=CreateFrame("StatusBar",nil,button)
     button.myPrediction=player
     player:SetAllPoints(button.healthBar)
@@ -335,7 +343,9 @@ local function onStop(self,index,grid)
     end
 
     local snapX,snapY=SnapToGrid(x,y,grid)
-    if not Ether.DB or not Ether.DB[21] or not Ether.DB[21][index] then return end
+    if not Ether.DB or not Ether.DB[21] or not Ether.DB[21][index] then
+        return
+    end
     local DB=Ether.DB[21][index]
     DB[1]=point
     DB[2]=relToName
@@ -497,7 +507,9 @@ function Ether:SoloAuraSetup(button)
 end
 
 function Ether:DispelFrameSetup(button)
-    if not button then return end
+    if not button then
+        return
+    end
     local r,g,b,a=0,0,0,0
     local frame=CreateFrame("Frame",nil,UIParent)
     frame:SetFrameLevel(button:GetFrameLevel()+6)
@@ -527,7 +539,9 @@ function Ether:DispelFrameSetup(button)
 end
 
 function Ether:CreatePopupBox()
-    if Ether.popupBox then return end
+    if Ether.popupBox then
+        return
+    end
     local frame=CreateFrame("Frame",nil,UIParent)
     Ether.popupBox=frame
     frame:Hide()
@@ -578,7 +592,9 @@ function Ether:CreatePopupBox()
 end
 
 function Ether:CreateToolFrame()
-    if Ether.toolFrame then return end
+    if Ether.toolFrame then
+        return
+    end
     local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
     Ether.toolFrame=frame
     frame:SetFrameStrata("TOOLTIP")

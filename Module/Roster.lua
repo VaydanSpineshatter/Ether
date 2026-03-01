@@ -8,7 +8,7 @@ local UnitGUID=UnitGUID
 local data={}
 local function GetUnits()
     wipe(data)
-    if UnitInParty("player") then
+    if UnitInParty("player") and not UnitInRaid("player") then
         for i=1,GetNumSubgroupMembers() do
             tinsert(data,"player")
             local unit="party"..i
@@ -16,14 +16,14 @@ local function GetUnits()
                 tinsert(data,unit)
             end
         end
-    elseif UnitInRaid("player") or UnitInBattleground("player") then
+    elseif UnitInRaid("player") and not UnitInParty("player") then
         for i=1,GetNumGroupMembers() do
             local unit="raid"..i
             if UnitExists(unit) then
                 tinsert(data,unit)
             end
         end
-    else
+    elseif not UnitInAnyGroup("player") then
         tinsert(data,"player")
     end
     return data
@@ -48,47 +48,20 @@ local cacheSoloAura={
     target=true,
 }
 
-function Ether:UnitStatus(unit)
-    if unit=="player" then
-        unit="raid1"
-    elseif unit=="party1" then
-        unit="raid2"
-    elseif unit=="party2" then
-        unit="raid3"
-    elseif unit=="party3" then
-        unit="raid4"
-    elseif unit=="party4" then
-        unit="raid5"
-    elseif unit=="pet" then
-        unit="raidpet1"
-    elseif unit=="partypet1" then
-        unit="raidpet2"
-    elseif unit=="partypet2" then
-        unit="raidpet3"
-    elseif unit=="partypet3" then
-        unit="raidpet4"
-    elseif unit=="partypet4" then
-        unit="raidpet5"
-    end
-end
-
-local cacheParty={
-    party1=true,
-    party2=true,
-    party3=true,
-    party4=true,
-    partypet1=true,
-    partypet2=true,
-    partypet3=true,
-    partypet4=true,
-}
-
 for i=1,40 do
     unitCache["raid"..i]=true
 end
 
 for i=1,40 do
     unitCache["raidpet"..i]=true
+end
+
+for i=1,4 do
+    unitCache["party"..i]=true
+end
+
+for i=1,4 do
+    unitCache["partypet"..i]=true
 end
 
 function Ether:IsValidSolo(unit)
@@ -99,10 +72,6 @@ function Ether:IsValidSoloAura(unit)
     return cacheSoloAura[unit]
 end
 
-function Ether:IsValidParty(unit)
-    return cacheParty[unit]
-end
-
 function Ether:IsValidUnit(unit)
     return unitCache[unit]
 end
@@ -111,23 +80,10 @@ local status=false
 local function refreshButtons()
     if not status then
         status=true
-        C_After(2,function()
-            if UnitInAnyGroup("player") then
-                for _,unit in ipairs(GetUnits()) do
-                    local button=Ether.unitButtons.raid[unit]
-                    if Ether.DB[1001][3]==1 then
-                        local guid=UnitGUID(unit)
-                        if not guid then return end
-                        Ether:UpdateRaidIsHelpful(button,guid)
-                        Ether:UpdateRaidIsHarmful(button,guid)
-                    end
-                end
-                if Ether.DB[401][6]==1 then
-                    Ether.Handler:FullUpdate()
-                end
-            else
+        C_After(3,function()
+            if not UnitInAnyGroup("player") then
                 for _,button in pairs(Ether.unitButtons.raid) do
-                    if button and button:IsVisible() then
+                    if button then
                         Ether:UpdateDispelFrame(button,{0,0,0,0})
                         Ether:UpdatePrediction(button)
                     end
@@ -135,44 +91,66 @@ local function refreshButtons()
                 if Ether.DB[1001][1]==1 then
                     Ether:FullAuraReset()
                 end
+                if Ether.DB[401][6]==1 then
+                    Ether.Handler:FullUpdate()
+                end
+            else
+                if Ether.DB[1001][3]==1 then
+                    for _,button in pairs(Ether.unitButtons.raid) do
+                        if button then
+                            local guid=UnitGUID(button.unit)
+                            if guid then
+                                Ether:CheckRaidAuras(button,guid)
+                            end
+                        end
+                    end
+                end
+                if Ether.DB[401][6]==1 then
+                    Ether.Handler:FullUpdate()
+                end
+                if UnitInBattleground("player") then
+                    for index = 1, GetNumGroupMembers() do
+                        local unit = "raid" .. index
+                        if UnitExists(unit) then
+                            local button = Ether.unitButtons.raid[unit]
+                            if button then
+                                Ether:InitialHealth(button)
+                            end
+                        end
+                    end
+                end
             end
             status=false
         end)
     end
 end
 
-local number=0
-local pvpData={}
+local number = 0
+local IsPVP = {}
 function Ether:CheckPvpStatus()
-    wipe(pvpData)
-    for _,unit in ipairs(GetUnits()) do
-        local name=UnitName(unit)
-        local pvp=UnitIsPVP(unit)
-        if pvp and name then
-            number=number+1
-            table.insert(pvpData,name)
-        end
-    end
-    if number~=0 then
-        Ether:EtherInfo("|cffcc66ffPvP Mismatch found:|r")
-        for _,info in ipairs(pvpData) do
-            if info then
-                Ether:EtherInfo(string.format("%s",info))
+    number = 0
+    wipe(IsPVP)
+    table.insert(IsPVP, "|cffcc66ffPvP Mismatch found:|r")
+    for unit,button in pairs(Ether.unitButtons.raid) do
+            if button then
+                if UnitExists(unit) then
+                local name = UnitName(unit)
+                local pvp=UnitIsPVPFreeForAll(unit)
+                if pvp and name then
+                    table.insert(IsPVP, name)
+                    number = number + 1
+                end
             end
         end
-        Ether:EtherInfo("|cffcc66ffMismatch total:|r "..tostring(number).."")
-        number=0
     end
+    table.insert(IsPVP, "|cffcc66ffMismatch total:|r " ..  tostring(number))
+    local concat = table.concat(IsPVP, "\n")
+    Ether:EtherInfo(concat)
 end
 
 local function Roster(_,event)
     if event=="PLAYER_UNGHOST" then
         refreshButtons()
-        for _,button in pairs(Ether.unitButtons.raid) do
-            if button then
-                Ether:InitialHealth(button)
-            end
-        end
     elseif event=="GROUP_ROSTER_UPDATE" then
         refreshButtons()
     elseif event=="PLAYER_TARGET_CHANGED" then

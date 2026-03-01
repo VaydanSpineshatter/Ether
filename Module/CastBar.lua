@@ -57,9 +57,13 @@ do
             eventFrame=CreateFrame("Frame")
             eventFrame:SetScript("OnEvent",function(self,event,unit,...)
                 local bar=Ether.unitButtons.solo[unit]
-                if not bar then return end
+                if not bar then
+                    return
+                end
                 self.unit=bar:GetAttribute("unit")
-                if self.unit~="player" and self.unit~="target" then return end
+                if self.unit~="player" and self.unit~="target" then
+                    return
+                end
                 Events[event](bar,event,unit,...)
             end)
         end

@@ -237,7 +237,9 @@ local function UpdateTooltip(self,unit)
 end
 
 function Ether:ToolTipInitialize()
-    if not Ether.toolFrame then return end
+    if not Ether.toolFrame then
+        return
+    end
     local frame=Ether.toolFrame
     GameTooltip:HookScript("OnTooltipSetUnit",function(self)
         if Ether.DB[401][3]~=1 then

@@ -14,11 +14,17 @@ function Ether:ShortenName(name,maxLength)
 end
 
 function Ether:UTF8SUB(name,start,numChars)
-    if not name then return end
-    start = start or 1
-    numChars = numChars or 0
-    if start < 1 then start = 1 end
-    if numChars <= 0 then return "" end
+    if not name then
+        return
+    end
+    start=start or 1
+    numChars=numChars or 0
+    if start<1 then
+        start=1
+    end
+    if numChars<=0 then
+        return ""
+    end
 
     local byteIndex=start
     local charCount=0
@@ -45,6 +51,6 @@ function Ether:UpdateName(button)
     end
     local name=UnitName(button.unit)
     if name then
-       button.name:SetText(Ether:UTF8SUB(name,1,3))
+        button.name:SetText(Ether:UTF8SUB(name,1,3))
     end
 end

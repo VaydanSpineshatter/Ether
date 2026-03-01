@@ -2,10 +2,10 @@
 ## Title: |cffcc66ffEther|r
 ## Notes: Ether Unit Frames
 ## Author: Vaydan-Spineshatter
-## Version: 37222
-## SavedVariables: ETHER_DATABASE_DX_AA, ETHER_ICON
+## Version: 41222
+## SavedVariables: ETHER_DATABASE_DX_AA
 ## IconTexture: Interface\AddOns\Ether\Media\Texture\icon
-## OptionalDeps: LibStub, CallbackHandler-1.0, LibDBIcon-1.0, ChatThrottleLib
+## OptionalDeps: LibSharedMedia-3.0
 ## X-Flavor: TBC
 ## X-Curse-Project-ID: 1376190
 ## X-Curse-Project-Website: https://www.curseforge.com/wow/addons/ether
@@ -13,7 +13,9 @@
 Libs.xml
 EtherUnitTemplate.xml
 Locale.lua
+Callback/EtherCallback.lua
 Core.lua
+Icon/Icon.lua
 Locale.xml
 Data/Proto.lua
 Data/Profile.lua

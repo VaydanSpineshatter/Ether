@@ -99,8 +99,12 @@ function Ether:HideIndicators(indicator)
 end
 
 function Ether:IndictorsTexture(b,tbl)
-    if not b then return end
-    if not b.Indicators then b.Indicators={} end
+    if not b then
+        return
+    end
+    if not b.Indicators then
+        b.Indicators={}
+    end
     local frame=CreateFrame("Frame",nil,UIParent)
     frame:SetFrameLevel(b:GetFrameLevel()+7)
     if not b.Indicators[tbl] then
@@ -117,7 +121,9 @@ end
 
 function Ether:SaveIndicatorsPosition(indicator,number)
     for _,button in pairs(Ether.unitButtons.raid) do
-        if not button or not button.Indicators then return end
+        if not button or not button.Indicators then
+            return
+        end
         Ether:IndictorsTexture(button,indicator)
         if button.Indicators[indicator] then
             button.Indicators[indicator]:Hide()
@@ -256,8 +262,8 @@ local function UpdateUnitFlags()
                     button.healthBar:SetValue(0)
                     button.healthBar:SetMinMaxValues(0,0)
                 end
-                Ether:UpdateDispelFrame(button,{0,0,0,0})
-                Ether:UpdatePrediction(button)
+                Ether:UpdateDispelFrame(button.unit,{0,0,0,0})
+                Ether:UpdatePrediction(button.unit)
                 button.Indicators.UnitFlags:Show()
             else
                 button.Indicators.UnitFlags:Hide()
@@ -283,7 +289,9 @@ local function UpdatePlayerFlags()
                 button.Indicators.PlayerFlags:Hide()
             end
 
-            if Ether.DB[401][4]~=1 then return end
+            if Ether.DB[401][4]~=1 then
+                return
+            end
             if UnitIsAFK("player") then
                 if not Ether.unitIsAway then
                     Ether:AFK()
@@ -361,6 +369,7 @@ end
 function Ether:IndicatorsUpdate(unit)
 
 end
+
 local function UpdateRaidTarget()
     for _,button in pairs(Ether.unitButtons.raid) do
         if button and button:IsVisible() then
@@ -382,7 +391,9 @@ end
 
 function Ether:UpdateSoloIndicator(unit)
     local button=Ether.unitButtons.solo[unit]
-    if not button or not button.RaidTarget then return end
+    if not button or not button.RaidTarget then
+        return
+    end
     if UnitExists(unit) then
         local index=GetRaidTargetIndex(unit)
         if index then
@@ -408,11 +419,16 @@ end
 Ether.unitIsAway=false
 function Ether:AFK()
     Ether.unitIsAway=true
-    if Ether.DB[1201][1]==1 then Ether:CastBarDisable("player") end
-    if Ether.DB[1201][2]==1 then Ether:CastBarDisable("target") end
-    if Ether.DB[1001][1]==1 then Ether:AuraDisable() end
+    if Ether.DB[1201][1]==1 then
+        Ether:CastBarDisable("player")
+    end
+    if Ether.DB[1201][2]==1 then
+        Ether:CastBarDisable("target")
+    end
     if Ether.DB[401][5]==1 then
-        C_Timer.After(0.1,function() Ether:RangeDisable() end)
+        C_Timer.After(0.1,function()
+            Ether:RangeDisable()
+        end)
     end
     for i=1,#map do
         Ether:HideIndicators(map[i])
@@ -421,13 +437,16 @@ end
 
 function Ether:NotAFK()
     Ether.unitIsAway=false
-    if Ether.DB[1201][1]==1 then Ether:CastBarEnable("player") end
-    if Ether.DB[1201][2]==1 then Ether:CastBarEnable("target") end
-    if Ether.DB[1001][1]==1 then
-        C_Timer.After(0.3,function() Ether:AuraEnable() end)
+    if Ether.DB[1201][1]==1 then
+        Ether:CastBarEnable("player")
+    end
+    if Ether.DB[1201][2]==1 then
+        Ether:CastBarEnable("target")
     end
     if Ether.DB[401][5]==1 then
-        C_Timer.After(0.1,function() Ether:RangeEnable() end)
+        C_Timer.After(0.1,function()
+            Ether:RangeEnable()
+        end)
     end
     Ether.Handler:FullUpdate()
 end

@@ -49,7 +49,9 @@ local function Update(self,event,unit)
 end
 
 function Ether:CreateUnitButtons(token)
-    if InCombatLockdown() then return end
+    if InCombatLockdown() then
+        return
+    end
     local button=CreateFrame("Button","Ether_"..token.."_UnitButton",UIParent,"EtherUnitTemplate")
     button.unit=token
     button:SetSize(120,40)

@@ -189,23 +189,13 @@ local function UpdateAuraStatus(spellId)
     if Ether.DB[1001][3]~=1 then
         return
     end
-    if not spellId then
-        return
-    end
+    if not spellId then return end
     local debuff=Ether.DB[1003][spellId].isDebuff
-    local active=Ether.DB[1003][spellId].isActive
     local editor=Ether.UIPanel.Frames["EDITOR"]
     if debuff then
         editor.isDebuff.bg:SetColorTexture(0.80,0.40,1.00,0.4)
     else
         editor.isDebuff.bg:SetColorTexture(0,0,0,0)
-    end
-    if not active then
-        editor.isActive.bg:SetColorTexture(0.80,0.40,1.00,0.4)
-        Ether:ForceHelpfulNotActive()
-    else
-        editor.isActive.bg:SetColorTexture(0,0,0,0)
-        Ether:ForceHelpfulNotActive()
     end
 end
 
@@ -1239,14 +1229,6 @@ function Ether:CreateCustomSection(EtherFrame)
             UpdateAuraStatus(Ether.UIPanel.SpellId)
         end
     end)
-    local isActive=EtherPanelButton(editor,50,25,"Active","BOTTOMLEFT",isDebuff,"TOPLEFT",0,10)
-    editor.isActive=isActive
-    isActive:SetScript("OnClick",function()
-        if Ether.UIPanel.SpellId then
-            Ether.DB[1003][Ether.UIPanel.SpellId].isActive=not Ether.DB[1003][Ether.UIPanel.SpellId].isActive
-            UpdateAuraStatus(Ether.UIPanel.SpellId)
-        end
-    end)
     local sizeLabel=editor:CreateFontString(nil,"OVERLAY","GameFontWhiteSmall")
     editor.sizeLabel=sizeLabel
     sizeLabel:SetPoint("TOPLEFT",spellIdInput,"BOTTOMLEFT",0,-120)
@@ -2159,7 +2141,7 @@ function Ether:CreateConfigSection(EtherFrame)
     end
 
     local DB=Ether.DB
-    local K={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidFrame","PetFrame", "PlayerCastBar", "TargetCastBar"}
+    local K={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidFrame","PetFrame","PlayerCastBar","TargetCastBar"}
 
     local F={
         [1]=Ether.infoFrame,
@@ -2173,7 +2155,8 @@ function Ether:CreateConfigSection(EtherFrame)
         [9]=Ether.Anchor.raid,
         [10]=Ether.Anchor.pet,
         [11]=Ether.unitButtons.solo["player"].castBar,
-        [12]=Ether.unitButtons.solo["target"].castBar
+        [12]=Ether.unitButtons.solo["target"].castBar,
+        [13]=Ether.EtherIcon
     }
     local sizeLabel=parent:CreateFontString(nil,"OVERLAY")
     sizeLabel:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
@@ -2262,7 +2245,7 @@ function Ether:CreateConfigSection(EtherFrame)
         sizeSlider:Enable()
         alphaSlider:Enable()
         local pos=DB[21][SELECTED]
-         sizeSlider:SetValue(pos[8] or 1)
+        sizeSlider:SetValue(pos[8] or 1)
         alphaSlider:SetValue(pos[9] or 1)
         UpdateValueLabels()
     end
