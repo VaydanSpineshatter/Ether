@@ -507,9 +507,7 @@ function Ether:SoloAuraSetup(button)
 end
 
 function Ether:DispelFrameSetup(button)
-    if not button then
-        return
-    end
+    if not button then return end
     local r,g,b,a=0,0,0,0
     local frame=CreateFrame("Frame",nil,UIParent)
     frame:SetFrameLevel(button:GetFrameLevel()+6)

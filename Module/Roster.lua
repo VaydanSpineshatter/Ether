@@ -1,33 +1,10 @@
 local _,Ether=...
 local C_After=C_Timer.After
 local UnitExists=UnitExists
-local tinsert=table.insert
+local tinsert,tconcat=table.insert, table.concat
 local IsEventValid=C_EventUtils.IsEventValid
 local ipairs=ipairs
 local UnitGUID=UnitGUID
-local data={}
-local function GetUnits()
-    wipe(data)
-    if UnitInParty("player") and not UnitInRaid("player") then
-        for i=1,GetNumSubgroupMembers() do
-            tinsert(data,"player")
-            local unit="party"..i
-            if UnitExists(unit) then
-                tinsert(data,unit)
-            end
-        end
-    elseif UnitInRaid("player") and not UnitInParty("player") then
-        for i=1,GetNumGroupMembers() do
-            local unit="raid"..i
-            if UnitExists(unit) then
-                tinsert(data,unit)
-            end
-        end
-    elseif not UnitInAnyGroup("player") then
-        tinsert(data,"player")
-    end
-    return data
-end
 
 local unitCache={
     player=true,
@@ -130,21 +107,21 @@ local IsPVP = {}
 function Ether:CheckPvpStatus()
     number = 0
     wipe(IsPVP)
-    table.insert(IsPVP, "|cffcc66ffPvP Mismatch found:|r")
+    tinsert(IsPVP, "|cffcc66ffPvP Mismatch found:|r")
     for unit,button in pairs(Ether.unitButtons.raid) do
             if button then
                 if UnitExists(unit) then
                 local name = UnitName(unit)
                 local pvp=UnitIsPVPFreeForAll(unit)
                 if pvp and name then
-                    table.insert(IsPVP, name)
+                    tinsert(IsPVP, name)
                     number = number + 1
                 end
             end
         end
     end
-    table.insert(IsPVP, "|cffcc66ffMismatch total:|r " ..  tostring(number))
-    local concat = table.concat(IsPVP, "\n")
+   tinsert(IsPVP, "|cffcc66ffMismatch total:|r " ..  tostring(number))
+    local concat = tconcat(IsPVP, "\n")
     Ether:EtherInfo(concat)
 end
 

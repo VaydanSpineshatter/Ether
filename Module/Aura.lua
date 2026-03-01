@@ -132,18 +132,24 @@ end
 
 local function UpdateDispelButton(button,guid)
     if not button or not guid then return end
-    local dispelName=dataDispel[guid].dispel
-    local order=CheckDispelOrder(dispelName)
+    local dispel=dataDispel[guid].dispel
+    local order=CheckDispelOrder(dispel)
     local color=colors[order] or {0,0,0,0}
-    Ether:UpdateDispelFrame(button,color)
-    if not button.iconFrame then return end
-    local icon=dataDispel[guid].icon
-    local duration=dataDispel[guid].duration
-    local spellId=dataDispel[guid].spellId
-    button.dispelIcon:SetTexture(icon)
-    button.dispelBorder:SetColorTexture(unpack(color))
-    dataDispel[guid][spellId]=button.iconFrame
-    Ether.StartBlink(dataDispel[guid][spellId],duration,0.28)
+    if dispel then
+        if button.left and button.right then
+            button.left:SetColorTexture(unpack(color))
+            button.right:SetColorTexture(unpack(color))
+        end
+    end
+    if button.iconFrame then
+        local icon=dataDispel[guid].icon
+        local duration=dataDispel[guid].duration
+        local spellId=dataDispel[guid].spellId
+        button.dispelIcon:SetTexture(icon)
+        button.dispelBorder:SetColorTexture(unpack(color))
+        dataDispel[guid][spellId]=button.iconFrame
+        Ether.StartBlink(dataDispel[guid][spellId],duration,0.28)
+    end
 end
 
 local function CheckActiveStatus(tbl,config,guid,spellId)
@@ -176,7 +182,6 @@ function Ether:CheckRaidAuras(button,guid)
         end
         index=index+1
     end
-
     index=1
     while true do
         local aura=GetDebuffDataByIndex(button.unit,index)
@@ -199,19 +204,18 @@ local function raidAuraUpdate(unit,updateInfo)
     local guid=UnitGUID(unit)
     if not guid then return end
     local CFG=Ether.DB[1003]
-
     if updateInfo.addedAuras then
         for _,aura in ipairs(updateInfo.addedAuras) do
             if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                if not dataDispel[guid] then dataDispel[guid]={} end
                 dataDispel[guid] = {
-                   spellId= aura.spellId,
+                    spellId= aura.spellId,
                     icon=aura.icon,
                     dispel=aura.dispelName,
                     duration=aura.duration
                 }
                UpdateDispelButton(button,guid)
-                raidAuraDispel[aura.auraInstanceID]=aura
+               raidAuraDispel[aura.auraInstanceID]=aura
             end
             if CFG[aura.spellId] then
                 local data=CFG[aura.spellId]
@@ -228,7 +232,6 @@ local function raidAuraUpdate(unit,updateInfo)
             end
         end
     end
-
     if updateInfo.removedAuraInstanceIDs then
         for _,auraInstanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
             if raidAuraDispel[auraInstanceID] then
@@ -241,7 +244,6 @@ local function raidAuraUpdate(unit,updateInfo)
                 end
                 raidAuraDispel[auraInstanceID]=nil
             end
-
             if raidAuraHarmful[auraInstanceID] then
                 local auraData = raidAuraHarmful[auraInstanceID]
                 if auraData and auraData.spellId and dataHarmful[guid] then
@@ -251,7 +253,6 @@ local function raidAuraUpdate(unit,updateInfo)
                 end
                 raidAuraHarmful[auraInstanceID]=nil
             end
-
             if raidAuraHelpful[auraInstanceID] then
                 local auraData = raidAuraHelpful[auraInstanceID]
                 if auraData and auraData.spellId and dataHelpful[guid] then
