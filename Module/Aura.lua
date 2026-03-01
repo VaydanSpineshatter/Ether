@@ -8,7 +8,6 @@ local GetUnitAuras=C_UnitAuras.GetUnitAuras
 local UnitGUID=UnitGUID
 local UnitExists=UnitExists
 local unpack=unpack
-local GetUnitAuraBySpellID=C_UnitAuras.GetUnitAuraBySpellID
 local tinsert=table.insert
 local colors={
     ["Magic"]={0.2,0.6,1.0,1},
@@ -24,16 +23,6 @@ local dispelClass={
     PALADIN={["Magic"]=true,["Disease"]=true,["Poison"]=true},
     DRUID={["Curse"]=true,["Poison"]=true},
     SHAMAN={["Disease"]=true,["Poison"]=true},
-    WARRIOR=true,
-    ROGUE=true,
-    HUNTER=true,
-    WARLOCK=true
-}
-local dispelPriority={
-    Magic=4,
-    Disease=3,
-    Curse=2,
-    Poison=1
 }
 
 local _,classFilename=UnitClass("player")
@@ -118,23 +107,10 @@ function Ether:UpdatePrediction(button)
     end
 end
 
-local function CheckDispelOrder(data)
-    if not data then return nil end
-    local dispel=nil
-    local priority=0
-    local order=dispelPriority[data] or 0
-    if order>priority then
-        priority=order
-        dispel=order
-    end
-    return dispel
-end
-
 local function UpdateDispelButton(button,guid)
     if not button or not guid then return end
     local dispel=dataDispel[guid].dispel
-    local order=CheckDispelOrder(dispel)
-    local color=colors[order] or {0,0,0,0}
+    local color=colors[dispel] or {0,0,0,0}
     if dispel then
         if button.left and button.right then
             button.left:SetColorTexture(unpack(color))
