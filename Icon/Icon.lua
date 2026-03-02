@@ -10,7 +10,6 @@ button:SetFrameStrata("MEDIUM")
 button:SetFrameLevel(8)
 button:SetHighlightTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
 
-
 local function OnUpdate(self, elapsed)
     self.last = (self.last or 0) + elapsed
     if self.last > 0.01 then

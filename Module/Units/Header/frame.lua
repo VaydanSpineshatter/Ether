@@ -44,19 +44,24 @@ local function Update(self)
     Ether.Handler:FullUpdate()
 end
 
+local guidTbl = {}
 local function CheckStatus(self)
     self.unit=self:GetAttribute("unit")
     local guid=self.unit and UnitGUID(self.unit)
-    if (guid~=self.unitGUID) then
-        self.unitGUID=guid
+    if (guid~=self.destGUID) then
+        self.destGUID=guid
         if guid then
             Update(self)
+            if not guidTbl[guid] and UnitExists(self.unit) and guid ~= nil then
+                table.insert(Ether.guidData,  self.destGUID)
+                guidTbl[self.destGUID] = true
+                Ether:EtherInfo("Added: ", self.destGUID)
+            end
         end
     end
 end
 
 local function Show(self)
-    self.unit=self:GetAttribute("unit")
     self:RegisterEvent("UNIT_NAME_UPDATE")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     if self.TypePet then
@@ -85,17 +90,26 @@ local function Event(self,event,unit)
     end
 end
 
+function Ether:EtherClearGUID(guid)
+    if not guid then return end
+      if guidTbl[guid] then
+             for index, info in ipairs(Ether.guidData) do
+                if index and info and info == guid then
+                    table.remove(Ether.guidData, index)
+                    break
+                end
+            end
+          Ether:EtherInfo("Removed: ", guid)
+          guidTbl[guid] = nil
+      end
+end
+
 local function OnAttributeChanged(self,name,unit)
     if not unit or name~="unit" then
         return
     end
     local oldUnit=self.unit
     local newUnit=unit
-    local GUID=UnitGUID(unit)
-    if self.unitGUID~=GUID then
-        Ether:CleanupAuras(self.unitGUID)
-        self.unitGUID=nil
-    end
     if oldUnit and oldUnit~=newUnit then
         Ether.unitButtons.raid[oldUnit]=nil
     end

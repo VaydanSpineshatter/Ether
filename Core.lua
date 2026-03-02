@@ -31,6 +31,7 @@ Ether.unitButtons={
     raid={},
     solo={}
 }
+Ether.guidData = {}
 
 local function CreateSettingsButtons(name,parent,layer,onClick,isTopButton)
     local btn=CreateFrame("Button",nil,parent)
