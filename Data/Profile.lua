@@ -36,13 +36,15 @@ local function ProfileRefresh(tbl)
     Ether:UpdateEditor(tbl)
     Ether:ProfileRefreshLayout()
     Ether:InitialIndicatorsPosition()
-    Ether:FullAuraReset()
+    Ether:AuraDisable()
+    Ether:AuraEnable()
 end
 
 function Ether:ProfileRefreshLayout()
     Ether:RefreshLayout(Ether.unitButtons.raid)
     Ether:RefreshLayout(Ether.unitButtons.solo)
 end
+
 function Ether:ExportCurrentProfile()
     Ether:CreateCustomSection(Ether.UIPanel)
     Ether:CreatePositionSection(Ether.UIPanel)

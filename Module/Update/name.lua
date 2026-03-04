@@ -45,12 +45,12 @@ function Ether:UTF8SUB(name,start,numChars)
     return name:sub(start,endIndex)
 end
 
-function Ether:UpdateName(button)
+function Ether:UpdateName(button,number)
     if not button or not button.unit or not button.name then
         return
     end
     local name=UnitName(button.unit)
     if name then
-        button.name:SetText(Ether:UTF8SUB(name,1,3))
+        button.name:SetText(Ether:UTF8SUB(name,1,number))
     end
 end

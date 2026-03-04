@@ -506,9 +506,28 @@ function Ether:SoloAuraSetup(button)
     end
 end
 
-function Ether:DispelFrameSetup(button)
+function Ether:DispelLineSetup(button)
     if not button then return end
+    if button.dispelLeft then return end
+    local frame=CreateFrame("Frame",nil,UIParent)
+    frame:SetFrameLevel(button:GetFrameLevel()+6)
     local r,g,b,a=0,0,0,0
+    local left=frame:CreateTexture(nil,"BORDER")
+    left:SetColorTexture(r,g,b,a)
+    left:SetPoint("LEFT",button,"LEFT",5,0)
+    left:SetSize(5,27)
+    local right=frame:CreateTexture(nil,"BORDER")
+    right:SetColorTexture(r,g,b,a)
+    right:SetPoint("RIGHT",button,"RIGHT",-5,0)
+    right:SetSize(5,27)
+    button.dispelLeft = left
+    button.dispelRight = right
+    return button
+end
+
+function Ether:DispelIconSetup(button)
+    if not button then return end
+    if button.dispelFrame then return end
     local frame=CreateFrame("Frame",nil,UIParent)
     frame:SetFrameLevel(button:GetFrameLevel()+6)
     frame:SetPoint("CENTER",button,"CENTER",0,8)
@@ -520,26 +539,110 @@ function Ether:DispelFrameSetup(button)
     border:SetColorTexture(1,1,1,0)
     border:SetPoint("TOPLEFT",frame,"TOPLEFT",-1,1)
     border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",1,-1)
-    local left=frame:CreateTexture(nil,"BORDER")
-    left:SetColorTexture(r,g,b,a)
-    left:SetPoint("TOPLEFT",button,"TOPLEFT",5,-5)
-    left:SetSize(5,40)
-    local right=frame:CreateTexture(nil,"BORDER")
-    right:SetColorTexture(r,g,b,a)
-    right:SetPoint("TOPRIGHT",button,"TOPRIGHT",-5,-5)
-    right:SetSize(5,40)
-    button.left=left
-    button.right=right
-    button.iconFrame=frame
+    button.dispelFrame=frame
     button.dispelIcon=icon
     button.dispelBorder=border
     return button
 end
 
-function Ether:CreatePopupBox()
-    if Ether.popupBox then
+local function CheckRaidButtons(arg1)
+    for unit,button in pairs(Ether.unitButtons.raid) do
+        if button and unit and unit==arg1 then
+            return button,button.unit,button.destGUID
+        end
+    end
+    return nil
+end
+
+local Create, Setup, Reset
+do
+    local frame = CreateFrame("Frame", nil, UIParent)
+    function Setup(self, CFG, unit)
+        local button = CheckRaidButtons(unit)
+        if not button then return end
+        self:SetParent(button.healthBar)
+        self:SetColorTexture(unpack(CFG.color))
+        self:SetSize(CFG.size, CFG.size)
+        self:SetPoint(CFG.position, button.healthBar, CFG.position, CFG.offsetX, CFG.offsetY)
+        self:Show()
+    end
+
+    function Reset(self)
+        self:Hide()
+        self:ClearAllPoints()
+        self:SetParent(nil)
+    end
+
+    function Create()
+        local method = frame:CreateTexture(nil, "OVERLAY")
+        method.Setup = Setup
+        method.Reset = Reset
+        return method
+    end
+end
+
+local active = {}
+local inactive = {}
+local temp = {}
+local count = 0
+
+function Ether:Acquire(...)
+    if count >= 220 then
+        return nil
+    end
+    local obj = tremove(inactive)
+    if not obj then
+        obj = Create()
+    end
+    count = count + 1
+    active[count] = obj
+    obj._poolIndex = count
+    if obj.Setup then
+        obj:Setup(...)
+    end
+    return obj
+end
+
+function Ether:Release(obj)
+    if not obj or not obj._poolIndex then
         return
     end
+    local index = obj._poolIndex
+    if index <= 0 or index > count then
+        return
+    end
+    local last = active[count]
+    active[index] = last
+    active[count] = nil
+
+    if last and last ~= obj then
+        last._poolIndex = index
+    end
+
+    obj._poolIndex = -1
+    count = count - 1
+
+    if obj.Reset then
+        obj:Reset()
+    end
+
+    if #inactive < 150 then
+        inactive[#inactive + 1] = obj
+    end
+end
+
+function Ether:ReleaseAll()
+    for i = 1, count do
+        temp[i] = active[i]
+    end
+    for i = 1, #temp do
+        Ether:Release(temp[i])
+        temp[i] = nil
+    end
+end
+
+function Ether:CreatePopupBox()
+    if Ether.popupBox then return end
     local frame=CreateFrame("Frame",nil,UIParent)
     Ether.popupBox=frame
     frame:Hide()

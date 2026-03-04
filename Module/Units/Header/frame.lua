@@ -5,7 +5,6 @@ local pet=CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplat
 Ether.Anchor.pet=pet
 local UnitExists=UnitExists
 local UnitGUID=UnitGUID
-local C_After=C_Timer.After
 local GameTooltip=GameTooltip
 local initialConfigFunction=[[
     local header = self:GetParent()
@@ -35,28 +34,25 @@ local function Leave()
 end
 
 local function Update(self)
-    self.unit=self:GetAttribute("unit")
     Ether:UpdateHealth(self)
-    Ether:UpdateName(self,true)
-    C_After(0.1,function()
-        Ether:InitialHealth(self)
-    end)
+    Ether:UpdateName(self,3)
+    Ether:InitialHealth(self)
     Ether.Handler:FullUpdate()
 end
 
-local guidTbl = {}
 local function CheckStatus(self)
     self.unit=self:GetAttribute("unit")
     local guid=self.unit and UnitGUID(self.unit)
     if (guid~=self.destGUID) then
         self.destGUID=guid
         if guid then
+        if not Ether.dataDispel[guid] then
+            Ether.dataDispel[guid]={}
+        end
+        if not Ether.dataSpell[guid] then
+            Ether.dataSpell[guid]={}
+        end
             Update(self)
-            if not guidTbl[guid] and UnitExists(self.unit) and guid ~= nil then
-                table.insert(Ether.guidData,  self.destGUID)
-                guidTbl[self.destGUID] = true
-                Ether:EtherInfo("Added: ", self.destGUID)
-            end
         end
     end
 end
@@ -78,30 +74,21 @@ local function Hide(self)
     end
 end
 
-local function Event(self,event,unit)
-    if self.unit~=unit then
-        return
+local function UpdateAuraByIndex(self)
+    local guid=self.destGUID
+    if not Ether.dataSpell[guid] then
+        Ether.dataSpell[guid]={}
     end
-    if event=="UNIT_NAME_UPDATE" then
-        local name=UnitName(self.unit)
-        if name then
-            self.name:SetText(Ether:UTF8SUB(name,1,3))
-        end
+    local C=Ether.DB[1003]
+    local index=1
+    while true do
+        local aura=C_UnitAuras.GetBuffDataByIndex(self.unit,index)
+        if not aura then break end
+        if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+        Ether.dataSpell[guid][aura.spellId]=Ether:Acquire(C[aura.spellId],self.unit)
+        Ether.spellInstance[aura.auraInstanceID]=aura
+        index=index+1
     end
-end
-
-function Ether:EtherClearGUID(guid)
-    if not guid then return end
-      if guidTbl[guid] then
-             for index, info in ipairs(Ether.guidData) do
-                if index and info and info == guid then
-                    table.remove(Ether.guidData, index)
-                    break
-                end
-            end
-          Ether:EtherInfo("Removed: ", guid)
-          guidTbl[guid] = nil
-      end
 end
 
 local function OnAttributeChanged(self,name,unit)
@@ -109,12 +96,23 @@ local function OnAttributeChanged(self,name,unit)
         return
     end
     local oldUnit=self.unit
+    local oldGUID=self.unitGUID
     local newUnit=unit
+    local newGUID=UnitGUID(unit)
+    if oldGUID and oldGUID~=newGUID then
+        Ether.CheckGUID(oldGUID)
+    end
     if oldUnit and oldUnit~=newUnit then
         Ether.unitButtons.raid[oldUnit]=nil
     end
     Ether.unitButtons.raid[newUnit]=self
-    self.unit = newUnit
+    if newUnit and UnitExists(newUnit) then
+        if Ether.DB[1001][3]==1 then
+            C_Timer.After(0.3,function()
+            --    UpdateAuraByIndex(self)
+            end)
+        end
+    end
     CheckStatus(self)
 end
 
@@ -124,7 +122,8 @@ local function CreateChildren(header,button)
     Ether:SetupHealthBar(b,"VERTICAL")
     Ether:SetupPrediction(b)
     Ether:SetupName(b,-5)
-    Ether:DispelFrameSetup(b)
+    Ether:DispelLineSetup(b)
+    Ether:DispelIconSetup(b)
     Ether:CheckIndicatorsPosition(b)
     Ether:SetupButtonLayout(b)
     if header:GetAttribute("TypePet") then
@@ -132,13 +131,10 @@ local function CreateChildren(header,button)
     else
         Ether:SetupUpdateText(b,"health")
         Ether:SetupUpdateText(b,"power",true)
-        Mixin(b.healthBar,SmoothStatusBarMixin)
-        b.Smooth=true
     end
     b:HookScript("OnAttributeChanged",OnAttributeChanged)
     b:SetScript("OnShow",Show)
     b:SetScript("OnHide",Hide)
-    b:HookScript("OnEvent",Event)
     b:SetScript("OnEnter",Enter)
     b:SetScript("OnLeave",Leave)
     if not InCombatLockdown() then
@@ -201,9 +197,7 @@ function Ether:CreatePetHeader()
 end
 
 function Ether:ChangeDirectionHeader(horizontal)
-    if InCombatLockdown() then
-        return
-    end
+    if InCombatLockdown() then return end
     if horizontal then
         Ether.Header.raid:SetAttribute("point","LEFT")
         Ether.Header.raid:SetAttribute("columnAnchorPoint","TOP")

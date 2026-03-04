@@ -27,11 +27,27 @@ Ether.SlashInfo={
     [4]={cmd="/ether Msg",desc="Ether whisper enable"}
 }
 
+Ether.dispelInstance={}
+Ether.spellInstance={}
+Ether.dataSpell={}
+Ether.dataDispel={}
+Ether.spellAdded={}
+Ether.dispelAdded={}
+
+function Ether:RaidAuraWipe()
+    wipe(Ether.dispelInstance)
+    wipe(Ether.spellInstance)
+    wipe(Ether.dataSpell)
+    wipe(Ether.dataDispel)
+    wipe(Ether.spellAdded)
+    wipe(Ether.dispelAdded)
+end
+
 Ether.unitButtons={
     raid={},
     solo={}
 }
-Ether.guidData = {}
+Ether.guidData={}
 
 local function CreateSettingsButtons(name,parent,layer,onClick,isTopButton)
     local btn=CreateFrame("Button",nil,parent)
@@ -488,12 +504,9 @@ local function OnInitialize(self,event,...)
         self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
         self:RegisterEvent("PLAYER_LOGOUT")
+
         Ether:CreatePopupBox()
-        Ether:CreateGroupHeader()
-        Ether:CreatePetHeader()
-        if Ether.DB[1501][1]==1 then
-            Ether:ChangeDirectionHeader(true)
-        end
+
         Ether:HideBlizzard()
         Ether:SetupInfoFrame()
         SLASH_ETHER1="/ether"
@@ -548,8 +561,8 @@ local function OnInitialize(self,event,...)
         Ether:ApplyFramePosition(Ether.Anchor.pet,10)
         Ether:SetupDrag(Ether.Anchor.pet,10,10)
         if Ether.EtherIcon then
-             Ether.EtherIcon:ClearAllPoints()
-             Ether.EtherIcon:SetPoint("CENTER", Minimap, "CENTER", Ether.DB[21][13][4], Ether.DB[21][13][5])
+            Ether.EtherIcon:ClearAllPoints()
+            Ether.EtherIcon:SetPoint("CENTER",Minimap,"CENTER",Ether.DB[21][13][4],Ether.DB[21][13][5])
         end
         for _,unit in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
             Ether:CreateUnitButtons(unit)
@@ -572,6 +585,11 @@ local function OnInitialize(self,event,...)
         end
     elseif (event=="PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        Ether:CreateGroupHeader()
+        Ether:CreatePetHeader()
+        if Ether.DB[1501][1]==1 then
+            Ether:ChangeDirectionHeader(true)
+        end
         Ether:RosterEnable()
     elseif (event=="PLAYER_REGEN_DISABLED") then
         self:UnregisterEvent("PLAYER_REGEN_DISABLED")
@@ -589,6 +607,7 @@ local function OnInitialize(self,event,...)
             Ether.UIPanel.Frames["MAIN"]:Show()
         end
     elseif (event=="PLAYER_LOGOUT") then
+        wipe(Ether.unitButtons)
         local current=Ether:GetCurrentProfileString()
         if current then
             ETHER_DATABASE_DX_AA.profiles[current]=Ether:CopyTable(Ether.DB)

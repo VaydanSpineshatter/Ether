@@ -1,22 +1,21 @@
 local _,Ether=...
 
 local function FullUpdate(self)
-    C_Timer.After(0.1,function()
-        Ether:InitialHealth(self)
-        Ether:InitialPower(self)
-    end)
     Ether:UpdateHealth(self)
-    Ether:UpdateName(self)
+    Ether:UpdatePower(self)
+    Ether:UpdateName(self,10)
     if Ether.DB[701][1]==1 then
         Ether:UpdateHealthTextRounded(self)
     end
-    Ether:UpdatePower(self)
     if Ether.DB[701][2]==1 then
         Ether:UpdatePowerTextRounded(self)
     end
+    Ether:InitialHealth(self)
+    Ether:InitialPower(self)
 end
 
 local function OnAttributeChanged(self)
+    self.unit=self:GetAttribute("unit")
     local guid=self.unit and UnitGUID(self.unit)
     if (guid~=self.unitGUID) then
         self.unitGUID=guid
@@ -26,13 +25,7 @@ local function OnAttributeChanged(self)
     end
 end
 
-local function Update(self,event,unit)
-    if not unit then
-        return
-    end
-    if not UnitExists(self.unit) then
-        return
-    end
+local function Event(self,event)
     if event=="UNIT_HEAL_PREDICTION" then
         Ether:UpdatePrediction(self)
     elseif event=="UNIT_MAXHEALTH" or event=="UNIT_HEALTH" then
@@ -53,10 +46,10 @@ function Ether:CreateUnitButtons(token)
         return
     end
     local button=CreateFrame("Button","Ether_"..token.."_UnitButton",UIParent,"EtherUnitTemplate")
-    button.unit=token
+
     button:SetSize(120,40)
+    button.unit=token
     button:SetAttribute("unit",button.unit)
-    button:RegisterForClicks("AnyUp")
     button:SetAttribute("*type1","target")
     button:SetAttribute("*type2","togglemenu")
     Ether:SetupTooltip(button,button.unit)
@@ -68,8 +61,6 @@ function Ether:CreateUnitButtons(token)
     Ether:SetupName(button,0)
     Ether:SetupUpdateText(button,"health")
     Ether:SetupUpdateText(button,"power",true)
-    Mixin(button.healthBar,SmoothStatusBarMixin)
-    Mixin(button.powerBar,SmoothStatusBarMixin)
     button.Smooth=true
     button.RaidTarget=button.healthBar:CreateTexture(nil,"OVERLAY")
     button.RaidTarget:SetSize(18,18)
@@ -84,11 +75,13 @@ function Ether:CreateUnitButtons(token)
     button:RegisterUnitEvent("UNIT_DISPLAYPOWER",button.unit)
     button:RegisterUnitEvent("UNIT_HEAL_PREDICTION",button.unit)
     button:HookScript("OnAttributeChanged",OnAttributeChanged)
-    button:HookScript("OnEvent",Update)
+    button:SetScript("OnEvent",Event)
     button:RegisterForDrag("LeftButton")
     button:EnableMouse(true)
     button:SetMovable(true)
-
+    if not InCombatLockdown() then
+        button:RegisterForClicks("AnyUp")
+    end
     for index,data in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
         if button.unit==data then
             Ether:ApplyFramePosition(button,index+2)
@@ -99,7 +92,6 @@ function Ether:CreateUnitButtons(token)
 
     OnAttributeChanged(button)
     Ether.unitButtons.solo[button.unit]=button
-
     return button
 end
 
@@ -119,8 +111,8 @@ function Ether:DestroyUnitButtons(unit)
         if unit~="player" then
             UnregisterUnitWatch(button)
         end
-        button:HookScript("OnAttributeChanged",nil)
-        button:HookScript("OnEvent",nil)
+        button:SetScript("OnAttributeChanged",nil)
+        button:SetScript("OnEvent",nil)
         button:SetScript("OnDragStart",nil)
         button:SetScript("OnDragStop",nil)
         Ether.unitButtons.solo[unit]=nil

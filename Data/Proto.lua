@@ -8,9 +8,9 @@ Ether.AuraTemplate=function(newId)
         position="TOP",
         offsetX=0,
         offsetY=0,
-        isEnabled=true,
+        isEnabled=false,
         isDebuff=false,
-        isActive=true
+        isActive=false,
     }
     return obj
 end
@@ -24,9 +24,9 @@ Ether.PredefinedAuras={
             position="BOTTOMLEFT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
         [32999]={
             name="Prayer Spirit 2",
@@ -35,9 +35,9 @@ Ether.PredefinedAuras={
             position="BOTTOMLEFT",
             offsetX=8,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
         [39374]={
             name="Prayer Shadow 2",
@@ -46,9 +46,9 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
     },
     ["Priest - Helpful"]={
@@ -59,9 +59,9 @@ Ether.PredefinedAuras={
             position="TOPLEFT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
         [41635]={
             name="POM1",
@@ -70,9 +70,9 @@ Ether.PredefinedAuras={
             position="RIGHT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
         [25222]={
             name="Renew 12",
@@ -81,9 +81,9 @@ Ether.PredefinedAuras={
             position="TOPRIGHT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
         [6346]={
             name="Fear Ward",
@@ -92,9 +92,9 @@ Ether.PredefinedAuras={
             position="BOTTOM",
             offsetX=0,
             offsetY=6,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
     },
     ["Priest - Harmful"]={
@@ -105,9 +105,9 @@ Ether.PredefinedAuras={
             position="TOP",
             offsetX=0,
             offsetY=-6,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=true,
-            isActive=true
+            isActive=false,
         }
     },
     ["Druid - Group Buffs"]={
@@ -118,9 +118,9 @@ Ether.PredefinedAuras={
             position="BOTTOMLEFT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
     },
     ["Mage - Group Buffs"]={
@@ -131,9 +131,9 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
     },
     ["Pala - Blessing"]={
@@ -144,9 +144,9 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
         [25898]={
             name="Kings",
@@ -155,9 +155,9 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=8,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
         [27141]={
             name="Might 3",
@@ -166,9 +166,9 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=16,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
     },
     ["Warrior Shout"]={
@@ -179,9 +179,9 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
     },
     ["Stance Ability"]={
@@ -203,9 +203,9 @@ Ether.PredefinedAuras={
             position="BOTTOMRIGHT",
             offsetX=0,
             offsetY=0,
-            isEnabled=true,
+            isEnabled=false,
             isDebuff=false,
-            isActive=true
+            isActive=false,
         },
     }
 }

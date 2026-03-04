@@ -172,6 +172,7 @@ end
 
 local function SelectAura(editor,spellId)
     Ether.UIPanel.SpellId=spellId
+    Ether.DB[1003][spellId].isEnabled=true
     Ether:UpdateAuraList()
     Ether:UpdateEditor(editor)
 end
@@ -1073,6 +1074,7 @@ function Ether:AddTemplateAuras(templateName)
     for spellID,auraData in pairs(template) do
         if not Ether.DB[1003][spellID] then
             Ether.DB[1003][spellID]=Ether:CopyTable(auraData)
+            Ether.DB[1003][spellID].isEnabled=true
             added=added+1
         else
             skipped=skipped+1
@@ -1112,7 +1114,7 @@ function Ether:CreateCustomSection(EtherFrame)
                 if not EtherFrame.Frames["EDITOR"]:IsShown() then
                     EtherFrame.Frames["EDITOR"]:Show()
                 end
-                Ether:AddTemplateAuras(templateName,true)
+                Ether:AddTemplateAuras(templateName)
             end
         })
     end
