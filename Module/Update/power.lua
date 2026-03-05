@@ -63,10 +63,9 @@ function Ether:InitialPower(button)
     button.powerBar:SetMinMaxValues(0,ReturnMaxPower(button.unit))
 end
 
-function Ether:GetPowerColor(unit)
-    if not unit then
-        return
-    end
+function Ether:UpdatePowerColor(button)
+    if not button or not button.unit then return end
+    local unit=button.unit
     local powerType,powerToken,altR,altG,altB=UnitPowerType(unit)
     local info=PowerBarColor[powerToken]
     local r,g,b
@@ -78,7 +77,8 @@ function Ether:GetPowerColor(unit)
     else
         r,g,b=altR,altG,altB;
     end
-    return r,g,b
+    button.powerBar:SetStatusBarColor(r,g,b,.6)
+    button.powerDrop:SetColorTexture(r*0.3,g*0.3,b*0.3)
 end
 --[[
 local PowerColors = {
@@ -138,9 +138,6 @@ function Ether:UpdatePower(button,smooth)
         button.powerBar:SetValue(p)
         button.powerBar:SetMinMaxValues(0,mp)
     end
-    local r,g,b=Ether:GetPowerColor(button.unit)
-    button.powerBar:SetStatusBarColor(r,g,b,.6)
-    button.powerDrop:SetColorTexture(r*0.3,g*0.3,b*0.3)
 end
 
 local function PowerChanged(self,event,unit)

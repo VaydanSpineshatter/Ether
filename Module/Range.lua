@@ -104,11 +104,11 @@ function Ether:RangeDisable()
         rangeTicker:Cancel()
         rangeTicker=nil
     end
-    if soloButtons["target"] then
-        soloButtons:SetAlpha(1)
+    if soloButtons["target"] and soloButtons["target"]:IsVisible() then
+       soloButtons["target"]:SetAlpha(1)
     end
     for _,button in pairs(raidButtons) do
-        if button then
+        if button and button:IsVisible() then
             button:SetAlpha(1.0)
         end
     end

@@ -161,8 +161,6 @@ function Ether:SetupHealthBar(button,orient)
     local healthDrop=button:CreateTexture(nil,"OVERLAY")
     button.healthDrop=healthDrop
     healthDrop:SetAllPoints(healthBar)
-    local r,g,b=Ether:GetClassColors("player")
-    healthBar:SetStatusBarColor(r,g,b)
     healthDrop:SetTexture(unpack(Ether.media.blankBar))
     return button
 end
@@ -219,7 +217,7 @@ function Ether:SetupCastBar(button,number)
     local drop=frame:CreateTexture(nil,"OVERLAY")
     frame.drop=drop
     drop:SetAllPoints()
-    local r,g,b=Ether:GetClassColors("player")
+    local r,g,b=Ether:GetClassColor("player")
     frame:SetStatusBarColor(r,g,b,1)
     drop:SetColorTexture(0.2,0.2,0.4,.5)
     local text=frame:CreateFontString(nil,"OVERLAY")
@@ -616,100 +614,6 @@ function Ether:DispelIconSetup(button)
     button.dispelBorder=border
     return button
 end
---[[
-local Create,Setup,Reset
-do
-    local frame=CreateFrame("Frame",nil,UIParent)
-    function Setup(self,CFG, unit)
-        local button=Ether.raidButtons[unit]
-        if not button then return end
-        self:SetParent(button.healthBar)
-        self:SetColorTexture(unpack(CFG.color))
-        self:SetSize(CFG.size,CFG.size)
-        self:SetPoint(CFG.position,button.healthBar,CFG.position,CFG.offsetX,CFG.offsetY)
-        self:Show()
-    end
-
-    function Reset(self)
-        self:Hide()
-        self:ClearAllPoints()
-        self:SetParent(nil)
-    end
-
-    function Create()
-        local method=frame:CreateTexture(nil,"OVERLAY")
-        method.Setup=Setup
-        method.Reset=Reset
-        return method
-    end
-end
-
-local active={}
-local inactive={}
-local temp={}
-local count=0
-
-function Ether:Acquire(...)
-    if count>=220 then
-        return nil
-    end
-    local obj=tremove(inactive)
-    if not obj then
-        obj=Create()
-    end
-    count=count+1
-    active[count]=obj
-    obj._poolIndex=count
-    if obj.Setup then
-        obj:Setup(...)
-    end
-    Ether:EtherInfo("Pool Count: ", tostring(count))
-    return obj
-end
-
-function Ether:Release(obj)
-    if not obj or not obj._poolIndex then
-        return
-    end
-    local index=obj._poolIndex
-    if index<=0 or index>count then
-        return
-    end
-    local last=active[count]
-    active[index]=last
-    active[count]=nil
-
-    if last and last~=obj then
-        last._poolIndex=index
-    end
-
-    obj._poolIndex=-1
-    count=count-1
-
-    if obj.Reset then
-        obj:Reset()
-        if  obj:IsShown() then
-  Ether:EtherInfo("True")
-        end
-    end
-
-    if #inactive<150 then
-        inactive[#inactive+1]=obj
-    end
-    Ether:EtherInfo("Pool Count: ", tostring(count))
-end
-
-function Ether:ReleaseAll()
-    for i=1,count do
-        temp[i]=active[i]
-    end
-    for i=1,#temp do
-        Ether:Release(temp[i])
-        temp[i]=nil
-    end
-    Ether:EtherInfo("Pool Release All")
-end
-]]
 
 function Ether:CreatePopupBox()
     if Ether.popupBox then return end
@@ -762,25 +666,29 @@ function Ether:CreatePopupBox()
     Ether.popupCallback=left
 end
 
-local frame=CreateFrame("Frame",nil,UIParent)
-Ether.TextureMethod=function()
-    local method=frame:CreateTexture(nil,"OVERLAY")
-    local raidButtons=Ether.raidButtons
-    method.Setup=function(self,CFG,unit)
-        local button=raidButtons[unit]
-        if not button then return end
-        self:SetParent(button.healthBar)
-        self:SetColorTexture(unpack(CFG.color))
-        self:SetSize(CFG.size,CFG.size)
-        self:SetPoint(CFG.position,button.healthBar,CFG.position,CFG.offsetX,CFG.offsetY)
-        self:Show()
+local frame,TextureMethod
+do
+    frame=CreateFrame("Frame",nil,UIParent)
+    TextureMethod=function()
+        local method=frame:CreateTexture(nil,"OVERLAY")
+        local raidButtons=Ether.raidButtons
+        method.Setup=function(self,CFG,unit)
+            local button=raidButtons[unit]
+            if not button then return end
+            self:SetParent(button.healthBar)
+            self:SetColorTexture(unpack(CFG.color))
+            self:SetSize(CFG.size,CFG.size)
+            self:SetPoint(CFG.position,button.healthBar,CFG.position,CFG.offsetX,CFG.offsetY)
+            self:Show()
+        end
+        method.Reset=function(self)
+            self:Hide()
+            self:ClearAllPoints()
+            self:SetParent(nil)
+        end
+        return method
     end
-    method.Reset=function(self)
-        self:Hide()
-        self:ClearAllPoints()
-        self:SetParent(nil)
-    end
-    return method
+    Ether.TextureMethod=TextureMethod
 end
 
 ---@class ObjPool

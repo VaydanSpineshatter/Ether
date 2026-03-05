@@ -264,7 +264,7 @@ local function raidAuraUpdate(unit,updateInfo)
         dataIcon[guid]={}
     end
     if not dataDispel[guid] then
-        dataIcon[guid]={}
+        dataDispel[guid]={}
     end
     local C=Ether.DB[1003]
     if updateInfo.isFullUpdate then
@@ -273,22 +273,27 @@ local function raidAuraUpdate(unit,updateInfo)
     end
     if updateInfo.addedAuras then
         for _,aura in ipairs(updateInfo.addedAuras) do
-            if aura.isHarmful and dispelByPlayer[aura.dispelName] then
-                local color=dispelColors[aura.dispelName] or {0,0,0,0}
-                Ether:UpdateDispelFrame(button,color)
-                dispelAuras[aura.auraInstanceID]=aura
-            end
-            if aura.isHarmful and aura.dispelName then
-                dataIcon[guid]={
-                    spellId=aura.spellId,
-                    guid=guid
-                }
-                local color=dispelColors[aura.dispelName] or {0,0,0,0}
-                button.dispelIcon:SetTexture(aura.icon)
-                button.dispelBorder:SetColorTexture(unpack(color))
-                dataIcon[guid][aura.spellId]=button.dispelFrame
-                Ether.StartBlink(dataIcon[guid][aura.spellId],aura.duration,0.3)
-                iconAuras[aura.auraInstanceID]=aura
+            if aura.isHarmful then
+                if aura.dispelName and dispelByPlayer[aura.dispelName] then
+                    local color=dispelColors[aura.dispelName] or {0,0,0,0}
+                    dataDispel[guid][aura.spellId]=button
+                    Ether:UpdateDispelFrame(dataDispel[guid][aura.spellId],color)
+                    dispelAuras[aura.auraInstanceID]={
+                        spellId=aura.spellId,
+                        guid=guid
+                    }
+                end
+                if aura.dispelName then
+                    local color=dispelColors[aura.dispelName] or {0,0,0,0}
+                    button.dispelIcon:SetTexture(aura.icon)
+                    button.dispelBorder:SetColorTexture(unpack(color))
+                    dataIcon[guid][aura.spellId]=button.dispelFrame
+                    Ether.StartBlink(dataIcon[guid][aura.spellId],aura.duration,0.3)
+                    iconAuras[aura.auraInstanceID]={
+                        spellId=aura.spellId,
+                        guid=guid
+                    }
+                end
             end
             if aura.isHelpful then
                 if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
@@ -317,17 +322,24 @@ local function raidAuraUpdate(unit,updateInfo)
     if updateInfo.removedAuraInstanceIDs then
         for _,auraInstanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
             if dispelAuras[auraInstanceID] then
-                Ether:UpdateDispelFrame(button,{0,0,0,0})
+                local tracked=dispelAuras[auraInstanceID]
+                if tracked then
+                    local spellId=tracked.spellId
+                    local targetGuid=tracked.guid
+                    if dataDispel[targetGuid] and dataDispel[targetGuid][spellId] then
+                        Ether:UpdateDispelFrame(dataDispel[targetGuid][spellId],{0,0,0,0})
+                    end
+                end
                 dispelAuras[auraInstanceID]=nil
             end
             if iconAuras[auraInstanceID] then
-                local spellId=iconAuras[auraInstanceID].spellId
-                if dataIcon[guid] and dataIcon[guid][spellId] then
-                    Ether.StopBlink(dataIcon[guid][spellId])
-                    dataIcon[guid][spellId]:Hide()
-                    dataIcon[guid][spellId]:ClearAllPoints()
-                    dataIcon[guid][spellId]:SetParent(nil)
-                    dataIcon[guid][spellId]=nil
+                local tracked=iconAuras[auraInstanceID]
+                if tracked then
+                    local spellId=tracked.spellId
+                    local targetGuid=tracked.guid
+                    if dataIcon[targetGuid] and dataIcon[targetGuid][spellId] then
+                        Ether.StopBlink(dataIcon[guid][spellId])
+                    end
                 end
                 iconAuras[auraInstanceID]=nil
             end
@@ -658,7 +670,9 @@ local function Aura(_,event,arg1,...)
     if not arg1 or not UnitExists(arg1) then return end
     local updateInfo=...
     if not updateInfo then return end
-    raidAuraUpdate(arg1,updateInfo)
+    if raidButtons[arg1] then
+        raidAuraUpdate(arg1,updateInfo)
+    end
     if Ether:IsValidAura(arg1) then
         soloAuraUpdate(arg1,updateInfo)
     end

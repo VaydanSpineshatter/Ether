@@ -392,6 +392,23 @@ local function UpdateRaidTarget()
     end
 end
 
+local map={"ReadyCheck","Connection","RaidTarget","Resurrection","GroupLeader","MasterLoot","UnitFlags","PlayerRoles","PlayerFlags"}
+local events={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED","RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
+local handler={UpdateConnection,UpdateResurrection,UpdateReady,UpdateConfirm,UpdateFinished,UpdateRaidTarget,UpdateGroupLeader,UpdateMasterLoot,UpdatePlayerRoles,UpdatePlayerFlags,UpdateUnitFlags}
+
+function Ether:IndicatorsRegister()
+    for index,info in ipairs(events) do
+        Register(info,handler[index])
+    end
+end
+
+function Ether:UpdateColors()
+    for _,info in ipairs({"target","targettarget","pettarget"}) do
+        Ether:UpdateClassColor(soloButtons[info])
+        Ether:UpdatePowerColor(soloButtons[info])
+    end
+end
+
 function Ether:UpdateSoloIndicator(unit)
     local button=soloButtons[unit]
     if not button or not button.RaidTarget then
@@ -406,16 +423,6 @@ function Ether:UpdateSoloIndicator(unit)
         else
             button.RaidTarget:Hide()
         end
-    end
-end
-
-local map={"ReadyCheck","Connection","RaidTarget","Resurrection","GroupLeader","MasterLoot","UnitFlags","PlayerRoles","PlayerFlags"}
-local events={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED","RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
-local handler={UpdateConnection,UpdateResurrection,UpdateReady,UpdateConfirm,UpdateFinished,UpdateRaidTarget,UpdateGroupLeader,UpdateMasterLoot,UpdatePlayerRoles,UpdatePlayerFlags,UpdateUnitFlags}
-
-function Ether:IndicatorsRegister()
-    for index,info in ipairs(events) do
-        Register(info,handler[index])
     end
 end
 

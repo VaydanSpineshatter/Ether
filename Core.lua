@@ -118,7 +118,6 @@ do
         for _,child in pairs(self["CONTENT"]["CHILDREN"]) do
             child:Hide()
         end
-
         if category=="Module" then
             Ether:CreateModuleSection(EtherFrame)
         elseif category=="Blizzard" then
@@ -155,7 +154,6 @@ do
             target:Show()
         end
     end
-
     local function InitializeLayer(self)
         if not self.Created then
             for layer=1,8 do
@@ -323,9 +321,9 @@ do
             self.Borders["LEFT"]:SetPoint("BOTTOMLEFT",-1,-1)
             self.Borders["RIGHT"]:SetPoint("TOPRIGHT",1,1)
             self.Borders["RIGHT"]:SetPoint("BOTTOMRIGHT",1,-1)
-            self.Frames["INDICATORS"]=CreateFrame("Frame",nil,self.Frames["MAIN"])
-            self.Frames["AURAS"]=CreateFrame("Frame",nil,self.Frames["MAIN"])
-            self.Frames["EDITOR"]=CreateFrame("Frame",nil,self.Frames["MAIN"])
+            for _,info in ipairs({"INDICATORS","AURAS","EDITOR"}) do
+                self.Frames[info]=CreateFrame("Frame",nil,self.Frames["MAIN"])
+            end
             local version=self.Frames["BOTTOM"]:CreateFontString(nil,"OVERLAY")
             version:SetFont(unpack(Ether.media.expressway),15,"OUTLINE")
             version:SetPoint("BOTTOMRIGHT",-10,3)

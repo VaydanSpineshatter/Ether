@@ -2,7 +2,7 @@
 ## Title: |cffcc66ffEther|r
 ## Notes: Ether Unit Frames
 ## Author: Vaydan-Spineshatter
-## Version: 41777
+## Version: 41888
 ## SavedVariables: ETHER_DATABASE_DX_AA
 ## IconTexture: Interface\AddOns\Ether\Media\Texture\icon
 ## OptionalDeps: LibSharedMedia-3.0

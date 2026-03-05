@@ -137,8 +137,9 @@ function Ether:InitialHealth(button)
     button.healthBar:SetMinMaxValues(0,ReturnMaxHealth(button.unit))
 end
 
-function Ether:GetClassColors(unit)
-    local _,classFilename=UnitClass(unit)
+function Ether:GetClassColor(unit)
+    if not unit then return end
+    local classFilename,classId=UnitClassBase(unit)
     local info=RAID_CLASS_COLORS[classFilename]
     local r,g,b
     if (info) then
@@ -150,22 +151,35 @@ function Ether:GetClassColors(unit)
     return r,g,b
 end
 
-function Ether:UpdateHealth(button,smooth)
+function Ether:UpdateClassColor(button)
+    if not button or not button.unit then return end
+    local unit=button.unit
+    local classFilename,classId=UnitClassBase(unit)
+    local info=RAID_CLASS_COLORS[classFilename]
+    local r,g,b
+    if (info) then
+        info=RAID_CLASS_COLORS[classFilename]
+        r,g,b=info.r,info.g,info.b
+    else
+        r,g,b=0.18,0.54,0.34
+    end
+    button.healthBar:SetStatusBarColor(r,g,b)
+    button.healthDrop:SetColorTexture(r*0.3,g*0.3,b*0.4,.3)
+end
+
+function Ether:UpdateHealth(button)
     if not button or not button.unit or not button.healthBar then
         return
     end
     local h=UnitHealth(button.unit)
     local mh=UnitHealthMax(button.unit)
-    if smooth and button.Smooth then
-        button.healthBar:SetMinMaxSmoothedValue(0,mh)
-        button.healthBar:SetSmoothedValue(h)
-    else
-        button.healthBar:SetValue(h)
-        button.healthBar:SetMinMaxValues(0,mh)
+    if h<=0 then
+        if button.destGUID then
+            Ether:UpdateDispelFrame(button,{0,0,0,0})
+        end
     end
-    local r,g,b=Ether:GetClassColors(button.unit)
-    button.healthBar:SetStatusBarColor(r,g,b)
-    button.healthDrop:SetColorTexture(r*0.3,g*0.3,b*0.4,.3)
+    button.healthBar:SetValue(h)
+    button.healthBar:SetMinMaxValues(0,mh)
 end
 
 --[[

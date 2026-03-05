@@ -603,22 +603,10 @@ function Ether:CreateBlizzardSection(self)
         return
     end
     parent.Created=true
-    local HideValue={
-        [1]={name="Player frame"},
-        [2]={name="Pet frame"},
-        [3]={name="Target frame"},
-        [4]={name="Focus frame"},
-        [5]={name="CastBar"},
-        [6]={name="Party"},
-        [7]={name="Raid"},
-        [8]={name="Raid Manager"},
-        [9]={name="MicroMenu"},
-        [10]={name="XP Bar"},
-        [11]={name="BagsBar"}
-    }
+    local blizzard ={"Player frame","Pet frame","Target frame","Focus frame","CastBar","Party","Raid","Raid Manager","MicroMenu","XP Bar","BagsBar"}
     local bF=CreateFrame("Frame",nil,parent)
-    bF:SetSize(200,(#HideValue*30)+60)
-    for i,opt in ipairs(HideValue) do
+    bF:SetSize(200,(#blizzard*30)+60)
+    for i,opt in ipairs(blizzard) do
         local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
         if i==1 then
             btn:SetPoint("TOPLEFT",5,-5)
@@ -626,13 +614,12 @@ function Ether:CreateBlizzardSection(self)
             btn:SetPoint("TOPLEFT",self.Buttons[2][i-1],"BOTTOMLEFT",0,0)
         end
         btn:SetSize(24,24)
-        btn.label=GetFont(self,btn,opt.name,12)
+        btn.label=GetFont(self,btn.name,12)
         btn.label:SetPoint("LEFT",btn,"RIGHT",8,1)
         btn:SetChecked(Ether.DB[101][i]==1)
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             Ether.DB[101][i]=checked and 1 or 0
-
         end)
         self.Buttons[2][i]=btn
     end
@@ -647,7 +634,7 @@ function Ether:CreateAboutSection(self)
     local slash=GetFont(self,parent,"Slash Commands",15)
     slash:SetPoint("TOP",0,-20)
     local lastY=-20
-    for _,entry in ipairs(Ether.SlashInfo) do
+    for _,entry in ipairs(Ether.media.slash) do
         local fs=GetFont(self,parent,string_format("%s  –  %s",entry.cmd,entry.desc),12)
         fs:SetPoint("TOP",slash,"BOTTOM",0,lastY)
         lastY=lastY-18

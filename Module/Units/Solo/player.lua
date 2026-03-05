@@ -42,6 +42,11 @@ local function Event(self,event)
     end
 end
 
+local function Show(self)
+    Ether:UpdateClassColor(self)
+    Ether:UpdatePowerColor(self)
+end
+
 function Ether:CreateUnitButtons(token)
     if InCombatLockdown() then
         return
@@ -62,24 +67,20 @@ function Ether:CreateUnitButtons(token)
     Ether:SetupName(button,0)
     Ether:SetupUpdateText(button,"health")
     Ether:SetupUpdateText(button,"power",true)
-    button.Smooth=true
     button.RaidTarget=button.healthBar:CreateTexture(nil,"OVERLAY")
     button.RaidTarget:SetSize(18,18)
     button.RaidTarget:SetPoint("LEFT",button.healthBar,"LEFT",5,0)
-    if button.unit~="player" then
-        RegisterUnitWatch(button)
-    end
     button:RegisterUnitEvent("UNIT_HEALTH",button.unit)
     button:RegisterUnitEvent("UNIT_MAXHEALTH",button.unit)
     button:RegisterUnitEvent("UNIT_POWER_UPDATE",button.unit)
     button:RegisterUnitEvent("UNIT_MAXPOWER",button.unit)
     button:RegisterUnitEvent("UNIT_DISPLAYPOWER",button.unit)
     button:RegisterUnitEvent("UNIT_HEAL_PREDICTION",button.unit)
-    button:HookScript("OnAttributeChanged",OnAttributeChanged)
-    button:SetScript("OnEvent",Event)
     button:RegisterForDrag("LeftButton")
     button:EnableMouse(true)
     button:SetMovable(true)
+    Ether:UpdateClassColor(button)
+    Ether:UpdatePowerColor(button)
     if not InCombatLockdown() then
         button:RegisterForClicks("AnyUp")
     end
@@ -90,7 +91,13 @@ function Ether:CreateUnitButtons(token)
             break
         end
     end
-
+    if self.unit~="player" then
+        RegisterUnitWatch(button)
+    end
+    button:HookScript("OnAttributeChanged",OnAttributeChanged)
+    button:SetScript("OnEvent",Event)
+    button:SetScript("OnShow",Show)
+    button:SetScript("OnHide",Show)
     OnAttributeChanged(button)
     soloButtons[button.unit]=button
     return button
@@ -109,11 +116,12 @@ function Ether:DestroyUnitButtons(unit)
         button:ClearAllPoints()
         button:SetAttribute("unit",nil)
         button:RegisterForClicks()
-        if unit~="player" then
+        button:SetScript("OnAttributeChanged",nil)
+         if unit~="player" then
             UnregisterUnitWatch(button)
         end
-        button:SetScript("OnAttributeChanged",nil)
         button:SetScript("OnEvent",nil)
+        button:SetScript("OnShow",nil)
         button:SetScript("OnDragStart",nil)
         button:SetScript("OnDragStop",nil)
         soloButtons[unit]=nil

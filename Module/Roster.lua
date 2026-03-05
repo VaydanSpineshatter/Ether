@@ -153,6 +153,7 @@ local function Roster(_,event)
             Ether:UpdateSoloIndicator("target")
             Ether:UpdateSoloIndicator("targettarget")
         end
+        Ether:UpdateColors()
         if Ether.DB[1001][2]==1 then
             Ether:TargetAuraFullUpdate()
         end

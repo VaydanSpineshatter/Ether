@@ -43,6 +43,7 @@ local function Update(self)
     Ether:UpdateHealth(self)
     Ether:UpdateName(self,3)
     Ether:InitialHealth(self)
+    Ether:UpdateClassColor(self)
     Ether.Handler:FullUpdate()
 end
 
@@ -87,11 +88,6 @@ local function OnAttributeChanged(self,name,unit)
     local oldUnit=self.unit
     local newUnit=unit
     local GUID=UnitGUID(unit)
-    if self.destGUID and self.destGUID~=GUID then
-        if guidData[self.destGUID] then
-            Ether:GuidStatus(self.destGUID)
-        end
-    end
     if oldUnit and oldUnit~=newUnit then
         raidButtons[oldUnit]=nil
     end
