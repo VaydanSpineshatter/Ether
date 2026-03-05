@@ -614,7 +614,7 @@ function Ether:CreateBlizzardSection(self)
             btn:SetPoint("TOPLEFT",self.Buttons[2][i-1],"BOTTOMLEFT",0,0)
         end
         btn:SetSize(24,24)
-        btn.label=GetFont(self,btn.name,12)
+        btn.label=GetFont(self,btn,opt,12)
         btn.label:SetPoint("LEFT",btn,"RIGHT",8,1)
         btn:SetChecked(Ether.DB[101][i]==1)
         btn:SetScript("OnClick",function(self)
@@ -634,7 +634,7 @@ function Ether:CreateAboutSection(self)
     local slash=GetFont(self,parent,"Slash Commands",15)
     slash:SetPoint("TOP",0,-20)
     local lastY=-20
-    for _,entry in ipairs(Ether.media.slash) do
+    for _,entry in ipairs(Ether.SlashInfo) do
         local fs=GetFont(self,parent,string_format("%s  –  %s",entry.cmd,entry.desc),12)
         fs:SetPoint("TOP",slash,"BOTTOM",0,lastY)
         lastY=lastY-18
