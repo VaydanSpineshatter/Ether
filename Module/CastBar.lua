@@ -6,7 +6,7 @@ local UnitChannel=UnitChannelInfo
 local timeStr="%.1f|cffff0000-%.1f|r"
 local tStr="%.1f"
 local IsEventValid=C_EventUtils.IsEventValid
-
+local soloButtons=Ether.soloButtons
 local function OnUpdate(self,elapsed)
     if (self.casting) then
         local duration=self.duration+elapsed
@@ -56,7 +56,7 @@ do
         if not eventFrame then
             eventFrame=CreateFrame("Frame")
             eventFrame:SetScript("OnEvent",function(self,event,unit,...)
-                local bar=Ether.unitButtons.solo[unit]
+                local bar=soloButtons[unit]
                 if not bar then
                     return
                 end
@@ -333,7 +333,7 @@ local function castBarEvents(status)
 end
 
 function Ether:CastBarEnable(unit)
-    local bar=Ether.unitButtons.solo[unit]
+    local bar=soloButtons[unit]
     if not bar then
         return
     end
@@ -351,7 +351,7 @@ function Ether:CastBarEnable(unit)
 end
 
 function Ether:HideCastBar(unit,bool)
-    local bar=Ether.unitButtons.solo[unit]
+    local bar=soloButtons[unit]
     if not bar then
         return
     end
@@ -367,7 +367,7 @@ function Ether:HideCastBar(unit,bool)
 end
 
 function Ether:CastBarDisable(unit)
-    local bar=Ether.unitButtons.solo[unit]
+    local bar=soloButtons[unit]
     if not bar then
         return
     elseif bar.castBar then

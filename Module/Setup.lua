@@ -2,6 +2,94 @@ local _,Ether=...
 local math_floor=math.floor
 local tinsert=table.insert
 
+function Ether:CreateToolFrame()
+    if Ether.toolFrame then
+        return
+    end
+    local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
+    Ether.toolFrame=frame
+    frame:SetFrameStrata("TOOLTIP")
+    frame:SetSize(280,120)
+    frame:SetBackdrop({
+        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+        tile=true,tileSize=16,edgeSize=16,
+        insets={left=4,right=4,top=4,bottom=4}
+    })
+    frame:SetBackdropColor(0.08,0.08,0.08,0.8)
+    frame:SetBackdropBorderColor(0.3,0.3,0.3,0.7)
+    local name=frame:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
+    frame.name=name
+    name:SetFont(unpack(Ether.media.expressway),14,"OUTLINE")
+    name:SetPoint("TOPLEFT",12,-12)
+    name:SetJustifyH("LEFT")
+    name:SetTextColor(1,0.9,0.5,1)
+    local nameLine=frame:CreateTexture(nil,"ARTWORK")
+    nameLine:SetPoint("TOPLEFT",name,"BOTTOMLEFT",0,-4)
+    nameLine:SetPoint("RIGHT",frame,-12,0)
+    nameLine:SetHeight(1)
+    nameLine:SetColorTexture(0.4,0.4,0.4,0.6)
+    local guildIcon=frame:CreateTexture(nil,"OVERLAY")
+    guildIcon:SetSize(12,12)
+    guildIcon:SetTexture(135026)
+    guildIcon:SetPoint("TOPLEFT",nameLine,"BOTTOMLEFT",0,-8)
+    local guild=frame:CreateFontString(nil,"OVERLAY")
+    frame.guild=guild
+    guild:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+    guild:SetPoint("LEFT",guildIcon,"RIGHT",4,0)
+    guild:SetTextColor(0.7,0.7,1,1)
+    local info=frame:CreateFontString(nil,"OVERLAY")
+    frame.info=info
+    info:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+    info:SetPoint("TOPLEFT",guildIcon,"BOTTOMLEFT",0,-8)
+    info:SetTextColor(0.8,0.8,0.8,1)
+    local targetIcon=frame:CreateTexture(nil,"OVERLAY")
+    targetIcon:SetSize(14,14)
+    targetIcon:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
+    targetIcon:SetPoint("TOPLEFT",info,"BOTTOMLEFT",0,-8)
+    local target=frame:CreateFontString(nil,"OVERLAY")
+    frame.target=target
+    target:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+    target:SetPoint("LEFT",targetIcon,"RIGHT",4,0)
+    target:SetJustifyH("LEFT")
+    target:SetTextColor(1,0.5,0.5,1)
+    local flags=frame:CreateFontString(nil,"OVERLAY")
+    frame.flags=flags
+    flags:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
+    flags:SetPoint("BOTTOMRIGHT",frame,-10,10)
+    flags:SetJustifyH("RIGHT")
+    flags:SetTextColor(0.6,0.6,0.6,1)
+    local pvpBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
+    pvpBg:SetSize(22,22)
+    pvpBg:SetPoint("TOPRIGHT",frame,-8,-8)
+    pvpBg:SetBackdrop({
+        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize=8,
+        insets={left=2,right=2,top=2,bottom=2}
+    })
+    pvpBg:SetBackdropColor(0,0,0,0.5)
+    pvpBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
+    local pvp=frame:CreateTexture(nil,"OVERLAY")
+    frame.pvp=pvp
+    pvp:SetAllPoints(pvpBg)
+    local restBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
+    restBg:SetSize(22,22)
+    restBg:SetPoint("RIGHT",pvpBg,"LEFT",-6,0)
+    restBg:SetBackdrop(pvpBg:GetBackdrop())
+    restBg:SetBackdropColor(0,0,0,0.5)
+    restBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
+    local resting=frame:CreateTexture(nil,"OVERLAY")
+    frame.resting=resting
+    resting:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
+    resting:SetTexCoord(0.0625,0.45,0.0625,0.45)
+    resting:SetPoint("CENTER",restBg)
+    resting:SetAllPoints(restBg)
+    frame:Hide()
+    Ether:ApplyFramePosition(frame,2)
+    Ether:SetupDrag(frame,2,10)
+end
+
 function Ether:SetupUpdateText(button,tbl,p)
     if not button or not button.healthBar then
         return
@@ -58,24 +146,10 @@ function Ether:SetupBorderLayout(target,Offset)
     target.r:SetPoint("BOTTOMRIGHT",target.powerBar or target,"BOTTOMRIGHT",Offset,-Offset)
     target.r:SetWidth(Offset)
     target.r:SetColorTexture(r,g,b,a)
-
-    --[[
-    local br=target.r:GetTexelSnappingBias()
-    local bl=target.l:GetTexelSnappingBias()
-    local bt=target.t:GetTexelSnappingBias()
-    local bb=target.b:GetTexelSnappingBias()
-    target.r:SetTexelSnappingBias(br)
-    target.l:SetTexelSnappingBias(bl)
-    target.t:SetTexelSnappingBias(bt)
-    target.b:SetTexelSnappingBias(bb)
-    ]]
-
 end
 
 function Ether:SetupHealthBar(button,orient)
-    if not button then
-        return
-    end
+    if not button then return end
     local healthBar=CreateFrame("StatusBar",nil,button)
     button.healthBar=healthBar
     healthBar:SetAllPoints(button)
@@ -94,9 +168,7 @@ function Ether:SetupHealthBar(button,orient)
 end
 
 function Ether:SetupPowerBar(button)
-    if not button or not button.healthBar then
-        return
-    end
+    if not button or not button.healthBar then return end
     local powerBar=CreateFrame("StatusBar",nil,button)
     button.powerBar=powerBar
     powerBar:SetPoint("TOPLEFT",button,"BOTTOMLEFT")
@@ -125,7 +197,7 @@ function Ether:SetupPrediction(button)
     player:Hide()
     player:SetFrameLevel(button:GetFrameLevel()+1)
     local from=CreateFrame("StatusBar",nil,button)
-    button.otherPrediction=from
+    button.prediction=from
     from:SetAllPoints(button.healthBar)
     from:SetStatusBarTexture(unpack(Ether.media.blankBar))
     from:SetStatusBarColor(1.00,0.65,0.00,.5)
@@ -520,8 +592,8 @@ function Ether:DispelLineSetup(button)
     right:SetColorTexture(r,g,b,a)
     right:SetPoint("RIGHT",button,"RIGHT",-5,0)
     right:SetSize(5,27)
-    button.dispelLeft = left
-    button.dispelRight = right
+    button.dispelLeft=left
+    button.dispelRight=right
     return button
 end
 
@@ -544,26 +616,17 @@ function Ether:DispelIconSetup(button)
     button.dispelBorder=border
     return button
 end
-
-local function CheckRaidButtons(arg1)
-    for unit,button in pairs(Ether.unitButtons.raid) do
-        if button and unit and unit==arg1 then
-            return button,button.unit,button.destGUID
-        end
-    end
-    return nil
-end
-
-local Create, Setup, Reset
+--[[
+local Create,Setup,Reset
 do
-    local frame = CreateFrame("Frame", nil, UIParent)
-    function Setup(self, CFG, unit)
-        local button = CheckRaidButtons(unit)
+    local frame=CreateFrame("Frame",nil,UIParent)
+    function Setup(self,CFG, unit)
+        local button=Ether.raidButtons[unit]
         if not button then return end
         self:SetParent(button.healthBar)
         self:SetColorTexture(unpack(CFG.color))
-        self:SetSize(CFG.size, CFG.size)
-        self:SetPoint(CFG.position, button.healthBar, CFG.position, CFG.offsetX, CFG.offsetY)
+        self:SetSize(CFG.size,CFG.size)
+        self:SetPoint(CFG.position,button.healthBar,CFG.position,CFG.offsetX,CFG.offsetY)
         self:Show()
     end
 
@@ -574,32 +637,33 @@ do
     end
 
     function Create()
-        local method = frame:CreateTexture(nil, "OVERLAY")
-        method.Setup = Setup
-        method.Reset = Reset
+        local method=frame:CreateTexture(nil,"OVERLAY")
+        method.Setup=Setup
+        method.Reset=Reset
         return method
     end
 end
 
-local active = {}
-local inactive = {}
-local temp = {}
-local count = 0
+local active={}
+local inactive={}
+local temp={}
+local count=0
 
 function Ether:Acquire(...)
-    if count >= 220 then
+    if count>=220 then
         return nil
     end
-    local obj = tremove(inactive)
+    local obj=tremove(inactive)
     if not obj then
-        obj = Create()
+        obj=Create()
     end
-    count = count + 1
-    active[count] = obj
-    obj._poolIndex = count
+    count=count+1
+    active[count]=obj
+    obj._poolIndex=count
     if obj.Setup then
         obj:Setup(...)
     end
+    Ether:EtherInfo("Pool Count: ", tostring(count))
     return obj
 end
 
@@ -607,39 +671,45 @@ function Ether:Release(obj)
     if not obj or not obj._poolIndex then
         return
     end
-    local index = obj._poolIndex
-    if index <= 0 or index > count then
+    local index=obj._poolIndex
+    if index<=0 or index>count then
         return
     end
-    local last = active[count]
-    active[index] = last
-    active[count] = nil
+    local last=active[count]
+    active[index]=last
+    active[count]=nil
 
-    if last and last ~= obj then
-        last._poolIndex = index
+    if last and last~=obj then
+        last._poolIndex=index
     end
 
-    obj._poolIndex = -1
-    count = count - 1
+    obj._poolIndex=-1
+    count=count-1
 
     if obj.Reset then
         obj:Reset()
+        if  obj:IsShown() then
+  Ether:EtherInfo("True")
+        end
     end
 
-    if #inactive < 150 then
-        inactive[#inactive + 1] = obj
+    if #inactive<150 then
+        inactive[#inactive+1]=obj
     end
+    Ether:EtherInfo("Pool Count: ", tostring(count))
 end
 
 function Ether:ReleaseAll()
-    for i = 1, count do
-        temp[i] = active[i]
+    for i=1,count do
+        temp[i]=active[i]
     end
-    for i = 1, #temp do
+    for i=1,#temp do
         Ether:Release(temp[i])
-        temp[i] = nil
+        temp[i]=nil
     end
+    Ether:EtherInfo("Pool Release All")
 end
+]]
 
 function Ether:CreatePopupBox()
     if Ether.popupBox then return end
@@ -650,7 +720,7 @@ function Ether:CreatePopupBox()
     frame:SetPoint("CENTER")
     frame.bg=frame:CreateTexture(nil,"BACKGROUND")
     frame.bg:SetAllPoints()
-    frame.bg:SetTexture(unpack(Ether.media.etherEmblem))
+    frame.bg:SetTexture(unpack(Ether.media.emblem))
     frame.font=frame:CreateFontString(nil,"OVERLAY")
     frame.font:SetFont(unpack(Ether.media.expressway),14,"OUTLINE")
     frame.font:SetPoint("TOP",0,-20)
@@ -692,93 +762,102 @@ function Ether:CreatePopupBox()
     Ether.popupCallback=left
 end
 
-function Ether:CreateToolFrame()
-    if Ether.toolFrame then
+local frame=CreateFrame("Frame",nil,UIParent)
+Ether.TextureMethod=function()
+    local method=frame:CreateTexture(nil,"OVERLAY")
+    local raidButtons=Ether.raidButtons
+    method.Setup=function(self,CFG,unit)
+        local button=raidButtons[unit]
+        if not button then return end
+        self:SetParent(button.healthBar)
+        self:SetColorTexture(unpack(CFG.color))
+        self:SetSize(CFG.size,CFG.size)
+        self:SetPoint(CFG.position,button.healthBar,CFG.position,CFG.offsetX,CFG.offsetY)
+        self:Show()
+    end
+    method.Reset=function(self)
+        self:Hide()
+        self:ClearAllPoints()
+        self:SetParent(nil)
+    end
+    return method
+end
+
+---@class ObjPool
+---@field active table
+---@field inactive table
+---@field activeCount number
+local ObjPool={}
+
+---@return ObjPool
+function Ether:CreateObjPool(creatorFunc)
+    local obj={
+        create=creatorFunc,
+        active={},
+        inactive={},
+        temp={},
+        activeCount=0,
+    }
+    setmetatable(obj,{__index=ObjPool})
+    return obj
+end
+---@return any
+function ObjPool:Acquire(...)
+    if self.activeCount>=220 then
+        return nil
+    end
+    local obj=table.remove(self.inactive)
+    if not obj then
+        obj=self.create()
+    end
+    self.activeCount=self.activeCount+1
+    self.active[self.activeCount]=obj
+    obj._poolIndex=self.activeCount
+    if obj.Setup then
+        obj:Setup(...)
+    end
+    Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
+    return obj
+end
+function ObjPool:Release(obj)
+    if not obj or not obj._poolIndex then
         return
     end
-    local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
-    Ether.toolFrame=frame
-    frame:SetFrameStrata("TOOLTIP")
-    frame:SetSize(280,120)
-    frame:SetBackdrop({
-        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
-        tile=true,tileSize=16,edgeSize=16,
-        insets={left=4,right=4,top=4,bottom=4}
-    })
-    frame:SetBackdropColor(0.08,0.08,0.08,0.8)
-    frame:SetBackdropBorderColor(0.3,0.3,0.3,0.7)
-    local name=frame:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
-    frame.name=name
-    name:SetFont(unpack(Ether.media.expressway),14,"OUTLINE")
-    name:SetPoint("TOPLEFT",12,-12)
-    name:SetJustifyH("LEFT")
-    name:SetTextColor(1,0.9,0.5,1)
-    local nameLine=frame:CreateTexture(nil,"ARTWORK")
-    nameLine:SetPoint("TOPLEFT",name,"BOTTOMLEFT",0,-4)
-    nameLine:SetPoint("RIGHT",frame,-12,0)
-    nameLine:SetHeight(1)
-    nameLine:SetColorTexture(0.4,0.4,0.4,0.6)
-    local guildIcon=frame:CreateTexture(nil,"OVERLAY")
-    guildIcon:SetSize(12,12)
-    guildIcon:SetTexture(135026)
-    guildIcon:SetPoint("TOPLEFT",nameLine,"BOTTOMLEFT",0,-8)
-    local guild=frame:CreateFontString(nil,"OVERLAY")
-    frame.guild=guild
-    guild:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
-    guild:SetPoint("LEFT",guildIcon,"RIGHT",4,0)
-    guild:SetTextColor(0.7,0.7,1,1)
-    local info=frame:CreateFontString(nil,"OVERLAY")
-    frame.info=info
-    info:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
-    info:SetPoint("TOPLEFT",guildIcon,"BOTTOMLEFT",0,-8)
-    info:SetTextColor(0.8,0.8,0.8,1)
-    local targetIcon=frame:CreateTexture(nil,"OVERLAY")
-    targetIcon:SetSize(14,14)
-    targetIcon:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
-    targetIcon:SetPoint("TOPLEFT",info,"BOTTOMLEFT",0,-8)
-    local target=frame:CreateFontString(nil,"OVERLAY")
-    frame.target=target
-    target:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
-    target:SetPoint("LEFT",targetIcon,"RIGHT",4,0)
-    target:SetJustifyH("LEFT")
-    target:SetTextColor(1,0.5,0.5,1)
-    local flags=frame:CreateFontString(nil,"OVERLAY")
-    frame.flags=flags
-    flags:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
-    flags:SetPoint("BOTTOMRIGHT",frame,-10,10)
-    flags:SetJustifyH("RIGHT")
-    flags:SetTextColor(0.6,0.6,0.6,1)
-    local pvpBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
-    pvpBg:SetSize(22,22)
-    pvpBg:SetPoint("TOPRIGHT",frame,-8,-8)
-    pvpBg:SetBackdrop({
-        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize=8,
-        insets={left=2,right=2,top=2,bottom=2}
-    })
-    pvpBg:SetBackdropColor(0,0,0,0.5)
-    pvpBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
-    local pvp=frame:CreateTexture(nil,"OVERLAY")
-    frame.pvp=pvp
-    pvp:SetAllPoints(pvpBg)
-    local restBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
-    restBg:SetSize(22,22)
-    restBg:SetPoint("RIGHT",pvpBg,"LEFT",-6,0)
-    restBg:SetBackdrop(pvpBg:GetBackdrop())
-    restBg:SetBackdropColor(0,0,0,0.5)
-    restBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
-    local resting=frame:CreateTexture(nil,"OVERLAY")
-    frame.resting=resting
-    resting:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
-    resting:SetTexCoord(0.0625,0.45,0.0625,0.45)
-    resting:SetPoint("CENTER",restBg)
-    resting:SetAllPoints(restBg)
-    frame:Hide()
-    Ether:ApplyFramePosition(frame,2)
-    Ether:SetupDrag(frame,2,10)
+    local index=obj._poolIndex
+    if index<=0 or index>self.activeCount then
+        return
+    end
+    local last=self.active[self.activeCount]
+    self.active[index]=last
+    self.active[self.activeCount]=nil
+    if last and last~=obj then
+        last._poolIndex=index
+    end
+    obj._poolIndex=-1
+    self.activeCount=self.activeCount-1
+    if obj.Reset then
+        obj:Reset()
+    end
+    if #self.inactive<150 then
+        self.inactive[#self.inactive+1]=obj
+    end
+    Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
 end
+function ObjPool:ReleaseAll()
+    for i=1,self.activeCount do
+        self.temp[i]=self.active[i]
+    end
+
+    for i=1,#self.temp do
+        self:Release(self.temp[i])
+    end
+
+    for i=1,#self.temp do
+        self.temp[i]=nil
+    end
+    Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
+end
+
 --[[
 local function HexToRGB(hex)
     hex = hex:gsub('#', '')

@@ -30,7 +30,8 @@ local masterlootIcon="Interface\\GroupFrame\\UI-Group-MasterLooter"
 local charmedIcon="Interface\\Icons\\Spell_Shadow_Charm"
 local AFK=[[|cE600CCFFAFK|r]]
 local DND=[[|cffCC66FFDND|r]]
-
+local raidButtons=Ether.raidButtons
+local soloButtons=Ether.soloButtons
 Ether.Handler={}
 local Updates={}
 function Ether.Handler:FullUpdate()
@@ -91,7 +92,7 @@ do
 end
 
 function Ether:HideIndicators(indicator)
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button.Indicators and button.Indicators[indicator] then
             button.Indicators[indicator]:Hide()
         end
@@ -120,7 +121,7 @@ function Ether:IndictorsTexture(b,tbl)
 end
 
 function Ether:SaveIndicatorsPosition(indicator,number)
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if not button or not button.Indicators then
             return
         end
@@ -156,7 +157,7 @@ end
 
 local updater=nil
 local function HideReadyCheckIcons()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button.Indicators and button.Indicators.ReadyCheck then
             button.Indicators.ReadyCheck:Hide()
         end
@@ -168,7 +169,7 @@ local function HideReadyCheckIcons()
 end
 
 local function UpdateConnection()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"Connection")
             local isConnected=UnitIsConnected(button.unit)
@@ -184,7 +185,7 @@ local function UpdateConnection()
 end
 
 local function UpdateResurrection()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"Resurrection")
             local Resurrection=UnitHasIncomingResurrection(button.unit)
@@ -199,7 +200,7 @@ local function UpdateResurrection()
 end
 
 local function UpdateReady()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"ReadyCheck")
             local unit=button.unit
@@ -225,7 +226,7 @@ local function UpdateReady()
 end
 
 local function UpdateConfirm()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"ReadyCheck")
             local status=GetReadyCheckStatus(button.unit)
@@ -247,7 +248,7 @@ local function UpdateFinished()
 end
 
 local function UpdateUnitFlags()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"UnitFlags")
             local charmed=UnitIsCharmed(button.unit)
@@ -262,8 +263,10 @@ local function UpdateUnitFlags()
                     button.healthBar:SetValue(0)
                     button.healthBar:SetMinMaxValues(0,0)
                 end
-                Ether:UpdateDispelFrame(button.unit,{0,0,0,0})
-                Ether:UpdatePrediction(button.unit)
+                if button.destGUID then
+                    Ether:UpdateDispelFrame(button,{0,0,0,0})
+                    Ether:UpdatePrediction(button)
+                end
                 button.Indicators.UnitFlags:Show()
             else
                 button.Indicators.UnitFlags:Hide()
@@ -274,7 +277,7 @@ local function UpdateUnitFlags()
 end
 
 local function UpdatePlayerFlags()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"PlayerFlags")
             local away=UnitIsAFK(button.unit)
@@ -306,7 +309,7 @@ local function UpdatePlayerFlags()
 end
 
 local function UpdateGroupLeader()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"GroupLeader")
             if not UnitInAnyGroup("player") then
@@ -324,7 +327,7 @@ local function UpdateGroupLeader()
 end
 
 local function UpdatePlayerRoles()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"PlayerRoles")
             if not IsInRaid() then
@@ -346,7 +349,7 @@ local function UpdatePlayerRoles()
 end
 
 local function UpdateMasterLoot()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"MasterLoot")
             if not UnitInAnyGroup("player") then
@@ -371,7 +374,7 @@ function Ether:IndicatorsUpdate(unit)
 end
 
 local function UpdateRaidTarget()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:IndictorsTexture(button,"RaidTarget")
             local index=GetRaidTargetIndex(button.unit)
@@ -390,7 +393,7 @@ local function UpdateRaidTarget()
 end
 
 function Ether:UpdateSoloIndicator(unit)
-    local button=Ether.unitButtons.solo[unit]
+    local button=soloButtons[unit]
     if not button or not button.RaidTarget then
         return
     end

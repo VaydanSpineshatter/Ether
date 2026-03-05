@@ -10,7 +10,7 @@ local string_format=string.format
 local math_floor=math.floor
 local fm="%.1f"
 local f2m="%s%d%%|r"
-
+local raidButtons=Ether.raidButtons
 local FACTION_COLORS={
     [0]={r=1.0,g=0,b=0},-- 255/255=1.0
     [1]={r=1.0,g=0.506,b=0},-- 129/255=0.506
@@ -93,7 +93,7 @@ do
             if not unit then
                 return
             end
-            local button=Ether.unitButtons.raid[unit]
+            local button=raidButtons[unit]
             if not button then
                 return
             end
@@ -215,9 +215,7 @@ function Ether:UpdateHealthTextRounded(button)
 end
 
 function Ether:UpdatePrediction(button)
-    if not button or not button.unit or not button.myPrediction or not button.otherPrediction then
-        return
-    end
+    if not button or not button.unit then return end
     local myHeal=UnitGetIncomingHeals(button.unit,"player") or 0
     local otherHeal=UnitGetIncomingHeals(button.unit) or 0
     local other=0
@@ -232,11 +230,11 @@ function Ether:UpdatePrediction(button)
             button.myPrediction:Hide()
         end
     end
-    if button.otherPrediction then
+    if button.prediction then
         if other>1 then
-            button.otherPrediction:Show()
+            button.prediction:Show()
         else
-            button.otherPrediction:Hide()
+            button.prediction:Hide()
         end
     end
 end

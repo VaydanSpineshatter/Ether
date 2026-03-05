@@ -6,6 +6,12 @@ Ether.Anchor.pet=pet
 local UnitExists=UnitExists
 local UnitGUID=UnitGUID
 local GameTooltip=GameTooltip
+local raidButtons={}
+Ether.raidButtons=raidButtons
+local guidData={}
+Ether.guidData=guidData
+local C_After=C_Timer.After
+
 local initialConfigFunction=[[
     local header = self:GetParent()
     self:SetWidth(header:GetAttribute("ButtonWidth"))
@@ -30,10 +36,10 @@ local function Leave()
         return
     end
     GameTooltip:Hide()
-
 end
 
 local function Update(self)
+    self.unit=self:GetAttribute("unit")
     Ether:UpdateHealth(self)
     Ether:UpdateName(self,3)
     Ether:InitialHealth(self)
@@ -46,18 +52,13 @@ local function CheckStatus(self)
     if (guid~=self.destGUID) then
         self.destGUID=guid
         if guid then
-        if not Ether.dataDispel[guid] then
-            Ether.dataDispel[guid]={}
-        end
-        if not Ether.dataSpell[guid] then
-            Ether.dataSpell[guid]={}
-        end
             Update(self)
         end
     end
 end
 
 local function Show(self)
+    self.unit=self:GetAttribute("unit")
     self:RegisterEvent("UNIT_NAME_UPDATE")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     if self.TypePet then
@@ -72,22 +73,10 @@ local function Hide(self)
     if self.TypePet then
         self:UnregisterEvent("UNIT_PET")
     end
-end
-
-local function UpdateAuraByIndex(self)
-    local guid=self.destGUID
-    if not Ether.dataSpell[guid] then
-        Ether.dataSpell[guid]={}
-    end
-    local C=Ether.DB[1003]
-    local index=1
-    while true do
-        local aura=C_UnitAuras.GetBuffDataByIndex(self.unit,index)
-        if not aura then break end
-        if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
-        Ether.dataSpell[guid][aura.spellId]=Ether:Acquire(C[aura.spellId],self.unit)
-        Ether.spellInstance[aura.auraInstanceID]=aura
-        index=index+1
+    if self.destGUID then
+        Ether:UpdateDispelFrame(self,{0,0,0,0})
+        Ether:UpdatePrediction(self)
+        Ether:GuidStatus(self.destGUID)
     end
 end
 
@@ -96,20 +85,24 @@ local function OnAttributeChanged(self,name,unit)
         return
     end
     local oldUnit=self.unit
-    local oldGUID=self.unitGUID
     local newUnit=unit
-    local newGUID=UnitGUID(unit)
-    if oldGUID and oldGUID~=newGUID then
-        Ether.CheckGUID(oldGUID)
+    local GUID=UnitGUID(unit)
+    if self.destGUID and self.destGUID~=GUID then
+        if guidData[self.destGUID] then
+            Ether:GuidStatus(self.destGUID)
+        end
     end
     if oldUnit and oldUnit~=newUnit then
-        Ether.unitButtons.raid[oldUnit]=nil
+        raidButtons[oldUnit]=nil
     end
-    Ether.unitButtons.raid[newUnit]=self
+    raidButtons[newUnit]=self
     if newUnit and UnitExists(newUnit) then
         if Ether.DB[1001][3]==1 then
-            C_Timer.After(0.3,function()
-            --    UpdateAuraByIndex(self)
+            C_After(0.3,function()
+                if GUID then
+                    --   Ether:UpdateRaidIsHelpful(self, self.unitGUID)
+                    --  Ether:UpdateRaidIsHarmful(self, self.unitGUID)
+                end
             end)
         end
     end

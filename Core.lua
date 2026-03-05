@@ -1,53 +1,24 @@
 ---@class Ether
 local _,Ether=...
 local pairs,ipairs=pairs,ipairs
-Ether.IsMovable=false
-Ether.IsShown=false
-Ether.version=0
-local updatedChannel=false
-Ether.debug=false
-Ether.Header={}
-Ether.Anchor={}
-Ether.playerName=UnitName("player")
-Ether.charKey=""
+Ether.IsShown,Ether.IsMovable=false,false
+Ether.metaData={"EtherAddonMsg","",0}
+local Anchor,Header={},{}
+Ether.Header,Ether.Anchor=Anchor,Header
 local soundsRegistered=false
 Ether.Anchor.toolFrame=CreateFrame("Frame",nil,UIParent)
 Ether.media={
-    etherIcon={"Interface\\AddOns\\Ether\\Media\\Texture\\icon.blp"},
-    etherEmblem={"Interface\\AddOns\\Ether\\Media\\Texture\\emblem.png"},
+    icon={"Interface\\AddOns\\Ether\\Media\\Texture\\icon.blp"},
+    emblem={"Interface\\AddOns\\Ether\\Media\\Texture\\emblem.png"},
     expressway={"Interface\\AddOns\\Ether\\Media\\Font\\expressway.ttf"},
     blankBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
-    powerBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\otravi.tga"}
+    slash={
+        [1]={cmd="/ether",desc="Toggle Commands"},
+        [2]={cmd="/ether settings",desc="Toggle settings"},
+        [3]={cmd="/ether rl",desc="Reload Interface"},
+        [4]={cmd="/ether Msg",desc="Ether whisper enable"}
+    }
 }
-
-Ether.SlashInfo={
-    [1]={cmd="/ether",desc="Toggle Commands"},
-    [2]={cmd="/ether settings",desc="Toggle settings"},
-    [3]={cmd="/ether rl",desc="Reload Interface"},
-    [4]={cmd="/ether Msg",desc="Ether whisper enable"}
-}
-
-Ether.dispelInstance={}
-Ether.spellInstance={}
-Ether.dataSpell={}
-Ether.dataDispel={}
-Ether.spellAdded={}
-Ether.dispelAdded={}
-
-function Ether:RaidAuraWipe()
-    wipe(Ether.dispelInstance)
-    wipe(Ether.spellInstance)
-    wipe(Ether.dataSpell)
-    wipe(Ether.dataDispel)
-    wipe(Ether.spellAdded)
-    wipe(Ether.dispelAdded)
-end
-
-Ether.unitButtons={
-    raid={},
-    solo={}
-}
-Ether.guidData={}
 
 local function CreateSettingsButtons(name,parent,layer,onClick,isTopButton)
     local btn=CreateFrame("Button",nil,parent)
@@ -89,7 +60,7 @@ do
                 [1]={"Module","Blizzard","About"},
                 [2]={"Helper"},
                 [3]={"Create","Fake","Update"},
-                [4]={"Settings","Custom","Effects","Helper"},
+                [4]={"Settings","Custom","Effects"},
                 [5]={"Position"},
                 [6]={"Tooltip"},
                 [7]={"Layout","Header","CastBar","Config"},
@@ -107,6 +78,14 @@ do
             }
         }
     }
+    local Required=false
+    local function CreateRequiredSections(data)
+        if not Required then
+            Required=true
+            Ether:CreateIndicatorsSection(data)
+            Ether:CreateCustomSection(data)
+        end
+    end
 
     local function ShowCategory(self,category)
         if self.Created~=true then
@@ -154,14 +133,10 @@ do
             Ether:CreateUpdateSection(EtherFrame)
         elseif category=="Settings" then
             Ether:CreateSettingsSection(EtherFrame)
-        elseif category=="Custom" then
-            Ether:CreateCustomSection(EtherFrame)
         elseif category=="Effects" then
             Ether:CreateEffectsSection(EtherFrame)
         elseif category=="Helper" then
             Ether:CreateHelperSection(EtherFrame)
-        elseif category=="Position" then
-            Ether:CreatePositionSection(EtherFrame)
         elseif category=="Tooltip" then
             Ether:CreateTooltipSection(EtherFrame)
         elseif category=="Header" then
@@ -175,7 +150,6 @@ do
         elseif category=="Edit" then
             Ether:CreateEditSection(EtherFrame)
         end
-
         local target=self["CONTENT"]["CHILDREN"][category]
         if target then
             target:Show()
@@ -231,7 +205,7 @@ do
                     for _,itemName in ipairs(self.Menu["LEFT"][layer]) do
                         local btn=CreateSettingsButtons(itemName,self.Frames["LEFT"],layer,function(_,btnLayer)
                             local firstTabName=self.Menu["TOP"][btnLayer][1]
-                            Ether.DB[111][3]=firstTabName
+                            Ether.DB[111][1]=firstTabName
                             for _,layers in pairs(self.Buttons[10]) do
                                 for _,topBtn in pairs(layers) do
                                     topBtn:Hide()
@@ -310,10 +284,10 @@ do
                 self.Frames[value]=CreateFrame("Frame",nil,self.Frames["MAIN"])
             end
             self.Frames["MAIN"]:SetScript("OnShow",function()
-                Ether.DB[111][2]=1
+                Ether.DB[111][3]=1
             end)
             self.Frames["MAIN"]:SetScript("OnHide",function()
-                Ether.DB[111][2]=0
+                Ether.DB[111][3]=0
             end)
             self.Frames["TOP"]:SetPoint("TOPLEFT",10,-15)
             self.Frames["TOP"]:SetPoint("TOPRIGHT",-10,0)
@@ -352,15 +326,13 @@ do
             self.Frames["INDICATORS"]=CreateFrame("Frame",nil,self.Frames["MAIN"])
             self.Frames["AURAS"]=CreateFrame("Frame",nil,self.Frames["MAIN"])
             self.Frames["EDITOR"]=CreateFrame("Frame",nil,self.Frames["MAIN"])
-            self.Frames["EDITOR"].Created=false
-            self.Frames["AURAS"].Created=false
             local version=self.Frames["BOTTOM"]:CreateFontString(nil,"OVERLAY")
             version:SetFont(unpack(Ether.media.expressway),15,"OUTLINE")
             version:SetPoint("BOTTOMRIGHT",-10,3)
-            version:SetText("Beta Build |cE600CCFF"..Ether.version.."|r")
+            version:SetText("Beta Build |cE600CCFF"..tostring(Ether.metaData[3]).."|r")
             local menuIcon=self.Frames["BOTTOM"]:CreateTexture(nil,"ARTWORK")
             menuIcon:SetSize(32,32)
-            menuIcon:SetTexture(unpack(Ether.media.etherIcon))
+            menuIcon:SetTexture(unpack(Ether.media.icon))
             menuIcon:SetPoint("BOTTOMLEFT",0,5)
             local name=self.Frames["BOTTOM"]:CreateFontString(nil,"OVERLAY")
             name:SetFont(unpack(Ether.media.expressway),20,"OUTLINE")
@@ -386,6 +358,7 @@ do
                 ShowHideSettings(false)
             end)
             InitializeLayer(self)
+            CreateRequiredSections(EtherFrame)
         end
     end
     function EtherToggle()
@@ -398,7 +371,7 @@ do
         else
             EtherFrame.Frames["MAIN"]:Show()
         end
-        local category=Ether.DB[111][3]
+        local category=Ether.DB[111][1]
         if EtherFrame["CONTENT"]["CHILDREN"][category] then
             ShowCategory(EtherFrame,category)
         end
@@ -418,33 +391,6 @@ do
     Ether.EtherToggle=EtherToggle
 end
 
-local sendChannel
-local function UpdateSendChannel()
-    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        sendChannel="INSTANCE_CHAT"
-    elseif IsInRaid() then
-        sendChannel="RAID"
-    else
-        sendChannel="PARTY"
-    end
-end
-
-local string_format=string.format
-local Comm=LibStub("AceComm-3.0")
-Comm:RegisterComm("ETHER_VERSION",function(prefix,message,channel,sender)
-    if sender==Ether.playerName then
-        return
-    end
-    local theirVersion=tonumber(message)
-    local myVersion=tonumber(Ether.version)
-    local lastCheck=Ether.DB[111][1] or 0
-    if (time()-lastCheck>=9200) and theirVersion and myVersion and myVersion<theirVersion then
-        Ether.DB[111][1]=time()
-        local msg=string_format("New version found (%d). Please visit %s to get the latest version.",theirVersion,"|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
-        Ether:EtherInfo(msg)
-    end
-end)
-
 local function OnInitialize(self,event,...)
     if (event=="ADDON_LOADED") then
         local addon=...
@@ -455,60 +401,56 @@ local function OnInitialize(self,event,...)
         if type(_G.ETHER_DATABASE_DX_AA)~="table" then
             _G.ETHER_DATABASE_DX_AA={}
         end
-        if type(_G.ETHER_DATABASE_DX_AA[1])~="number" then
-            _G.ETHER_DATABASE_DX_AA[1]=0
+        if type(ETHER_DATABASE_DX_AA["Version"])~="number" then
+            ETHER_DATABASE_DX_AA["Version"]=0
         end
-
-        Ether.charKey=Ether:GetCharacterKey() or "Unknown-Unknown"
-        Ether.version=C_AddOns.GetAddOnMetadata("Ether","Version")
-        local function f()
-            if Ether.version==0 then
-                ETHER_DATABASE_DX_AA={
-                    profiles={
-                        [Ether.charKey]=Ether:CopyTable(Ether.DataDefault)
-                    },
-                    currentProfile=Ether.charKey
-                }
-                ETHER_DATABASE_DX_AA[1]=tonumber(Ether.version)
-            end
-            if not ETHER_DATABASE_DX_AA.profiles[Ether.charKey] then
-                ETHER_DATABASE_DX_AA.profiles[Ether.charKey]=Ether.DataDefault
-            end
-            local current=Ether:GetCurrentProfileString()
-            if ETHER_DATABASE_DX_AA.profiles[current] then
-                ETHER_DATABASE_DX_AA.profiles[current]=Ether:CopyTable(Ether:GetCurrentProfile())
-            end
-            Ether:MergeToLeft(Ether:CopyTable(Ether:GetCurrentProfile()),Ether.DataDefault)
-            Ether.DB=Ether:CopyTable(Ether:GetCurrentProfile())
-            return "Init successfully"
+        if type(ETHER_DATABASE_DX_AA["Last"])~="number" then
+            ETHER_DATABASE_DX_AA["Last"]=0
         end
-        local function err(msg)
-            print("err called",msg)
-            ETHER_DATABASE_DX_AA={
-                profiles={
-                    [Ether.charKey]=Ether:CopyTable(Ether.DataDefault)
-                },
-                currentProfile=Ether.charKey
+        if type(ETHER_DATABASE_DX_AA["Profiles"])~="table" then
+            ETHER_DATABASE_DX_AA["Profiles"]={}
+        end
+        if type(ETHER_DATABASE_DX_AA["Current"])~="string" then
+            ETHER_DATABASE_DX_AA["Current"]=""
+        end
+        local System=C_AddOns.GetAddOnMetadata("Ether","Version")
+        local CharKey=Ether:GetCharacterKey()
+        Ether.metaData[2]=CharKey
+        Ether.metaData[3]=tonumber(System)
+        local User=ETHER_DATABASE_DX_AA["Version"]
+        if User<41500 then
+            wipe(ETHER_DATABASE_DX_AA["Profiles"])
+            ETHER_DATABASE_DX_AA["Profiles"]={
+                ["Default"]=Ether.DataDefault,
             }
-            ETHER_DATABASE_DX_AA[1]=tonumber(Ether.version)
-            Ether.DB=ETHER_DATABASE_DX_AA.profiles[Ether.charKey]
-            return "Init failed"
+            ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3]
+            ETHER_DATABASE_DX_AA["Current"]="Default"
+        else
+            ETHER_DATABASE_DX_AA["Profiles"]={
+                ["Default"]=Ether.DataDefault,
+                [Ether:GetProfileName()]=Ether:CopyTable(Ether:GetProfile())
+            }
+            ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3]
+            ETHER_DATABASE_DX_AA["Current"]=Ether:GetProfileName()
         end
-        local function call()
-            return f()
-        end
-        local status,ret=xpcall(call,err)
+        Ether:MergeToLeft(Ether:CopyTable(Ether:GetProfile()),Ether.DataDefault)
+        Ether.DB=Ether:CopyTable(Ether:GetProfile())
         self:RegisterEvent("PLAYER_LOGIN")
     elseif (event=="PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
-        self:RegisterEvent("GROUP_ROSTER_UPDATE")
         self:RegisterEvent("PLAYER_ENTERING_WORLD")
         self:RegisterEvent("PLAYER_LOGOUT")
-
+        C_ChatInfo.RegisterAddonMessagePrefix(Ether.metaData[1])
         Ether:CreatePopupBox()
-
         Ether:HideBlizzard()
         Ether:SetupInfoFrame()
+        local IsPrefixRegistered=C_ChatInfo.IsAddonMessagePrefixRegistered(Ether.metaData[1])
+        if IsPrefixRegistered then
+            if IsInGuild() then
+                C_ChatInfo.SendAddonMessage(Ether.metaData[1],Ether.metaData[3],"GUILD")
+            end
+            Ether:EtherDebug("Prefix registered")
+        end
         SLASH_ETHER1="/ether"
         SlashCmdList["ETHER"]=function(msg)
             local input,rest=msg:match("^(%S*)%s*(.-)$")
@@ -523,13 +465,10 @@ local function OnInitialize(self,event,...)
             elseif input=="msg" then
                 Ether:EtherFrameSetClick(1,2)
             else
-                for _,entry in ipairs(Ether.SlashInfo) do
-                    Ether:EtherInfo(string_format("%s  –  %s",entry.cmd,entry.desc))
+                for _,entry in ipairs(Ether.media.slash) do
+                    Ether:EtherInfo(string.format("%s  –  %s",entry.cmd,entry.desc))
                 end
             end
-        end
-        if IsInGuild() then
-            Comm:SendCommMessage("ETHER_VERSION",Ether.version,"GUILD",nil,"NORMAL")
         end
         if LibStub and LibStub("LibSharedMedia-3.0",true) then
             if not soundsRegistered then
@@ -541,6 +480,11 @@ local function OnInitialize(self,event,...)
         end
         if Ether.DB[401][2]==1 then
             Ether.EnableMsgEvents()
+        end
+        Ether:CreateGroupHeader()
+        Ether:CreatePetHeader()
+        if Ether.DB[1501][1]==1 then
+            Ether:ChangeDirectionHeader(true)
         end
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
         EtherToggle()
@@ -563,6 +507,9 @@ local function OnInitialize(self,event,...)
         if Ether.EtherIcon then
             Ether.EtherIcon:ClearAllPoints()
             Ether.EtherIcon:SetPoint("CENTER",Minimap,"CENTER",Ether.DB[21][13][4],Ether.DB[21][13][5])
+            if Ether.DB[401][1]==1 then
+                Ether:ToggleIcon(1)
+            end
         end
         for _,unit in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
             Ether:CreateUnitButtons(unit)
@@ -573,23 +520,11 @@ local function OnInitialize(self,event,...)
         if Ether.DB[1201][2]==1 then
             Ether:CastBarEnable("target")
         end
-        if Ether.unitButtons.solo["pet"] then
-            Ether:PetCondition(Ether.unitButtons.solo["pet"])
-        end
-    elseif (event=="GROUP_ROSTER_UPDATE") then
-        self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-        if IsInGroup() and updatedChannel~=true then
-            updatedChannel=true
-            UpdateSendChannel()
-            Comm:SendCommMessage("ETHER_VERSION",Ether.version,sendChannel,nil,"NORMAL")
+        if Ether.soloButtons["pet"] then
+            Ether:PetCondition(Ether.soloButtons["pet"])
         end
     elseif (event=="PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-        Ether:CreateGroupHeader()
-        Ether:CreatePetHeader()
-        if Ether.DB[1501][1]==1 then
-            Ether:ChangeDirectionHeader(true)
-        end
         Ether:RosterEnable()
     elseif (event=="PLAYER_REGEN_DISABLED") then
         self:UnregisterEvent("PLAYER_REGEN_DISABLED")
@@ -607,11 +542,7 @@ local function OnInitialize(self,event,...)
             Ether.UIPanel.Frames["MAIN"]:Show()
         end
     elseif (event=="PLAYER_LOGOUT") then
-        wipe(Ether.unitButtons)
-        local current=Ether:GetCurrentProfileString()
-        if current then
-            ETHER_DATABASE_DX_AA.profiles[current]=Ether:CopyTable(Ether.DB)
-        end
+        ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
     end
 end
 local Initialize=CreateFrame("Frame")

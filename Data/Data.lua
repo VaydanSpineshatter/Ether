@@ -1,33 +1,14 @@
 local _,Ether=...
-local tinsert,tsort,tconcat=table.insert,table.sort,table.concat
+local tinsert,tsort=table.insert,table.sort
 local pairs,ipairs=pairs,ipairs
-local tostring=tostring
-local string_format=string.format
 local type,next=type,next
-local math_floor=math.floor
-local string_char=string.char
-local string_rep=string.rep
-
-local STR={
-    [1]="UIParent",
-    [2]="TOPLEFT",
-    [3]="TOP",
-    [4]="TOPRIGHT",
-    [5]="LEFT",
-    [6]="CENTER",
-    [7]="RIGHT",
-    [8]="BOTTOMLEFT",
-    [9]="BOTTOM",
-    [10]="BOTTOMRIGHT"
-}
 
 local Default={
-    [1]=0,
     [101]={1,1,1,1,1,1,1,1,1,1,1},
-    [111]={0,1,"Module",331},
+    [111]={"Module",331,0},
     [201]={1,1,1,1,1,1},
     [301]={1,1,1,1,1,1,1,1,1,1,1,1,1},
-    [401]={1,1,1,1,0,1,1},
+    [401]={1,1,1,1,0,1,1,0},
     [501]={1,1,1,1,1,1,1,1,1},
     [701]={0,0,0,0},
     [801]={0,0,0},
@@ -114,12 +95,10 @@ function Ether:CopyTable(orig,seen)
     if type(orig)~="table" then
         return orig
     end
-
     seen=seen or {}
     if seen[orig] then
         return seen[orig]
     end
-
     local copy={}
     seen[orig]=copy
     for k,v in pairs(orig) do
@@ -162,7 +141,7 @@ end
 
 function Ether:ArrayMigrateData(data)
     local arraysLength={
-        [101]=11,[201]=6,[301]=13,[401]=7,
+        [101]=11,[201]=6,[301]=13,[401]=8,
         [501]=9,[701]=4,[801]=3,
         [1001]=3,[1101]=3,[1201]=2,[1501]=5
     }
@@ -187,6 +166,7 @@ function Ether:RefreshAllSettings()
     Ether:FrameChecked(9,1201)
     Ether:FrameChecked(11,1501)
 end
+
 local mergeCache={}
 function Ether:MergeToLeft(ORIG,NEW)
     mergeCache[ORIG]=NEW
@@ -227,16 +207,16 @@ function Ether:RefreshFramePositions()
     local frame={
         [1]=Ether.infoFrame,
         [2]=Ether.toolFrame,
-        [3]=Ether.unitButtons.solo["player"],
-        [4]=Ether.unitButtons.solo["target"],
-        [5]=Ether.unitButtons.solo["targettarget"],
-        [6]=Ether.unitButtons.solo["pet"],
-        [7]=Ether.unitButtons.solo["pettarget"],
-        [8]=Ether.unitButtons.solo["focus"],
+        [3]=Ether.soloButtons["player"],
+        [4]=Ether.soloButtons["target"],
+        [5]=Ether.soloButtons["targettarget"],
+        [6]=Ether.soloButtons["pet"],
+        [7]=Ether.soloButtons["pettarget"],
+        [8]=Ether.soloButtons["focus"],
         [9]=Ether.Anchor.raid,
         [10]=Ether.Anchor.pet,
-        [11]=Ether.unitButtons.solo["player"].castBar,
-        [12]=Ether.unitButtons.solo["target"].castBar,
+        [11]=Ether.soloButtons["player"].castBar,
+        [12]=Ether.soloButtons["target"].castBar,
         [13]=Ether.EtherIcon,
         [14]=Ether.UIPanel.Frames["MAIN"]
     }
@@ -269,260 +249,4 @@ function Ether:EtherFrameSetClick(number,number2,number3)
     local check=Ether.UIPanel.Buttons[number][number2][number3] or Ether.UIPanel.Buttons[number][number2]
     check:SetChecked(not check:GetChecked())
     check:GetScript("OnClick")(check)
-end
-
-function Ether:StringToTbl(str)
-    if not str or str=="" then
-        return false,"Empty string"
-    end
-    if not str:match("^%s*return") then
-        str="return "..str
-    end
-    local env={
-        string={
-            sub=string.sub,
-            find=string.find,
-            match=string.match,
-            gsub=string.gsub,
-            byte=string.byte,
-            char=string.char,
-            len=string.len,
-            lower=string.lower,
-            upper=string.upper,
-            rep=string.rep,
-            format=string.format,
-        },
-        table={
-            insert=table.insert,
-            remove=table.remove,
-            concat=table.concat,
-            sort=table.sort,
-        },
-        math={
-            floor=math.floor,
-            ceil=math.ceil,
-            abs=math.abs,
-            max=math.max,
-            min=math.min,
-            random=math.random,
-            sqrt=math.sqrt,
-        },
-        tonumber=tonumber,
-        tostring=tostring,
-        type=type,
-        pairs=pairs,
-        ipairs=ipairs,
-        next=next,
-        select=select,
-        unpack=unpack,
-        error=error,
-        pcall=pcall,
-        assert=assert,
-        _VERSION=_VERSION,
-    }
-    setmetatable(env,{
-        __index=function(t,k)
-            error("Access to forbidden global: "..tostring(k),2)
-        end,
-        __newindex=function(t,k,v)
-            error("Modification of environment forbidden",2)
-        end
-    })
-    local func,err=loadstring(str)
-    if not func then
-        return false,"Compile error: "..err
-    end
-    setfenv(func,env)
-    local success,result=pcall(func)
-    if not success then
-        return false,"Execution error: "..result
-    end
-    return true,result
-end
-
-local function isArray(tbl)
-    if type(tbl)~="table" then
-        return false
-    end
-    local count=0
-    local maxIndex=0
-    for k,v in pairs(tbl) do
-        if type(k)~="number" or k<1 or k~=math_floor(k) then
-            return false
-        end
-        count=count+1
-        if k>maxIndex then
-            maxIndex=k
-        end
-    end
-    if count==0 or count~=maxIndex then
-        return false
-    end
-    return true
-end
-
-local function serializeValue(value,indent)
-    if type(value)=="table" then
-        if isArray(value) then
-            return Ether:SerializeArray(value)
-        else
-            return Ether:SerializeTbl(value,indent)
-        end
-    elseif type(value)=="string" then
-        return string_format("%q",value)
-    elseif type(value)=="number" then
-        return tostring(value)
-    elseif type(value)=="boolean" then
-        return value and "true" or "false"
-    elseif value==nil then
-        return "nil"
-    else
-        return string_format("%q",tostring(value))
-    end
-end
-
-function Ether:SerializeArray(tbl)
-    local items={}
-    for i=1,#tbl do
-        local value=tbl[i]
-        if type(value)=="table" then
-            if isArray(value) then
-                tinsert(items,Ether:SerializeArray(value))
-            else
-                tinsert(items,Ether:SerializeTbl(value,0))
-            end
-        elseif type(value)=="string" then
-            tinsert(items,string_format("%q",value))
-        elseif type(value)=="number" then
-            tinsert(items,tostring(value))
-        elseif type(value)=="boolean" then
-            tinsert(items,value and "true" or "false")
-        elseif value==nil then
-            tinsert(items,"nil")
-        else
-            tinsert(items,string_format("%q",tostring(value)))
-        end
-    end
-    return "{"..tconcat(items,",").."}"
-end
-
-function Ether:SerializeTbl(tbl,indent)
-    indent=indent or 0
-
-    local isEmpty=true
-    for _ in pairs(tbl) do
-        isEmpty=false
-        break
-    end
-    if isEmpty then
-        return "{}"
-    end
-
-    if isArray(tbl) then
-        return Ether:SerializeArray(tbl)
-    end
-
-    local result={}
-    tinsert(result,"{")
-
-    local keys={}
-    for k in pairs(tbl) do
-        tinsert(keys,k)
-    end
-    tsort(keys,function(a,b)
-        if type(a)==type(b) then
-            return a<b
-        else
-            return type(a)=="number"
-        end
-    end)
-    for i,key in ipairs(keys) do
-        local value=tbl[key]
-        local comma=i<#keys and "," or ""
-
-        local keyStr
-        if type(key)=="number" then
-            keyStr="["..key.."]"
-        elseif type(key)=="string" and key:match("^[a-zA-Z_][a-zA-Z0-9_]*$") then
-            keyStr=key
-        else
-            keyStr="["..string_format("%q",tostring(key)).."]"
-        end
-
-        local valueStr=serializeValue(value,indent+2)
-
-        if indent>0 and type(value)=="table" and not isArray(value) and Ether:TableSize(value)>2 then
-            tinsert(result,"\n"..string_rep("",indent)..keyStr.."="..valueStr..comma)
-        else
-            tinsert(result,keyStr.."="..valueStr..comma.."")
-        end
-    end
-
-    tinsert(result,"}")
-    return tconcat(result)
-end
-
-function Ether:TblToString(tbl)
-    return "return "..Ether:SerializeTbl(tbl)
-end
-
-local P,B='=','ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-
-function Ether:Base64Encode(data)
-    local res={}
-    for i=1,#data,3 do
-        local a,b,c=data:byte(i,i+2)
-        local index1=math_floor(a/4)+1
-        tinsert(res,B:sub(index1,index1))
-        if b then
-            local index2=((a%4)*16)+math_floor(b/16)+1
-            tinsert(res,B:sub(index2,index2))
-            if c then
-                local index3=((b%16)*4)+math_floor(c/64)+1
-                tinsert(res,B:sub(index3,index3))
-                local index4=(c%64)+1
-                tinsert(res,B:sub(index4,index4))
-            else
-                local index3=((b%16)*4)+1
-                tinsert(res,B:sub(index3,index3))
-                tinsert(res,'=')
-            end
-        else
-            local index2=((a%4)*16)+1
-            tinsert(res,B:sub(index2,index2))
-            tinsert(res,'==')
-        end
-    end
-    return tconcat(res)
-end
-
-function Ether:Base64Decode(data)
-    data=data:gsub('[^'..B..P..']','')
-    local res={}
-    for i=1,#data,4 do
-        local chunk=data:sub(i,i+3)
-        if #chunk<4 then
-            break
-        end
-        local values={}
-        for j=1,4 do
-            local char=chunk:sub(j,j)
-            if char=='=' then
-                values[j]=0
-            else
-                values[j]=B:find(char,1,true)-1
-            end
-        end
-        local byte1=(values[1]*4)+math_floor(values[2]/16)
-        tinsert(res,string_char(byte1))
-        if values[3]~=0 or chunk:sub(3,3)~='=' then
-            local byte2=((values[2]%16)*16)+math_floor(values[3]/4)
-            tinsert(res,string_char(byte2))
-        end
-        if values[4]~=0 or chunk:sub(4,4)~='=' then
-            local byte3=((values[3]%4)*64)+values[4]
-            tinsert(res,string_char(byte3))
-        end
-    end
-    return tconcat(res)
 end

@@ -2,7 +2,7 @@
 ## Title: |cffcc66ffEther|r
 ## Notes: Ether Unit Frames
 ## Author: Vaydan-Spineshatter
-## Version: 41333
+## Version: 41777
 ## SavedVariables: ETHER_DATABASE_DX_AA
 ## IconTexture: Interface\AddOns\Ether\Media\Texture\icon
 ## OptionalDeps: LibSharedMedia-3.0
@@ -10,19 +10,24 @@
 ## X-Curse-Project-ID: 1376190
 ## X-Curse-Project-Website: https://www.curseforge.com/wow/addons/ether
 
-Libs.xml
+Library/LibStub/LibStub.lua
+Library/CallbackHandler-1.0/CallbackHandler-1.0.lua
+Library/LibSharedMedia-3.0/LibSharedMedia-3.0.lua
+Locale/Locale.lua
+Locale/Locale.xml
 EtherUnitTemplate.xml
-Locale.lua
 Callback/EtherCallback.lua
-Module/Setup.lua
 Core.lua
+Module/Setup.lua
+Module/Units/Solo/player.lua
+Module/Units/Solo/hunter.lua
+Module/Units/Header/frame.lua
 Icon/Icon.lua
-Locale.xml
 Data/Proto.lua
 Data/Profile.lua
 Data/Data.lua
+Com/Com.lua
 Module/Indicators.lua
-Module/Roster.lua
 Module/Aura.lua
 Module/Tooltip.lua
 Module/Effects.lua
@@ -34,8 +39,6 @@ Module/Update/power.lua
 Module/Debug.lua
 Module/Preview/frame.lua
 Settings/frame.lua
-Module/Units/Solo/player.lua
-Module/Units/Solo/hunter.lua
-Module/Units/Header/frame.lua
 Module/CastBar.lua
+Module/Roster.lua
 

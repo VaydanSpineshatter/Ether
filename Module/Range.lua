@@ -36,6 +36,8 @@ local classHostile={
 local _,playerClass=UnitClass("player")
 local friendly=classFriendly[playerClass] or 355
 local hostile=classHostile[playerClass] or 772
+local raidButtons=Ether.raidButtons
+local soloButtons=Ether.soloButtons
 
 function Ether:IsUnitInRange(unit)
     if not unit then
@@ -73,13 +75,13 @@ function Ether:UpdateAlpha(button)
 end
 
 local function UpdateTargetAlpha()
-    if Ether.unitButtons.solo["target"] and Ether.unitButtons.solo["target"]:IsVisible() then
-        Ether:UpdateAlpha(Ether.unitButtons.solo["target"])
+    if soloButtons["target"] and soloButtons["target"]:IsVisible() then
+        Ether:UpdateAlpha(soloButtons["target"])
     end
 end
 
 local function UpdateRaidAlpha()
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then
             Ether:UpdateAlpha(button)
         end
@@ -102,10 +104,10 @@ function Ether:RangeDisable()
         rangeTicker:Cancel()
         rangeTicker=nil
     end
-    if Ether.unitButtons.solo["target"] then
-        Ether.unitButtons.solo["target"]:SetAlpha(1)
+    if soloButtons["target"] then
+        soloButtons:SetAlpha(1)
     end
-    for _,button in pairs(Ether.unitButtons.raid) do
+    for _,button in pairs(raidButtons) do
         if button then
             button:SetAlpha(1.0)
         end

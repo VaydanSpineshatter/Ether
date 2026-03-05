@@ -553,19 +553,11 @@ function Ether:CreateModuleSection(self)
         return
     end
     parent.Created=true
-    local modulesValue={
-        [1]={name="Icon"},
-        [2]={name="Chat Bn & Msg Whisper"},
-        [3]={name="Tooltip"},
-        [4]={name="Idle mode"},
-        [5]={name="Range check"},
-        [6]={name="Indicators"},
-        [7]={name="Info Frame"}
-    }
+    local modules={"Icon","Chat Bn & Msg Whisper","Tooltip","Idle mode","Range check","Indicators","Info Frame","Debug"}
 
     local mod=CreateFrame("Frame",nil,parent)
-    mod:SetSize(200,(#modulesValue*30)+60)
-    for i,opt in ipairs(modulesValue) do
+    mod:SetSize(200,(#modules*30)+60)
+    for i,opt in ipairs(modules) do
         local btn=CreateFrame("CheckButton",nil,mod,"OptionsBaseCheckButtonTemplate")
         if i==1 then
             btn:SetPoint("TOPLEFT",parent,5,-5)
@@ -573,20 +565,17 @@ function Ether:CreateModuleSection(self)
             btn:SetPoint("TOPLEFT",self.Buttons[1][i-1],"BOTTOMLEFT",0,0)
         end
         btn:SetSize(24,24)
-        GetFont(self,btn,opt.name,12)
+        GetFont(self,btn,opt,12)
         btn.label:SetPoint("LEFT",btn,"RIGHT",10,0)
         btn:SetChecked(Ether.DB[401][i]==1)
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             Ether.DB[401][i]=checked and 1 or 0
             if i==1 then
-                local LDI=LibStub("LibDBIcon-1.0")
                 if Ether.DB[401][1]==1 then
-                    LDI:Show("EtherIcon")
-                    ETHER_ICON.hide=false
+                    Ether:ToggleIcon(1)
                 else
-                    LDI:Hide("EtherIcon")
-                    ETHER_ICON.hide=true
+                    Ether:ToggleIcon(0)
                 end
             elseif i==2 then
                 Ether.EnableMsgEvents()
@@ -1101,8 +1090,6 @@ function Ether:CreateCustomSection(EtherFrame)
         return
     end
     parent.Created=true
-    EtherFrame.Frames["AURAS"].Created=true
-    EtherFrame.Frames["EDITOR"].Created=true
     EtherFrame.Frames["AURAS"]:SetParent(parent)
     EtherFrame.Frames["EDITOR"]:SetParent(parent)
 
@@ -1309,7 +1296,7 @@ function Ether:CreateCustomSection(EtherFrame)
     rgbText:SetPoint("LEFT",sizeSlider,"RIGHT",40,0)
     rgbText:SetText("Pick Color")
 
-    local preview=CreateHeaderPreview(editor,Ether.playerName,3,55)
+    local preview=CreateHeaderPreview(editor,Ether.metaData[2],3,55)
     editor.preview=preview
     preview:SetPoint("TOPLEFT",15,-120)
     preview.name:SetPoint("CENTER",0,-5)
@@ -1611,7 +1598,7 @@ function Ether:CreateHelperSection(EtherFrame)
     end)
 end
 
-function Ether:CreatePositionSection(EtherFrame)
+function Ether:CreateIndicatorsSection(EtherFrame)
     local parent=EtherFrame["CONTENT"]["CHILDREN"]["Position"]
     if parent.Created then
         return
@@ -1737,7 +1724,7 @@ function Ether:CreatePositionSection(EtherFrame)
     Indicator.templateDropdown=templateDropdown
     templateDropdown:SetPoint("TOPLEFT")
 
-    local preview=CreateHeaderPreview(parent,Ether.playerName,3,55)
+    local preview=CreateHeaderPreview(parent,Ether.metaData[2],3,55)
     Indicator.preview=preview
     preview:SetPoint("TOP",80,-90)
     local icon=preview.healthBar:CreateTexture(nil,"OVERLAY")
@@ -2148,16 +2135,16 @@ function Ether:CreateConfigSection(EtherFrame)
     local F={
         [1]=Ether.infoFrame,
         [2]=Ether.toolFrame,
-        [3]=Ether.unitButtons.solo["player"],
-        [4]=Ether.unitButtons.solo["target"],
-        [5]=Ether.unitButtons.solo["targettarget"],
-        [6]=Ether.unitButtons.solo["pet"],
-        [7]=Ether.unitButtons.solo["pettarget"],
-        [8]=Ether.unitButtons.solo["focus"],
+        [3]=Ether.soloButtons["player"],
+        [4]=Ether.soloButtons["target"],
+        [5]=Ether.soloButtons["targettarget"],
+        [6]=Ether.soloButtons["pet"],
+        [7]=Ether.soloButtons["pettarget"],
+        [8]=Ether.soloButtons["focus"],
         [9]=Ether.Anchor.raid,
         [10]=Ether.Anchor.pet,
-        [11]=Ether.unitButtons.solo["player"].castBar,
-        [12]=Ether.unitButtons.solo["target"].castBar,
+        [11]=Ether.soloButtons["player"].castBar,
+        [12]=Ether.soloButtons["target"].castBar,
         [13]=Ether.EtherIcon
     }
     local sizeLabel=parent:CreateFontString(nil,"OVERLAY")
@@ -2224,7 +2211,7 @@ function Ether:CreateConfigSection(EtherFrame)
 
     local dropdowns,frameOptions={},{}
     local function UpdateValueLabels()
-        local SELECTED=DB[111][4]
+        local SELECTED=DB[111][2]
         if not SELECTED or not DB[21] or not DB[21][SELECTED] then
             sizeValue:SetText("")
             alphaValue:SetText("")
@@ -2236,7 +2223,7 @@ function Ether:CreateConfigSection(EtherFrame)
     end
 
     local function UpdateSliders()
-        local SELECTED=DB[111][4]
+        local SELECTED=DB[111][2]
         if not SELECTED or not DB[21][SELECTED] then
             sizeSlider:Disable()
             alphaSlider:Disable()
@@ -2256,7 +2243,7 @@ function Ether:CreateConfigSection(EtherFrame)
         table.insert(frameOptions,{
             text=frameData,
             func=function()
-                DB[111][4]=frameID
+                DB[111][2]=frameID
                 UpdateSliders()
                 dropdowns.frame.text:SetText(K[frameID])
             end
@@ -2267,7 +2254,7 @@ function Ether:CreateConfigSection(EtherFrame)
     dropdowns.frame:SetPoint("TOPLEFT")
 
     sizeSlider:SetScript("OnValueChanged",function(self)
-        local frame=DB[111][4]
+        local frame=DB[111][2]
         if DB[21][frame] then
             DB[21][frame][8]=self:GetValue()
             Ether:ApplyFramePosition(F[frame],frame)
@@ -2276,7 +2263,7 @@ function Ether:CreateConfigSection(EtherFrame)
     end)
 
     alphaSlider:SetScript("OnValueChanged",function(self)
-        local frame=DB[111][4]
+        local frame=DB[111][2]
         if DB[21][frame] then
             DB[21][frame][9]=self:GetValue()
             Ether:ApplyFramePosition(F[frame],frame)
@@ -2295,7 +2282,7 @@ function Ether:CreateConfigSection(EtherFrame)
         table.insert(frameOptions,{
             text=frameData,
             func=function()
-                DB[111][4]=frameID
+                DB[111][2]=frameID
                 UpdateSliders()
                 dropdowns.frame.text:SetText(K[frameID])
             end
@@ -2412,12 +2399,12 @@ function Ether:CreateEditSection(EtherFrame)
                         Ether:EtherInfo("|cffcc66ffEther|r "..msg)
                     end
                 end
-                info.checked=(profileName==Ether:GetCurrentProfileString())
+                info.checked=(profileName==Ether:GetProfileName())
                 UIDropDownMenu_AddButton(info,level)
             end
         end)
-        UIDropDownMenu_SetSelectedValue(dropdown,Ether:GetCurrentProfileString())
-        UIDropDownMenu_SetText(dropdown,Ether:GetCurrentProfileString())
+        UIDropDownMenu_SetSelectedValue(dropdown,Ether:GetProfileName())
+        UIDropDownMenu_SetText(dropdown,Ether:GetProfileName())
     end
     RefreshDropdown()
 
@@ -2446,13 +2433,13 @@ function Ether:CreateEditSection(EtherFrame)
     local copyButton=EtherPanelButton(parent,60,25,"Copy","LEFT",createButton,"RIGHT",5,0)
     copyButton:SetScript("OnClick",function()
         inputTitle:SetText("Copy profile")
-        inputBox:SetText(Ether:GetCurrentProfileString().." - Copy")
+        inputBox:SetText(Ether:GetProfileName().." - Copy")
         inputDialog:Show()
         inputBox:SetFocus()
         okButton:SetScript("OnClick",function()
             local name=inputBox:GetText()
             if name and name~="" then
-                local success,msg=Ether:CopyProfile(Ether:GetCurrentProfileString(),name)
+                local success,msg=Ether:CopyProfile(Ether:GetProfile(),name)
                 if success then
                     RefreshDropdown()
                     Ether:EtherInfo("|cffcc66ffEther|r "..msg)
@@ -2466,13 +2453,13 @@ function Ether:CreateEditSection(EtherFrame)
     local renameButton=EtherPanelButton(parent,60,25,"Rename","TOPLEFT",createButton,"BOTTOMLEFT",0,-20)
     renameButton:SetScript("OnClick",function()
         inputTitle:SetText("Rename profile")
-        inputBox:SetText(Ether:GetCurrentProfileString())
+        inputBox:SetText(Ether:GetProfileName())
         inputDialog:Show()
         inputBox:SetFocus()
         okButton:SetScript("OnClick",function()
             local newName=inputBox:GetText()
             if newName and newName~="" then
-                local success,msg=Ether:RenameProfile(Ether:GetCurrentProfileString(),newName)
+                local success,msg=Ether:RenameProfile(Ether:GetProfileName(),newName)
                 if success then
                     RefreshDropdown()
                     Ether:EtherInfo("|cffcc66ffEther|r "..msg)
@@ -2486,7 +2473,7 @@ function Ether:CreateEditSection(EtherFrame)
 
     local deleteButton=EtherPanelButton(parent,60,25,"Delete","LEFT",renameButton,"RIGHT",5,0)
     deleteButton:SetScript("OnClick",function()
-        local profileToDelete=Ether:GetCurrentProfileString()
+        local profileToDelete=Ether:GetProfileName()
         local profiles=Ether:GetProfileList()
         if #profiles<=1 then
             Ether:EtherInfo("|cffcc66ffEther|r Cannot delete the only profile")
@@ -2525,7 +2512,7 @@ function Ether:CreateEditSection(EtherFrame)
         if not Ether.popupBox then
             return
         end
-        local profileToRest=Ether:GetCurrentProfileString()
+        local profileToRest=Ether:GetProfileName()
         if Ether.popupCallback:GetScript("OnClick") then
             Ether.popupCallback:SetScript("OnClick",nil)
         end
@@ -2613,6 +2600,10 @@ function Ether:CreateEditSection(EtherFrame)
         end
     end)
     import:SetScript("OnClick",function()
+        if Ether:GetDataVersion()<41500 then
+            Ether:EtherInfo("|cffff0000Data cannot be imported:|r ",tostring(Ether:GetDataVersion()))
+            return
+        end
         local data=importBox:GetText()
         if data and data~="" and data~="Paste export data here..." then
             local success,msg=Ether:ImportProfile(data)
@@ -2667,8 +2658,6 @@ function Ether:CreateEditSection(EtherFrame)
 end
 
 function Ether.CleanUpButtons()
-    Ether:CreateCustomSection(Ether.UIPanel)
-    Ether:CreatePositionSection(Ether.UIPanel)
     local editor=Ether.UIPanel.Frames["EDITOR"]
     local Indicator=Ether.UIPanel.Frames["INDICATORS"]
     Ether.WrapSettingsColor({0.80,0.40,1.00,1})

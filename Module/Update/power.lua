@@ -7,6 +7,7 @@ local string_format=string.format
 local math_floor=math.floor
 local fm="%.1f"
 local f2m="%s%d%%|r"
+local raidButtons=Ether.raidButtons
 local RegisterPEvent,UnregisterPEvent
 do
     local IsEventValid=C_EventUtils.IsEventValid
@@ -18,7 +19,7 @@ do
             if not unit then
                 return
             end
-            local button=Ether.unitButtons.raid[unit]
+            local button=raidButtons[unit]
             if not button then
                 return
             end

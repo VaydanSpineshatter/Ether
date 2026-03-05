@@ -64,13 +64,14 @@ local function UpdateAuraByIndex(unit,guid)
     end
 end
 ]]
+local raidButtons=Ether.raidButtons
 local status=false
 local function refreshButtons()
     if not status then
         status=true
         C_After(3,function()
             if not UnitInAnyGroup("player") then
-                for _,button in pairs(Ether.unitButtons.raid) do
+                for _,button in pairs(raidButtons) do
                     if button then
                         Ether:UpdateDispelFrame(button,{0,0,0,0})
                         Ether:UpdatePrediction(button)
@@ -80,9 +81,17 @@ local function refreshButtons()
                     Ether:AuraDisable()
                     Ether:AuraEnable()
                 end
+                if Ether.DB[401][6]==1 then
+                    Ether.Handler:FullUpdate()
+                end
             else
                 if Ether.DB[1001][3]==1 then
-                   -- Ether:ReleaseAll()
+                    for _,button in pairs(raidButtons) do
+                        if button and button:IsVisible() then
+                            -- Ether:UpdateRaidIsHelpful(button)
+                            -- Ether:UpdateRaidIsHarmful(button)
+                        end
+                    end
                 end
                 if Ether.DB[401][6]==1 then
                     Ether.Handler:FullUpdate()
@@ -99,7 +108,7 @@ function Ether:CheckPvpStatus()
     number=0
     wipe(IsPVP)
     tinsert(IsPVP,"|cffcc66ffPvP Mismatch found:|r")
-    for unit,button in pairs(Ether.unitButtons.raid) do
+    for unit,button in pairs(raidButtons) do
         if button then
             if UnitExists(unit) then
                 local name=UnitName(unit)
@@ -121,7 +130,7 @@ local function initialButtons()
     if not initial then
         initial=true
         C_After(1.5,function()
-            for unit,button in pairs(Ether.unitButtons.raid) do
+            for unit,button in pairs(raidButtons) do
                 if button and button:IsVisible() then
                     if UnitExists(unit) then
                         Ether:InitialHealth(button)
@@ -178,7 +187,7 @@ function Ether:RosterEnable()
         end)
     end
     C_Timer.After(0.8,function()
-        for _,button in pairs(Ether.unitButtons.raid) do
+        for _,button in pairs(raidButtons) do
             if Ether.DB[701][3]==1 then
                 Ether:UpdateHealthTextRounded(button)
             end

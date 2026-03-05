@@ -3,13 +3,6 @@ local L=Ether.L
 local isDragging=false
 local cos,sin,abs,pi,atan2=math.cos,math.sin,math.abs,math.pi,math.atan2
 
-local button=CreateFrame("Button","EtherMinimapButton",Minimap)
-Ether.EtherIcon=button
-button:SetSize(31,31)
-button:SetFrameStrata("MEDIUM")
-button:SetFrameLevel(8)
-button:SetHighlightTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
-
 local function OnUpdate(self,elapsed)
     self.last=(self.last or 0)+elapsed
     if self.last>0.01 then
@@ -75,23 +68,48 @@ local function Click(_,btn)
     end
 end
 
-local icon=button:CreateTexture(nil,"BACKGROUND")
-icon:SetSize(20,20)
-icon:SetPoint("CENTER",button,"CENTER",0,1)
-icon:SetTexture(unpack(Ether.media.etherIcon))
+local button
+if not button then
+    button=CreateFrame("Button","EtherMinimapButton",Minimap)
+    Ether.EtherIcon=button
+    button:SetSize(31,31)
+    button:SetFrameStrata("MEDIUM")
+    button:SetFrameLevel(8)
+    button:SetHighlightTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
+    button:EnableMouse(true)
+    button:SetMovable(true)
 
-local border=button:CreateTexture(nil,"OVERLAY")
-border:SetSize(53,53)
-border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
-border:SetPoint("TOPLEFT",button,"TOPLEFT")
+    local icon=button:CreateTexture(nil,"BACKGROUND")
+    icon:SetSize(20,20)
+    icon:SetPoint("CENTER",button,"CENTER",0,1)
+    icon:SetTexture(unpack(Ether.media.icon))
 
-button:SetScript("OnDragStart",DragStart)
-button:SetScript("OnDragStop",DragStop)
-button:SetScript("OnEnter",Enter)
-button:SetScript("OnLeave",Leave)
-button:SetScript("OnClick",Click)
-button:EnableMouse(true)
-button:SetMovable(true)
-button:RegisterForClicks("AnyUp")
-button:RegisterForDrag("LeftButton")
+    local border=button:CreateTexture(nil,"OVERLAY")
+    border:SetSize(53,53)
+    border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
+    border:SetPoint("TOPLEFT",button,"TOPLEFT")
+    button:Hide()
+end
 
+function Ether:ToggleIcon(number)
+    if number==0 and button:GetScript("OnDragStart") then
+        button:SetScript("OnDragStart",nil)
+        button:SetScript("OnDragStop",nil)
+        button:SetScript("OnEnter",nil)
+        button:SetScript("OnLeave",nil)
+        button:SetScript("OnClick",nil)
+        button:SetScript("OnUpdate",nil)
+        button:RegisterForClicks()
+        button:RegisterForDrag()
+        button:Hide()
+    elseif number==1 and not button:GetScript("OnDragStart") then
+        button:RegisterForClicks("AnyUp")
+        button:RegisterForDrag("LeftButton")
+        button:SetScript("OnDragStart",DragStart)
+        button:SetScript("OnDragStop",DragStop)
+        button:SetScript("OnEnter",Enter)
+        button:SetScript("OnLeave",Leave)
+        button:SetScript("OnClick",Click)
+        button:Show()
+    end
+end

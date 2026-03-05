@@ -4,6 +4,7 @@ local tconcat=table.concat
 local select,wipe=select,wipe
 local C_After=C_Timer.After
 local debugText=""
+
 local function SendOutput(input)
     if not Ether.infoFrame then
         return
@@ -41,6 +42,25 @@ function Ether:EtherInfo(...)
     wipe(TEMP_CAT)
     hide()
 end
+function Ether:EtherDebug(...)
+    if Ether.DB[401][8]~=1 then return end
+    if not Ether.infoFrame then
+        print(...)
+    end
+    local data=...
+    if type(data)~="string" then
+        return
+    end
+    for i=1,select('#',...) do
+        local arg=select(i,...)
+        tinsert(TEMP_CAT,tostring(arg))
+    end
+    local concat=tconcat(TEMP_CAT,"")
+    SendOutput(concat)
+    wipe(TEMP_CAT)
+    hide()
+end
+
 local msgEvent,enableWhisper,disableWhisper
 do
     if not msgEvent then

@@ -2,22 +2,17 @@ local _,Ether=...
 local math_floor=math.floor
 local math_ceil=math.ceil
 local pairs,ipairs=pairs,ipairs
+local GetBuffDataByIndex=C_UnitAuras.GetBuffDataByIndex
+local GetDebuffDataByIndex=C_UnitAuras.GetDebuffDataByIndex
 local GetUnitAuras=C_UnitAuras.GetUnitAuras
 local UnitGUID=UnitGUID
 local UnitExists=UnitExists
-local UnitIsConnected=UnitIsConnected
-local unpack,type,wipe=unpack,type,wipe
-local tinsert,tremove=table.insert,table.remove
---local GetTime=GetTime
---local GetUnitAuraBySpellID=C_UnitAuras.GetUnitAuraBySpellID
---local GetDataByIndex=C_UnitAuras.GetAuraDataByIndex
---local GetBuffDataByIndex=C_UnitAuras.GetBuffDataByIndex
--- local GetDebuffDataByIndex=C_UnitAuras.GetDebuffDataByIndex
---   if updateInfo.isFullUpdate then
---   end
---   if info.updatedAuraInstanceIDs then
---   end
-
+local GetTime=GetTime
+local unpack=unpack
+local GetUnitAuraBySpellID=C_UnitAuras.GetUnitAuraBySpellID
+local tinsert=table.insert
+local raidButtons=Ether.raidButtons
+local soloButtons=Ether.soloButtons
 local dispelColors={
     ["Magic"]={0.2,0.6,1.0,1},
     ["Disease"]={0.6,0.4,0.0,1},
@@ -36,10 +31,19 @@ local dispelByPlayer={}
 local _,classFilename=UnitClass("player")
 dispelByPlayer=dispelClass[classFilename]
 
-local function CheckRaidButtons(arg1)
-    for unit,button in pairs(Ether.unitButtons.raid) do
-        if button and unit and unit==arg1 then
-            return button,button.unit,button.destGUID
+local helpfulAuras={}
+local harmfulAuras={}
+local dispelAuras={}
+local iconAuras={}
+local dataHelpful={}
+local dataHarmful={}
+local dataDispel={}
+local dataIcon={}
+local dispelCache={}
+local function CheckRaidButtons(unit)
+    for _,button in pairs(raidButtons) do
+        if button and button.unit==unit then
+            return button
         end
     end
     return nil
@@ -66,14 +70,122 @@ local function updateAuraPos(tbl,spellId)
 end
 
 function Ether:SaveAuraPosition(spellId)
-    if type(spellId)~="number" then return end
-    updateAuraPos(Ether.dataSpell,spellId)
+    if not spellId then return end
+    local debuff=Ether.DB[1003][spellId].isDebuff
+    if debuff then
+        updateAuraPos(dataHarmful,spellId)
+    else
+        updateAuraPos(dataHelpful,spellId)
+    end
+end
+
+function Ether:CleanupTimerCache()
+    local currentTime=GetTime()
+    for guid,data in pairs(dispelCache) do
+        if (currentTime-data.timestamp)>5 then
+            dispelCache[guid]=nil
+        end
+    end
+end
+
+local function ScanUnitAuras(unit)
+    if not UnitExists(unit) then
+        return nil,{}
+    end
+    local dispel=nil
+    local priority=0
+    local index=1
+    while true do
+        local auraData=GetDebuffDataByIndex(unit,index)
+        if not auraData then
+            break
+        end
+        if auraData.dispelName and dispelByPlayer[auraData.dispelName] then
+            local order=dispelPriority[auraData.dispelName] or 0
+            if order>priority then
+                priority=order
+                dispel={
+                    name=auraData.name,
+                    dispelName=auraData.dispelName,
+                    spellId=auraData.spellId,
+                    index=index
+                }
+            end
+        end
+        index=index+1
+    end
+    return dispel
+end
+
+local function GetCachedDispel(unit)
+    local guid=UnitGUID(unit)
+    if not guid then
+        return nil
+    end
+
+    local cached=dispelCache[guid]
+    if cached and (GetTime()-cached.timestamp)<2 then
+        return cached.dispel
+    end
+    local dispel=ScanUnitAuras(unit)
+    dispelCache[guid]={
+        dispel=dispel,
+        timestamp=GetTime()
+    }
+    return dispel
+end
+
+local function CreateAuraTexture(button,tbl,spellId,guid)
+    if true then return end
+    if not tbl[guid] then
+        tbl[guid]={}
+    end
+    local C=Ether.DB[1003][spellId]
+    if not tbl[guid][spellId] then
+        tbl[guid][spellId]=button.healthBar:CreateTexture(nil,"OVERLAY")
+        tbl[guid][spellId]:SetColorTexture(unpack(C.color))
+        tbl[guid][spellId]:SetSize(C.size,C.size)
+        tbl[guid][spellId]:SetPoint(C.position,C.offsetX,C.offsetY)
+        tbl[guid][spellId]:Show()
+    end
+end
+
+function Ether:UpdateRaidIsHelpful(button,guid)
+    if not button then return end
+    local unit=button.unit
+    local C=Ether.DB[1003]
+    local index=1
+    while true do
+        local aura=GetBuffDataByIndex(unit,index)
+        if not aura then break end
+        if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+        CreateAuraTexture(button,dataHelpful,aura.spellId,guid)
+        helpfulAuras[aura.auraInstanceID]=aura
+        index=index+1
+    end
+end
+
+function Ether:UpdateRaidIsHarmful(button,guid)
+    if not button then return end
+    local unit=button.unit
+    local C=Ether.DB[1003]
+    local index=1
+    while true do
+        local aura=GetDebuffDataByIndex(unit,index)
+        if not aura then break end
+        if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+        CreateAuraTexture(button,dataHarmful,aura.spellId,guid)
+        harmfulAuras[aura.auraInstanceID]=aura
+        index=index+1
+    end
 end
 
 function Ether:UpdateDispelFrame(button,color)
     if not button or type(color)~="table" then return end
     if button.dispelLeft then
         button.dispelLeft:SetColorTexture(unpack(color))
+    end
+    if button.dispelRight then
         button.dispelRight:SetColorTexture(unpack(color))
     end
 end
@@ -83,96 +195,173 @@ function Ether:UpdatePrediction(button)
     if button.myPrediction then
         button.myPrediction:Hide()
     end
-    if button.otherPrediction then
-        button.otherPrediction:Hide()
+    if button.prediction then
+        button.prediction:Hide()
     end
 end
 
-Ether.CheckGUID=function(unit,guid)
+local function CheckGUID(guid)
+    if dataHelpful[guid] then
+        dataHelpful[guid]=nil
+        Ether:EtherDebug("GUID cleared: ",tostring(guid))
+    end
+    if dataHarmful[guid] then
+        dataHarmful[guid]=nil
+    end
+    if dataDispel[guid] then
+        dataDispel[guid]=nil
+    end
+    if dataIcon[guid] then
+        dataIcon[guid]=nil
+    end
+end
+
+function Ether:CleanupGUID()
+    for guid in pairs(dataHelpful) do
+        CheckGUID(guid)
+    end
+    for guid in pairs(dataHarmful) do
+        CheckGUID(guid)
+    end
+    for guid in pairs(dataDispel) do
+        CheckGUID(guid)
+    end
+    for guid in pairs(dataIcon) do
+        CheckGUID(guid)
+    end
+end
+
+function Ether:GuidStatus(guid)
     local found=false
-    local oldGUID=UnitGUID(unit)
-    if oldGUID and oldGUID==guid then
-        found=true
+    if guid and type(guid)~="nil" then
+        if Ether.guidData[guid] then
+            found=true
+        end
     end
     if found then
-        for info in pairs(Ether.dataSpell) do
-            if info and info==guid then
-                info=nil
-                break
-            end
-        end
-        for info in pairs(Ether.dataDispel) do
-            if info and info==guid then
-                info=nil
-                break
-            end
-        end
+        Ether:EtherDebug("GUID found: ",tostring(guid))
+        CheckGUID(guid)
+        Ether.guidData[guid]=nil
     end
 end
 
-local function raidAuraUpdate(arg1,updateInfo)
-    local button,unit,guid=CheckRaidButtons(arg1)
+local TexPool=Ether:CreateObjPool(Ether.TextureMethod)
+local function raidAuraUpdate(unit,updateInfo)
+    local button=CheckRaidButtons(unit)
     if not button then return end
-
-    if not UnitIsConnected(unit) then
-        Ether.CheckGUID(unit,guid)
+    local guid=UnitGUID(unit)
+    if not guid then return end
+    if not Ether.guidData[guid] then
+        Ether.guidData[guid]=true
+    end
+    if not dataHelpful[guid] then
+        dataHelpful[guid]={}
+    end
+    if not dataHarmful[guid] then
+        dataHarmful[guid]={}
+    end
+    if not dataIcon[guid] then
+        dataIcon[guid]={}
+    end
+    if not dataDispel[guid] then
+        dataIcon[guid]={}
     end
     local C=Ether.DB[1003]
-    local spell=false
-
+    if updateInfo.isFullUpdate then
+        --Ether:UpdateRaidIsHarmful(button)
+        --Ether:UpdateRaidIsHelpful(button)
+    end
     if updateInfo.addedAuras then
         for _,aura in ipairs(updateInfo.addedAuras) do
-            if aura.isHarmful and aura.dispelName then
+            if aura.isHarmful and dispelByPlayer[aura.dispelName] then
                 local color=dispelColors[aura.dispelName] or {0,0,0,0}
-                if dispelByPlayer[aura.dispelName] then
-                    Ether.dataDispel[guid][aura.dispelName] = button
-                    Ether:UpdateDispelFrame(Ether.dataDispel[guid][aura.dispelName],color)
-                end
+                Ether:UpdateDispelFrame(button,color)
+                dispelAuras[aura.auraInstanceID]=aura
+            end
+            if aura.isHarmful and aura.dispelName then
+                dataIcon[guid]={
+                    spellId=aura.spellId,
+                    guid=guid
+                }
+                local color=dispelColors[aura.dispelName] or {0,0,0,0}
                 button.dispelIcon:SetTexture(aura.icon)
                 button.dispelBorder:SetColorTexture(unpack(color))
-                Ether.dataDispel[guid][aura.icon]=button.dispelFrame
-                Ether.StartBlink(Ether.dataDispel[guid][aura.icon],aura.duration,0.26)
-                Ether.dispelInstance[aura.auraInstanceID]=aura
+                dataIcon[guid][aura.spellId]=button.dispelFrame
+                Ether.StartBlink(dataIcon[guid][aura.spellId],aura.duration,0.3)
+                iconAuras[aura.auraInstanceID]=aura
             end
-            if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
-            spell=true
-            tinsert(Ether.spellAdded,aura)
-            Ether.spellInstance[aura.auraInstanceID]=aura
+            if aura.isHelpful then
+                if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+                if dataHelpful[guid][aura.spellId] then
+                    TexPool:Release(dataHelpful[guid][aura.spellId])
+                end
+                dataHelpful[guid][aura.spellId]=TexPool:Acquire(C[aura.spellId],unit)
+                helpfulAuras[aura.auraInstanceID]={
+                    spellId=aura.spellId,
+                    guid=guid
+                }
+            end
+            if aura.isHarmful then
+                if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+                if dataHarmful[guid][aura.spellId] then
+                    TexPool:Release(dataHarmful[guid][aura.spellId])
+                end
+                dataHarmful[guid][aura.spellId]=TexPool:Acquire(C[aura.spellId],unit)
+                harmfulAuras[aura.auraInstanceID]={
+                    spellId=aura.spellId,
+                    guid=guid
+                }
+            end
         end
     end
-
     if updateInfo.removedAuraInstanceIDs then
         for _,auraInstanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-            if Ether.spellInstance[auraInstanceID] then
-                local data=Ether.spellInstance[auraInstanceID].spellId
-                if Ether.dataSpell[guid] and Ether.dataSpell[guid][data] then
-                    Ether:Release(Ether.dataSpell[guid][data])
-                end
-                Ether.spellInstance[auraInstanceID]=nil
+            if dispelAuras[auraInstanceID] then
+                Ether:UpdateDispelFrame(button,{0,0,0,0})
+                dispelAuras[auraInstanceID]=nil
             end
-            if Ether.dispelInstance[auraInstanceID] then
-                if not Ether.dataDispel[guid] then return end
-                local auraData=Ether.dispelInstance[auraInstanceID]
-                local icon=auraData.icon
-                local name=auraData.dispelName
-                if Ether.dataDispel[guid][name] then
-                     Ether:UpdateDispelFrame(Ether.dataDispel[guid][name],{0,0,0,0})
+            if iconAuras[auraInstanceID] then
+                local spellId=iconAuras[auraInstanceID].spellId
+                if dataIcon[guid] and dataIcon[guid][spellId] then
+                    Ether.StopBlink(dataIcon[guid][spellId])
+                    dataIcon[guid][spellId]:Hide()
+                    dataIcon[guid][spellId]:ClearAllPoints()
+                    dataIcon[guid][spellId]:SetParent(nil)
+                    dataIcon[guid][spellId]=nil
                 end
-                if Ether.dataDispel[guid][icon] then
-                    Ether.StopBlink(Ether.dataDispel[guid][icon])
+                iconAuras[auraInstanceID]=nil
+            end
+            if harmfulAuras[auraInstanceID] then
+                local tracked=harmfulAuras[auraInstanceID]
+                if tracked then
+                    local spellId=tracked.spellId
+                    local targetGuid=tracked.guid
+                    if dataHarmful[targetGuid] and dataHarmful[targetGuid][spellId] then
+                        TexPool:Release(dataHarmful[targetGuid][spellId])
+                        dataHarmful[targetGuid][spellId]=nil
+                        if not next(dataHarmful[targetGuid]) then
+                            dataHarmful[targetGuid]=nil
+                        end
+                    end
+                    harmfulAuras[auraInstanceID]=nil
                 end
-                Ether.dispelInstance[auraInstanceID]=nil
+            end
+            if helpfulAuras[auraInstanceID] then
+                local tracked=helpfulAuras[auraInstanceID]
+                if tracked then
+                    local spellId=tracked.spellId
+                    local targetGuid=tracked.guid
+                    if dataHelpful[targetGuid] and dataHelpful[targetGuid][spellId] then
+                        TexPool:Release(dataHelpful[targetGuid][spellId])
+                        dataHelpful[targetGuid][spellId]=nil
+                        if not next(dataHelpful[targetGuid]) then
+                            dataHelpful[targetGuid]=nil
+                        end
+                    end
+                    helpfulAuras[auraInstanceID]=nil
+                end
             end
         end
-    end
-
-    if spell then
-        for _,info in ipairs(Ether.spellAdded) do
-            if info and info.spellId then
-                Ether.dataSpell[guid][info.spellId]=Ether:Acquire(C[info.spellId],unit)
-            end
-        end
-        wipe(Ether.spellAdded)
     end
 end
 
@@ -212,9 +401,8 @@ local function CheckDispelType(self,dispelName)
         self:Hide()
     end
 end
-
 local function SoloAuraIsHelpful(unit)
-    local button=Ether.unitButtons.solo[unit]
+    local button=soloButtons[unit]
     if not button or not button.Aura then
         return
     end
@@ -262,7 +450,7 @@ local function SoloAuraIsHelpful(unit)
 end
 
 local function SoloAuraIsHarmful(unit)
-    local button=Ether.unitButtons.solo[unit]
+    local button=soloButtons[unit]
     if not button or not button.Aura then
         return
     end
@@ -292,7 +480,6 @@ local function SoloAuraIsHarmful(unit)
             if last.auraInstanceID~=auraData.auraInstanceID then
                 now.icon:SetTexture(auraData.icon)
                 now.icon:Show()
-
                 if CheckDispelType and now.border then
                     CheckDispelType(now.border,auraData.dispelName)
                 elseif now.border then
@@ -327,6 +514,8 @@ local function SoloAuraIsHarmful(unit)
 end
 
 local function soloAuraUpdate(unit,updateInfo)
+    local button=soloButtons[unit]
+    if not button or not button.Aura then return end
     local helpful,harmful=false,false
     if updateInfo.addedAuras then
         for _,aura in ipairs(updateInfo.addedAuras) do
@@ -350,11 +539,21 @@ local function soloAuraUpdate(unit,updateInfo)
     end
 end
 
+function Ether:AuraWipe()
+    wipe(helpfulAuras)
+    wipe(harmfulAuras)
+    wipe(dispelAuras)
+    wipe(iconAuras)
+    wipe(dataHelpful)
+    wipe(dataHarmful)
+    wipe(dataIcon)
+    wipe(dataDispel)
+    wipe(dispelCache)
+end
+
 function Ether:SoloAuraFullInitial(unit)
-    local button=Ether.unitButtons.solo[unit]
-    if not button then
-        return
-    end
+    local button=soloButtons[unit]
+    if not button then return end
     Ether:SoloAuraSetup(button)
     for i=1,16 do
         if button.Aura.Buffs and button.Aura.Buffs[i] then
@@ -369,7 +568,7 @@ function Ether:SoloAuraFullInitial(unit)
 end
 
 function Ether:TargetAuraFullUpdate()
-    local button=Ether.unitButtons.solo["target"]
+    local button=soloButtons["target"]
     if button then
         SoloAuraIsHelpful("target")
         SoloAuraIsHarmful("target")
@@ -377,7 +576,7 @@ function Ether:TargetAuraFullUpdate()
 end
 
 local function auraTblReset(unit)
-    local button=Ether.unitButtons.solo[unit]
+    local button=soloButtons[unit]
     if not button or not button.Aura then
         return
     end
@@ -426,10 +625,32 @@ function Ether:DisableSoloUnitAura(info)
     end
 end
 
-local buttons=Ether.unitButtons.raid
+function Ether:DisableHeaderAuras()
+    Ether:CleanupRaidIcons()
+    Ether:AuraWipe()
+end
 
-local function getDB()
-    return Ether.DB and Ether.DB[1001][3]
+function Ether:EnableHeaderAuras()
+    if true then return end
+    for unit,button in pairs(raidButtons) do
+        if button and UnitExists(unit) then
+            local guid=UnitGUID(unit)
+            if guid then
+                Ether:UpdateRaidIsHelpful(button,guid)
+                Ether:UpdateRaidIsHarmful(button,guid)
+            end
+        end
+    end
+end
+
+function Ether:FullAuraReset()
+    Ether.StopAllBlinks()
+    TexPool:ReleaseAll()
+    Ether:CleanupGUID()
+    Ether:DisableHeaderAuras()
+    Ether:DisableSoloAuras()
+    Ether:EnableHeaderAuras()
+    Ether:EnableSoloAuras()
 end
 
 local function Aura(_,event,arg1,...)
@@ -437,43 +658,44 @@ local function Aura(_,event,arg1,...)
     if not arg1 or not UnitExists(arg1) then return end
     local updateInfo=...
     if not updateInfo then return end
-    if Ether.DB[1001][3]==1 then
-        if buttons[arg1] then
-            raidAuraUpdate(arg1,updateInfo)
-        end
-    end
-    if Ether.DB[1001][2]==1 then
-        if Ether:IsValidAura(arg1) then
-            soloAuraUpdate(arg1,updateInfo)
-        end
+    raidAuraUpdate(arg1,updateInfo)
+    if Ether:IsValidAura(arg1) then
+        soloAuraUpdate(arg1,updateInfo)
     end
 end
 
+--Ether.DB[1001][2]==1
+--Ether.DB[1001][3]==1
 local update
 if not update then
     update=CreateFrame("Frame")
 end
 
 function Ether:AuraEnable()
-    if Ether.DB[1001][1]~=1 then return end
     if not update:GetScript("OnEvent") then
         update:RegisterEvent("UNIT_AURA")
         update:RegisterUnitEvent("UNIT_AURA","targettarget")
         update:SetScript("OnEvent",Aura)
     end
+    if Ether.DB[1001][3]==1 then
+        C_Timer.After(1,function()
+            Ether:EnableHeaderAuras()
+        end)
+    end
     if Ether.DB[1001][2]==1 then
         Ether:EnableSoloAuras()
     end
+
 end
 
 function Ether:AuraDisable()
     if update:GetScript("OnEvent") then
+        TexPool:ReleaseAll()
+        Ether.StopAllBlinks()
+        Ether:CleanupGUID()
         Ether:DisableSoloAuras()
         update:UnregisterAllEvents()
         update:SetScript("OnEvent",nil)
-        Ether.StopAllBlinks()
-        Ether:ReleaseAll()
-        Ether:DisableSoloAuras()
-        Ether:RaidAuraWipe()
+        Ether:AuraWipe()
     end
 end

@@ -1,5 +1,6 @@
 local _,Ether=...
-
+local soloButtons={}
+Ether.soloButtons=soloButtons
 local function FullUpdate(self)
     Ether:UpdateHealth(self)
     Ether:UpdatePower(self)
@@ -91,13 +92,13 @@ function Ether:CreateUnitButtons(token)
     end
 
     OnAttributeChanged(button)
-    Ether.unitButtons.solo[button.unit]=button
+    soloButtons[button.unit]=button
     return button
 end
 
 function Ether:DestroyUnitButtons(unit)
-    if Ether.unitButtons.solo[unit] then
-        local button=Ether.unitButtons.solo[unit]
+    if soloButtons[unit] then
+        local button=soloButtons[unit]
         if unit=="player" then
             Ether:CastBarDisable("player")
         end
@@ -115,7 +116,7 @@ function Ether:DestroyUnitButtons(unit)
         button:SetScript("OnEvent",nil)
         button:SetScript("OnDragStart",nil)
         button:SetScript("OnDragStop",nil)
-        Ether.unitButtons.solo[unit]=nil
+        soloButtons[unit]=nil
     end
 end
 
