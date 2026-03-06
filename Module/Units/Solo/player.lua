@@ -117,7 +117,7 @@ function Ether:DestroyUnitButtons(unit)
         button:SetAttribute("unit",nil)
         button:RegisterForClicks()
         button:SetScript("OnAttributeChanged",nil)
-         if unit~="player" then
+        if unit~="player" then
             UnregisterUnitWatch(button)
         end
         button:SetScript("OnEvent",nil)

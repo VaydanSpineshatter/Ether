@@ -20,6 +20,7 @@ local dispelColors={
     ["Poison"]={0.2,1.0,0.2,1},
     [""]={0,0,0,0}
 }
+
 local dispelClass={
     ["MAGE"]={Curse=true},
     ["PRIEST"]={Magic=true,Disease=true},
@@ -27,6 +28,7 @@ local dispelClass={
     ["DRUID"]={Curse=true,Poison=true},
     ["SHAMAN"]={Disease=true,Poison=true}
 }
+
 local dispelByPlayer={}
 local _,classFilename=UnitClass("player")
 dispelByPlayer=dispelClass[classFilename]
@@ -40,6 +42,7 @@ local dataHarmful={}
 local dataDispel={}
 local dataIcon={}
 local dispelCache={}
+
 local function CheckRaidButtons(unit)
     for _,button in pairs(raidButtons) do
         if button and button.unit==unit then
@@ -57,9 +60,9 @@ local function updateAuraPos(tbl,spellId)
                 tbl[guid][spellId].Shown=tbl[guid][spellId]:IsShown()
                 tbl[guid][spellId]:Hide()
                 tbl[guid][spellId]:ClearAllPoints()
-                tbl[guid][spellId]:SetColorTexture(unpack(C.color))
-                tbl[guid][spellId]:SetSize(C.size,C.size)
-                tbl[guid][spellId]:SetPoint(C.position,C.offsetX,C.offsetY)
+                tbl[guid][spellId]:SetColorTexture(unpack(C[2]))
+                tbl[guid][spellId]:SetSize(C[3],C[3])
+                tbl[guid][spellId]:SetPoint(C[4],C[5],C[6])
                 if tbl[guid][spellId].Shown then
                     tbl[guid][spellId]:Show()
                     tbl[guid][spellId].Shown=nil
@@ -71,7 +74,7 @@ end
 
 function Ether:SaveAuraPosition(spellId)
     if not spellId then return end
-    local debuff=Ether.DB[1003][spellId].isDebuff
+    local debuff=Ether.DB[1003][spellId][8]
     if debuff then
         updateAuraPos(dataHarmful,spellId)
     else
@@ -143,9 +146,9 @@ local function CreateAuraTexture(button,tbl,spellId,guid)
     local C=Ether.DB[1003][spellId]
     if not tbl[guid][spellId] then
         tbl[guid][spellId]=button.healthBar:CreateTexture(nil,"OVERLAY")
-        tbl[guid][spellId]:SetColorTexture(unpack(C.color))
-        tbl[guid][spellId]:SetSize(C.size,C.size)
-        tbl[guid][spellId]:SetPoint(C.position,C.offsetX,C.offsetY)
+        tbl[guid][spellId]:SetColorTexture(unpack(C[2]))
+        tbl[guid][spellId]:SetSize(C[3],C[3])
+        tbl[guid][spellId]:SetPoint(C[4],C[5],C[6])
         tbl[guid][spellId]:Show()
     end
 end
@@ -158,7 +161,7 @@ function Ether:UpdateRaidIsHelpful(button,guid)
     while true do
         local aura=GetBuffDataByIndex(unit,index)
         if not aura then break end
-        if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+        if not C[aura.spellId] or not C[aura.spellId][9] then return end
         CreateAuraTexture(button,dataHelpful,aura.spellId,guid)
         helpfulAuras[aura.auraInstanceID]=aura
         index=index+1
@@ -173,7 +176,7 @@ function Ether:UpdateRaidIsHarmful(button,guid)
     while true do
         local aura=GetDebuffDataByIndex(unit,index)
         if not aura then break end
-        if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+        if not C[aura.spellId] or not C[aura.spellId][9] then return end
         CreateAuraTexture(button,dataHarmful,aura.spellId,guid)
         harmfulAuras[aura.auraInstanceID]=aura
         index=index+1
@@ -296,7 +299,7 @@ local function raidAuraUpdate(unit,updateInfo)
                 end
             end
             if aura.isHelpful then
-                if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+                if not C[aura.spellId] or not C[aura.spellId][9] then return end
                 if dataHelpful[guid][aura.spellId] then
                     TexPool:Release(dataHelpful[guid][aura.spellId])
                 end
@@ -307,7 +310,7 @@ local function raidAuraUpdate(unit,updateInfo)
                 }
             end
             if aura.isHarmful then
-                if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
+                if not C[aura.spellId] or not C[aura.spellId][9] then return end
                 if dataHarmful[guid][aura.spellId] then
                     TexPool:Release(dataHarmful[guid][aura.spellId])
                 end

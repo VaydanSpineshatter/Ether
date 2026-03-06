@@ -676,9 +676,9 @@ do
             local button=raidButtons[unit]
             if not button then return end
             self:SetParent(button.healthBar)
-            self:SetColorTexture(unpack(CFG.color))
-            self:SetSize(CFG.size,CFG.size)
-            self:SetPoint(CFG.position,button.healthBar,CFG.position,CFG.offsetX,CFG.offsetY)
+            self:SetColorTexture(unpack(CFG[2]))
+            self:SetSize(CFG[3],CFG[3])
+            self:SetPoint(CFG[4],button.healthBar,CFG[4],CFG[5],CFG[6])
             self:Show()
         end
         method.Reset=function(self)
@@ -709,6 +709,7 @@ function Ether:CreateObjPool(creatorFunc)
     setmetatable(obj,{__index=ObjPool})
     return obj
 end
+
 ---@return any
 function ObjPool:Acquire(...)
     if self.activeCount>=220 then
@@ -727,6 +728,7 @@ function ObjPool:Acquire(...)
     Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
     return obj
 end
+
 function ObjPool:Release(obj)
     if not obj or not obj._poolIndex then
         return
@@ -751,6 +753,7 @@ function ObjPool:Release(obj)
     end
     Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
 end
+
 function ObjPool:ReleaseAll()
     for i=1,self.activeCount do
         self.temp[i]=self.active[i]
@@ -764,6 +767,150 @@ function ObjPool:ReleaseAll()
         self.temp[i]=nil
     end
     Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
+end
+
+function Ether:UpdateEditor(editor)
+    if not Ether.DB[1003][Ether.UIPanel.SpellId] then
+        editor.nameInput:SetText("")
+        editor.nameInput:Disable()
+        editor.spellIdInput:SetText("")
+        editor.spellIdInput:Disable()
+        editor.colorBtn:Disable()
+        editor.sizeSlider:Disable()
+        editor.offsetXSlider:Disable()
+        editor.YSlider:Disable()
+        editor.icon:Hide()
+        for _,btn in pairs(editor.posButtons) do
+            btn:Disable()
+        end
+        return
+    end
+    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
+    editor.nameInput:SetText(data[1] or "")
+    editor.nameInput:Enable()
+    editor.icon:Show()
+    editor.spellIdInput:SetText(tostring(Ether.UIPanel.SpellId))
+    editor.spellIdInput:Enable()
+    editor.colorBtn.bg:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
+    editor.colorBtn:Enable()
+    editor.offsetXSlider:Enable()
+    editor.offsetXSlider:Show()
+    editor.YSlider:Enable()
+    editor.YSlider:Show()
+    editor.sizeSlider:SetValue(data[3])
+    editor.sizeSlider:Enable()
+    editor.sizeSlider:Show()
+    editor.sizeValue:SetText(string.format("%.0f px",data[3]))
+    for pos,btn in pairs(editor.posButtons) do
+        if pos==data[4] then
+            btn.bg:SetColorTexture(0.8,0.6,0,0.5)
+            btn:Enable()
+        else
+            btn.bg:SetColorTexture(0.2,0.2,0.2,0.5)
+            btn:Enable()
+        end
+    end
+    editor.offsetXSlider:SetValue(data[5])
+    editor.offsetXValue:SetText(string.format("%.0f",data[5]))
+    editor.YSlider:SetValue(data[6])
+    editor.offsetYValue:SetText(string.format("%.0f",data[6]))
+    Ether:UpdatePreview(editor)
+end
+
+function Ether:UpdatePreview(editor)
+    if type(Ether.UIPanel.SpellId)=="nil" then
+        return
+    end
+    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
+    local indicator=editor.icon
+    indicator:SetSize(data[3],data[3])
+    indicator:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
+    indicator:ClearAllPoints()
+    local posMap={
+        TOPLEFT={"TOPLEFT",data[5],data[6]},
+        TOP={"TOP",data[5],data[6]},
+        TOPRIGHT={"TOPRIGHT",data[5],data[6]},
+        LEFT={"LEFT",data[5],-data[6]},
+        CENTER={"CENTER",data[5],-data[6]},
+        RIGHT={"RIGHT",data[5],-data[6]},
+        BOTTOMLEFT={"BOTTOMLEFT",data[5],data[6]},
+        BOTTOM={"BOTTOM",data[5],data[6]},
+        BOTTOMRIGHT={"BOTTOMRIGHT",data[5],data[6]},
+    }
+    local pos=posMap[data[4]]
+    if pos then
+        indicator:SetPoint(pos[1],editor.preview.healthBar,pos[1],pos[2],pos[3])
+    end
+end
+
+
+function Ether:SpellInfo(info,result,icon)
+    if not info or not result or not icon then return end
+    info=info:trim()
+    if info=="" then
+        result:SetText("Enter spell name")
+        result:SetTextColor(1,1,1)
+        icon:Hide()
+        return
+    end
+    local spellID=C_Spell.GetSpellIDForSpellIdentifier(info)
+    if not spellID then
+        local baseName=info:gsub("%s*%(%s*[Rr]ank%s+%d+%s*%)",""):trim()
+        if baseName~=info then
+            spellID=C_Spell.GetSpellIDForSpellIdentifier(baseName)
+        end
+    end
+    if not spellID then
+        result:SetText("Not found: "..info)
+        result:SetTextColor(1,0,0)
+        icon:Hide()
+        return
+    end
+    local name=C_Spell.GetSpellName(spellID)
+    local subtext=C_Spell.GetSpellSubtext(spellID) or ""
+    local iconID=C_Spell.GetSpellTexture(spellID)
+    local levelLearned=C_Spell.GetSpellLevelLearned(spellID)
+    local spellRank=0
+    if subtext:match("Rank") then
+        spellRank=tonumber(subtext:match("Rank%s+(%d+)")) or 0
+    end
+    if iconID then
+        icon:SetTexture(iconID)
+        icon:Show()
+    else
+        icon:Hide()
+    end
+    local resultStr=string.format("Spell Name: %s\nSpellID: %d",name,spellID)
+    if subtext~="" then
+        resultStr=resultStr..string.format("\n%s",subtext)
+    end
+    if levelLearned>0 then
+        resultStr=resultStr..string.format("\nLearned at: Level %d",levelLearned)
+    end
+    result:SetText(resultStr)
+    result:SetTextColor(1,1,1)
+    Ether:EtherInfo(resultStr)
+    icon:SetScript("OnEnter",function()
+        GameTooltip:SetOwner(icon,"ANCHOR_RIGHT")
+        GameTooltip:AddLine(name,1,1,1)
+        GameTooltip:AddLine("Spell ID: "..spellID,0.5,1,0.5)
+        if subtext~="" then
+            GameTooltip:AddLine(subtext,1,0.82,0)
+        end
+        local level=C_Spell.GetSpellLevelLearned(spellID)
+        if level>0 then
+            GameTooltip:AddLine("Learned at level "..level,0.7,0.7,1)
+        end
+        local desc=C_Spell.GetSpellDescription(spellID)
+        if desc and desc~="" then
+            GameTooltip:AddLine(" ")
+            GameTooltip:AddLine(desc:sub(1,200),0.8,0.8,0.8,true)
+        end
+        GameTooltip:Show()
+    end)
+    icon:SetScript("OnLeave",function()
+        GameTooltip:Hide()
+    end)
 end
 
 --[[

@@ -2,12 +2,19 @@ local _,Ether=...
 local string_format=string.format
 local pairs,ipairs=pairs,ipairs
 
+local positions={
+    {"TOPLEFT","TOP","TOPRIGHT"},
+    {"LEFT","CENTER","RIGHT"},
+    {"BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}
+}
+
 local function GetFont(_,target,tex,numb)
     target.label=target:CreateFontString(nil,"OVERLAY")
     target.label:SetFont(unpack(Ether.media.expressway),numb,"OUTLINE")
     target.label:SetText(tex)
     return target.label
 end
+
 local function CreateHeaderPreview(parent,name,numb,size)
     local preview=CreateFrame("Frame",nil,parent,"BackdropTemplate")
     preview:SetSize(size,size)
@@ -21,158 +28,78 @@ local function CreateHeaderPreview(parent,name,numb,size)
     return preview
 end
 
-local colorPickerCallbacks={
-    currentSpellId=nil,
-    editorFrame=nil
-}
-
-local function GenericColorChanged()
-    local state=colorPickerCallbacks
-    if state.currentSpellId and Ether.DB[1003][state.currentSpellId] then
-        local r,g,b=ColorPickerFrame:GetColorRGB()
-        local a=ColorPickerFrame:GetColorAlpha()
-        local auraData=Ether.DB[1003][state.currentSpellId]
-
-        auraData.color[1],auraData.color[2],auraData.color[3],auraData.color[4]=r,g,b,a
-
-        if state.editorFrame then
-            state.editorFrame.colorBtn.bg:SetColorTexture(r,g,b,a)
-            Ether:UpdatePreview(Ether.UIPanel.Frames["EDITOR"])
-            Ether:UpdateAuraList()
-        end
-    end
-end
-
-local function GenericCancel(prevValues)
-    local state=colorPickerCallbacks
-    if state.currentSpellId and Ether.DB[1003][state.currentSpellId] then
-        local auraData=Ether.DB[1003][state.currentSpellId]
-
-        if prevValues then
-            auraData.color[1]=prevValues.r
-            auraData.color[2]=prevValues.g
-            auraData.color[3]=prevValues.b
-            auraData.color[4]=prevValues.a
-        end
-
-        if state.editorFrame then
-            local r,g,b,a=auraData.color[1],auraData.color[2],auraData.color[3],auraData.color[4]
-            state.editorFrame.colorBtn.bg:SetColorTexture(r,g,b,a)
-            Ether:UpdatePreview(Ether.UIPanel.Frames["EDITOR"])
-            Ether:UpdateAuraList()
-        end
-    end
-    colorPickerCallbacks.currentSpellId=nil
-    colorPickerCallbacks.editorFrame=nil
-end
-
-local originalColor
-local currentEditor
-local function OnCancel(prevValues)
-    if type(Ether.UIPanel. SpellId)=="nil" then
-        return
-    end
-    if Ether.DB[1003][Ether.UIPanel.SpellId] then
-        local auraData=Ether.DB[1003][Ether.UIPanel.SpellId]
-
-        if prevValues then
-            auraData.color[1]=prevValues.r
-            auraData.color[2]=prevValues.g
-            auraData.color[3]=prevValues.b
-            auraData.color[4]=prevValues.a
-        else
-            auraData.color={unpack(originalColor)}
-        end
-
-        local color=prevValues or {
-            r=originalColor[1],
-            g=originalColor[2],
-            b=originalColor[3],
-            a=originalColor[4]
-        }
-        currentEditor.colorBtn.bg:SetColorTexture(color.r,color.g,color.b,color.a)
-        Ether:UpdateAuraList()
-    end
-end
-
-function Ether:UpdateEditor(editor)
-    if not Ether.DB[1003][Ether.UIPanel.SpellId] then
-        editor.nameInput:SetText("")
-        editor.nameInput:Disable()
-        editor.spellIdInput:SetText("")
-        editor.spellIdInput:Disable()
-        editor.colorBtn:Disable()
-        editor.sizeSlider:Disable()
-        editor.offsetXSlider:Disable()
-        editor.YSlider:Disable()
-        editor.icon:Hide()
-        for _,btn in pairs(editor.posButtons) do
-            btn:Disable()
-        end
-        return
-    end
-
-    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
-    editor.nameInput:SetText(data.name or "")
-    editor.nameInput:Enable()
-    editor.icon:Show()
-    editor.spellIdInput:SetText(tostring(Ether.UIPanel.SpellId))
-    editor.spellIdInput:Enable()
-    editor.colorBtn.bg:SetColorTexture(data.color[1],data.color[2],data.color[3],data.color[4])
-    editor.colorBtn:Enable()
-    editor.offsetXSlider:Enable()
-    editor.offsetXSlider:Show()
-    editor.YSlider:Enable()
-    editor.YSlider:Show()
-    editor.sizeSlider:SetValue(data.size)
-    editor.sizeSlider:Enable()
-    editor.sizeSlider:Show()
-    editor.sizeValue:SetText(string_format("%.0f px",data.size))
-    for pos,btn in pairs(editor.posButtons) do
-        if pos==data.position then
-            btn.bg:SetColorTexture(0.8,0.6,0,0.5)
-            btn:Enable()
-        else
-            btn.bg:SetColorTexture(0.2,0.2,0.2,0.5)
-            btn:Enable()
-        end
-    end
-    editor.offsetXSlider:SetValue(data.offsetX)
-    editor.offsetXValue:SetText(string_format("%.0f",data.offsetX))
-    editor.YSlider:SetValue(data.offsetY)
-    editor.offsetYValue:SetText(string_format("%.0f",data.offsetY))
-    Ether:UpdatePreview(editor)
-end
-
-function Ether:UpdatePreview(editor)
-    if type(Ether.UIPanel.SpellId)=="nil" then
-        return
-    end
-    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
-    local indicator=editor.icon
-    indicator:SetSize(data.size,data.size)
-    indicator:SetColorTexture(data.color[1],data.color[2],data.color[3],data.color[4])
-    indicator:ClearAllPoints()
-    local posMap={
-        TOPLEFT={"TOPLEFT",data.offsetX,data.offsetY},
-        TOP={"TOP",data.offsetX,data.offsetY},
-        TOPRIGHT={"TOPRIGHT",data.offsetX,data.offsetY},
-        LEFT={"LEFT",data.offsetX,-data.offsetY},
-        CENTER={"CENTER",data.offsetX,-data.offsetY},
-        RIGHT={"RIGHT",data.offsetX,-data.offsetY},
-        BOTTOMLEFT={"BOTTOMLEFT",data.offsetX,data.offsetY},
-        BOTTOM={"BOTTOM",data.offsetX,data.offsetY},
-        BOTTOMRIGHT={"BOTTOMRIGHT",data.offsetX,data.offsetY}
+local originalColor,currentEditor
+local GenericColor,GenericCancel, OnCancel
+do
+    local editor = Ether.UIPanel.Frames["EDITOR"]
+    local callbacks={
+        currentSpellId=nil,
+        editorFrame=nil
     }
-    local pos=posMap[data.position]
-    if pos then
-        indicator:SetPoint(pos[1],editor.preview.healthBar,pos[1],pos[2],pos[3])
+    function GenericColor()
+        local state=callbacks
+        if state.currentSpellId and Ether.DB[1003][state.currentSpellId] then
+            local r,g,b=ColorPickerFrame:GetColorRGB()
+            local a=ColorPickerFrame:GetColorAlpha()
+            local auraData=Ether.DB[1003][state.currentSpellId]
+            auraData.color[1],auraData.color[2],auraData.color[3],auraData.color[4]=r,g,b,a
+            if state.editorFrame then
+                state.editorFrame.colorBtn.bg:SetColorTexture(r,g,b,a)
+                Ether:UpdatePreview(editor)
+                Ether:UpdateAuraList()
+            end
+        end
+    end
+    function GenericCancel(prevValues)
+        local state=callbacks
+        if state.currentSpellId and Ether.DB[1003][state.currentSpellId] then
+            local auraData=Ether.DB[1003][state.currentSpellId]
+            if prevValues then
+                auraData.color[1]=prevValues.r
+                auraData.color[2]=prevValues.g
+                auraData.color[3]=prevValues.b
+                auraData.color[4]=prevValues.a
+            end
+            if state.editorFrame then
+                local r,g,b,a=auraData.color[1],auraData.color[2],auraData.color[3],auraData.color[4]
+                state.editorFrame.colorBtn.bg:SetColorTexture(r,g,b,a)
+                Ether:UpdatePreview(editor)
+                Ether:UpdateAuraList()
+            end
+        end
+        function OnCancel(prev)
+            if type(Ether.UIPanel. SpellId)=="nil" then
+                return
+            end
+            if Ether.DB[1003][Ether.UIPanel.SpellId] then
+                local auraData=Ether.DB[1003][Ether.UIPanel.SpellId]
+                if prev then
+                    auraData.color[1]=prev.r
+                    auraData.color[2]=prev.g
+                    auraData.color[3]=prev.b
+                    auraData.color[4]=prev.a
+                else
+                    auraData.color={unpack(originalColor)}
+                end
+
+                local color=prevValues or {
+                    r=originalColor[1],
+                    g=originalColor[2],
+                    b=originalColor[3],
+                    a=originalColor[4]
+                }
+                currentEditor.colorBtn.bg:SetColorTexture(color.r,color.g,color.b,color.a)
+                Ether:UpdateAuraList()
+            end
+        end
+        callbacks.currentSpellId=nil
+        callbacks.editorFrame=nil
     end
 end
 
 local function SelectAura(editor,spellId)
     Ether.UIPanel.SpellId=spellId
-    Ether.DB[1003][spellId].isEnabled=true
+    Ether.DB[1003][spellId][9]=true
     Ether:UpdateAuraList()
     Ether:UpdateEditor(editor)
 end
@@ -182,99 +109,20 @@ local function AddCustomAura(editor)
     while Ether.DB[1003][newId] do
         newId=newId+1
     end
-    Ether.DB[1003][newId]=Ether.AuraTemplate(newId)
+    Ether.DB[1003][newId]=Ether:AuraTemplate(newId)
     SelectAura(editor,newId)
 end
 
 local function UpdateAuraStatus(spellId)
-    if Ether.DB[1001][3]~=1 then
-        return
-    end
+    if Ether.DB[1001][3]~=1 then return end
     if not spellId then return end
-    local debuff=Ether.DB[1003][spellId].isDebuff
+    local debuff=Ether.DB[1003][spellId][8]
     local editor=Ether.UIPanel.Frames["EDITOR"]
     if debuff then
         editor.isDebuff.bg:SetColorTexture(0.80,0.40,1.00,0.4)
     else
         editor.isDebuff.bg:SetColorTexture(0,0,0,0)
     end
-end
-
-local function EtherSpellInfo(spellName,resultText,spellIcon)
-    if not resultText or not spellIcon then
-        return
-    end
-    spellName=spellName:trim()
-    if spellName=="" then
-        resultText:SetText("Enter spell name")
-        resultText:SetTextColor(1,1,1)
-        spellIcon:Hide()
-        return
-    end
-    local spellID=C_Spell.GetSpellIDForSpellIdentifier(spellName)
-    if not spellID then
-        local baseName=spellName:gsub("%s*%(%s*[Rr]ank%s+%d+%s*%)",""):trim()
-        if baseName~=spellName then
-            spellID=C_Spell.GetSpellIDForSpellIdentifier(baseName)
-        end
-    end
-    if not spellID then
-        resultText:SetText("Not found: "..spellName)
-        resultText:SetTextColor(1,0,0)
-        spellIcon:Hide()
-        return
-    end
-    local name=C_Spell.GetSpellName(spellID)
-    local subtext=C_Spell.GetSpellSubtext(spellID) or ""
-    local iconID=C_Spell.GetSpellTexture(spellID)
-    local levelLearned=C_Spell.GetSpellLevelLearned(spellID)
-    local spellRank=0
-    if subtext:match("Rank") then
-        spellRank=tonumber(subtext:match("Rank%s+(%d+)")) or 0
-    end
-    if iconID then
-        spellIcon:SetTexture(iconID)
-        spellIcon:Show()
-    else
-        spellIcon:Hide()
-    end
-    local resultStr=string_format("Spell Name: %s\nSpellID: %d",name,spellID)
-    if subtext~="" then
-        resultStr=resultStr..string_format("\n%s",subtext)
-    end
-    if levelLearned>0 then
-        resultStr=resultStr..string_format("\nLearned at: Level %d",levelLearned)
-    end
-
-    resultText:SetText(resultStr)
-    resultText:SetTextColor(1,1,1)
-    Ether:EtherInfo(resultStr)
-    spellIcon:SetScript("OnEnter",function()
-        GameTooltip:SetOwner(spellIcon,"ANCHOR_RIGHT")
-        GameTooltip:AddLine(name,1,1,1)
-        GameTooltip:AddLine("Spell ID: "..spellID,0.5,1,0.5)
-
-        if subtext~="" then
-            GameTooltip:AddLine(subtext,1,0.82,0)
-        end
-
-        local level=C_Spell.GetSpellLevelLearned(spellID)
-        if level>0 then
-            GameTooltip:AddLine("Learned at level "..level,0.7,0.7,1)
-        end
-
-        local desc=C_Spell.GetSpellDescription(spellID)
-        if desc and desc~="" then
-            GameTooltip:AddLine(" ")
-            GameTooltip:AddLine(desc:sub(1,200),0.8,0.8,0.8,true)
-        end
-
-        GameTooltip:Show()
-    end)
-
-    spellIcon:SetScript("OnLeave",function()
-        GameTooltip:Hide()
-    end)
 end
 
 local function CreateEtherDropdown(parent,width,text,options,position)
@@ -603,7 +451,7 @@ function Ether:CreateBlizzardSection(self)
         return
     end
     parent.Created=true
-    local blizzard ={"Player frame","Pet frame","Target frame","Focus frame","CastBar","Party","Raid","Raid Manager","MicroMenu","XP Bar","BagsBar"}
+    local blizzard={"Player frame","Pet frame","Target frame","Focus frame","CastBar","Party","Raid","Raid Manager","MicroMenu","XP Bar","BagsBar"}
     local bF=CreateFrame("Frame",nil,parent)
     bF:SetSize(200,(#blizzard*30)+60)
     for i,opt in ipairs(blizzard) do
@@ -656,18 +504,10 @@ function Ether:CreateCreationSection(EtherFrame)
         return
     end
     parent.Created=true
-    local CreateUnits={
-        [1]={name="|cffCC66FFPlayer|r"},
-        [2]={name="|cE600CCFFTarget|r"},
-        [3]={name="Target of Target"},
-        [4]={name="|cffCC66FFPet|r"},
-        [5]={name="|cffCC66FFPetTarget|r"},
-        [6]={name="|cff3399FFFocus|r"},
-    }
-
+    local units={"|cffCC66FFPlayer|r","|cE600CCFFTarget|r","Target of Target","|cffCC66FFPet|r","|cffCC66FFPetTarget|r","|cff3399FFFocus|r"}
     local uF=CreateFrame('Frame',nil,parent)
-    uF:SetSize(200,(#CreateUnits*30)+60)
-    for i,opt in ipairs(CreateUnits) do
+    uF:SetSize(200,(#units*30)+60)
+    for i,opt in ipairs(units) do
         local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
         if i==1 then
             btn:SetPoint("TOPLEFT",5,-5)
@@ -675,7 +515,7 @@ function Ether:CreateCreationSection(EtherFrame)
             btn:SetPoint("TOP",EtherFrame.Buttons[3][i-1],"BOTTOM",0,0)
         end
         btn:SetSize(24,24)
-        btn.label=GetFont(EtherFrame,btn,opt.name,12)
+        btn.label=GetFont(EtherFrame,btn,opt,12)
         btn.label:SetPoint("LEFT",btn,"RIGHT",8,1)
         btn:SetChecked(Ether.DB[201][i]==1)
         btn:SetScript("OnClick",function(self)
@@ -1050,7 +890,7 @@ function Ether:AddTemplateAuras(templateName)
     for spellID,auraData in pairs(template) do
         if not Ether.DB[1003][spellID] then
             Ether.DB[1003][spellID]=Ether:CopyTable(auraData)
-            Ether.DB[1003][spellID].isEnabled=true
+            Ether.DB[1003][spellID][9]=true
             added=added+1
         else
             skipped=skipped+1
@@ -1079,7 +919,6 @@ function Ether:CreateCustomSection(EtherFrame)
     parent.Created=true
     EtherFrame.Frames["AURAS"]:SetParent(parent)
     EtherFrame.Frames["EDITOR"]:SetParent(parent)
-
     local auraWipe={}
     for templateName,_ in pairs(Ether.PredefinedAuras) do
         table.insert(auraWipe,{
@@ -1104,11 +943,9 @@ function Ether:CreateCustomSection(EtherFrame)
     editor.scrollFrame=scrollFrame
     scrollFrame:SetPoint("TOPLEFT",0,-10)
     scrollFrame:SetPoint("BOTTOMRIGHT",-25,35)
-
     local scrollChild=CreateFrame("Frame",nil,scrollFrame)
     scrollChild:SetSize(190,1)
     scrollFrame:SetScrollChild(scrollChild)
-
     if scrollFrame.ScrollBar then
         scrollFrame.ScrollBar:Hide()
     end
@@ -1201,7 +1038,7 @@ function Ether:CreateCustomSection(EtherFrame)
     editor.isDebuff=isDebuff
     isDebuff:SetScript("OnClick",function(self)
         if Ether.UIPanel.SpellId then
-            Ether.DB[1003][Ether.UIPanel.SpellId].isDebuff=not Ether.DB[1003][Ether.UIPanel.SpellId].isDebuff
+            Ether.DB[1003][Ether.UIPanel.SpellId][8]=not Ether.DB[1003][Ether.UIPanel.SpellId][8]
             UpdateAuraStatus(Ether.UIPanel.SpellId)
         end
     end)
@@ -1221,7 +1058,7 @@ function Ether:CreateCustomSection(EtherFrame)
     sizeSlider.High:SetText("20")
     sizeSlider:SetScript("OnValueChanged",function(self,value)
         if Ether.UIPanel.SpellId then
-            Ether.DB[1003][Ether.UIPanel.SpellId].size=value
+            Ether.DB[1003][Ether.UIPanel.SpellId][3]=value
             editor.sizeValue:SetText(string_format("%.0f px",value))
             Ether:UpdatePreview(editor)
         end
@@ -1263,7 +1100,6 @@ function Ether:CreateCustomSection(EtherFrame)
                 Ether:UpdatePreview(editor)
             end
         end
-
         local swatchTexture=editor.colorBtn.bg
         ColorPickerFrame:SetupColorPickerAndShow({
             swatchFunc=OnColorChanged,
@@ -1293,12 +1129,6 @@ function Ether:CreateCustomSection(EtherFrame)
     icon:SetPoint("TOP",preview.healthBar,"TOP",0,0)
     icon:SetColorTexture(1,1,0,1)
 
-    local positions={
-        {"TOPLEFT","TOP","TOPRIGHT"},
-        {"LEFT","CENTER","RIGHT"},
-        {"BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}
-    }
-
     editor.posButtons={}
     local startX,startY=120,-120
     local btnSize=25
@@ -1322,7 +1152,7 @@ function Ether:CreateCustomSection(EtherFrame)
             btn.position=pos
             btn:SetScript("OnClick",function(self)
                 if Ether.UIPanel.SpellId then
-                    Ether.DB[1003][Ether.UIPanel.SpellId].position=self.position
+                    Ether.DB[1003][Ether.UIPanel.SpellId][4] = self.position
                     Ether:UpdateEditor(editor)
                     Ether:UpdatePreview(editor)
                 end
@@ -1360,9 +1190,9 @@ function Ether:CreateCustomSection(EtherFrame)
     offsetXSlider.High:SetText("20")
     offsetXSlider:SetScript("OnValueChanged",function(self,value)
         if Ether.UIPanel.SpellId then
-            Ether.DB[1003][Ether.UIPanel.SpellId].offsetX=value
+            Ether.DB[1003][Ether.UIPanel.SpellId][5]=value
             editor.offsetXValue:SetText(string_format("%.0f",value))
-            Ether:UpdatePreview(editor,Ether.UIPanel.SpellId)
+            Ether:UpdatePreview(editor)
         end
     end)
     local offsetXBG=offsetXSlider:CreateTexture(nil,"BACKGROUND")
@@ -1388,7 +1218,7 @@ function Ether:CreateCustomSection(EtherFrame)
     YSlider:SetObeyStepOnDrag(true)
     YSlider:SetScript("OnValueChanged",function(self,value)
         if Ether.UIPanel.SpellId then
-            Ether.DB[1003][Ether.UIPanel.SpellId].offsetY=value
+            Ether.DB[1003][Ether.UIPanel.SpellId][6]=value
             editor.offsetYValue:SetText(string_format("%.0f",value))
             Ether:UpdatePreview(editor)
         end
@@ -1463,7 +1293,7 @@ function Ether:UpdateAuraList()
         btn.name=btn:CreateFontString(nil,"OVERLAY")
         btn.name:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
         btn.name:SetPoint("TOPLEFT",10,-8)
-        btn.name:SetText(data.name or "Unknown")
+        btn.name:SetText(data[1] or "Unknown")
 
         btn.spellId=btn:CreateFontString(nil,"OVERLAY")
         btn.spellId:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
@@ -1474,8 +1304,8 @@ function Ether:UpdateAuraList()
         btn.colorBox=btn:CreateTexture(nil,"OVERLAY")
         btn.colorBox:SetSize(15,15)
         btn.colorBox:SetPoint("RIGHT",-10,0)
-        if data.color then
-            btn.colorBox:SetColorTexture(data.color[1],data.color[2],data.color[3],data.color[4])
+        if data[2] then
+            btn.colorBox:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
         end
 
         btn.deleteBtn=CreateFrame("Button",nil,btn)
@@ -1546,7 +1376,7 @@ function Ether:CreateHelperSection(EtherFrame)
     spellNameBox:SetPoint("TOPLEFT",spellIDPanel,"TOPLEFT",10,-30)
     spellNameBox:SetAutoFocus(false)
     spellNameBox:SetScript("OnEnterPressed",function()
-        EtherSpellInfo(spellNameBox:GetText(),resultText,spellIcon)
+       Ether:SpellInfo(spellNameBox:GetText(),resultText,spellIcon)
     end)
 
     local spellInfo=EtherPanelButton(spellIDPanel,50,25,"Search","LEFT",spellNameBox,"RIGHT",10,0)
@@ -1565,9 +1395,8 @@ function Ether:CreateHelperSection(EtherFrame)
     spellIcon:SetSize(64,64)
     spellIcon:Hide()
     spellInfo:SetScript("OnClick",function()
-        EtherSpellInfo(spellNameBox:GetText(),resultText,spellIcon)
+        Ether:SpellInfo(spellNameBox:GetText(),resultText,spellIcon)
     end)
-
     local examples={"Greater Heal(Rank 4)","Greater Heal","25233"}
     local exampleText="Example\n\n"
     for i=1,3 do
@@ -1591,25 +1420,25 @@ function Ether:CreateIndicatorsSection(EtherFrame)
         return
     end
     parent.Created=true
-    -- local tbl = {"ReadCheck","Connection","RaidTarget","Resurrection","GroupLeader","LootMethod", "UnitFlags", "PlayerRoles","PlayerFlags"}
-    -- local icon = {}
-    local I_Register={
-        [1]={text="Ready check",texture="Interface\\RaidFrame\\ReadyCheck-Ready",texture2="Interface\\RaidFrame\\ReadyCheck-NotReady",texture3="Interface\\RaidFrame\\ReadyCheck-Waiting"},
-        [2]={text="Connection",texture="Interface\\CharacterFrame\\Disconnect-Icon",size=30},
-        [3]={text="Raid target update",texture="Interface\\TargetingFrame\\UI-RaidTargetingIcons",size=14,coo={0.75,1,0.25,0.5}},
-        [4]={text="Resurrection",texture="Interface\\RaidFrame\\Raid-Icon-Rez",size=20},
-        [5]={text="Leader",texture="Interface\\GroupFrame\\UI-Group-LeaderIcon"},
-        [6]={text="Loot method",texture="Interface\\GroupFrame\\UI-Group-MasterLooter",size=16},
-        [7]={text="Unit Flags |cffff0000 Red Name|r  &",texture="Interface\\Icons\\Spell_Shadow_Charm",texture2="Interface\\Icons\\Spell_Holy_GuardianSpirit"},
-        [8]={text="Maintank and Mainassist",texture="Interface\\GroupFrame\\UI-Group-MainTankIcon",texture2="Interface\\GroupFrame\\UI-Group-MainAssistIcon"},
-        [9]={text="Player flags  |cE600CCFFAFK|r & |cffCC66FFDND|r"}
-    }
+    local tbl = {"ReadCheck","RaidTarget","GroupLeader","MasterLooter","PlayerRoles"}
+    local toggle={"Connection","Resurrection","PlayerFlags","UnitFlags"}
+    local unitFlags= {"Unit Flags |cffff0000 Red Name|r  &", "Interface\\Icons\\Spell_Shadow_Charm","Interface\\Icons\\Spell_Holy_GuardianSpirit"}
+    local tank = {texture="Interface\\GroupFrame\\UI-Group-MainTankIcon","Interface\\GroupFrame\\UI-Group-MainAssistIcon"}
+    local size = {14,16,20,30}
+    local texRdy = {"Interface\\RaidFrame\\ReadyCheck-Ready","Interface\\RaidFrame\\ReadyCheck-NotReady","Interface\\RaidFrame\\ReadyCheck-Waiting"}
+    local connection ="Interface\\CharacterFrame\\Disconnect-Icon"
+    local register={"ReadyCheck","MainTank/Assist","GroupLeader","RaidTarget","LootMaster"}
+    local flagsTex = {"|cE600CCFFAFK|r & |cffCC66FFDND|r"}
+    local raidTarget = "Interface\\TargetingFrame\\UI-RaidTargetingIcons"
 
+    local res = "Interface\\RaidFrame\\Raid-Icon-Rez"
+    local leader = "Interface\\GroupFrame\\UI-Group-LeaderIcon"
+    local loot ="Interface\\GroupFrame\\UI-Group-MasterLooter"
+    local cc = {0.75,1,0.25,0.5}
     local DB=Ether.DB
     local iRegister=CreateFrame("Frame",nil,parent)
-    iRegister:SetSize(200,(#I_Register*30)+60)
-
-    for i,opt in ipairs(I_Register) do
+    iRegister:SetSize(200,(#toggle*30)+60)
+    for i,opt in ipairs(toggle) do
         local btn=CreateFrame("CheckButton",nil,iRegister,"InterfaceOptionsCheckButtonTemplate")
         if i==1 then
             btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-100)
@@ -1617,38 +1446,49 @@ function Ether:CreateIndicatorsSection(EtherFrame)
             btn:SetPoint("TOPLEFT",Ether.UIPanel.Buttons[6][i-1],"BOTTOMLEFT",0,0)
         end
         btn:SetSize(24,24)
-        btn.label=GetFont(EtherFrame,btn,opt.text,12)
+        btn.label=GetFont(EtherFrame,btn,opt,12)
         btn.label:SetPoint("LEFT",btn,"RIGHT",10,0)
-        btn.texture=btn:CreateTexture(nil,"OVERLAY")
-        btn.texture:SetSize(18,18)
-        btn.texture:SetPoint("LEFT",btn.label,"RIGHT",8,0)
-        btn.texture:SetTexture(opt.texture)
-        btn.texture2=btn:CreateTexture(nil,"OVERLAY")
-        btn.texture2:SetSize(18,18)
-        btn.texture2:SetPoint("LEFT",btn.label,"RIGHT",35,0)
-        btn.texture2:SetTexture(opt.texture2)
-        btn.texture3=btn:CreateTexture(nil,"OVERLAY")
-        btn.texture3:SetSize(18,18)
-        btn.texture3:SetPoint("LEFT",btn.label,"RIGHT",60,0)
-        btn.texture3:SetTexture(opt.texture3)
-        if opt.size then
-            btn.texture:SetSize(opt.size,opt.size)
-        end
-        if opt.coo then
-            btn.texture:SetTexCoord(unpack(opt.coo))
-        end
-        if opt.coo2 then
-            btn.texture2:SetTexCoord(unpack(opt.coo2))
-        end
-        if opt.coo3 then
-            btn.texture3:SetTexCoord(unpack(opt.coo3))
-        end
+        --[[
+            for i,opt in ipairs(I_Register) do
+                local btn=CreateFrame("CheckButton",nil,iRegister,"InterfaceOptionsCheckButtonTemplate")
+                if i==1 then
+                    btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-100)
+                else
+                    btn:SetPoint("TOPLEFT",Ether.UIPanel.Buttons[6][i-1],"BOTTOMLEFT",0,0)
+                end
+                btn:SetSize(24,24)
+                btn.label=GetFont(EtherFrame,btn,opt.text,12)
+                btn.label:SetPoint("LEFT",btn,"RIGHT",10,0)
+                btn.texture=btn:CreateTexture(nil,"OVERLAY")
+                btn.texture:SetSize(18,18)
+                btn.texture:SetPoint("LEFT",btn.label,"RIGHT",8,0)
+                btn.texture:SetTexture(opt.texture)
+                btn.texture2=btn:CreateTexture(nil,"OVERLAY")
+                btn.texture2:SetSize(18,18)
+                btn.texture2:SetPoint("LEFT",btn.label,"RIGHT",35,0)
+                btn.texture2:SetTexture(opt.texture2)
+                btn.texture3=btn:CreateTexture(nil,"OVERLAY")
+                btn.texture3:SetSize(18,18)
+                btn.texture3:SetPoint("LEFT",btn.label,"RIGHT",60,0)
+                btn.texture3:SetTexture(opt.texture3)
+                if opt.size then
+                    btn.texture:SetSize(opt.size,opt.size)
+                end
+                if opt.coo then
+                    btn.texture:SetTexCoord(unpack(opt.coo))
+                end
+                if opt.coo2 then
+                    btn.texture2:SetTexCoord(unpack(opt.coo2))
+                end
+                if opt.coo3 then
+                    btn.texture3:SetTexCoord(unpack(opt.coo3))
+                end
+                ]]
         btn:SetChecked(DB[501][i]==1)
-
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             Ether.DB[501][i]=checked and 1 or 0
-            Ether:IndicatorsRegisterByIndex(i)
+            Ether.IndicatorToggle(i)
         end)
         EtherFrame.Buttons[6][i]=btn
     end
@@ -1725,13 +1565,6 @@ function Ether:CreateIndicatorsSection(EtherFrame)
     Indicator.text=textIndicator
     textIndicator:SetPoint("TOP",preview.healthBar,"TOP",0,0)
     textIndicator:Hide()
-
-    local positions={
-        {"TOPLEFT","TOP","TOPRIGHT"},
-        {"LEFT","CENTER","RIGHT"},
-        {"BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}
-    }
-
     Indicator.posButtons={}
     local startX,startY=90,0
     local btnSize=25
@@ -2052,22 +1885,15 @@ function Ether:CreateCastBarSection(EtherFrame)
     iconInput:SetNumeric(true)
     iconInput:SetScript("OnEnterPressed",function(self)
         local size=tonumber(self:GetText())
-
         self:ClearFocus()
     end)
     iconLabel:Hide()
     iconInput:Hide()
-    local layoutValue={
-        [1]={text="Player CastBar"},
-        [2]={text="Target CastBar"}
-    }
-
+    local lTbl={"Player CastBar","Target CastBar"}
     local layout=CreateFrame("Frame",nil,parent)
-    layout:SetSize(200,(#layoutValue*30)+60)
-
-    for i,opt in ipairs(layoutValue) do
+    layout:SetSize(200,(#lTbl*30)+60)
+    for i,opt in ipairs(lTbl) do
         local btn=CreateFrame("CheckButton",nil,layout,"InterfaceOptionsCheckButtonTemplate")
-
         if i==1 then
             btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-300)
         else
@@ -2104,21 +1930,8 @@ function Ether:CreateConfigSection(EtherFrame)
         return
     end
     parent.Created=true
-    local editor=EtherFrame.Frames["EDITOR"]
-    local auras=EtherFrame.Frames["AURAS"]
-
-    if not editor.Created or not auras.Created then
-        Ether:CreateCustomSection(EtherFrame)
-        editor.Created,auras.Created=true,true
-    end
-    if not EtherFrame["CONTENT"]["CHILDREN"]["Position"].Created then
-        Ether:CreatePositionSection(EtherFrame)
-        EtherFrame["CONTENT"]["CHILDREN"]["Position"].Created=true
-    end
-
     local DB=Ether.DB
     local K={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidFrame","PetFrame","PlayerCastBar","TargetCastBar"}
-
     local F={
         [1]=Ether.infoFrame,
         [2]=Ether.toolFrame,
@@ -2333,15 +2146,11 @@ end
 
 function Ether:CreateEditSection(EtherFrame)
     local parent=EtherFrame["CONTENT"]["CHILDREN"]["Edit"]
-    if parent.Created then
-        return
-    end
+    if parent.Created then return end
     parent.Created=true
-
     local dropdown=CreateFrame("Frame",nil,parent,"UIDropDownMenuTemplate")
     dropdown:SetPoint("TOPLEFT",parent,"TOPLEFT",0,-5)
     UIDropDownMenu_SetWidth(dropdown,130)
-
     local inputDialog=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
     inputDialog:SetSize(300,120)
     inputDialog:SetPoint("CENTER")
@@ -2426,7 +2235,7 @@ function Ether:CreateEditSection(EtherFrame)
         okButton:SetScript("OnClick",function()
             local name=inputBox:GetText()
             if name and name~="" then
-                local success,msg=Ether:CopyProfile(Ether:GetProfile(),name)
+                local success,msg=Ether:CopyProfile(Ether:GetProfileName(),name)
                 if success then
                     RefreshDropdown()
                     Ether:EtherInfo("|cffcc66ffEther|r "..msg)

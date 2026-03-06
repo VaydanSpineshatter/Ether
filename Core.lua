@@ -327,7 +327,7 @@ do
             local version=self.Frames["BOTTOM"]:CreateFontString(nil,"OVERLAY")
             version:SetFont(unpack(Ether.media.expressway),15,"OUTLINE")
             version:SetPoint("BOTTOMRIGHT",-10,3)
-            version:SetText("Beta Build |cE600CCFF"..tostring(Ether.metaData[3]).."|r")
+            version:SetText("Beta |cE600CCFF"..tostring(Ether.metaData[3]).."|r")
             local menuIcon=self.Frames["BOTTOM"]:CreateTexture(nil,"ARTWORK")
             menuIcon:SetSize(32,32)
             menuIcon:SetTexture(unpack(Ether.media.icon))
@@ -345,11 +345,11 @@ do
             close.text:SetFont(unpack(Ether.media.expressway),15,"OUTLINE")
             close.text:SetAllPoints()
             close.text:SetText("Close")
-            close:SetScript("OnEnter",function(self)
-                self.text:SetTextColor(0.00,0.80,1.00,1)
+            close:SetScript("OnEnter",function()
+                close.text:SetTextColor(0.00,0.80,1.00,1)
             end)
-            close:SetScript("OnLeave",function(self)
-                self.text:SetTextColor(1,1,1,1)
+            close:SetScript("OnLeave",function()
+                close.text:SetTextColor(1,1,1,1)
             end)
             close:SetScript("OnClick",function()
                 self.Frames["MAIN"]:Hide()
@@ -424,12 +424,12 @@ local function OnInitialize(self,event,...)
             ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3]
             ETHER_DATABASE_DX_AA["Current"]="Default"
         else
-            ETHER_DATABASE_DX_AA["Profiles"]={
-                ["Default"]=Ether.DataDefault,
-                [Ether:GetProfileName()]=Ether:CopyTable(Ether:GetProfile())
-            }
-            ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3]
-            ETHER_DATABASE_DX_AA["Current"]=Ether:GetProfileName()
+            if ETHER_DATABASE_DX_AA["Current"][Ether:GetProfileName()] then
+                ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether:GetProfile())
+            end
+            if not ETHER_DATABASE_DX_AA["Profiles"]["Default"] then
+                ETHER_DATABASE_DX_AA["Profiles"]["Default"]=Ether:CopyTable(Ether.DataDefault)
+            end
         end
         Ether:MergeToLeft(Ether:CopyTable(Ether:GetProfile()),Ether.DataDefault)
         Ether.DB=Ether:CopyTable(Ether:GetProfile())
@@ -540,6 +540,7 @@ local function OnInitialize(self,event,...)
             Ether.UIPanel.Frames["MAIN"]:Show()
         end
     elseif (event=="PLAYER_LOGOUT") then
+        ETHER_DATABASE_DX_AA["Current"]=Ether:GetProfileName()
         ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
     end
 end

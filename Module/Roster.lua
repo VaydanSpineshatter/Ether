@@ -5,7 +5,7 @@ local tinsert,tconcat=table.insert,table.concat
 local IsEventValid=C_EventUtils.IsEventValid
 local pairs,ipairs=pairs,ipairs
 --local UnitGUID=UnitGUID
-
+local soloButtons=Ether.soloButtons
 local cacheSolo={
     player=true,
     pet=true,
@@ -139,6 +139,13 @@ local function initialButtons()
             end
             initial=false
         end)
+    end
+end
+
+function Ether:UpdateColors()
+    for _,info in ipairs({"target","targettarget","pettarget"}) do
+        Ether:UpdateClassColor(soloButtons[info])
+        Ether:UpdatePowerColor(soloButtons[info])
     end
 end
 

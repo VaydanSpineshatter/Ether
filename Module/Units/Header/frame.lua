@@ -44,6 +44,7 @@ local function Update(self)
     Ether:UpdateName(self,3)
     Ether:InitialHealth(self)
     Ether:UpdateClassColor(self)
+    Ether:IndicatorsFullUpdate(self)
     Ether.Handler:FullUpdate()
 end
 

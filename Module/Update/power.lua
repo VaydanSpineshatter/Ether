@@ -124,20 +124,14 @@ function Ether:UpdatePowerTextRounded(button)
     end
 end
 
-function Ether:UpdatePower(button,smooth)
+function Ether:UpdatePower(button)
     if not button or not button.unit or not button.powerBar then
         return
     end
     local p=UnitPower(button.unit)
     local mp=UnitPowerMax(button.unit)
-
-    if smooth then
-        button.powerBar:SetMinMaxSmoothedValue(0,mp)
-        button.powerBar:SetSmoothedValue(p)
-    else
-        button.powerBar:SetValue(p)
-        button.powerBar:SetMinMaxValues(0,mp)
-    end
+    button.powerBar:SetValue(p)
+    button.powerBar:SetMinMaxValues(0,mp)
 end
 
 local function PowerChanged(self,event,unit)

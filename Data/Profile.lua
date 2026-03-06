@@ -266,14 +266,14 @@ local function TblToString(tbl)
 end
 
 local function ProfileRefresh()
-    Ether:RefreshAllSettings()
-    Ether:RefreshFramePositions()
+    Ether:AuraDisable()
+    Ether:ProfileRefreshLayout()
     Ether:UpdateAuraList()
     Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
-    Ether:ProfileRefreshLayout()
-    Ether:InitialIndicatorsPosition()
-    Ether:AuraDisable()
     Ether:AuraEnable()
+    Ether:InitialIndicatorsPosition()
+    Ether:RefreshAllSettings()
+    Ether:RefreshFramePositions()
 end
 
 function Ether:ProfileRefreshLayout()
@@ -334,6 +334,7 @@ function Ether:ImportProfile(encodedString)
 end
 
 function Ether:CopyProfile(sourceName,targetName)
+    if not sourceName or not targetName then return end
     if not ETHER_DATABASE_DX_AA["Profiles"][sourceName] then
         return false,"Profile not found"
     end
@@ -348,8 +349,9 @@ function Ether:SwitchProfile(name)
     if not ETHER_DATABASE_DX_AA["Profiles"][name] then
         return false,"Profile not found"
     end
-    ETHER_DATABASE_DX_AA["Current"]=name
+    ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
     Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["Profiles"][name])
+    ETHER_DATABASE_DX_AA["Current"]=name
     ProfileRefresh()
     return true,"Switched to "..name
 end

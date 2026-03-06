@@ -24,11 +24,10 @@ local function HandleVersion(message)
     end
 end
 
-local playerName=UnitName("player")
 local function Message(self,event,prefix,message,channel,sender,...)
     if event=="CHAT_MSG_ADDON" then
         if prefix~=Ether.metaData[1] then return end
-        if sender==playerName then return end
+        if sender==Ether:GetCharacterKey() then return end
         if Received[message]==message then
             return
         end
