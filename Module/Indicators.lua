@@ -230,11 +230,11 @@ local function MasterLoot()
             local lootType,partyID,raidID=GetLootMethod()
             if lootType==Enum.LootMethod.Masterlooter then
                 local masterLooterUnit=raidID and ((raidID==0) and "player" or "raid"..raidID) or partyID and ((partyID==0) and "player" or "party"..partyID)
-                if masterLooterUnit and UnitIsUnit(button .unit,masterLooterUnit) then
-                    button .Indicators.MasterLoot:SetTexture(masterlootIcon)
-                    button .Indicators.MasterLoot:Show()
+                if masterLooterUnit and UnitIsUnit(button.unit,masterLooterUnit) then
+                    button.Indicators.MasterLoot:SetTexture(masterlootIcon)
+                    button.Indicators.MasterLoot:Show()
                 else
-                    button .Indicators.MasterLoot:Hide()
+                    button.Indicators.MasterLoot:Hide()
                 end
             end
         end
@@ -259,11 +259,11 @@ function Ether:UpdateSoloIndicator(unit)
 end
 
 local function IndicatorsSoloUpdate()
-   for _,info in ipairs({"player","target","targettarget"}) do
+    for _,info in ipairs({"player","target","targettarget"}) do
         if UnitExists(info) then
             Ether:UpdateSoloIndicator(info)
         end
-   end
+    end
 end
 
 local function RaidTarget()
@@ -306,6 +306,7 @@ local function isAway(DB)
     if DB[401][5]==1 then
         Ether:RangeDisable()
     end
+     Ether:IndicatorsNormalFullUpdate()
     for i=1,#iTbl do
         Ether:HideIndicators(iTbl[i])
     end
@@ -397,11 +398,11 @@ local function PlayerFlags(self)
 end
 
 function Ether:IndicatorsNormalFullUpdate()
-        for _,button in pairs(raidButtons) do
-            if button then
-                for _,value in ipairs(iTbl) do
-                      Ether:IndictorsTexture(button,value)
-                end
+    for _,button in pairs(raidButtons) do
+        if button then
+            for _,value in ipairs(iTbl) do
+                Ether:IndictorsTexture(button,value)
+            end
             Connection(button)
             PlayerFlags(button)
             UnitFlags(button)
@@ -425,7 +426,7 @@ function Ether:IndicatorsFullUpdate(self)
     MasterLoot(self)
 end
 
-local Toggle, Register,Unregister
+local Toggle,Register,Unregister
 do
     local str={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
     local nStr={"RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
@@ -467,8 +468,8 @@ do
         wipe(Events)
     end
     function Toggle(number)
-        if not number or type(number) ~= "number" then return end
-        if number < 5 then
+        if not number or type(number)~="number" then return end
+        if number<5 then
             for index,info in ipairs(str) do
                 if number==index then
                     if StrEvent[info] and token:IsEventRegistered(info) then
@@ -480,19 +481,19 @@ do
                     end
                 end
             end
-       else
-             for index,info in ipairs(nStr) do
-                 if number==index +4 then
-                     if Events[info] and frame:IsEventRegistered(info) then
-                         frame:UnregisterEvent(info)
-                         Events[info]=nil
-                     else
-                         frame:RegisterEvent(info)
-                         Events[info]=n[index]
-                     end
-                 end
-             end
-         end
+        else
+            for index,info in ipairs(nStr) do
+                if number==index+4 then
+                    if Events[info] and frame:IsEventRegistered(info) then
+                        frame:UnregisterEvent(info)
+                        Events[info]=nil
+                    else
+                        frame:RegisterEvent(info)
+                        Events[info]=n[index]
+                    end
+                end
+            end
+        end
     end
     Ether.IndicatorToggle=Toggle
 end

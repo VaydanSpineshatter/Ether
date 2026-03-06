@@ -31,7 +31,7 @@ local dispelClass={
 
 local dispelByPlayer={}
 local _,classFilename=UnitClass("player")
-dispelByPlayer=dispelClass[classFilename]
+dispelByPlayer=dispelClass[classFilename] or {}
 
 local helpfulAuras={}
 local harmfulAuras={}

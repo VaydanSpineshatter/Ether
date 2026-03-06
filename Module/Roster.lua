@@ -29,14 +29,8 @@ function Ether:IsValidAura(unit)
     return cacheSoloAura[unit]
 end
 --[[
-local function CheckRaidButtons(arg1)
-    for unit,button in pairs(Ether.unitButtons.raid) do
-        if button and unit and unit==arg1 then
-            return button,button.unit,button.destGUID
-        end
-    end
-    return nil
-end
+
+
      for index = 1, GetNumGroupMembers() do
                     local unit = "raid" .. index
                     if UnitExists(unit) then
@@ -64,7 +58,29 @@ local function UpdateAuraByIndex(unit,guid)
     end
 end
 ]]
+
 local raidButtons=Ether.raidButtons
+local function CheckRaidButtons(unit)
+    for _,button in pairs(raidButtons) do
+        if button and button.unit ==unit then
+            return button
+        end
+    end
+    return nil
+end
+
+function Ether:UpdateRaidButtons()
+     for index = 1, GetNumGroupMembers() do
+        local unit = "raid" .. index
+        if UnitExists(unit) then
+            local button =CheckRaidButtons(unit)
+            if button then
+                Ether:IndicatorsFullUpdate(button)
+            end
+        end
+     end
+end
+
 local status=false
 local function refreshButtons()
     if not status then
@@ -82,7 +98,10 @@ local function refreshButtons()
                     Ether:AuraEnable()
                 end
                 if Ether.DB[401][6]==1 then
-                    Ether.Handler:FullUpdate()
+                    local btn = raidButtons["player"]
+                    if btn then
+                        Ether:IndicatorsFullUpdate(btn)
+                    end
                 end
             else
                 if Ether.DB[1001][3]==1 then
@@ -94,7 +113,7 @@ local function refreshButtons()
                     end
                 end
                 if Ether.DB[401][6]==1 then
-                    Ether.Handler:FullUpdate()
+                     Ether:UpdateRaidButtons()
                 end
             end
             status=false
@@ -131,9 +150,10 @@ local function initialButtons()
         initial=true
         C_After(1.5,function()
             for unit,button in pairs(raidButtons) do
-                if button and button:IsVisible() then
+                if button then
                     if UnitExists(unit) then
                         Ether:InitialHealth(button)
+                        Ether:IndicatorsFullUpdate(button)
                     end
                 end
             end
