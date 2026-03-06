@@ -104,7 +104,7 @@ function Ether:SaveIndicatorsPosition(indicator,number)
 end
 local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","ReadyCheck","RaidTarget","GroupLeader","MasterLoot","PlayerRoles"}
 function Ether:CheckIndicatorsPosition(button)
-    for index,value in pairs(iTbl) do
+    for index,value in ipairs(iTbl) do
         Ether:IndictorsTexture(button,value)
         if button.Indicators[value] then
             button.Indicators[value]:Hide()
@@ -257,6 +257,7 @@ function Ether:UpdateSoloIndicator(unit)
         end
     end
 end
+
 local function IndicatorsSoloUpdate()
    for _,info in ipairs({"player","target","targettarget"}) do
         if UnitExists(info) then
@@ -264,6 +265,7 @@ local function IndicatorsSoloUpdate()
         end
    end
 end
+
 local function RaidTarget()
     for _,button in pairs(raidButtons) do
         if button then
@@ -278,7 +280,7 @@ local function RaidTarget()
             end
         end
     end
- IndicatorsSoloUpdate()
+    IndicatorsSoloUpdate()
 end
 
 local function UpdateHealthBar(button)
@@ -395,8 +397,11 @@ local function PlayerFlags(self)
 end
 
 function Ether:IndicatorsNormalFullUpdate()
-    for _,button in pairs(raidButtons) do
-        if button then
+        for _,button in pairs(raidButtons) do
+            if button then
+                for _,value in ipairs(iTbl) do
+                      Ether:IndictorsTexture(button,value)
+                end
             Connection(button)
             PlayerFlags(button)
             UnitFlags(button)
@@ -420,7 +425,7 @@ function Ether:IndicatorsFullUpdate(self)
     MasterLoot(self)
 end
 
-local Toggle
+local Toggle, Register,Unregister
 do
     local str={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
     local nStr={"RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
@@ -441,21 +446,29 @@ do
             Events[event](self,event)
         end)
     end
-    for index,info in ipairs(str) do
-        if not StrEvent[info] and not token:IsEventRegistered(info) then
-            token:RegisterEvent(info)
-            StrEvent[info]=h[index]
+    function Register()
+        for index,info in ipairs(str) do
+            if not StrEvent[info] and not token:IsEventRegistered(info) then
+                token:RegisterEvent(info)
+                StrEvent[info]=h[index]
+            end
+        end
+        for index,info in ipairs(nStr) do
+            if not Events[info] and not frame:IsEventRegistered(info) then
+                frame:RegisterEvent(info)
+                Events[info]=n[index]
+            end
         end
     end
-    for index,info in ipairs(nStr) do
-        if not StrEvent[info] and not frame:IsEventRegistered(info) then
-            frame:RegisterEvent(info)
-            Events[info]=n[index]
-        end
+    function Unregister()
+        token:UnregisterAllEvent()
+        frame:UnregisterAllEvent()
+        wipe(StrEvent)
+        wipe(Events)
     end
     function Toggle(number)
-        if not number or type(number)~="number" then return end
-        if number<5 then
+        if not number or type(number) ~= "number" then return end
+        if number < 5 then
             for index,info in ipairs(str) do
                 if number==index then
                     if StrEvent[info] and token:IsEventRegistered(info) then
@@ -467,31 +480,28 @@ do
                     end
                 end
             end
-        end
-        if number>5 then
-            for index,info in ipairs(nStr) do
-                if number==index then
-                    if Events[info] and frame:IsEventRegistered(info) then
-                        frame:UnregisterEvent(info)
-                        Events[info]=nil
-                    else
-                        frame:RegisterEvent(info)
-                        Events[info]=n[index]
-                    end
-                end
-            end
-        end
+       else
+             for index,info in ipairs(nStr) do
+                 if number==index +4 then
+                     if Events[info] and frame:IsEventRegistered(info) then
+                         frame:UnregisterEvent(info)
+                         Events[info]=nil
+                     else
+                         frame:RegisterEvent(info)
+                         Events[info]=n[index]
+                     end
+                 end
+             end
+         end
     end
     Ether.IndicatorToggle=Toggle
 end
 
-function Ether:IndicatorsRegister()
-    Ether.Handler:FullUpdate()
-end
-
 function Ether:IndicatorsEnable()
+    Register()
     Ether:UpdateSoloIndicator("player")
 end
 
 function Ether:IndicatorsDisable()
+    Unregister()
 end
