@@ -29,9 +29,9 @@ local function CreateHeaderPreview(parent,name,numb,size)
 end
 
 local originalColor,currentEditor
-local GenericColor,GenericCancel, OnCancel
+local GenericColor,GenericCancel,OnCancel
 do
-    local editor = Ether.UIPanel.Frames["EDITOR"]
+    local editor=Ether.UIPanel.Frames["EDITOR"]
     local callbacks={
         currentSpellId=nil,
         editorFrame=nil
@@ -1152,7 +1152,7 @@ function Ether:CreateCustomSection(EtherFrame)
             btn.position=pos
             btn:SetScript("OnClick",function(self)
                 if Ether.UIPanel.SpellId then
-                    Ether.DB[1003][Ether.UIPanel.SpellId][4] = self.position
+                    Ether.DB[1003][Ether.UIPanel.SpellId][4]=self.position
                     Ether:UpdateEditor(editor)
                     Ether:UpdatePreview(editor)
                 end
@@ -1376,7 +1376,7 @@ function Ether:CreateHelperSection(EtherFrame)
     spellNameBox:SetPoint("TOPLEFT",spellIDPanel,"TOPLEFT",10,-30)
     spellNameBox:SetAutoFocus(false)
     spellNameBox:SetScript("OnEnterPressed",function()
-       Ether:SpellInfo(spellNameBox:GetText(),resultText,spellIcon)
+        Ether:SpellInfo(spellNameBox:GetText(),resultText,spellIcon)
     end)
 
     local spellInfo=EtherPanelButton(spellIDPanel,50,25,"Search","LEFT",spellNameBox,"RIGHT",10,0)
@@ -1420,21 +1420,21 @@ function Ether:CreateIndicatorsSection(EtherFrame)
         return
     end
     parent.Created=true
-    local tbl = {"ReadCheck","RaidTarget","GroupLeader","MasterLooter","PlayerRoles"}
-    local toggle={"Connection","Resurrection","PlayerFlags","UnitFlags"}
-    local unitFlags= {"Unit Flags |cffff0000 Red Name|r  &", "Interface\\Icons\\Spell_Shadow_Charm","Interface\\Icons\\Spell_Holy_GuardianSpirit"}
-    local tank = {texture="Interface\\GroupFrame\\UI-Group-MainTankIcon","Interface\\GroupFrame\\UI-Group-MainAssistIcon"}
-    local size = {14,16,20,30}
-    local texRdy = {"Interface\\RaidFrame\\ReadyCheck-Ready","Interface\\RaidFrame\\ReadyCheck-NotReady","Interface\\RaidFrame\\ReadyCheck-Waiting"}
-    local connection ="Interface\\CharacterFrame\\Disconnect-Icon"
-    local register={"ReadyCheck","MainTank/Assist","GroupLeader","RaidTarget","LootMaster"}
-    local flagsTex = {"|cE600CCFFAFK|r & |cffCC66FFDND|r"}
-    local raidTarget = "Interface\\TargetingFrame\\UI-RaidTargetingIcons"
+    local toggle={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLooter","PlayerRoles","ReadCheck"}
 
-    local res = "Interface\\RaidFrame\\Raid-Icon-Rez"
-    local leader = "Interface\\GroupFrame\\UI-Group-LeaderIcon"
-    local loot ="Interface\\GroupFrame\\UI-Group-MasterLooter"
-    local cc = {0.75,1,0.25,0.5}
+    local unitFlags={"Unit Flags |cffff0000 Red Name|r  &","Interface\\Icons\\Spell_Shadow_Charm","Interface\\Icons\\Spell_Holy_GuardianSpirit"}
+    local tank={texture="Interface\\GroupFrame\\UI-Group-MainTankIcon","Interface\\GroupFrame\\UI-Group-MainAssistIcon"}
+    local size={14,16,20,30}
+    local texRdy={"Interface\\RaidFrame\\ReadyCheck-Ready","Interface\\RaidFrame\\ReadyCheck-NotReady","Interface\\RaidFrame\\ReadyCheck-Waiting"}
+    local connection="Interface\\CharacterFrame\\Disconnect-Icon"
+    local register={"ReadyCheck","MainTank/Assist","GroupLeader","RaidTarget","LootMaster"}
+    local flagsTex={"|cE600CCFFAFK|r & |cffCC66FFDND|r"}
+    local raidTarget="Interface\\TargetingFrame\\UI-RaidTargetingIcons"
+
+    local res="Interface\\RaidFrame\\Raid-Icon-Rez"
+    local leader="Interface\\GroupFrame\\UI-Group-LeaderIcon"
+    local loot="Interface\\GroupFrame\\UI-Group-MasterLooter"
+    local cc={0.75,1,0.25,0.5}
     local DB=Ether.DB
     local iRegister=CreateFrame("Frame",nil,parent)
     iRegister:SetSize(200,(#toggle*30)+60)

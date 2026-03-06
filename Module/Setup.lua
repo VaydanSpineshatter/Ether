@@ -843,7 +843,6 @@ function Ether:UpdatePreview(editor)
     end
 end
 
-
 function Ether:SpellInfo(info,result,icon)
     if not info or not result or not icon then return end
     info=info:trim()
