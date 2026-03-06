@@ -415,11 +415,10 @@ function Ether:IndicatorsNormalFullUpdate()
     end
 end
 
-function Ether:IndicatorsFullUpdate(self)
+function Ether:IndicatorsFullUpdateUnit(self)
     Connection(self)
     PlayerFlags(self)
     UnitFlags(self)
-    Resurrection(self)
     RaidTarget(self)
     PlayerRoles(self)
     GroupLeader(self)
@@ -428,68 +427,67 @@ end
 
 local Toggle,Register,Unregister
 do
-    local str={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
-    local nStr={"RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
-    local StrEvent,Events={},{}
-    local h={Connection,Resurrection,PlayerFlags,UnitFlags}
-    local n={RaidTarget,GroupLeader,MasterLoot,PlayerRoles,UpdateReady,UpdateConfirm,UpdateFinished}
+    local uSTR={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
+    local nSTR={"RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
+    local U,N={},{}
+    local UH={Connection,Resurrection,PlayerFlags,UnitFlags}
+    local NH={RaidTarget,GroupLeader,MasterLoot,PlayerRoles,UpdateReady,UpdateConfirm,UpdateFinished}
     local token,frame=CreateFrame("Frame"),CreateFrame("Frame")
     if not token:GetScript("OnEvent") then
         token:SetScript("OnEvent",function(_,event,unit)
             local btn=raidButtons[unit]
             if not btn then return end
             if unit and btn.unit~=unit then return end
-            StrEvent[event](btn,event,unit)
+            U[event](btn,event,unit)
         end)
     end
     if not frame:GetScript("OnEvent") then
         frame:SetScript("OnEvent",function(self,event)
-            Events[event](self,event)
+            N[event](self,event)
         end)
     end
     function Register()
-        for index,info in ipairs(str) do
-            if not StrEvent[info] and not token:IsEventRegistered(info) then
+        for index,info in ipairs(uSTR) do
+            if not U[info] and not token:IsEventRegistered(info) then
                 token:RegisterEvent(info)
-                StrEvent[info]=h[index]
+                U[info]=UH[index]
             end
         end
-        for index,info in ipairs(nStr) do
-            if not Events[info] and not frame:IsEventRegistered(info) then
+        for index,info in ipairs(nSTR) do
+            if not N[info] and not frame:IsEventRegistered(info) then
                 frame:RegisterEvent(info)
-                Events[info]=n[index]
+                N[info]=NH[index]
             end
         end
     end
     function Unregister()
         token:UnregisterAllEvent()
         frame:UnregisterAllEvent()
-        wipe(StrEvent)
-        wipe(Events)
+        wipe(N);wipe(U)
     end
     function Toggle(number)
         if not number or type(number)~="number" then return end
         if number<5 then
-            for index,info in ipairs(str) do
+            for index,info in ipairs(uSTR) do
                 if number==index then
-                    if StrEvent[info] and token:IsEventRegistered(info) then
+                    if U[info] and token:IsEventRegistered(info) then
                         token:UnregisterEvent(info)
-                        StrEvent[info]=nil
+                        U[info]=nil
                     else
                         token:RegisterEvent(info)
-                        StrEvent[info]=h[index]
+                        U[info]=UH[index]
                     end
                 end
             end
         else
-            for index,info in ipairs(nStr) do
+            for index,info in ipairs(nSTR) do
                 if number==index+4 then
-                    if Events[info] and frame:IsEventRegistered(info) then
+                    if N[info] and frame:IsEventRegistered(info) then
                         frame:UnregisterEvent(info)
-                        Events[info]=nil
+                        N[info]=nil
                     else
                         frame:RegisterEvent(info)
-                        Events[info]=n[index]
+                        N[info]=NH[index]
                     end
                 end
             end
