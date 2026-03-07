@@ -467,10 +467,10 @@ function Ether:SavePosition(button)
       local C=Ether.DB[1002]
     for index,data in ipairs(iTbl) do
         if button.Indicators[data] then
-           -- button.Indicators[data]:Hide()
+             button.Indicators[data]:Hide()
             button.Indicators[data]:ClearAllPoints()
-            button.Indicators[data]:SetPoint(C[index][1], button.healthBar,C[index][1][1],C[index][1][2],C[index][1][3])
-            button.Indicators[data]:SetSize(C[index][1][4],C[index][1][4])
+            button.Indicators[data]:SetPoint(C[index][1], button.healthBar,C[index][1],C[index][2],C[index][3])
+            button.Indicators[data]:SetSize(C[index][4],C[index][4])
         end
     end
 end
