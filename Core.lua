@@ -230,6 +230,9 @@ do
                     end
                 end
             end
+
+            self.Frames["AURAS"]:SetParent(self["CONTENT"]["CHILDREN"]["Custom"])
+            self.Frames["EDITOR"]:SetParent(self["CONTENT"]["CHILDREN"]["Custom"])
             self.Created=true
         end
     end
@@ -356,7 +359,7 @@ do
                 ShowHideSettings(false)
             end)
             InitializeLayer(self)
-            CreateRequiredSections(EtherFrame)
+            CreateRequiredSections(self)
         end
     end
     function EtherToggle()

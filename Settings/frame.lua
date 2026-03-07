@@ -1039,7 +1039,7 @@ function Ether:CreateCustomSection(EtherFrame)
         end
     end)
 
-    editor.posButtons=cube
+    editor.cube=cube
 
     local offsetXLabel=editor:CreateFontString(nil,"OVERLAY")
     editor.offsetXLabel=offsetXLabel
@@ -1286,7 +1286,7 @@ function Ether:CreateIndicatorsSection(EtherFrame)
         end
     end)
 
-    local s=Ether:CreateSlider(preview,"Size","6 px","4","34","TOPLEFT","BOTTOMLEFT",0,-50,function(self,value)
+    local s=Ether:CreateSlider(preview,"Size","6 px","4","34","TOP","BOTTOM",0,-60,function(self,value)
         if iNumber then
             Ether.DB[1002][iNumber][4]=value
             self.v:SetText(string.format("%.0f px",value))
@@ -1295,7 +1295,7 @@ function Ether:CreateIndicatorsSection(EtherFrame)
     end)
     Indicator.s=s
 
-    local x=Ether:CreateSlider(preview,"X-Off","0","-20","20","TOPLEFT","BOTTOMLEFT",0,0,function(self,value)
+    local x=Ether:CreateSlider(s,"X-Off","0","-20","20","TOPLEFT","BOTTOMLEFT",0,-20,function(self,value)
         if iNumber then
             Ether.DB[1002][iNumber][2]=value
             self.v:SetText(string.format("%.0f",value))
@@ -1304,37 +1304,14 @@ function Ether:CreateIndicatorsSection(EtherFrame)
     end)
     Indicator.x=x
 
-    local y=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
-    Indicator.y=y
-    y.l=y:CreateFontString(nil,"OVERLAY")
-    y.l:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    y.l:SetPoint("TOPLEFT",x.l,"BOTTOMLEFT",0,-50)
-    y.l:SetText("Y Offset")
-    y:SetPoint("TOPLEFT",y.l,"BOTTOMLEFT")
-    y:SetWidth(100)
-    y:SetMinMaxValues(-20,20)
-    y:SetValueStep(1)
-    y:SetObeyStepOnDrag(true)
-    y.Low:SetText("-20")
-    y.High:SetText("20")
-    y:SetScript("OnValueChanged",function(self,value)
+    local y=Ether:CreateSlider(x,"Y-Off","0","-20","20","TOPLEFT","BOTTOMLEFT",0,-20,function(self,value)
         if iNumber then
             Ether.DB[1002][iNumber][3]=value
             self.v:SetText(string.format("%.0f",value))
             Ether:UpdateIndicatorsPos(iNumber,iIcon)
         end
     end)
-
-    y.bg=y:CreateTexture(nil,"BACKGROUND")
-    y.bg:SetPoint("CENTER")
-    y.bg:SetSize(100,10)
-    y.bg:SetColorTexture(0.2,0.2,0.2,0.6)
-    y.bg:SetDrawLayer("BACKGROUND",-1)
-
-    y.v=y:CreateFontString(nil,"OVERLAY")
-    y.v:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    y.v:SetPoint("TOP",y,"BOTTOM")
-    y.v:SetText("0")
+    Indicator.y=y
 
     SetupSliderText(s,"4","34")
     SetupSliderText(y,"-20","20")
@@ -2073,7 +2050,7 @@ function Ether:CleanUpButtons(editor,indicator)
     indicator:Hide()
     editor:Hide()
     indicator.templateDropdown.text:SetText("Select Indicator")
-    for _,btn in pairs(editor.posButtons) do
+    for _,btn in pairs(editor.cube) do
         btn:Disable()
     end
     for _,btn in pairs(indicator.cube) do

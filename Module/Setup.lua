@@ -285,31 +285,28 @@ local position={
     {"BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}
 }
 
-local function C() end
-local function E() end
-local function L() end
-function Ether:CreateCube(parent,s,x,y,click,enter,leave)
-    local data={}
-    for row=1,3 do
-        for col=1,3 do
-            local pos=position[row][col]
-            data[pos]=CreateFrame("Button",nil,parent)
-            data[pos]:SetSize(s,s)
-            data[pos]:SetPoint("TOPLEFT",x+(col-1)*(s+1),y-(row-1)*(s+1))
-            data[pos].bg=data[pos]:CreateTexture(nil,"BACKGROUND")
-            data[pos].bg:SetAllPoints()
-            data[pos].bg:SetColorTexture(0.2,0.2,0.2,0.8)
-            data[pos].text=data[pos]:CreateFontString(nil,"OVERLAY")
-            data[pos].text:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-            data[pos].text:SetPoint("CENTER")
-            data[pos].text:SetText(pos:sub(1,1))
-            data[pos].position=pos
-            data[pos]:SetScript("OnClick",C)
-            C=click
-            data[pos]:SetScript("OnEnter",E)
-            E=enter
-            data[pos]:SetScript("OnLeave",L)
-            L=leave
+
+function Ether:CreateCube(parent, s, x, y, click, enter, leave)
+    local data = {}
+    for row = 1, 3 do
+        for col = 1, 3 do
+            local pos = position[row][col]
+            local btn = CreateFrame("Button", nil, parent)
+            data[pos] = btn
+            btn:SetSize(s, s)
+            btn:SetPoint("TOPLEFT", x + (col - 1) * (s + 1), y - (row - 1) * (s + 1))
+            btn.bg = btn:CreateTexture(nil, "BACKGROUND")
+            btn.bg:SetAllPoints()
+            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
+
+            btn.text = btn:CreateFontString(nil, "OVERLAY")
+            btn.text:SetFont(unpack(Ether.media.expressway), 10, "OUTLINE")
+            btn.text:SetPoint("CENTER")
+            btn.text:SetText(pos:sub(1, 1))
+            btn.position = pos
+            btn:SetScript("OnClick", click)
+            btn:SetScript("OnEnter", enter)
+            btn:SetScript("OnLeave", leave)
         end
     end
     return data
@@ -827,80 +824,6 @@ function ObjPool:ReleaseAll()
         self.temp[i]=nil
     end
     Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
-end
-
-function Ether:UpdateEditor(editor)
-    if not Ether.DB[1003][Ether.UIPanel.SpellId] then
-        editor.nameInput:SetText("")
-        editor.nameInput:Disable()
-        editor.spellIdInput:SetText("")
-        editor.spellIdInput:Disable()
-        editor.colorBtn:Disable()
-        editor.sizeSlider:Disable()
-        editor.offsetXSlider:Disable()
-        editor.YSlider:Disable()
-        editor.icon:Hide()
-        for _,btn in pairs(editor.posButtons) do
-            btn:Disable()
-        end
-        return
-    end
-    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
-    editor.nameInput:SetText(data[1] or "")
-    editor.nameInput:Enable()
-    editor.icon:Show()
-    editor.spellIdInput:SetText(tostring(Ether.UIPanel.SpellId))
-    editor.spellIdInput:Enable()
-    editor.colorBtn.bg:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
-    editor.colorBtn:Enable()
-    editor.offsetXSlider:Enable()
-    editor.offsetXSlider:Show()
-    editor.YSlider:Enable()
-    editor.YSlider:Show()
-    editor.sizeSlider:SetValue(data[3])
-    editor.sizeSlider:Enable()
-    editor.sizeSlider:Show()
-    editor.sizeValue:SetText(string.format("%.0f px",data[3]))
-    for pos,btn in pairs(editor.posButtons) do
-        if pos==data[4] then
-            btn.bg:SetColorTexture(0.8,0.6,0,0.5)
-            btn:Enable()
-        else
-            btn.bg:SetColorTexture(0.2,0.2,0.2,0.5)
-            btn:Enable()
-        end
-    end
-    editor.offsetXSlider:SetValue(data[5])
-    editor.offsetXValue:SetText(string.format("%.0f",data[5]))
-    editor.YSlider:SetValue(data[6])
-    editor.offsetYValue:SetText(string.format("%.0f",data[6]))
-    Ether:UpdatePreview(editor)
-end
-
-function Ether:UpdatePreview(editor)
-    if type(Ether.UIPanel.SpellId)=="nil" then
-        return
-    end
-    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
-    local indicator=editor.icon
-    indicator:SetSize(data[3],data[3])
-    indicator:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
-    indicator:ClearAllPoints()
-    local posMap={
-        TOPLEFT={"TOPLEFT",data[5],data[6]},
-        TOP={"TOP",data[5],data[6]},
-        TOPRIGHT={"TOPRIGHT",data[5],data[6]},
-        LEFT={"LEFT",data[5],-data[6]},
-        CENTER={"CENTER",data[5],-data[6]},
-        RIGHT={"RIGHT",data[5],-data[6]},
-        BOTTOMLEFT={"BOTTOMLEFT",data[5],data[6]},
-        BOTTOM={"BOTTOM",data[5],data[6]},
-        BOTTOMRIGHT={"BOTTOMRIGHT",data[5],data[6]},
-    }
-    local pos=posMap[data[4]]
-    if pos then
-        indicator:SetPoint(pos[1],editor.preview.healthBar,pos[1],pos[2],pos[3])
-    end
 end
 
 function Ether:SpellInfo(info,result,icon)

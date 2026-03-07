@@ -122,3 +122,107 @@ function Ether:UpdateAuraList()
         index=index+1
     end
 end
+
+
+function Ether:UpdateEditor(editor)
+    if not Ether.DB[1003][Ether.UIPanel.SpellId] then
+        editor.nameInput:SetText("")
+        editor.nameInput:Disable()
+        editor.spellIdInput:SetText("")
+        editor.spellIdInput:Disable()
+        editor.colorBtn:Disable()
+        editor.sizeSlider:Disable()
+        editor.offsetXSlider:Disable()
+        editor.YSlider:Disable()
+        editor.icon:Hide()
+        for _,btn in pairs(editor.cube) do
+            btn:Disable()
+        end
+        return
+    end
+    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
+    editor.nameInput:SetText(data[1] or "")
+    editor.nameInput:Enable()
+    editor.icon:Show()
+    editor.spellIdInput:SetText(tostring(Ether.UIPanel.SpellId))
+    editor.spellIdInput:Enable()
+    editor.colorBtn.bg:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
+    editor.colorBtn:Enable()
+    editor.offsetXSlider:Enable()
+    editor.offsetXSlider:Show()
+    editor.YSlider:Enable()
+    editor.YSlider:Show()
+    editor.sizeSlider:SetValue(data[3])
+    editor.sizeSlider:Enable()
+    editor.sizeSlider:Show()
+    editor.sizeValue:SetText(string.format("%.0f px",data[3]))
+    for pos,btn in pairs(editor.cube) do
+        if pos==data[4] then
+            btn.bg:SetColorTexture(0.8,0.6,0,0.5)
+            btn:Enable()
+        else
+            btn.bg:SetColorTexture(0.2,0.2,0.2,0.5)
+            btn:Enable()
+        end
+    end
+    editor.offsetXSlider:SetValue(data[5])
+    editor.offsetXValue:SetText(string.format("%.0f",data[5]))
+    editor.YSlider:SetValue(data[6])
+    editor.offsetYValue:SetText(string.format("%.0f",data[6]))
+    Ether:UpdatePreview(editor)
+end
+
+function Ether:UpdatePreview(editor)
+    if type(Ether.UIPanel.SpellId)=="nil" then
+        return
+    end
+    local data=Ether.DB[1003][Ether.UIPanel.SpellId]
+    local indicator=editor.icon
+    indicator:SetSize(data[3],data[3])
+    indicator:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
+    indicator:ClearAllPoints()
+    local posMap={
+        TOPLEFT={"TOPLEFT",data[5],data[6]},
+        TOP={"TOP",data[5],data[6]},
+        TOPRIGHT={"TOPRIGHT",data[5],data[6]},
+        LEFT={"LEFT",data[5],-data[6]},
+        CENTER={"CENTER",data[5],-data[6]},
+        RIGHT={"RIGHT",data[5],-data[6]},
+        BOTTOMLEFT={"BOTTOMLEFT",data[5],data[6]},
+        BOTTOM={"BOTTOM",data[5],data[6]},
+        BOTTOMRIGHT={"BOTTOMRIGHT",data[5],data[6]},
+    }
+    local pos=posMap[data[4]]
+    if pos then
+        indicator:SetPoint(pos[1],editor.preview.healthBar,pos[1],pos[2],pos[3])
+    end
+end
+
+
+function Ether:AddTemplateAuras(templateName)
+    local template=Ether.PredefinedAuras[templateName]
+    if not template then return end
+    local DB=Ether.DB
+    local added=0
+    local skipped=0
+    for spellID,auraData in pairs(template) do
+        if not DB[1003][spellID] then
+            DB[1003][spellID]=Ether:CopyTable(auraData)
+            DB[1003][spellID][9]=true
+            added=added+1
+        else
+            skipped=skipped+1
+        end
+    end
+    Ether:UpdateAuraList()
+    local msg=string.format("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
+    if added>0 then
+        msg=msg..string.format("|cff00ff00+%d new auras|r",added)
+    end
+    if skipped>0 then
+        msg=msg..string.format(" (%d already existed)",skipped)
+    end
+    Ether:EtherInfo(msg)
+    Ether.UIPanel.SpellId=nil
+    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+end
