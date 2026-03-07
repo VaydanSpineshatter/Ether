@@ -285,12 +285,23 @@ local position={
     {"BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}
 }
 
+local function GetShortName(pos)
+    if pos == "CENTER" then return "C" end
+    local first = pos:match("TOP") or pos:match("BOTTOM") or ""
+    local second = pos:match("LEFT") or pos:match("RIGHT") or ""
+    if first ~= "" and second ~= "" then
+        return first:sub(1,1) .. second:sub(1,1)
+    else
+        return pos:sub(1,1)
+    end
+end
 
 function Ether:CreateCube(parent, s, x, y, click, enter, leave)
     local data = {}
     for row = 1, 3 do
         for col = 1, 3 do
             local pos = position[row][col]
+            local text = GetShortName(pos)
             local btn = CreateFrame("Button", nil, parent)
             data[pos] = btn
             btn:SetSize(s, s)
@@ -298,11 +309,10 @@ function Ether:CreateCube(parent, s, x, y, click, enter, leave)
             btn.bg = btn:CreateTexture(nil, "BACKGROUND")
             btn.bg:SetAllPoints()
             btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-
             btn.text = btn:CreateFontString(nil, "OVERLAY")
             btn.text:SetFont(unpack(Ether.media.expressway), 10, "OUTLINE")
             btn.text:SetPoint("CENTER")
-            btn.text:SetText(pos:sub(1, 1))
+            btn.text:SetText(text)
             btn.position = pos
             btn:SetScript("OnClick", click)
             btn:SetScript("OnEnter", enter)
