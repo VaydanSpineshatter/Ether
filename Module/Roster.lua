@@ -62,7 +62,7 @@ end
 local raidButtons=Ether.raidButtons
 local function CheckRaidButtons(unit)
     for _,button in pairs(raidButtons) do
-        if button and button.unit ==unit then
+        if button and button.unit==unit then
             return button
         end
     end
@@ -70,15 +70,15 @@ local function CheckRaidButtons(unit)
 end
 
 function Ether:UpdateRaidButtons()
-     for index = 1, GetNumGroupMembers() do
-        local unit = "raid" .. index
+    for index=1,GetNumGroupMembers() do
+        local unit="raid"..index
         if UnitExists(unit) then
-            local button =CheckRaidButtons(unit)
+            local button=CheckRaidButtons(unit)
             if button then
-                Ether:IndicatorsFullUpdate(button)
+                Ether:IndicatorsFullUpdateUnit(button)
             end
         end
-     end
+    end
 end
 
 local status=false
@@ -98,9 +98,9 @@ local function refreshButtons()
                     Ether:AuraEnable()
                 end
                 if Ether.DB[401][6]==1 then
-                    local btn = raidButtons["player"]
+                    local btn=raidButtons["player"]
                     if btn then
-                        Ether:IndicatorsFullUpdate(btn)
+                        Ether:IndicatorsFullUpdateUnit(btn)
                     end
                 end
             else
@@ -113,7 +113,7 @@ local function refreshButtons()
                     end
                 end
                 if Ether.DB[401][6]==1 then
-                     Ether:UpdateRaidButtons()
+                    Ether:UpdateRaidButtons()
                 end
             end
             status=false
@@ -153,7 +153,7 @@ local function initialButtons()
                 if button then
                     if UnitExists(unit) then
                         Ether:InitialHealth(button)
-                        Ether:IndicatorsFullUpdate(button)
+                        Ether:IndicatorsFullUpdateUnit(button)
                     end
                 end
             end

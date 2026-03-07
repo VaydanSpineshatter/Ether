@@ -554,18 +554,6 @@ local function soloAuraUpdate(unit,updateInfo)
     end
 end
 
-function Ether:AuraWipe()
-    wipe(helpfulAuras)
-    wipe(harmfulAuras)
-    wipe(dispelAuras)
-    wipe(iconAuras)
-    wipe(dataHelpful)
-    wipe(dataHarmful)
-    wipe(dataIcon)
-    wipe(dataDispel)
-    wipe(dispelCache)
-end
-
 function Ether:SoloAuraFullInitial(unit)
     local button=soloButtons[unit]
     if not button then return end
@@ -691,7 +679,6 @@ end
 function Ether:AuraEnable()
     if not update:GetScript("OnEvent") then
         update:RegisterEvent("UNIT_AURA")
-        update:RegisterUnitEvent("UNIT_AURA","targettarget")
         update:SetScript("OnEvent",Aura)
     end
     if Ether.DB[1001][3]==1 then
@@ -705,14 +692,24 @@ function Ether:AuraEnable()
 
 end
 
+function Ether:AuraWipe()
+    wipe(helpfulAuras)
+    wipe(harmfulAuras)
+    wipe(dispelAuras)
+    wipe(iconAuras)
+    wipe(dataHelpful)
+    wipe(dataHarmful)
+    wipe(dataIcon)
+    wipe(dataDispel)
+    wipe(dispelCache)
+end
+
 function Ether:AuraDisable()
-    if update:GetScript("OnEvent") then
-        TexPool:ReleaseAll()
-        Ether.StopAllBlinks()
-        Ether:CleanupGUID()
-        Ether:DisableSoloAuras()
-        update:UnregisterAllEvents()
-        update:SetScript("OnEvent",nil)
-        Ether:AuraWipe()
-    end
+    TexPool:ReleaseAll()
+    Ether.StopAllBlinks()
+    Ether:CleanupGUID()
+    Ether:DisableSoloAuras()
+    update:UnregisterAllEvents()
+    update:SetScript("OnEvent",nil)
+    Ether:AuraWipe()
 end

@@ -204,7 +204,6 @@ do
         end
         local result={}
         tinsert(result,"{")
-
         local keys={}
         for k in pairs(tbl) do
             tinsert(keys,k)
@@ -219,7 +218,6 @@ do
         for i,key in ipairs(keys) do
             local value=tbl[key]
             local comma=i<#keys and "," or ""
-
             local keyStr
             if type(key)=="number" then
                 keyStr="["..key.."]"
@@ -228,9 +226,7 @@ do
             else
                 keyStr="["..string_format("%q",tostring(key)).."]"
             end
-
             local valueStr=Value(value,indent+2)
-
             if indent>0 and type(value)=="table" and not isArray(value) and Ether:TableSize(value)>2 then
                 tinsert(result,"\n"..string_rep("",indent)..keyStr.."="..valueStr..comma)
             else
@@ -266,19 +262,15 @@ local function TblToString(tbl)
 end
 
 local function ProfileRefresh()
-    Ether:AuraDisable()
-    Ether:ProfileRefreshLayout()
     Ether:UpdateAuraList()
     Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
+    Ether:AuraDisable()
     Ether:AuraEnable()
     Ether:InitialIndicatorsPosition()
-    Ether:RefreshAllSettings()
-    Ether:RefreshFramePositions()
-end
-
-function Ether:ProfileRefreshLayout()
     Ether:RefreshLayout(Ether.raidButtons)
     Ether:RefreshLayout(Ether.soloButtons)
+    Ether:RefreshAllSettings()
+    Ether:RefreshFramePositions()
 end
 
 function Ether:ExportCurrentProfile()

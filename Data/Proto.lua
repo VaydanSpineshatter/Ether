@@ -5,6 +5,11 @@ function Ether:AuraTemplate(newId)
     return obj
 end
 
+function Ether:IndicatorTemplate(n,k,c,s,p,x,y)
+    local obj= {n,k,c,s,p,x,y,false}
+    return obj
+end
+
 Ether.PredefinedAuras={
     ["Priest-GroupBuffs"]={
         [25392]={"Prayer Fortitude 3",{0.93,0.91,0.67,1},8,"BOTTOMLEFT",0,0,false,false,false},

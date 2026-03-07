@@ -113,7 +113,7 @@ local function CreateChildren(header,button)
     Ether:SetupName(b,-5)
     Ether:DispelLineSetup(b)
     Ether:DispelIconSetup(b)
-    Ether:CheckIndicatorsPosition(b)
+       Ether:SavePosition(b)
     Ether:SetupButtonLayout(b)
     if header:GetAttribute("TypePet") then
         b.TypePet=true

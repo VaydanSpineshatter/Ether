@@ -242,17 +242,77 @@ function Ether:SetupCastBar(button,number)
     frame.timeToHold=0.1
     if number then
         local pos=Ether.DB[21][number]
-        local config=Ether.DB[1301][number]
         frame:SetSize(pos[6],pos[7])
         frame:SetScale(pos[8])
         frame:SetAlpha(pos[9])
         frame:SetPoint(pos[1],UIParent,pos[3],pos[4],pos[5])
-        text:SetFont(Ether.DB[811][1] or unpack(Ether.media.expressway),config[2],"OUTLINE")
-        time:SetFont(Ether.DB[811][1] or unpack(Ether.media.expressway),config[3],"OUTLINE")
-        icon:SetSize(config[1],config[1])
         Ether:SetupDrag(frame,number,10)
     end
     frame:Hide()
+end
+
+function Ether:CreateSlider(parent,label,text,l,h,point,rel,x,y,callback)
+    local slider=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
+    slider.l=slider:CreateFontString(nil,"OVERLAY")
+    slider.l:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
+    slider.l:SetPoint(point,parent,rel,x,y)
+    slider.l:SetText(label)
+    slider:SetPoint("TOPLEFT",slider.l,"BOTTOMLEFT")
+    slider:SetWidth(100)
+    slider:SetMinMaxValues(tonumber(l),tonumber(h))
+    slider:SetValueStep(1)
+    slider:SetObeyStepOnDrag(true)
+    slider.Low:SetText(tostring(l))
+    slider.High:SetText(tostring(h))
+    slider:SetScript("OnValueChanged",function(self,value)
+        if callback then callback(self,value) end
+    end)
+    slider.bg=slider:CreateTexture(nil,"BACKGROUND")
+    slider.bg:SetPoint("CENTER")
+    slider.bg:SetSize(100,10)
+    slider.bg:SetColorTexture(0.2,0.2,0.2,0.8)
+    slider.bg:SetDrawLayer("BACKGROUND",-1)
+    slider.v=slider:CreateFontString(nil,"OVERLAY")
+    slider.v:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
+    slider.v:SetPoint("TOP",slider,"BOTTOM",0,-5)
+    slider.v:SetText(text)
+    return slider
+end
+
+local position={
+    {"TOPLEFT","TOP","TOPRIGHT"},
+    {"LEFT","CENTER","RIGHT"},
+    {"BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}
+}
+
+local function C() end
+local function E() end
+local function L() end
+function Ether:CreateCube(parent,s,x,y,click,enter,leave)
+    local data={}
+    for row=1,3 do
+        for col=1,3 do
+            local pos=position[row][col]
+            data[pos]=CreateFrame("Button",nil,parent)
+            data[pos]:SetSize(s,s)
+            data[pos]:SetPoint("TOPLEFT",x+(col-1)*(s+1),y-(row-1)*(s+1))
+            data[pos].bg=data[pos]:CreateTexture(nil,"BACKGROUND")
+            data[pos].bg:SetAllPoints()
+            data[pos].bg:SetColorTexture(0.2,0.2,0.2,0.8)
+            data[pos].text=data[pos]:CreateFontString(nil,"OVERLAY")
+            data[pos].text:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
+            data[pos].text:SetPoint("CENTER")
+            data[pos].text:SetText(pos:sub(1,1))
+            data[pos].position=pos
+            data[pos]:SetScript("OnClick",C)
+            C=click
+            data[pos]:SetScript("OnEnter",E)
+            E=enter
+            data[pos]:SetScript("OnLeave",L)
+            L=leave
+        end
+    end
+    return data
 end
 
 function Ether:SetupTooltip(button,unit)

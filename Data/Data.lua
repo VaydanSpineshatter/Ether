@@ -3,6 +3,16 @@ local tinsert,tsort=table.insert,table.sort
 local pairs,ipairs=pairs,ipairs
 local type,next=type,next
 
+function Ether:PosNumber(input)
+    for index,info in ipairs({"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}) do
+        if type(input)=="string" and input==info then
+            return index
+        elseif type(input)=="number" and input==index then
+            return info
+        end
+    end
+end
+
 local Default={
     [101]={1,1,1,1,1,1,1,1,1,1,1},
     [111]={"Module",331,0},
@@ -15,23 +25,21 @@ local Default={
     [811]={"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\FrameGeneral\\UI-Background-Rock","Interface\\DialogFrame\\UI-DialogBox-Border"},
     [1001]={1,1,1},
     [1002]={
-        [1]={12,"TOP",0,0},
-        [2]={24,"TOPLEFT",0,0},
-        [3]={12,"BOTTOM",0,0},
-        [4]={17,"CENTER",0,6},
-        [5]={12,"RIGHT",0,0},
-        [6]={12,"BOTTOMRIGHT",0,12},
-        [7]={12,"TOP",0,0},
-        [8]={12,"LEFT",0,0},
-        [9]={34,"TOPLEFT",0,0},
+        [1]={"TOP",12,0,0},
+        [2]={"TOPLEFT",12,0,0},
+        [3]={"TOPLEFT",16,0,0},
+        [4]={"CENTER",12,0,6},
+        [5]={"RIGHT",12,0,0},
+        [6]={"BOTTOMRIGHT",12,0,12},
+        [7]={"TOP",12,0,0},
+        [8]={"LEFT",12,0,0},
+        [9]={"TOPLEFT",12,0,0},
+        ["Test"]={}
     },
     [1003]={},
     [1101]={1,1,1},
     [1201]={1,1},
-    [1301]={
-        [11]={16,12,12},
-        [12]={16,12,12}
-    },
+    [1301]={16,12,12,16,12,12},
     [1401]={
         [1]={"CENTER","UIParent","CENTER",0,90},
         [2]={"CENTER","UIParent","CENTER",0,0},
@@ -140,12 +148,7 @@ function Ether:NilCheckData(data,number)
 end
 
 function Ether:ArrayMigrateData(data)
-    local arraysLength={
-        [101]=11,[201]=6,[301]=13,[401]=8,
-        [501]=9,[701]=4,[801]=3,
-        [1001]=3,[1101]=3,[1201]=2,[1501]=5
-    }
-    for arrayID,expectedLength in pairs(arraysLength) do
+    for arrayID,expectedLength in pairs(data) do
         if data[arrayID] and type(data[arrayID])=="table" then
             if #data[arrayID]~=expectedLength then
                 data[arrayID]=Ether:DataMigrate(data[arrayID],expectedLength,1)

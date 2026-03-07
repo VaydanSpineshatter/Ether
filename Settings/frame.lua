@@ -2,12 +2,6 @@ local _,Ether=...
 local string_format=string.format
 local pairs,ipairs=pairs,ipairs
 
-local positions={
-    {"TOPLEFT","TOP","TOPRIGHT"},
-    {"LEFT","CENTER","RIGHT"},
-    {"BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}
-}
-
 local function GetFont(_,target,tex,numb)
     target.label=target:CreateFontString(nil,"OVERLAY")
     target.label:SetFont(unpack(Ether.media.expressway),numb,"OUTLINE")
@@ -25,6 +19,9 @@ local function CreateHeaderPreview(parent,name,numb,size)
     Ether:SetupHealthBar(preview,"HORIZONTAL",size,size,"player")
     Ether:SetupName(preview,0)
     preview.name:SetText(Ether:ShortenName(name,numb))
+    preview.tex=preview.healthBar:CreateTexture(nil,"OVERLAY")
+    preview.tex:SetSize(12,12)
+    preview.tex:SetPoint("TOP",preview.healthBar,"TOP",0,0)
     return preview
 end
 
@@ -94,34 +91,6 @@ do
         end
         callbacks.currentSpellId=nil
         callbacks.editorFrame=nil
-    end
-end
-
-local function SelectAura(editor,spellId)
-    Ether.UIPanel.SpellId=spellId
-    Ether.DB[1003][spellId][9]=true
-    Ether:UpdateAuraList()
-    Ether:UpdateEditor(editor)
-end
-
-local function AddCustomAura(editor)
-    local newId=1
-    while Ether.DB[1003][newId] do
-        newId=newId+1
-    end
-    Ether.DB[1003][newId]=Ether:AuraTemplate(newId)
-    SelectAura(editor,newId)
-end
-
-local function UpdateAuraStatus(spellId)
-    if Ether.DB[1001][3]~=1 then return end
-    if not spellId then return end
-    local debuff=Ether.DB[1003][spellId][8]
-    local editor=Ether.UIPanel.Frames["EDITOR"]
-    if debuff then
-        editor.isDebuff.bg:SetColorTexture(0.80,0.40,1.00,0.4)
-    else
-        editor.isDebuff.bg:SetColorTexture(0,0,0,0)
     end
 end
 
@@ -317,82 +286,6 @@ local function EtherPanelButton(parent,width,height,text,point,relto,rel,offX,of
         self.text:SetTextColor(1,1,1,1)
     end)
     return btn
-end
-
-local number=nil
-local iconTexture=""
-local coordinates=""
-local indicatorType=""
-local currentIndicator=nil
-
-local function UpdateIndicators(self)
-    if not number then
-        return
-    end
-    local data=Ether.DB[1002][number]
-    if not data then
-        return
-    end
-
-    if indicatorType=="texture" then
-        self.icon:SetSize(data[1],data[1])
-        self.icon:ClearAllPoints()
-        self.icon:SetPoint(data[2],self.preview.healthBar,data[2],data[3],data[4])
-    elseif indicatorType=="string" then
-        self.text:SetSize(data[1],data[1])
-        self.text:ClearAllPoints()
-        self.text:SetPoint(data[2],self.preview.healthBar,data[2],data[3],data[4])
-    end
-end
-
-local function UpdateIndicatorsValue(self)
-    if not number then
-        return
-    end
-    local data=Ether.DB[1002][number]
-    if not data then
-        return
-    end
-
-    self.icon:Hide()
-    self.text:Hide()
-    if indicatorType=="texture" then
-        self.icon:SetTexture(iconTexture)
-        self.icon:SetTexCoord(0,1,0,1)
-        self.icon:Show()
-        if coordinates then
-            self.icon:SetTexCoord(unpack(coordinates))
-        end
-    elseif indicatorType=="string" then
-        self.text:Show()
-        self.text:SetText([[|cE600CCFFAFK|r]])
-    end
-
-    self.sizeSlider:SetValue(data[1])
-
-    if self.sizeValue then
-        self.sizeValue:SetText(string_format("%.0f px",data[1]))
-    end
-
-    for pos,btn in pairs(self.posButtons) do
-        if pos==data[2] then
-            btn.bg:SetColorTexture(0.8,0.6,0,0.5)
-        else
-            btn.bg:SetColorTexture(0.2,0.2,0.2,0.5)
-        end
-    end
-
-    self.offsetXSlider:SetValue(data[3])
-    if self.offsetXValue then
-        self.offsetXValue:SetText(string_format("%.0f",data[3]))
-    end
-
-    self.YSlider:SetValue(data[4])
-    if self.offsetYValue then
-        self.offsetYValue:SetText(string_format("%.0f",data[4]))
-    end
-
-    UpdateIndicators(self)
 end
 
 function Ether:CreateModuleSection(self)
@@ -899,12 +792,12 @@ function Ether:AddTemplateAuras(templateName)
 
     Ether:UpdateAuraList()
 
-    local msg=string_format("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
+    local msg=string.format("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
     if added>0 then
-        msg=msg..string_format("|cff00ff00+%d new auras|r",added)
+        msg=msg..string.format("|cff00ff00+%d new auras|r",added)
     end
     if skipped>0 then
-        msg=msg..string_format(" (%d already existed)",skipped)
+        msg=msg..string.format(" (%d already existed)",skipped)
     end
     Ether:EtherInfo(msg)
     Ether.UIPanel.SpellId=nil
@@ -955,7 +848,7 @@ function Ether:CreateCustomSection(EtherFrame)
         if not editor:IsShown() then
             editor:Show()
         end
-        AddCustomAura(editor,auras)
+        Ether:AddCustomAura(editor,auras)
     end)
     addBtn.text:SetPoint("LEFT")
 
@@ -1039,7 +932,7 @@ function Ether:CreateCustomSection(EtherFrame)
     isDebuff:SetScript("OnClick",function(self)
         if Ether.UIPanel.SpellId then
             Ether.DB[1003][Ether.UIPanel.SpellId][8]=not Ether.DB[1003][Ether.UIPanel.SpellId][8]
-            UpdateAuraStatus(Ether.UIPanel.SpellId)
+            Ether:UpdateAuraStatus(Ether.UIPanel.SpellId)
         end
     end)
     local sizeLabel=editor:CreateFontString(nil,"OVERLAY","GameFontWhiteSmall")
@@ -1129,49 +1022,24 @@ function Ether:CreateCustomSection(EtherFrame)
     icon:SetPoint("TOP",preview.healthBar,"TOP",0,0)
     icon:SetColorTexture(1,1,0,1)
 
-    editor.posButtons={}
-    local startX,startY=120,-120
-    local btnSize=25
-
-    for row=1,3 do
-        for col=1,3 do
-            local pos=positions[row][col]
-            local btn=CreateFrame("Button",nil,editor)
-            btn:SetSize(btnSize,btnSize)
-            btn:SetPoint("TOPLEFT",startX+(col-1)*(btnSize+1),startY-(row-1)*(btnSize+1))
-
-            btn.bg=btn:CreateTexture(nil,"BACKGROUND")
-            btn.bg:SetAllPoints()
-            btn.bg:SetColorTexture(0.2,0.2,0.2,0.8)
-
-            btn.text=btn:CreateFontString(nil,"OVERLAY")
-            btn.text:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-            btn.text:SetPoint("CENTER")
-            btn.text:SetText(pos:sub(1,1))
-
-            btn.position=pos
-            btn:SetScript("OnClick",function(self)
-                if Ether.UIPanel.SpellId then
-                    Ether.DB[1003][Ether.UIPanel.SpellId][4]=self.position
-                    Ether:UpdateEditor(editor)
-                    Ether:UpdatePreview(editor)
-                end
-            end)
-
-            btn:SetScript("OnEnter",function(self)
-                self.bg:SetColorTexture(0.3,0.3,0.3,0.9)
-            end)
-            btn:SetScript("OnLeave",function(self)
-                local data=Ether.UIPanel.SpellId and Ether.DB[1003][Ether.UIPanel.SpellId]
-                if data and data.position==self.position then
-                    self.bg:SetColorTexture(0.8,0.6,0,0.4)
-                else
-                    self.bg:SetColorTexture(0.2,0.2,0.2,0.8)
-                end
-            end)
-            editor.posButtons[pos]=btn
+    local cube=Ether:CreateCube(editor,24,120,-120,function(self)
+        if Ether.UIPanel.SpellId then
+            Ether.DB[1003][Ether.UIPanel.SpellId][4]=self.position
+            Ether:UpdateEditor(editor)
+            Ether:UpdatePreview(editor)
         end
-    end
+    end,function(self)
+        self.bg:SetColorTexture(0.3,0.3,0.3,0.9)
+    end,function(self)
+        local data=Ether.UIPanel.SpellId and Ether.DB[1003][Ether.UIPanel.SpellId]
+        if data and data[1]==self.position then
+            self.bg:SetColorTexture(0.8,0.6,0,0.4)
+        else
+            self.bg:SetColorTexture(0.2,0.2,0.2,0.8)
+        end
+    end)
+
+    editor.posButtons=cube
 
     local offsetXLabel=editor:CreateFontString(nil,"OVERLAY")
     editor.offsetXLabel=offsetXLabel
@@ -1252,101 +1120,6 @@ function Ether:CreateCustomSection(EtherFrame)
     Ether:UpdateEditor(editor)
 end
 
-function Ether:UpdateAuraList()
-    local editor=Ether.UIPanel.Frames["EDITOR"]
-    local auras=Ether.UIPanel.Frames["AURAS"]
-    for _,btn in ipairs(Ether.UIPanel.Buttons[12]) do
-        btn:Hide()
-        btn:SetParent(nil)
-    end
-    wipe(Ether.UIPanel.Buttons[12])
-    local yOffset=0
-    local index=1
-    for spellId,data in pairs(Ether.DB[1003]) do
-        local btn=CreateFrame("Button",nil,auras.scrollChild)
-        btn:SetSize(200,40)
-        btn:SetPoint("TOP",2,yOffset)
-
-        btn.bg=btn:CreateTexture(nil,"BACKGROUND")
-        btn.bg:SetAllPoints()
-        btn.bg:SetColorTexture(0.1,0.1,0.1,0.6)
-
-        btn:SetScript("OnEnter",function(self)
-            self.bg:SetColorTexture(0.2,0.2,0.2,0.7)
-        end)
-        btn:SetScript("OnLeave",function(self)
-            if Ether.UIPanel.SpellId==spellId then
-                self.bg:SetColorTexture(0.80,0.40,1.00,0.2)
-            else
-                self.bg:SetColorTexture(0.1,0.1,0.1,0.8)
-            end
-        end)
-
-        btn:SetScript("OnClick",function()
-            if not editor:IsShown() then
-                editor:Show()
-            end
-            SelectAura(editor,spellId)
-            UpdateAuraStatus(spellId)
-        end)
-
-        btn.name=btn:CreateFontString(nil,"OVERLAY")
-        btn.name:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-        btn.name:SetPoint("TOPLEFT",10,-8)
-        btn.name:SetText(data[1] or "Unknown")
-
-        btn.spellId=btn:CreateFontString(nil,"OVERLAY")
-        btn.spellId:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-        btn.spellId:SetPoint("TOPLEFT",10,-23)
-        btn.spellId:SetText("Spell ID: "..spellId)
-        btn.spellId:SetTextColor(0,0.8,1)
-
-        btn.colorBox=btn:CreateTexture(nil,"OVERLAY")
-        btn.colorBox:SetSize(15,15)
-        btn.colorBox:SetPoint("RIGHT",-10,0)
-        if data[2] then
-            btn.colorBox:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
-        end
-
-        btn.deleteBtn=CreateFrame("Button",nil,btn)
-        btn.deleteBtn:SetSize(15,15)
-        btn.deleteBtn:SetPoint("RIGHT",btn.colorBox,"LEFT",0,0)
-        btn.deleteBtn:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
-        btn.deleteBtn:SetScript("OnClick",function(self)
-            if not Ether.popupBox then
-                return
-            end
-            if Ether.popupCallback:GetScript("OnClick") then
-                Ether.popupCallback:SetScript("OnClick",nil)
-            end
-            if not Ether.popupBox:IsShown() then
-                Ether.popupBox:SetShown(true)
-                Ether.UIPanel.Frames["MAIN"]:SetShown(false)
-            end
-            Ether.popupBox.font:SetText("Delete Aura |cffcc66ff"..tostring(spellId).."|r ?")
-            Ether.popupCallback:SetScript("OnClick",function()
-                Ether.UIPanel.Frames["MAIN"]:SetShown(true)
-                Ether.popupBox:SetShown(false)
-                Ether.DB[1003][spellId]=nil
-                if Ether.UIPanel.SpellId==spellId then
-                    Ether.UIPanel.SpellId=nil
-                end
-                Ether:UpdateAuraList()
-                Ether:UpdateEditor(editor)
-            end)
-            self:GetParent():GetScript("OnLeave")(self:GetParent())
-        end)
-        btn.spellId=spellId
-        table.insert(Ether.UIPanel.Buttons[12],btn)
-
-        if Ether.UIPanel.SpellId==spellId then
-            btn.bg:SetColorTexture(0,0.8,1,0.8,.3)
-        end
-        yOffset=yOffset-45
-        index=index+1
-    end
-end
-
 function Ether:CreateEffectsSection(EtherFrame)
     local parent=EtherFrame["CONTENT"]["CHILDREN"]["Effects"]
     if parent.Created then
@@ -1414,32 +1187,21 @@ function Ether:CreateHelperSection(EtherFrame)
     end)
 end
 
+local iNumber=nil
+local iIcon=""
 function Ether:CreateIndicatorsSection(EtherFrame)
     local parent=EtherFrame["CONTENT"]["CHILDREN"]["Position"]
     if parent.Created then
         return
     end
     parent.Created=true
-    local toggle={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLooter","PlayerRoles","ReadCheck"}
+    local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLoot","PlayerRoles","ReadyCheck"}
 
-    local unitFlags={"Unit Flags |cffff0000 Red Name|r  &","Interface\\Icons\\Spell_Shadow_Charm","Interface\\Icons\\Spell_Holy_GuardianSpirit"}
-    local tank={texture="Interface\\GroupFrame\\UI-Group-MainTankIcon","Interface\\GroupFrame\\UI-Group-MainAssistIcon"}
-    local size={14,16,20,30}
-    local texRdy={"Interface\\RaidFrame\\ReadyCheck-Ready","Interface\\RaidFrame\\ReadyCheck-NotReady","Interface\\RaidFrame\\ReadyCheck-Waiting"}
-    local connection="Interface\\CharacterFrame\\Disconnect-Icon"
-    local register={"ReadyCheck","MainTank/Assist","GroupLeader","RaidTarget","LootMaster"}
-    local flagsTex={"|cE600CCFFAFK|r & |cffCC66FFDND|r"}
-    local raidTarget="Interface\\TargetingFrame\\UI-RaidTargetingIcons"
-
-    local res="Interface\\RaidFrame\\Raid-Icon-Rez"
-    local leader="Interface\\GroupFrame\\UI-Group-LeaderIcon"
-    local loot="Interface\\GroupFrame\\UI-Group-MasterLooter"
-    local cc={0.75,1,0.25,0.5}
     local DB=Ether.DB
-    local iRegister=CreateFrame("Frame",nil,parent)
-    iRegister:SetSize(200,(#toggle*30)+60)
-    for i,opt in ipairs(toggle) do
-        local btn=CreateFrame("CheckButton",nil,iRegister,"InterfaceOptionsCheckButtonTemplate")
+    local register=CreateFrame("Frame",nil,parent)
+    register:SetSize(200,(#iTbl*30)+60)
+    for i,opt in ipairs(iTbl) do
+        local btn=CreateFrame("CheckButton",nil,register,"InterfaceOptionsCheckButtonTemplate")
         if i==1 then
             btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-100)
         else
@@ -1448,42 +1210,6 @@ function Ether:CreateIndicatorsSection(EtherFrame)
         btn:SetSize(24,24)
         btn.label=GetFont(EtherFrame,btn,opt,12)
         btn.label:SetPoint("LEFT",btn,"RIGHT",10,0)
-        --[[
-            for i,opt in ipairs(I_Register) do
-                local btn=CreateFrame("CheckButton",nil,iRegister,"InterfaceOptionsCheckButtonTemplate")
-                if i==1 then
-                    btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-100)
-                else
-                    btn:SetPoint("TOPLEFT",Ether.UIPanel.Buttons[6][i-1],"BOTTOMLEFT",0,0)
-                end
-                btn:SetSize(24,24)
-                btn.label=GetFont(EtherFrame,btn,opt.text,12)
-                btn.label:SetPoint("LEFT",btn,"RIGHT",10,0)
-                btn.texture=btn:CreateTexture(nil,"OVERLAY")
-                btn.texture:SetSize(18,18)
-                btn.texture:SetPoint("LEFT",btn.label,"RIGHT",8,0)
-                btn.texture:SetTexture(opt.texture)
-                btn.texture2=btn:CreateTexture(nil,"OVERLAY")
-                btn.texture2:SetSize(18,18)
-                btn.texture2:SetPoint("LEFT",btn.label,"RIGHT",35,0)
-                btn.texture2:SetTexture(opt.texture2)
-                btn.texture3=btn:CreateTexture(nil,"OVERLAY")
-                btn.texture3:SetSize(18,18)
-                btn.texture3:SetPoint("LEFT",btn.label,"RIGHT",60,0)
-                btn.texture3:SetTexture(opt.texture3)
-                if opt.size then
-                    btn.texture:SetSize(opt.size,opt.size)
-                end
-                if opt.coo then
-                    btn.texture:SetTexCoord(unpack(opt.coo))
-                end
-                if opt.coo2 then
-                    btn.texture2:SetTexCoord(unpack(opt.coo2))
-                end
-                if opt.coo3 then
-                    btn.texture3:SetTexCoord(unpack(opt.coo3))
-                end
-                ]]
         btn:SetChecked(DB[501][i]==1)
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
@@ -1494,239 +1220,128 @@ function Ether:CreateIndicatorsSection(EtherFrame)
     end
 
     local Indicator=EtherFrame.Frames["INDICATORS"]
-    Indicator.sizeValue=nil
-    Indicator.offsetXValue=nil
-    Indicator.offsetYValue=nil
-    local indicators={
-        ["ReadyCheck"]={icon="Interface\\RaidFrame\\ReadyCheck-Ready",id=1,type="texture"},
-        ["Connection"]={icon="Interface\\CharacterFrame\\Disconnect-Icon",id=2,type="texture"},
-        ["RaidTarget"]={icon="Interface\\TargetingFrame\\UI-RaidTargetingIcons",id=3,coordinates={0.75,1,0.25,0.5},type="texture"},
-        ["Resurrection"]={icon="Interface\\RaidFrame\\Raid-Icon-Rez",id=4,type="texture"},
-        ["GroupLeader"]={icon="Interface\\GroupFrame\\UI-Group-LeaderIcon",id=5,type="texture"},
-        ["MasterLoot"]={icon="Interface\\GroupFrame\\UI-Group-MasterLooter",id=6,type="texture"},
-        ["UnitFlags"]={icon="Interface\\Icons\\Spell_Holy_GuardianSpirit",id=7,type="texture"},
-        ["PlayerRoles"]={icon="Interface\\GroupFrame\\UI-Group-MainTankIcon",id=8,type="texture"},
-        ["PlayerFlags"]={type="string",id=9},
+    local iK={
+        [1]="Interface\\CharacterFrame\\Disconnect-Icon",
+        [2]="Interface\\RaidFrame\\Raid-Icon-Rez",
+        [3]="Interface\\FriendsFrame\\StatusIcon-Away",
+        [4]="Interface\\Icons\\Spell_Holy_GuardianSpirit",
+        [5]="Interface\\TargetingFrame\\UI-RaidTargetingIcons",
+        [6]="Interface\\GroupFrame\\UI-Group-LeaderIcon",
+        [7]="Interface\\GroupFrame\\UI-Group-MasterLooter",
+        [8]="Interface\\GroupFrame\\UI-Group-MainTankIcon",
+        [9]="Interface\\RaidFrame\\ReadyCheck-Ready"
     }
-    local templateDropdown
-    local indicatorFunc={}
-    for name in pairs(indicators) do
-        table.insert(indicatorFunc,{
+    local dropdown
+    local Func_i={}
+
+    for index,name in ipairs(iTbl) do
+        table.insert(Func_i,{
             text=name,
             func=function()
-                Indicator.sizeSlider:Show()
-                Indicator.sizeSlider:Enable()
-                Indicator.YSlider:Show()
-                Indicator.YSlider:Enable()
-                Indicator.offsetXSlider:Show()
-                Indicator.offsetXSlider:Enable()
-                Indicator.offsetXLabel:Show()
-                Indicator.sizeLabel:Show()
-                Indicator.offsetYLabel:Show()
-                Indicator.offsetXValue:Show()
-                Indicator.offsetYValue:Show()
-                Indicator.sizeValue:Show()
-                Indicator.preview:Show()
-                for _,btn in pairs(Indicator.posButtons) do
-                    btn:Enable()
+                if index and name then
+                    for _,btn in pairs(Indicator.cube) do
+                        btn:Enable()
+                    end
+                    iNumber=index
+                    iIcon=iK[index]
+                    dropdown.text:SetText(name)
+                    Ether:UpdateIndicatorsPos(iNumber,iIcon)
                 end
-                number=indicators[name].id
-                if indicators[name].type=="texture" then
-                    indicatorType=indicators[name].type
-                    iconTexture=indicators[name].icon
-                    coordinates=indicators[name].coordinates
-                end
-                if indicators[name].type=="string" then
-                    indicatorType=indicators[name].type
-                    coordinates=indicators[name].coordinates
-                end
-                currentIndicator=name
-                templateDropdown.text:SetText(currentIndicator)
-                UpdateIndicatorsValue(Indicator)
+
             end
         })
     end
 
-    templateDropdown=CreateEtherDropdown(parent,160,"Select Indicator",indicatorFunc)
-    Indicator.templateDropdown=templateDropdown
-    templateDropdown:SetPoint("TOPLEFT")
+    dropdown=CreateEtherDropdown(parent,160,"Select Indicator",Func_i)
+    Indicator.dropdown=dropdown
+    dropdown:SetPoint("TOPLEFT")
 
     local preview=CreateHeaderPreview(parent,Ether.metaData[2],3,55)
     Indicator.preview=preview
     preview:SetPoint("TOP",80,-90)
-    local icon=preview.healthBar:CreateTexture(nil,"OVERLAY")
-    Indicator.icon=icon
-    icon:SetSize(12,12)
-    icon:SetPoint("TOP",preview.healthBar,"TOP",0,0)
-    icon:SetTexture(iconTexture)
+    preview.tex:SetTexture(iIcon)
     preview.name:SetPoint("CENTER",0,-5)
-    local textIndicator=preview.healthBar:CreateFontString(nil,"OVERLAY")
-    textIndicator:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    Indicator.text=textIndicator
-    textIndicator:SetPoint("TOP",preview.healthBar,"TOP",0,0)
-    textIndicator:Hide()
-    Indicator.posButtons={}
-    local startX,startY=90,0
-    local btnSize=25
 
-    for row=1,3 do
-        for col=1,3 do
-            local pos=positions[row][col]
-            local btn=CreateFrame("Button",nil,preview)
-            btn:SetSize(btnSize,btnSize)
-            btn:SetPoint("TOPLEFT",startX+(col-1)*(btnSize+1),startY-(row-1)*(btnSize+1))
-            btn.bg=btn:CreateTexture(nil,"BACKGROUND")
-            btn.bg:SetAllPoints()
-            btn.bg:SetColorTexture(0.2,0.2,0.2,0.8)
-            btn.text=btn:CreateFontString(nil,"OVERLAY")
-            btn.text:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-            btn.text:SetPoint("CENTER")
-            btn.text:SetText(pos:sub(1,1))
-            btn.position=pos
-            btn:SetScript("OnClick",function(self)
-                if number then
-                    Ether.DB[1002][number][2]=self.position
-                    UpdateIndicatorsValue(Indicator)
-                end
-            end)
-            btn:SetScript("OnEnter",function(self)
-                self.bg:SetColorTexture(0.3,0.3,0.3,0.9)
-            end)
-            btn:SetScript("OnLeave",function(self)
-                local data=number and Ether.DB[1002][number]
-                if data and data[2]==self.position then
-                    self.bg:SetColorTexture(0.8,0.6,0,0.4)
-                else
-                    self.bg:SetColorTexture(0.2,0.2,0.2,0.8)
-                end
-            end)
-
-            Indicator.posButtons[pos]=btn
+    local cube=Ether:CreateCube(preview,24,90,0,function(self)
+        if iNumber then
+            Ether.DB[1002][iNumber][1]=self.position
+            Ether:UpdateIndicatorsPos(iNumber,iIcon)
         end
-    end
+    end,function(self)
+        self.bg:SetColorTexture(0.3,0.3,0.3,0.9)
+    end,function(self)
+        local data=iNumber and Ether.DB[1002][iNumber]
+        if data and data[1]==self.position then
+            self.bg:SetColorTexture(0.8,0.6,0,0.4)
+        else
+            self.bg:SetColorTexture(0.2,0.2,0.2,0.8)
+        end
+    end)
 
-    local sizeLabel=parent:CreateFontString(nil,"OVERLAY")
-    Indicator.sizeLabel=sizeLabel
-    sizeLabel:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    sizeLabel:SetPoint("TOPLEFT",preview,"BOTTOMLEFT",0,-50)
-    sizeLabel:SetText("Size")
-
+    Indicator.cube=cube
     local confirm=EtherPanelButton(preview,60,25,"Confirm","BOTTOMLEFT",preview,"TOPRIGHT",0,40)
     confirm:SetScript("OnClick",function()
-        if currentIndicator and number then
-            Ether:SaveIndicatorsPosition(currentIndicator,number)
+        if iNumber then
+            Ether:UpdateIndicatorsPosition(iNumber)
         end
     end)
 
-    local sizeSlider=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
-    Indicator.sizeSlider=sizeSlider
-    sizeSlider:SetPoint("TOPLEFT",sizeLabel,"BOTTOMLEFT")
-    sizeSlider:SetWidth(100)
-    sizeSlider:SetMinMaxValues(4,34)
-    sizeSlider:SetValueStep(1)
-    sizeSlider:SetObeyStepOnDrag(true)
-    sizeSlider.Low:SetText("4")
-    sizeSlider.High:SetText("34")
-    sizeSlider:SetScript("OnValueChanged",function(self,value)
-        if number then
-            Ether.DB[1002][number][1]=value
-            if Indicator.sizeValue then
-                Indicator.sizeValue:SetText(string_format("%.0f px",value))
-            end
-            UpdateIndicatorsValue(Indicator)
+    local s=Ether:CreateSlider(preview,"Size","6 px","4","34","TOPLEFT","BOTTOMLEFT",0,-50,function(self,value)
+        if iNumber then
+            Ether.DB[1002][iNumber][4]=value
+            self.v:SetText(string.format("%.0f px",value))
+            Ether:UpdateIndicatorsPos(iNumber,iIcon)
         end
     end)
-    local sizeSliderBG=sizeSlider:CreateTexture(nil,"BACKGROUND")
-    sizeSliderBG:SetPoint("CENTER")
-    sizeSliderBG:SetSize(100,10)
-    sizeSliderBG:SetColorTexture(0.2,0.2,0.2,0.8)
-    sizeSliderBG:SetDrawLayer("BACKGROUND",-1)
+    Indicator.s=s
 
-    local sizeValue=parent:CreateFontString(nil,"OVERLAY")
-    Indicator.sizeValue=sizeValue
-    sizeValue:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    sizeValue:SetPoint("TOP",sizeSlider,"BOTTOM",0,-5)
-    sizeValue:SetText("6 px")
-
-    local offsetXLabel=parent:CreateFontString(nil,"OVERLAY")
-    Indicator.offsetXLabel=offsetXLabel
-    offsetXLabel:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    offsetXLabel:SetPoint("TOPLEFT",sizeLabel,"BOTTOMLEFT",0,-50)
-    offsetXLabel:SetText("X Offset")
-
-    local offsetXSlider=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
-    Indicator.offsetXSlider=offsetXSlider
-    offsetXSlider:SetPoint("TOPLEFT",offsetXLabel,"BOTTOMLEFT")
-    offsetXSlider:SetWidth(100)
-    offsetXSlider:SetMinMaxValues(-20,20)
-    offsetXSlider:SetValueStep(1)
-    offsetXSlider:SetObeyStepOnDrag(true)
-    offsetXSlider.Low:SetText("-20")
-    offsetXSlider.High:SetText("20")
-    offsetXSlider:SetScript("OnValueChanged",function(self,value)
-        if number then
-            Ether.DB[1002][number][3]=value
-            if Indicator.offsetXValue then
-                Indicator.offsetXValue:SetText(string_format("%.0f",value))
-            end
-            UpdateIndicatorsValue(Indicator)
+    local x=Ether:CreateSlider(preview,"X-Off","0","-20","20","TOPLEFT","BOTTOMLEFT",0,0,function(self,value)
+        if iNumber then
+            Ether.DB[1002][iNumber][2]=value
+            self.v:SetText(string.format("%.0f",value))
+            Ether:UpdateIndicatorsPos(iNumber,iIcon)
         end
     end)
-    local offsetXBG=offsetXSlider:CreateTexture(nil,"BACKGROUND")
-    offsetXBG:SetPoint("CENTER")
-    offsetXBG:SetSize(100,10)
-    offsetXBG:SetColorTexture(0.2,0.2,0.2,0.8)
-    offsetXBG:SetDrawLayer("BACKGROUND",-1)
+    Indicator.x=x
 
-    local offsetXValue=parent:CreateFontString(nil,"OVERLAY")
-    Indicator.offsetXValue=offsetXValue
-    offsetXValue:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    offsetXValue:SetPoint("TOP",offsetXSlider,"BOTTOM")
-    offsetXValue:SetText("0")
-
-    local offsetYLabel=parent:CreateFontString(nil,"OVERLAY")
-    Indicator.offsetYLabel=offsetYLabel
-    offsetYLabel:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    offsetYLabel:SetPoint("TOPLEFT",offsetXLabel,"BOTTOMLEFT",0,-50)
-    offsetYLabel:SetText("Y Offset")
-
-    local YSlider=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
-    Indicator.YSlider=YSlider
-    YSlider:SetPoint("TOPLEFT",offsetYLabel,"BOTTOMLEFT")
-    YSlider:SetWidth(100)
-    YSlider:SetMinMaxValues(-20,20)
-    YSlider:SetValueStep(1)
-    YSlider:SetObeyStepOnDrag(true)
-    YSlider.Low:SetText("-20")
-    YSlider.High:SetText("20")
-    YSlider:SetScript("OnValueChanged",function(self,value)
-        if number then
-            Ether.DB[1002][number][4]=value
-            if Indicator.offsetYValue then
-                Indicator.offsetYValue:SetText(string_format("%.0f",value))
-            end
-            UpdateIndicatorsValue(Indicator)
+    local y=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
+    Indicator.y=y
+    y.l=y:CreateFontString(nil,"OVERLAY")
+    y.l:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
+    y.l:SetPoint("TOPLEFT",x.l,"BOTTOMLEFT",0,-50)
+    y.l:SetText("Y Offset")
+    y:SetPoint("TOPLEFT",y.l,"BOTTOMLEFT")
+    y:SetWidth(100)
+    y:SetMinMaxValues(-20,20)
+    y:SetValueStep(1)
+    y:SetObeyStepOnDrag(true)
+    y.Low:SetText("-20")
+    y.High:SetText("20")
+    y:SetScript("OnValueChanged",function(self,value)
+        if iNumber then
+            Ether.DB[1002][iNumber][3]=value
+            self.v:SetText(string.format("%.0f",value))
+            Ether:UpdateIndicatorsPos(iNumber,iIcon)
         end
     end)
 
-    local offsetYBG=YSlider:CreateTexture(nil,"BACKGROUND")
-    offsetYBG:SetPoint("CENTER")
-    offsetYBG:SetSize(100,10)
-    offsetYBG:SetColorTexture(0.2,0.2,0.2,0.6)
-    offsetYBG:SetDrawLayer("BACKGROUND",-1)
+    y.bg=y:CreateTexture(nil,"BACKGROUND")
+    y.bg:SetPoint("CENTER")
+    y.bg:SetSize(100,10)
+    y.bg:SetColorTexture(0.2,0.2,0.2,0.6)
+    y.bg:SetDrawLayer("BACKGROUND",-1)
 
-    local offsetYValue=parent:CreateFontString(nil,"OVERLAY")
-    Indicator.offsetYValue=offsetYValue
-    offsetYValue:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    offsetYValue:SetPoint("TOP",YSlider,"BOTTOM")
-    offsetYValue:SetText("0")
+    y.v=y:CreateFontString(nil,"OVERLAY")
+    y.v:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
+    y.v:SetPoint("TOP",y,"BOTTOM")
+    y.v:SetText("0")
 
-    SetupSliderText(sizeSlider,"4","34")
-    SetupSliderText(YSlider,"-20","20")
-    SetupSliderText(offsetXSlider,"-20","20")
-    SetupSliderThump(sizeSlider,10,{0.8,0.6,0,1})
-    SetupSliderThump(YSlider,10,{0.8,0.6,0,1})
-    SetupSliderThump(offsetXSlider,10,{0.8,0.6,0,1})
+    SetupSliderText(s,"4","34")
+    SetupSliderText(y,"-20","20")
+    SetupSliderText(x,"-20","20")
+    SetupSliderThump(s,10,{0.8,0.6,0,1})
+    SetupSliderThump(y,10,{0.8,0.6,0,1})
+    SetupSliderThump(x,10,{0.8,0.6,0,1})
 end
 
 function Ether:CreateTooltipSection(EtherFrame)
@@ -2453,31 +2068,15 @@ function Ether:CreateEditSection(EtherFrame)
     end
 end
 
-function Ether.CleanUpButtons()
-    local editor=Ether.UIPanel.Frames["EDITOR"]
-    local Indicator=Ether.UIPanel.Frames["INDICATORS"]
+function Ether:CleanUpButtons(editor,indicator)
     Ether.WrapSettingsColor({0.80,0.40,1.00,1})
-    Indicator.icon:Hide()
-    Indicator.text:Hide()
-    Indicator.sizeSlider:Hide()
-    Indicator.sizeSlider:Disable()
-    Indicator.YSlider:Hide()
-    Indicator.YSlider:Disable()
-    Indicator.offsetXSlider:Hide()
-    Indicator.offsetXSlider:Disable()
-    Indicator.offsetXLabel:Hide()
-    Indicator.sizeLabel:Hide()
-    Indicator.offsetYLabel:Hide()
-    Indicator.offsetXValue:Hide()
-    Indicator.offsetYValue:Hide()
-    Indicator.sizeValue:Hide()
-    Indicator.preview:Hide()
+    indicator:Hide()
     editor:Hide()
-    Indicator.templateDropdown.text:SetText("Select Indicator")
+    indicator.templateDropdown.text:SetText("Select Indicator")
     for _,btn in pairs(editor.posButtons) do
         btn:Disable()
     end
-    for _,btn in pairs(Indicator.posButtons) do
+    for _,btn in pairs(indicator.cube) do
         btn:Disable()
     end
 end

@@ -257,7 +257,7 @@ do
         Ether:HideCastBar("player",state)
         Ether:HideCastBar("target",state)
         if not state then
-            Ether.CleanUpButtons()
+            Ether:CleanUpButtons(EtherFrame.Frames["EDITOR"],EtherFrame.Frames["INDICATORS"])
             Ether.WrapSettingsColor({0.80,0.40,1.00,1})
         end
     end
@@ -425,14 +425,13 @@ local function OnInitialize(self,event,...)
             ETHER_DATABASE_DX_AA["Current"]="Default"
         else
             if ETHER_DATABASE_DX_AA["Current"][Ether:GetProfileName()] then
-                ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether:GetProfile())
+                ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:MergeToLeft(Ether:CopyTable(Ether:GetProfile()),Ether.DataDefault)
             end
             if not ETHER_DATABASE_DX_AA["Profiles"]["Default"] then
                 ETHER_DATABASE_DX_AA["Profiles"]["Default"]=Ether:CopyTable(Ether.DataDefault)
             end
         end
-        Ether:MergeToLeft(Ether:CopyTable(Ether:GetProfile()),Ether.DataDefault)
-        Ether.DB=Ether:CopyTable(Ether:GetProfile())
+        Ether.DB=Ether:GetProfile()
         self:RegisterEvent("PLAYER_LOGIN")
     elseif (event=="PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
@@ -540,8 +539,7 @@ local function OnInitialize(self,event,...)
             Ether.UIPanel.Frames["MAIN"]:Show()
         end
     elseif (event=="PLAYER_LOGOUT") then
-        ETHER_DATABASE_DX_AA["Current"]=Ether:GetProfileName()
-        ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
+        ETHER_DATABASE_DX_AA["Profiles"][ETHER_DATABASE_DX_AA["Current"]]=Ether:CopyTable(Ether.DB)
     end
 end
 local Initialize=CreateFrame("Frame")
