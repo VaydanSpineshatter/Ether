@@ -524,31 +524,16 @@ do
     end
     function Toggle(number)
         if not number or type(number)~="number" then return end
-        if number<5 then
-            local info=uSTR[number]
-            local handler=UH[number]
-            if not info then return end
-
-            if U[info] and token:IsEventRegistered(info) then
-                token:UnregisterEvent(info)
-                U[info]=nil
-            else
-                token:RegisterEvent(info)
-                U[info]=handler
-            end
+        local idx=number-4
+        local info=nSTR[idx]
+        local handler=NH[idx]
+        if not info then return end
+        if N[info] and frame:IsEventRegistered(info) then
+            frame:UnregisterEvent(info)
+            N[info]=nil
         else
-            local idx=number-4
-            local info=nSTR[idx]
-            local handler=NH[idx]
-            if not info then return end
-
-            if N[info] and frame:IsEventRegistered(info) then
-                frame:UnregisterEvent(info)
-                N[info]=nil
-            else
-                frame:RegisterEvent(info)
-                N[info]=handler
-            end
+            frame:RegisterEvent(info)
+            N[info]=handler
         end
     end
     Ether.IndicatorToggle=Toggle
