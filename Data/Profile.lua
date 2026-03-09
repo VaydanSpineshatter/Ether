@@ -288,196 +288,6 @@ local function ProfileRefresh()
     Ether:IndicatorsNormalFullUpdate()
 end
 
-function Ether:ExportCurrentProfile()
-    Ether:UpdateAuraList()
-    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
-    local userData=Ether:GetProfile()
-    if not userData then
-        return nil,"Current profile not found"
-    end
-    local exportData={
-        name=Ether:GetProfileName(),
-        version=ETHER_DATABASE_DX_AA["Version"] or 0,
-        data=userData
-    }
-    local serialized=TblToString(exportData)
-    local compressed=CompressString(serialized,1)
-    local encoded=Base64Encode(compressed)
-    Ether:EtherInfo("|cff00ff00Export ready:|r "..Ether:GetProfileName())
-    Ether:EtherInfo("|cff888888Size (compressed):|r "..#encoded.." characters")
-    return encoded
-end
-
-function Ether:ImportProfile(encodedString)
-    if not encodedString or encodedString=="" then
-        return false,"Empty import string"
-    end
-    local decodedBinary=Base64Decode(encodedString)
-    if not decodedBinary then
-        return false,"Invalid Base64 encoding"
-    end
-    local decompressed=DecompressString(decodedBinary,1)
-    if not decompressed then
-        return false,"Decompression failed (possibly corrupt data)"
-    end
-    local success,import=StringToTbl(decompressed)
-    if not success then
-        return false,"Invalid data format (Compile error)"
-    end
-    if type(import)~="table" then
-        return false,"Invalid data: No profile data found"
-    end
-    local importVersion=import.version or 0
-    if importVersion<41500 then
-        return false,"Invalid data version"
-    end
-    local name=import.name or "Imported"
-    local baseName=name
-    local counter=1
-    while ETHER_DATABASE_DX_AA["Profiles"][name] do
-        counter=counter+1
-        name=baseName.."_"..counter
-    end
-    ETHER_DATABASE_DX_AA["Profiles"][name]=Ether:CopyTable(import.data)
-    Ether:NilCheck(ETHER_DATABASE_DX_AA["Profiles"][name])
-    Ether:ArrayMigrate(ETHER_DATABASE_DX_AA["Profiles"][name])
-    ETHER_DATABASE_DX_AA["Current"]=name
-    Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["Profiles"][name])
-    ProfileRefresh()
-    return true,"Successfully imported as: "..name
-end
-
-function Ether:CopyProfile(sourceName,targetName)
-    if not sourceName or not targetName then return end
-    if not ETHER_DATABASE_DX_AA["Profiles"][sourceName] then
-        return false,"Profile not found"
-    end
-    if ETHER_DATABASE_DX_AA["Profiles"][targetName] then
-        return false,"Profile already exists"
-    end
-    ETHER_DATABASE_DX_AA["Profiles"][targetName]=Ether:CopyTable(ETHER_DATABASE_DX_AA["Profiles"][sourceName])
-    return true,"Profile copied"
-end
-
-function Ether:SwitchProfile(name)
-    if not ETHER_DATABASE_DX_AA["Profiles"][name] then
-        return false,"Profile not found"
-    end
-    ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
-    Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["Profiles"][name])
-    ETHER_DATABASE_DX_AA["Current"]=name
-    ProfileRefresh()
-    return true,"Switched to "..name
-end
-
-function Ether:DeleteProfile(name)
-    if not ETHER_DATABASE_DX_AA["Profiles"][name] then
-        return false,"Profile not found"
-    end
-    local profileCount=0
-    for _ in pairs(ETHER_DATABASE_DX_AA["Profiles"]) do
-        profileCount=profileCount+1
-    end
-    if profileCount<=1 then
-        return false,"Cannot delete the only profile"
-    end
-    if name==Ether:GetProfileName() then
-        local otherProfile
-        for profileName in pairs(ETHER_DATABASE_DX_AA["Profiles"]) do
-            if profileName~=name then
-                otherProfile=profileName
-                break
-            end
-        end
-        if not otherProfile then
-            return false,"No other profile available"
-        end
-        local success,msg=Ether:SwitchProfile(otherProfile)
-        if not success then
-            return false,"Failed to switch profile: "..msg
-        end
-    end
-    ETHER_DATABASE_DX_AA["Profiles"][name]=nil
-    ProfileRefresh()
-    return true,"Profile deleted"
-end
-
-function Ether:GetProfile()
-    return ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]
-end
-
-function Ether:ResetProfile()
-    Ether.DB=Ether:CopyTable(Ether.DataDefault)
-    ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DataDefault)
-    Ether:NilCheck(Ether:GetProfile())
-    Ether:ArrayMigrate(Ether:GetProfile())
-    ETHER_DATABASE_DX_AA["Current"]=Ether:GetProfileName()
-    ProfileRefresh()
-    return true,"Profile reset to default"
-end
-
-function Ether:ResetDataBase()
-    wipe(ETHER_DATABASE_DX_AA["Profiles"])
-    ETHER_DATABASE_DX_AA["Profiles"]={
-        ["Default"]=Ether:CopyTable(Ether.DataDefault),
-    }
-    ETHER_DATABASE_DX_AA[100][1]="Default"
-    ETHER_DATABASE_DX_AA[100][2]=Ether.metaData[3] or 0
-end
-
-function Ether:VerifyDefaultData()
-    if not ETHER_DATABASE_DX_AA["Profiles"]["Default"] then
-        ETHER_DATABASE_DX_AA["Profiles"]["Default"]=Ether:CopyTable(Ether.DataDefault)
-    end
-end
-
-function Ether:VerifyVersion()
-    ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3] or 0
-end
-
-function Ether:LoadAddon(self)
-    for _,v in ipairs({"PLAYER_LOGOUT","PLAYER_LOGIN","PLAYER_ENTERING_WORLD"}) do
-        if not self:IsEventRegistered(v) then
-            self:RegisterEvent(v)
-        end
-    end
-end
-
-function Ether:GetProfileName()
-    local name=ETHER_DATABASE_DX_AA["Current"]
-    if not name or name=="" then return "Default" end
-    return name
-end
-
-function Ether:GetProfileList()
-    return Ether:GetTableData(ETHER_DATABASE_DX_AA["Profiles"])
-end
-
-function Ether:CreateProfile(name)
-    if ETHER_DATABASE_DX_AA["Profiles"][name] then
-        return false,"Profile already exists"
-    end
-    ETHER_DATABASE_DX_AA["Profiles"]={
-        [name]=Ether:CopyTable(Ether.DataDefault),
-        ["Version"]=Ether.metaData[3] or 0
-    }
-    ETHER_DATABASE_DX_AA["Current"]="Default"
-    ProfileRefresh()
-    return true,"Profile created"
-end
-
-function Ether:RenameProfile(oldName,newName)
-    if not ETHER_DATABASE_DX_AA["Profiles"][oldName] then
-        return false,"Profile not found"
-    end
-    if ETHER_DATABASE_DX_AA["Profiles"][newName] then
-        return false,"Name already taken"
-    end
-    ETHER_DATABASE_DX_AA["Profiles"][newName]=ETHER_DATABASE_DX_AA["Profiles"][oldName]
-    ETHER_DATABASE_DX_AA["Current"]=newName
-    return true,"Profile renamed"
-end
-
 function Ether:ExportProfileToClipboard()
     local encoded,err=Ether:ExportCurrentProfile()
     if not encoded then
@@ -512,14 +322,201 @@ function Ether:RefreshLayout(data)
     if not data then return end
     for _,button in pairs(data) do
         if not button then return end
-        if button.background then
-            button.background:SetTexture(Ether.DB[100][9])
-        end
         if button.name then
-            button.name:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
+            button.name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),12,"OUTLINE")
         end
         if button.healthBar then
-            button.healthBar:SetStatusBarTexture((Ether.DB[100][8] or unpack(Ether.media.blankBar)))
+            button.healthBar:SetStatusBarTexture((Ether.DB[100][5] or unpack(Ether.media.blankBar)))
+        end
+        if button.background then
+            button.background:SetTexture(Ether.DB[100][6])
         end
     end
 end
+
+function Ether:ExportCurrentProfile()
+    ProfileRefresh()
+    local userData=Ether:GetProfile()
+    if not userData then
+        return nil,"Current profile not found"
+    end
+    local exportData={
+        name=Ether:GetProfileName(),
+        version=Ether.metaData[3] or 0,
+        data=userData
+    }
+    local serialized=TblToString(exportData)
+    local compressed=CompressString(serialized,1)
+    local encoded=Base64Encode(compressed)
+    Ether:EtherInfo("|cff00ff00Export ready:|r "..Ether:GetProfileName())
+    Ether:EtherInfo("|cff888888Size (compressed):|r "..#encoded.." characters")
+    return encoded
+end
+
+function Ether:ImportProfile(encodedString)
+    if not encodedString or encodedString=="" then
+        return false,"Empty import string"
+    end
+    local decodedBinary=Base64Decode(encodedString)
+    if not decodedBinary then
+        return false,"Invalid Base64 encoding"
+    end
+    local decompressed=DecompressString(decodedBinary,1)
+    if not decompressed then
+        return false,"Decompression failed (possibly corrupt data)"
+    end
+    local success,import=StringToTbl(decompressed)
+    if not success then
+        return false,"Invalid data format (Compile error)"
+    end
+    if type(import)~="table" then
+        return false,"Invalid data: No profile data found"
+    end
+    local name=import.name or "Imported"
+    local baseName=name
+    local counter=1
+    while ETHER_DATABASE_DX_AA["PROFILES"][name] do
+        counter=counter+1
+        name=baseName.."_"..counter
+    end
+    ETHER_DATABASE_DX_AA["PROFILES"][name]=Ether:CopyTable(import.data)
+    Ether:NilCheck(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    Ether:ArrayMigrate(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    ETHER_DATABASE_DX_AA["CURRENT"]=name
+    Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    ProfileRefresh()
+    return true,"Successfully imported as: "..name
+end
+
+function Ether:CopyProfile(sourceName,targetName)
+    if not sourceName or not targetName then return end
+    if not ETHER_DATABASE_DX_AA["PROFILES"][sourceName] then
+        return false,"Profile "..sourceName.." not found"
+    end
+    if ETHER_DATABASE_DX_AA["PROFILES"][targetName] then
+        return false,"Profile "..sourceName.." already exists"
+    end
+    ETHER_DATABASE_DX_AA["PROFILES"][targetName]=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][sourceName])
+    return true,"Profile "..sourceName.."  copied"
+end
+
+function Ether:SwitchProfile(name)
+    if not ETHER_DATABASE_DX_AA["PROFILES"][name] then
+        return false,"Profile "..name.." not found"
+    end
+    ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
+    Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    ETHER_DATABASE_DX_AA["CURRENT"]=name
+    ProfileRefresh()
+    return true,"Switched to "..name
+end
+
+function Ether:DeleteProfile(name)
+    if not ETHER_DATABASE_DX_AA["PROFILES"][name] then
+        return false,"Profile not found"
+    end
+    local profileCount=0
+    for _ in pairs(ETHER_DATABASE_DX_AA["PROFILES"]) do
+        profileCount=profileCount+1
+    end
+    if profileCount<=1 then
+        return false,"Cannot delete the only profile"
+    end
+    if name==Ether:GetProfileName() then
+        local otherProfile
+        for profileName in pairs(ETHER_DATABASE_DX_AA["PROFILES"]) do
+            if profileName~=name then
+                otherProfile=profileName
+                break
+            end
+        end
+        if not otherProfile then
+            return false,"No other profile available"
+        end
+        local success,msg=Ether:SwitchProfile(otherProfile)
+        if not success then
+            return false,"Failed to switch profile: "..msg
+        end
+    end
+    ETHER_DATABASE_DX_AA["PROFILES"][name]=nil
+    ProfileRefresh()
+    return true,"Profile "..name.."  deleted"
+end
+
+function Ether:GetProfile()
+    return ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]
+end
+
+function Ether:ResetProfile()
+    local name=Ether:GetProfileName()
+    wipe(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    ETHER_DATABASE_DX_AA["PROFILES"][name]=Ether:CopyTable(Ether.DataDefault)
+    Ether.DB=Ether:CopyTable(Ether.DataDefault)
+    ProfileRefresh()
+    return true,"Profile "..name.." reset to default"
+end
+
+function Ether:CreateProfile(name)
+    if ETHER_DATABASE_DX_AA["PROFILES"][name] then
+        return false,"Profile "..name.." already exists"
+    end
+    ETHER_DATABASE_DX_AA["PROFILES"][name]=Ether:CopyTable(Ether.DataDefault)
+    ETHER_DATABASE_DX_AA["CURRENT"]="DEFAULT"
+    ProfileRefresh()
+    return true,"Profile "..name.." created"
+end
+
+function Ether:RenameProfile(oldName,newName)
+    if not ETHER_DATABASE_DX_AA["PROFILES"][oldName] then
+        return false,"Profile not found"
+    end
+    if ETHER_DATABASE_DX_AA["PROFILES"][newName] then
+        return false,"Name already taken"
+    end
+     ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
+    ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
+    ETHER_DATABASE_DX_AA["CURRENT"]=newName
+    ETHER_DATABASE_DX_AA["PROFILES"][oldName]=nil
+    return true,"Profile "..oldName.." renamed to "..newName
+end
+
+function Ether:VerifyDefaultData()
+    if not ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"] then
+        ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"]=Ether:CopyTable(Ether.DataDefault)
+    else
+        Ether:NilCheck(ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"])
+        Ether:ArrayMigrate(ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"])
+    end
+end
+
+function Ether:LoadAddon(self)
+    for _,v in ipairs({"PLAYER_LOGOUT","PLAYER_LOGIN","PLAYER_ENTERING_WORLD"}) do
+        if not self:IsEventRegistered(v) then
+            self:RegisterEvent(v)
+        end
+    end
+end
+
+function Ether:GetProfileName()
+    local name=ETHER_DATABASE_DX_AA["CURRENT"]
+    if not name or name=="" then return "DEFAULT" end
+    return name
+end
+
+local function GetProfiles(tbl)
+    local data={}
+    for name in pairs(tbl) do
+        if name ~= "VERSION" then
+            tinsert(data,name)
+        end
+    end
+    tsort(data)
+    return data
+end
+
+function Ether:GetProfileList()
+    return GetProfiles(ETHER_DATABASE_DX_AA["PROFILES"])
+end
+
+
+

@@ -18,7 +18,7 @@ function Ether:RefreshAllSettings()
     end
 end
 local Default={
-    [1]={1,1,1,1,1,1,1,1},--Module
+    [1]={1,1,1,1,1,1,0,0},--Module
     [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
     [3]={1,1,1,1,1,1},--Create Units
     [4]={0,0,0,0},--Update
@@ -61,8 +61,8 @@ local Default={
         [13]={D[3],D[10],D[1],-5,0,31,31,1,1},
         [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
     },
-    ["USER"] = {},
-    [100]={"Default",0,0,"Module",331,0,"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\FrameGeneral\\UI-Background-Rock"}
+    ["USER"]={},
+    [100]={"Module",1,0,"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\DialogFrame\\UI-DialogBox-Background-Dark"}
 }
 Ether.DataDefault=Default
 
@@ -126,15 +126,6 @@ function Ether:CopyTable(orig,seen)
         setmetatable(copy,Ether:CopyTable(mt,seen))
     end
     return copy
-end
-
-function Ether:GetTableData(tbl)
-    local data={}
-    for name in pairs(tbl) do
-        tinsert(data,name)
-    end
-    tsort(data)
-    return data
 end
 
 function Ether:TableSize(t)

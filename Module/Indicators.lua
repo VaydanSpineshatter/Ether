@@ -542,7 +542,6 @@ end
 function Ether:IndicatorsEnable()
     Ether:InitialIndicatorsPosition()
     Register()
-
     Ether:UpdateSoloIndicator("player")
     Ether:IndicatorsNormalFullUpdate()
 end

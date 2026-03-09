@@ -108,7 +108,7 @@ function Ether:SetupName(button,number)
     end
     local name=button.healthBar:CreateFontString(nil,"OVERLAY")
     button.name=name
-    name:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
+    name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),12,"OUTLINE")
     name:SetPoint("CENTER",button.healthBar,"CENTER",0,number)
     name:SetTextColor(1,1,1)
     return button
@@ -119,7 +119,7 @@ function Ether:SetupButtonLayout(button)
         return
     end
     button.background=button:CreateTexture(nil,"BACKGROUND")
-    button.background:SetTexture(Ether.DB[100][9])
+    button.background:SetTexture(Ether.DB[100][6])
     button.background:SetAllPoints(button)
     return button
 end
@@ -154,7 +154,7 @@ function Ether:SetupHealthBar(button,orient)
     button.healthBar=healthBar
     healthBar:SetAllPoints(button)
     healthBar:SetOrientation(orient)
-    local bar=Ether.DB[100][8] or unpack(Ether.media.blankBar)
+    local bar=Ether.DB[100][5] or unpack(Ether.media.blankBar)
     healthBar:SetStatusBarTexture(bar)
     healthBar:SetMinMaxValues(0,100)
     healthBar:SetFrameLevel(button:GetFrameLevel()+3)
@@ -222,11 +222,11 @@ function Ether:SetupCastBar(button,number)
     drop:SetColorTexture(0.2,0.2,0.4,.5)
     local text=frame:CreateFontString(nil,"OVERLAY")
     frame.text=text
-    text:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
+    text:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),12,"OUTLINE")
     text:SetPoint("LEFT",31,0)
     local time=frame:CreateFontString(nil,"OVERLAY")
     frame.time=time
-    time:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
+    time:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),12,"OUTLINE")
     time:SetPoint("RIGHT",frame,"RIGHT",-12,0)
     local icon=frame:CreateTexture(nil,"OVERLAY")
     icon:SetSize(16,16)
@@ -905,8 +905,8 @@ function Ether:SpellInfo(info,result,icon)
     end)
 end
 
-function Ether:IgnoringHandler(result, name)
-    if not name or type(name) ~= "string" then return end
+function Ether:IgnoringHandler(result,name)
+    if not name or type(name)~="string" then return end
     name=name:trim()
     if name=="" then
         return
@@ -919,7 +919,7 @@ function Ether:IgnoringHandler(result, name)
     end
 end
 function Ether.ValidMessage(sender)
-    local DB = Ether.DB["USER"]
+    local DB=Ether.DB["USER"]
     if DB[sender] then
         return true
     end

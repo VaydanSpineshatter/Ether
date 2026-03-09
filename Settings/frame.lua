@@ -228,18 +228,18 @@ local function CreateLineInput(parent,width,height)
     line:SetColorTexture(0.80,0.40,1.00,1)
     input:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
     input:SetTextInsets(4,4,2,2)
-    input:SetScript("OnEditFocusGained",function(self)
+    input:SetScript("OnEditFocusGained",function()
         line:SetColorTexture(0,0.8,1,1)
         line:SetHeight(1)
         bg:SetColorTexture(1,1,1,0.1)
     end)
-    input:SetScript("OnEditFocusLost",function(self)
+    input:SetScript("OnEditFocusLost",function()
         line:SetColorTexture(0.80,0.40,1.00,1)
         line:SetHeight(1)
         bg:SetColorTexture(1,1,1,0.1)
     end)
-    input:SetScript("OnEscapePressed",function(self)
-        self:ClearFocus()
+    input:SetScript("OnEscapePressed",function()
+         input:ClearFocus()
     end)
     return input
 end
@@ -294,7 +294,7 @@ function Ether:CreateModuleSection(self)
         return
     end
     parent.Created=true
-    local modules={"Icon","Chat Bn & Msg Whisper","Tooltip","Idle mode","Range check","Indicators","Info Frame","Debug"}
+    local modules={"Icon","Chat Bn & Msg Whisper","Tooltip","Idle mode","Range check","Indicators","Info","Debug"}
     local mod=CreateFrame("Frame",nil,parent)
     mod:SetSize(200,(#modules*30)+60)
     for i,opt in ipairs(modules) do
@@ -318,7 +318,7 @@ function Ether:CreateModuleSection(self)
                     Ether:ToggleIcon(0)
                 end
             elseif i==2 then
-           Ether:EnableMsgEvents()
+                Ether:EnableMsgEvents()
             elseif i==5 then
                 if Ether.DB[1][5]==1 then
                     Ether:RangeEnable()
@@ -1163,12 +1163,12 @@ function Ether:CreateCustomSection(self)
     local nameInput=CreateLineInput(editor,140,24)
     editor.nameInput=nameInput
     nameInput:SetPoint("TOPLEFT",name,"BOTTOMLEFT",0,-10)
-    nameInput:SetScript("OnEnterPressed",function(self)
-        if Ether.UIPanel.SpellId then
-            DB[1003][Ether.UIPanel.SpellId].name=self:GetText()
+    nameInput:SetScript("OnEnterPressed",function(_)
+           if type(self.SpellId) ~= nil then
+            DB[1003][self.SpellId].name=nameInput:GetText()
             Ether:UpdateAuraList()
         end
-        self:ClearFocus()
+        nameInput:ClearFocus()
     end)
 
     local spellID=editor:CreateFontString(nil,"OVERLAY")
@@ -1197,14 +1197,14 @@ function Ether:CreateCustomSection(self)
     local isDebuff=EtherPanelButton(editor,50,25,"Debuff","LEFT",spellIdInput,"RIGHT",10,0)
     editor.isDebuff=isDebuff
     isDebuff:SetScript("OnClick",function()
-        if self.SpellId then
+         if type(self.SpellId) ~= nil then
             DB[1003][self.SpellId][8]=not DB[1003][self.SpellId][8]
             Ether:UpdateAuraStatus(self.SpellId)
         end
     end)
 
     local cube=Ether:CreateCube(editor,24,120,-120,function(self)
-        if Ether.UIPanel.SpellId then
+        if type(Ether.UIPanel.SpellId) ~= nil then
             Ether.DB[1003][Ether.UIPanel.SpellId][4]=self.position
             Ether:UpdateEditor(editor)
             Ether:UpdatePreview(editor)
@@ -1221,27 +1221,27 @@ function Ether:CreateCustomSection(self)
     end)
     editor.cube=cube
 
-    local s=Ether:CreateSlider(spellIdInput,"Size","6 px","4","20",1,"TOPLEFT","BOTTOMLEFT",0,-110,function(self,value)
-        if Ether.UIPanel.SpellId then
-            DB[1003][Ether.UIPanel.SpellId][3]=value
+    local s=Ether:CreateSlider(spellIdInput,"Size","6 px","4","20",1,"TOPLEFT","BOTTOMLEFT",0,-110,function(_,value)
+        if type(self.SpellId) ~= nil then
+            DB[1003][self.SpellId][3]=value
             editor.s.v:SetText(string_format("%.0f px",value))
             Ether:UpdatePreview(editor)
         end
     end)
     editor.s=s
 
-    local x=Ether:CreateSlider(s,"X-Off","0","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,function(self,value)
-        if Ether.UIPanel.SpellId then
-            DB[1003][Ether.UIPanel.SpellId][5]=value
+    local x=Ether:CreateSlider(s,"X-Off","0","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,function(_,value)
+         if type(self.SpellId) ~= nil then
+            DB[1003][self.SpellId][5]=value
             editor.x.v:SetText(string_format("%.0f",value))
             Ether:UpdatePreview(editor)
         end
     end)
     editor.x=x
 
-    local y=Ether:CreateSlider(x,"Y-Off","0","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,function(self,value)
-        if Ether.UIPanel.SpellId then
-            DB[1003][Ether.UIPanel.SpellId][6]=value
+    local y=Ether:CreateSlider(x,"Y-Off","0","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,function(_,value)
+       if type(self.SpellId) ~= nil then
+            DB[1003][self.SpellId][6]=value
             editor.y.v:SetText(string_format("%.0f",value))
             Ether:UpdatePreview(editor)
         end
@@ -1256,16 +1256,14 @@ function Ether:CreateCustomSection(self)
     editor.colorBtn.bg:SetAllPoints()
     editor.colorBtn.bg:SetColorTexture(1,1,0,1)
     editor.colorBtn:SetScript("OnClick",function()
-        if not Ether.UIPanel.SpellId then
-            return
-        end
-        local data=Ether.DB[1003][Ether.UIPanel.SpellId]
+        if type(self.SpellId) ~= nil then return end
+        local data=Ether.DB[1003][self.SpellId]
         originalColor=data.color
         currentEditor=editor
         local function OnColorChanged()
             local r,g,b=ColorPickerFrame:GetColorRGB()
             local a=ColorPickerFrame:GetColorAlpha()
-            if Ether.UIPanel.SpellId and Ether.DB[1003][Ether.UIPanel.SpellId] then
+            if Ether.DB[1003][self.SpellId] then
                 local auraData=Ether.DB[1003][self.SpellId]
                 auraData.color[1],auraData.color[2],auraData.color[3],auraData.color[4]=r,g,b,a
                 currentEditor.colorBtn.bg:SetColorTexture(r,g,b,a)
@@ -1359,7 +1357,7 @@ function Ether:CreateHelperSection(EtherFrame)
     spellInfo:SetScript("OnClick",function()
         Ether:SpellInfo(spellNameBox:GetText(),resultText,spellIcon)
     end)
-    local examples={"Greater Heal(Rank 4)","Greater Heal","25233", "Name-Name"}
+    local examples={"Greater Heal(Rank 4)","Greater Heal","25233","Name-Name"}
     local exampleText="Example\n\n"
     for i=1,4 do
         exampleText=exampleText..string_format("• %s\n",examples[i])
@@ -1379,34 +1377,34 @@ function Ether:CreateHelperSection(EtherFrame)
     ignore:SetPoint("LEFT",parent,"LEFT",10,-10)
     ignore:SetAutoFocus(false)
     ignore:SetScript("OnEnterPressed",function(self)
-        local name = self:GetText()
+        local name=self:GetText()
         if name then
-            Ether:IgnoringHandler(resultText, name)
+            Ether:IgnoringHandler(resultText,name)
         end
         self:ClearFocus()
     end)
     local send=EtherPanelButton(parent,50,25,"Enter","LEFT",ignore,"RIGHT",10,0)
-       send:SetScript("OnClick",function()
-       local name = ignore:GetText()
-       if name then
-            Ether:IgnoringHandler(resultText, name)
-       end
-       ignore:ClearFocus()
+    send:SetScript("OnClick",function()
+        local name=ignore:GetText()
+        if name then
+            Ether:IgnoringHandler(resultText,name)
+        end
+        ignore:ClearFocus()
     end)
     local search=EtherPanelButton(parent,50,25,"Search","LEFT",send,"RIGHT",10,0)
     search:SetScript("OnClick",function()
-       for entry in pairs(Ether.DB["USER"]) do
+        for entry in pairs(Ether.DB["USER"]) do
             Ether:EtherInfo(string.format("%s",entry))
-       end
+        end
     end)
     local clear=EtherPanelButton(parent,50,25,"Delete ignore list","LEFT",search,"RIGHT",50,0)
     clear:SetScript("OnClick",function()
         wipe(Ether.DB["USER"])
     end)
-   local label=parent:CreateFontString(nil,"OVERLAY")
-   label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
-   label:SetPoint("BOTTOMLEFT",ignore, "TOPLEFT",0,10)
-   label:SetText("Enter name to ignore")
+    local label=parent:CreateFontString(nil,"OVERLAY")
+    label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
+    label:SetPoint("BOTTOMLEFT",ignore,"TOPLEFT",0,10)
+    label:SetText("Enter name to ignore")
 end
 
 function Ether:CreateConfigSection(self)
@@ -1416,7 +1414,7 @@ function Ether:CreateConfigSection(self)
     end
     parent.Created=true
     local DB=Ether.DB
-    local ID=DB[100][5]
+    local ID=DB[100][2]
     local K={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidFrame","PetFrame","PlayerCastBar","TargetCastBar"}
     local F={
         [1]=Ether.infoFrame,
@@ -1537,7 +1535,7 @@ function Ether:CreateConfigSection(self)
             text=font,
             func=function()
                 dropdowns.font.text:SetText(font)
-                DB[100][7]=path
+                DB[100][4]=path
                 RefreshLayout()
             end})
     end
@@ -1550,7 +1548,7 @@ function Ether:CreateConfigSection(self)
             text=bar,
             func=function()
                 dropdowns.bar.text:SetText(bar)
-                DB[100][8]=path
+                DB[100][5]=path
                 RefreshLayout()
             end})
     end
@@ -1563,7 +1561,7 @@ function Ether:CreateConfigSection(self)
             text=background,
             func=function()
                 dropdowns.bg.text:SetText(background)
-                DB[100][9]=path
+                DB[100][6]=path
                 RefreshLayout()
             end})
     end
@@ -1571,8 +1569,8 @@ function Ether:CreateConfigSection(self)
     dropdowns.bg:SetPoint("TOP",dropdowns.bar,"BOTTOM")
 end
 
-function Ether:CreateEditSection(EtherFrame)
-    local parent=EtherFrame["CONTENT"]["CHILDREN"]["Edit"]
+function Ether:CreateEditSection(self)
+    local parent=self["CONTENT"]["CHILDREN"]["Edit"]
     if parent.Created then return end
     parent.Created=true
     local dropdown=CreateFrame("Frame",nil,parent,"UIDropDownMenuTemplate")
@@ -1622,7 +1620,7 @@ function Ether:CreateEditSection(EtherFrame)
                         Ether:EtherInfo("|cffcc66ffEther|r "..msg)
                     end
                 end
-                info.checked=(profileName==Ether:GetProfileName())
+                info.checked=(profileName==self.value)
                 UIDropDownMenu_AddButton(info,level)
             end
         end)
@@ -1676,13 +1674,14 @@ function Ether:CreateEditSection(EtherFrame)
     local renameButton=EtherPanelButton(parent,60,25,"Rename","TOPLEFT",createButton,"BOTTOMLEFT",0,-20)
     renameButton:SetScript("OnClick",function()
         inputTitle:SetText("Rename profile")
-        inputBox:SetText(Ether:GetProfileName())
+        local name = Ether:GetProfileName()
+        inputBox:SetText(name)
         inputDialog:Show()
         inputBox:SetFocus()
         okButton:SetScript("OnClick",function()
             local newName=inputBox:GetText()
             if newName and newName~="" then
-                local success,msg=Ether:RenameProfile(Ether:GetProfileName(),newName)
+                local success,msg=Ether:RenameProfile(name,newName)
                 if success then
                     RefreshDropdown()
                     Ether:EtherInfo("|cffcc66ffEther|r "..msg)
@@ -1710,7 +1709,7 @@ function Ether:CreateEditSection(EtherFrame)
         end
         if not Ether.popupBox:IsShown() then
             Ether.popupBox:SetShown(true)
-            Ether.UIPanel.Frames["MAIN"]:SetShown(false)
+            self.Frames["MAIN"]:SetShown(false)
         end
         Ether.popupBox.font:SetText("Delete profile |cffcc66ff"..profileToDelete.."|r ?")
         Ether.popupCallback:SetScript("OnClick",function()
@@ -1722,11 +1721,11 @@ function Ether:CreateEditSection(EtherFrame)
                     parent.RefreshConfig()
                 end
                 Ether.popupBox:SetShown(false)
-                Ether.UIPanel.Frames["MAIN"]:SetShown(true)
+                self.Frames["MAIN"]:SetShown(true)
             else
                 Ether:EtherInfo("|cffcc66ffEther|r "..msg)
                 Ether.popupBox:SetShown(false)
-                Ether.UIPanel.Frames["MAIN"]:SetShown(true)
+                self.Frames["MAIN"]:SetShown(true)
             end
         end)
     end)
@@ -1741,7 +1740,7 @@ function Ether:CreateEditSection(EtherFrame)
         end
         if not Ether.popupBox:IsShown() then
             Ether.popupBox:SetShown(true)
-            Ether.UIPanel.Frames["MAIN"]:SetShown(false)
+            self.Frames["MAIN"]:SetShown(false)
         end
         Ether.popupBox.font:SetText("Reset profile |cffcc66ff"..profileToRest.."|r ?")
         Ether.popupCallback:SetScript("OnClick",function()
@@ -1753,11 +1752,11 @@ function Ether:CreateEditSection(EtherFrame)
                     parent.RefreshConfig()
                 end
                 Ether.popupBox:SetShown(false)
-                Ether.UIPanel.Frames["MAIN"]:SetShown(true)
+                self.Frames["MAIN"]:SetShown(true)
             else
                 Ether:EtherInfo("|cffcc66ffEther|r "..msg)
                 Ether.popupBox:SetShown(false)
-                Ether.UIPanel.Frames["MAIN"]:SetShown(true)
+                self.Frames["MAIN"]:SetShown(true)
             end
         end)
     end)
@@ -1786,32 +1785,29 @@ function Ether:CreateEditSection(EtherFrame)
     importBox:SetFont(unpack(Ether.media.expressway),9,"OUTLINE")
     importBox:SetText("Paste export data here...")
     importBox:SetTextColor(0.7,0.7,0.7)
-    importBox:SetScript("OnMouseWheel",function(self,delta)
-        local current=self:GetText()
+    importBox:SetScript("OnMouseWheel",function(_,delta)
+        local current=importBox:GetText()
         if delta>0 then
-            self:SetCursorPosition(0)
+            importBox:SetCursorPosition(0)
         else
-            self:SetCursorPosition(#current)
+            importBox:SetCursorPosition(#current)
         end
     end)
-
-    importBox:SetScript("OnEditFocusGained",function(self)
-        if self:GetText()=="Paste export data here..." then
-            self:SetText("")
-            self:SetTextColor(1,1,1)
+    importBox:SetScript("OnEditFocusGained",function()
+        if importBox:GetText()=="Paste export data here..." then
+            importBox:SetText("")
+            importBox:SetTextColor(1,1,1)
         end
-        self:HighlightText()
+        importBox:HighlightText()
     end)
-
-    importBox:SetScript("OnEditFocusLost",function(self)
-        if self:GetText()=="" then
-            self:SetText("Paste export data here...")
-            self:SetTextColor(0.7,0.7,0.7)
+    importBox:SetScript("OnEditFocusLost",function()
+        if importBox:GetText()=="" then
+           importBox:SetText("Paste export data here...")
+           importBox:SetTextColor(0.7,0.7,0.7)
         end
     end)
-
-    importBox:SetScript("OnEscapePressed",function(self)
-        self:ClearFocus()
+    importBox:SetScript("OnEscapePressed",function()
+        importBox:ClearFocus()
     end)
     local import=EtherPanelButton(transfer,60,25,"Import","BOTTOMLEFT",importBox,"TOPLEFT",0,20)
     import.text:SetPoint("LEFT")

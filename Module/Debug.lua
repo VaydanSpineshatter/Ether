@@ -38,8 +38,8 @@ local function hide()
 end
 local TEMP_CAT={}
 local function Output(...)
-      if not Ether.infoFrame then
-          print(...)
+    if not Ether.infoFrame then
+        print(...)
         return
     end
     for i=1,select('#',...) do
@@ -52,6 +52,7 @@ local function Output(...)
     hide()
 end
 function Ether:EtherInfo(...)
+    if Ether.DB[1][7]~=1 then return end
     Output(...)
 end
 function Ether:EtherDebug(...)

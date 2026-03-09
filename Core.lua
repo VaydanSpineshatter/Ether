@@ -202,7 +202,7 @@ do
                     for _,itemName in ipairs(self.Menu["LEFT"][layer]) do
                         local btn=CreateSettingsButtons(itemName,self.Frames["LEFT"],layer,function(_,btnLayer)
                             local firstTabName=self.Menu["TOP"][btnLayer][1]
-                            Ether.DB[100][4]=firstTabName
+                            Ether.DB[100][1]=firstTabName
                             for _,layers in pairs(self.Buttons[11]) do
                                 for _,topBtn in pairs(layers) do
                                     topBtn:Hide()
@@ -284,10 +284,10 @@ do
                 self.Frames[value]=CreateFrame("Frame",nil,self.Frames["MAIN"])
             end
             self.Frames["MAIN"]:SetScript("OnShow",function()
-                Ether.DB[100][6]=1
+                Ether.DB[100][3]=1
             end)
             self.Frames["MAIN"]:SetScript("OnHide",function()
-                Ether.DB[100][6]=0
+                Ether.DB[100][3]=0
             end)
             self.Frames["TOP"]:SetPoint("TOPLEFT",10,-15)
             self.Frames["TOP"]:SetPoint("TOPRIGHT",-10,0)
@@ -371,7 +371,7 @@ do
         else
             EtherFrame.Frames["MAIN"]:Show()
         end
-        local category=Ether.DB[100][4]
+        local category=Ether.DB[100][1]
         if EtherFrame["CONTENT"]["CHILDREN"][category] then
             ShowCategory(EtherFrame,category)
         end
@@ -400,11 +400,14 @@ local function OnInitialize(self,event,...)
         if type(_G.ETHER_DATABASE_DX_AA)~="table" then
             _G.ETHER_DATABASE_DX_AA={}
         end
-        if type(ETHER_DATABASE_DX_AA["Profiles"])~="table" then
-            ETHER_DATABASE_DX_AA["Profiles"]={}
+        if type(ETHER_DATABASE_DX_AA["PROFILES"])~="table" then
+            ETHER_DATABASE_DX_AA["PROFILES"]={}
         end
-        if type(ETHER_DATABASE_DX_AA[100])~="table" then
-            ETHER_DATABASE_DX_AA[100]={}
+        if type(ETHER_DATABASE_DX_AA["LAST"])~="number" then
+            ETHER_DATABASE_DX_AA["LAST"]=0
+        end
+        if type(ETHER_DATABASE_DX_AA["CURRENT"])~="string" then
+            ETHER_DATABASE_DX_AA["CURRENT"]=""
         end
         local system=tonumber(C_AddOns.GetAddOnMetadata("Ether","Version"))
         Ether.metaData[2]=UnitName("player")
@@ -468,8 +471,8 @@ local function OnInitialize(self,event,...)
         end
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
         EtherToggle()
-                if Ether.DB[1][2]==1 then
-           Ether:EnableMsgEvents()
+        if Ether.DB[1][2]==1 then
+            Ether:EnableMsgEvents()
         end
         Ether:CreateToolFrame()
         Ether:ToolTipInitialize()
@@ -525,7 +528,7 @@ local function OnInitialize(self,event,...)
             Ether.UIPanel.Frames["MAIN"]:Show()
         end
     elseif (event=="PLAYER_LOGOUT") then
-        ETHER_DATABASE_DX_AA["Profiles"][Ether.DB[100][1]]=Ether:CopyTable(Ether.DB)
+        ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
     end
 end
 local Initialize=CreateFrame("Frame")
