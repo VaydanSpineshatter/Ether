@@ -17,8 +17,6 @@ Ether.media={
         [2]={cmd="/ether settings",desc="Toggle settings"},
         [3]={cmd="/ether rl",desc="Reload Interface"},
         [4]={cmd="/ether Msg",desc="Ether whisper enable"},
-        [5]={cmd="/ether Msg",desc="www.hallo.de"},
-        [6]={cmd="/ether Msg",desc="http://www.hallo.de"}
     }
 }
 local function CreateSettingsButtons(name,parent,layer,onClick,isTopButton)

@@ -666,7 +666,6 @@ local function soloAuraUpdate(unit,updateInfo)
     local button=soloButtons[unit]
     if not button or not button.Aura then return end
     if updateInfo.isFullUpdate then
-        print("Full Update "..unit)
         SoloAuraIsHelpful(unit)
         SoloAuraIsHarmful(unit)
     else
