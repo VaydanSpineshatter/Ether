@@ -13,7 +13,7 @@ function Ether:PosNumber(input)
     return PosMap[input]
 end
 function Ether:RefreshAllSettings()
-    for i = 1,10 do
+    for i=1,10 do
         Ether:FrameChecked(i)
     end
 end
@@ -61,6 +61,7 @@ local Default={
         [13]={D[3],D[10],D[1],-5,0,31,31,1,1},
         [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
     },
+    ["USER"] = {},
     [100]={"Default",0,0,"Module",331,0,"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\FrameGeneral\\UI-Background-Rock"}
 }
 Ether.DataDefault=Default

@@ -25,7 +25,6 @@ local function SendOutput(input)
     debugText=debugText..'\n'..input
     Ether.infoText:SetText(debugText)
 end
-
 local timer=false
 local function hide()
     if not timer then
@@ -39,8 +38,8 @@ local function hide()
 end
 local TEMP_CAT={}
 local function Output(...)
-    if not Ether.infoFrame then
-        print(...)
+      if not Ether.infoFrame then
+          print(...)
         return
     end
     for i=1,select('#',...) do
@@ -52,7 +51,6 @@ local function Output(...)
     wipe(TEMP_CAT)
     hide()
 end
-
 function Ether:EtherInfo(...)
     Output(...)
 end
@@ -60,38 +58,4 @@ function Ether:EtherDebug(...)
     if Ether.DB[1][8]~=1 then return end
     Output(...)
 end
-local msgEvent,enableWhisper,disableWhisper
-do
-    if not msgEvent then
-        msgEvent=CreateFrame("Frame")
-    end
-    local function Whisper(_,event,...)
-        if event=="CHAT_MSG_WHISPER" or event=="CHAT_MSG_BN_WHISPER" then
-            local text,_,_,_,playerName2=...
-            Ether:EtherInfo(string.format("|cffcc66ffFrom %s:|r %s",playerName2,text))
-        end
-    end
-    function enableWhisper()
-        if not msgEvent:GetScript("OnEvent") then
-            msgEvent:SetScript("OnEvent",Whisper)
-            msgEvent:RegisterEvent("CHAT_MSG_WHISPER")
-            msgEvent:RegisterEvent("CHAT_MSG_BN_WHISPER")
-            Ether.DB[1][2]=1
-        end
-    end
-    function disableWhisper()
-        if msgEvent:GetScript("OnEvent") then
-            msgEvent:SetScript("OnEvent",nil)
-            msgEvent:UnregisterAllEvents()
-            Ether.DB[1][2]=0
-        end
-    end
-end
-local function EnableMsgEvents()
-    if msgEvent:GetScript("OnEvent") and msgEvent:IsEventRegistered("CHAT_MSG_WHISPER") then
-        disableWhisper()
-    else
-        enableWhisper()
-    end
-end
-Ether.EnableMsgEvents=EnableMsgEvents
+

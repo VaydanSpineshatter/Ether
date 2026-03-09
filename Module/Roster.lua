@@ -168,13 +168,32 @@ function Ether:UpdateColors()
         Ether:UpdatePowerColor(soloButtons[info])
     end
 end
-
+local sendChannel
+local updatedChannel=false
+local function UpdateSendChannel()
+    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+        sendChannel="INSTANCE_CHAT"
+    elseif IsInRaid() then
+        sendChannel="RAID"
+    else
+        sendChannel="PARTY"
+    end
+end
 local function Roster(_,event)
     if event=="PLAYER_UNGHOST" then
         if not UnitInBattleground("player") then return end
         initialButtons()
     elseif event=="GROUP_ROSTER_UPDATE" then
         refreshButtons()
+        if IsInGroup() then
+            if not updatedChannel then
+                updatedChannel=true
+                UpdateSendChannel()
+                C_ChatInfo.SendAddonMessage(Ether.metaData[1],Ether.metaData[3],sendChannel)
+            end
+        else
+            updatedChannel=false
+        end
     elseif event=="PLAYER_TARGET_CHANGED" then
         if Ether.DB[1][6]==1 then
             Ether:UpdateSoloIndicator("target")

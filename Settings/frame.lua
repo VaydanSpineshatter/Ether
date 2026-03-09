@@ -318,7 +318,7 @@ function Ether:CreateModuleSection(self)
                     Ether:ToggleIcon(0)
                 end
             elseif i==2 then
-                Ether.EnableMsgEvents()
+           Ether:EnableMsgEvents()
             elseif i==5 then
                 if Ether.DB[1][5]==1 then
                     Ether:RangeEnable()
@@ -1347,7 +1347,7 @@ function Ether:CreateHelperSection(EtherFrame)
     resultFrame:SetSize(230,40)
 
     resultText=resultFrame:CreateFontString(nil,"OVERLAY")
-    resultText:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+    resultText:SetFont(unpack(Ether.media.expressway),14,"OUTLINE")
     resultText:SetPoint("TOPLEFT",resultFrame,"BOTTOMLEFT",0,0)
     resultText:SetWidth(230)
     resultText:SetJustifyH("LEFT")
@@ -1359,9 +1359,9 @@ function Ether:CreateHelperSection(EtherFrame)
     spellInfo:SetScript("OnClick",function()
         Ether:SpellInfo(spellNameBox:GetText(),resultText,spellIcon)
     end)
-    local examples={"Greater Heal(Rank 4)","Greater Heal","25233"}
+    local examples={"Greater Heal(Rank 4)","Greater Heal","25233", "Name-Name"}
     local exampleText="Example\n\n"
-    for i=1,3 do
+    for i=1,4 do
         exampleText=exampleText..string_format("• %s\n",examples[i])
     end
     local example=parent:CreateFontString(nil,"OVERLAY")
@@ -1374,6 +1374,39 @@ function Ether:CreateHelperSection(EtherFrame)
     pvp:SetScript("OnClick",function()
         Ether:CheckPvpStatus()
     end)
+
+    local ignore=CreateLineInput(parent,180,20)
+    ignore:SetPoint("LEFT",parent,"LEFT",10,-10)
+    ignore:SetAutoFocus(false)
+    ignore:SetScript("OnEnterPressed",function(self)
+        local name = self:GetText()
+        if name then
+            Ether:IgnoringHandler(resultText, name)
+        end
+        self:ClearFocus()
+    end)
+    local send=EtherPanelButton(parent,50,25,"Enter","LEFT",ignore,"RIGHT",10,0)
+       send:SetScript("OnClick",function()
+       local name = ignore:GetText()
+       if name then
+            Ether:IgnoringHandler(resultText, name)
+       end
+       ignore:ClearFocus()
+    end)
+    local search=EtherPanelButton(parent,50,25,"Search","LEFT",send,"RIGHT",10,0)
+    search:SetScript("OnClick",function()
+       for entry in pairs(Ether.DB["USER"]) do
+            Ether:EtherInfo(string.format("%s",entry))
+       end
+    end)
+    local clear=EtherPanelButton(parent,50,25,"Delete ignore list","LEFT",search,"RIGHT",50,0)
+    clear:SetScript("OnClick",function()
+        wipe(Ether.DB["USER"])
+    end)
+   local label=parent:CreateFontString(nil,"OVERLAY")
+   label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
+   label:SetPoint("BOTTOMLEFT",ignore, "TOPLEFT",0,10)
+   label:SetText("Enter name to ignore")
 end
 
 function Ether:CreateConfigSection(self)
@@ -1383,7 +1416,7 @@ function Ether:CreateConfigSection(self)
     end
     parent.Created=true
     local DB=Ether.DB
-    local ID = DB[100][5]
+    local ID=DB[100][5]
     local K={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidFrame","PetFrame","PlayerCastBar","TargetCastBar"}
     local F={
         [1]=Ether.infoFrame,
@@ -1401,23 +1434,23 @@ function Ether:CreateConfigSection(self)
         [13]=Ether.EtherIcon
     }
 
-       local s=Ether:CreateSlider(parent,"Size","6 px","0.5","2",0.1,"TOPLEFT","TOPLEFT",100,-150,function(self,value)
-            if DB[21][ID] then
-                DB[21][ID][8]=value
-                Ether:ApplyFramePosition(F[ID],ID)
-                 parent.UpdateLabel()
-            end
-        end)
-        parent.s=s
+    local s=Ether:CreateSlider(parent,"Size","6 px","0.5","2",0.1,"TOPLEFT","TOPLEFT",100,-150,function(self,value)
+        if DB[21][ID] then
+            DB[21][ID][8]=value
+            Ether:ApplyFramePosition(F[ID],ID)
+            parent.UpdateLabel()
+        end
+    end)
+    parent.s=s
 
-        local a=Ether:CreateSlider(s,"Alpha","0","0","1",0.1,"LEFT","RIGHT",30,0,function(self,value)
-            if DB[21][ID] then
-                DB[21][ID][9]=value
-                Ether:ApplyFramePosition(F[ID],ID)
-                 parent.UpdateLabel()
-            end
-        end)
-       parent.a=a
+    local a=Ether:CreateSlider(s,"Alpha","0","0","1",0.1,"LEFT","RIGHT",30,0,function(self,value)
+        if DB[21][ID] then
+            DB[21][ID][9]=value
+            Ether:ApplyFramePosition(F[ID],ID)
+            parent.UpdateLabel()
+        end
+    end)
+    parent.a=a
 
     SetupSliderText(s,"0.5","2.0")
     SetupSliderText(a,"0","1")
@@ -1442,25 +1475,25 @@ function Ether:CreateConfigSection(self)
             return
         end
         local pos=DB[21][SELECTED]
-      s.v:SetText(string_format("%.1f",pos[8] or 1))
-      a.v:SetText(string_format("%.1f",pos[9] or 1))
+        s.v:SetText(string_format("%.1f",pos[8] or 1))
+        a.v:SetText(string_format("%.1f",pos[9] or 1))
     end
-    parent.UpdateLabel = UpdateLabel
+    parent.UpdateLabel=UpdateLabel
 
     local function UpdateSliders()
         local SELECTED=ID
         if not SELECTED or not DB[21][SELECTED] then
-           s:Disable()
+            s:Disable()
             a:Disable()
             UpdateLabel()
             return
         end
-       s:Enable()
-      a:Enable()
+        s:Enable()
+        a:Enable()
         local pos=DB[21][SELECTED]
-       s:SetValue(pos[8] or 1)
-       a:SetValue(pos[9] or 1)
-       UpdateLabel()
+        s:SetValue(pos[8] or 1)
+        a:SetValue(pos[9] or 1)
+        UpdateLabel()
     end
 
     for frameID,frameData in pairs(K) do
@@ -1530,7 +1563,7 @@ function Ether:CreateConfigSection(self)
             text=background,
             func=function()
                 dropdowns.bg.text:SetText(background)
-                 DB[100][9]=path
+                DB[100][9]=path
                 RefreshLayout()
             end})
     end

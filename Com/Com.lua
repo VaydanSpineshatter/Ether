@@ -1,20 +1,6 @@
 local _,Ether=...
-
 local Received={}
-local updatedChannel=false
-local sendChannel
-
-local function UpdateSendChannel()
-    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        sendChannel="INSTANCE_CHAT"
-    elseif IsInRaid() then
-        sendChannel="RAID"
-    else
-        sendChannel="PARTY"
-    end
-end
-
-local function HandleVersion(message)
+local function OnVersion(message)
     local theirVersion=tonumber(message)
     local myVersion=Ether.metaData[3]
     local lastCheck=ETHER_DATABASE_DX_AA[100][3] or 0
@@ -24,32 +10,40 @@ local function HandleVersion(message)
         Ether:EtherInfo(msg)
     end
 end
-
-local function Message(self,event,prefix,message,channel,sender,...)
-    if event=="CHAT_MSG_ADDON" then
+local NotValid = Ether.ValidMessage
+local string_split, string_format=string.split, string.format
+local function OnMsg(_, event, ...)
+    if  event == "CHAT_MSG_ADDON" then
+        local prefix,message,_,sender = ...
         if prefix~=Ether.metaData[1] then return end
         if sender==Ether.metaData[2] then return end
         if Received[message]==message then
             return
         end
         Received[message]=message
-        HandleVersion(message)
-    elseif event=="GROUP_ROSTER_UPDATE" then
-        if IsInGroup() then
-            if not updatedChannel then
-                updatedChannel=true
-                UpdateSendChannel()
-                C_ChatInfo.SendAddonMessage(Ether.metaData[1],Ether.metaData[3],sendChannel)
-            end
+        OnVersion(message)
+    elseif event == "CHAT_MSG_BN_WHISPER" or event == "CHAT_MSG_WHISPER" then
+         local message,sender=...
+          if NotValid(sender) then return end
+          local senderName = string_split('-', message)
+          Ether:EtherInfo(string_format("|cffcc66ffFrom %s:|r %s",message,senderName))
+    end
+end
+local frame
+if not frame then
+    frame = CreateFrame("Frame")
+    frame:SetScript("OnEvent",OnMsg)
+    frame:RegisterEvent("CHAT_MSG_ADDON")
+end
+function Ether:EnableMsgEvents()
+    for _,v in ipairs({"CHAT_MSG_WHISPER","CHAT_MSG_BN_WHISPER"}) do
+        if frame:IsEventRegistered(v) then
+           frame:UnregisterEvent(v)
+            Ether.DB[1][2]=0
         else
-            updatedChannel=false
+           frame:RegisterEvent(v)
+            Ether.DB[1][2]=1
         end
     end
 end
-local msgFrame
-if not msgFrame then
-    msgFrame=CreateFrame("Frame")
-    msgFrame:RegisterEvent("CHAT_MSG_ADDON")
-    msgFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
-    msgFrame:SetScript("OnEvent",Message)
-end
+

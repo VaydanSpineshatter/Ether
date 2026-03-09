@@ -432,7 +432,7 @@ function Ether:VerifyDefaultData()
 end
 
 function Ether:VerifyVersion()
-     ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3] or 0
+    ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3] or 0
 end
 
 function Ether:LoadAddon(self)
@@ -509,13 +509,9 @@ function Ether:ShowExportPopup(encoded)
 end
 
 function Ether:RefreshLayout(data)
-    if not data then
-        return
-    end
+    if not data then return end
     for _,button in pairs(data) do
-        if not button then
-            return
-        end
+        if not button then return end
         if button.background then
             button.background:SetTexture(Ether.DB[100][9])
         end

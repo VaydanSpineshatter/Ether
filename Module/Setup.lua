@@ -905,6 +905,26 @@ function Ether:SpellInfo(info,result,icon)
     end)
 end
 
+function Ether:IgnoringHandler(result, name)
+    if not name or type(name) ~= "string" then return end
+    name=name:trim()
+    if name=="" then
+        return
+    elseif Ether.DB["USER"][name] then
+        result:SetText("Name already ignored")
+        result:SetTextColor(1,0,0)
+        return
+    else
+        Ether.DB["USER"][name]=true
+    end
+end
+function Ether.ValidMessage(sender)
+    local DB = Ether.DB["USER"]
+    if DB[sender] then
+        return true
+    end
+    return false
+end
 --[[
 local function HexToRGB(hex)
     hex = hex:gsub('#', '')

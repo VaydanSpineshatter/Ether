@@ -461,9 +461,6 @@ local function OnInitialize(self,event,...)
                 LSM:Register("statusbar","BlankBar",[[Interface\AddOns\Ether\Media\StatusBar\BlankBar.tga]])
             end
         end
-        if Ether.DB[1][2]==1 then
-            Ether.EnableMsgEvents()
-        end
         Ether:CreateGroupHeader()
         Ether:CreatePetHeader()
         if Ether.DB[8][1]==1 then
@@ -471,6 +468,9 @@ local function OnInitialize(self,event,...)
         end
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
         EtherToggle()
+                if Ether.DB[1][2]==1 then
+           Ether:EnableMsgEvents()
+        end
         Ether:CreateToolFrame()
         Ether:ToolTipInitialize()
         Ether.Anchor.raid:SetSize(32,32)
