@@ -4,7 +4,19 @@ local tconcat=table.concat
 local select,wipe=select,wipe
 local C_After=C_Timer.After
 local debugText=""
-
+local function CreateLinkBox()
+    local box
+    if not box then
+        box=CreateFrame("EditBox",nil,UIParent,"InputBoxTemplate")
+        box:SetSize(280,20)
+        box:SetPoint("TOP",Ether.infoFrame,"BOTTOM")
+        box:SetAutoFocus(false)
+        local text=box:CreateFontString(nil,"OVERLAY","GameFontWhite")
+        text:SetPoint("CENTER")
+        box.text=text
+        return box
+    end
+end
 local function SendOutput(input)
     if not Ether.infoFrame then
         return
@@ -13,6 +25,7 @@ local function SendOutput(input)
     debugText=debugText..'\n'..input
     Ether.infoText:SetText(debugText)
 end
+
 local timer=false
 local function hide()
     if not timer then
@@ -25,30 +38,9 @@ local function hide()
     end
 end
 local TEMP_CAT={}
-function Ether:EtherInfo(...)
+local function Output(...)
     if not Ether.infoFrame then
         print(...)
-    end
-    local data=...
-    if type(data)~="string" then
-        return
-    end
-    for i=1,select('#',...) do
-        local arg=select(i,...)
-        tinsert(TEMP_CAT,tostring(arg))
-    end
-    local concat=tconcat(TEMP_CAT,"")
-    SendOutput(concat)
-    wipe(TEMP_CAT)
-    hide()
-end
-function Ether:EtherDebug(...)
-    if Ether.DB[401][8]~=1 then return end
-    if not Ether.infoFrame then
-        print(...)
-    end
-    local data=...
-    if type(data)~="string" then
         return
     end
     for i=1,select('#',...) do
@@ -61,6 +53,13 @@ function Ether:EtherDebug(...)
     hide()
 end
 
+function Ether:EtherInfo(...)
+    Output(...)
+end
+function Ether:EtherDebug(...)
+    if Ether.DB[1][8]~=1 then return end
+    Output(...)
+end
 local msgEvent,enableWhisper,disableWhisper
 do
     if not msgEvent then
@@ -77,14 +76,14 @@ do
             msgEvent:SetScript("OnEvent",Whisper)
             msgEvent:RegisterEvent("CHAT_MSG_WHISPER")
             msgEvent:RegisterEvent("CHAT_MSG_BN_WHISPER")
-            Ether.DB[401][2]=1
+            Ether.DB[1][2]=1
         end
     end
     function disableWhisper()
         if msgEvent:GetScript("OnEvent") then
             msgEvent:SetScript("OnEvent",nil)
             msgEvent:UnregisterAllEvents()
-            Ether.DB[401][2]=0
+            Ether.DB[1][2]=0
         end
     end
 end

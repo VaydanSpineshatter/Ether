@@ -6,7 +6,7 @@ function Ether:AuraTemplate(newId)
 end
 
 function Ether:IndicatorTemplate(n,k,c,s,p,x,y)
-    local obj= {n,k,c,s,p,x,y,false}
+    local obj={n,k,c,s,p,x,y,false}
     return obj
 end
 

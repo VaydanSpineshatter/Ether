@@ -258,12 +258,8 @@ local function HealthChanged(self,event,unit)
         return
     end
     if event=="UNIT_HEALTH" or event=="UNIT_MAXHEALTH" then
-        if Ether.DB[801][3]==1 then
-            Ether:UpdateHealth(self,true)
-        else
-            Ether:UpdateHealth(self)
-        end
-        if Ether.DB[701][3]==1 then
+         Ether:UpdateHealth(self)
+        if Ether.DB[4][3]==1 then
             Ether:UpdateHealthTextRounded(self)
         end
     end

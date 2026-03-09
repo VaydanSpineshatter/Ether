@@ -2,66 +2,66 @@ local _,Ether=...
 local tinsert,tsort=table.insert,table.sort
 local pairs,ipairs=pairs,ipairs
 local type,next=type,next
-
+local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
+local A={8,11,6,4,9,3,13,1,3,2}
+local PosMap={}
+for i,v in ipairs(D) do
+    PosMap[v]=i -- "TOPLEFT" -> 1
+    PosMap[i]=v -- 1 -> "TOPLEFT"
+end
 function Ether:PosNumber(input)
-    for index,info in ipairs({"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT"}) do
-        if type(input)=="string" and input==info then
-            return index
-        elseif type(input)=="number" and input==index then
-            return info
-        end
+    return PosMap[input]
+end
+function Ether:RefreshAllSettings()
+    for i = 1,10 do
+        Ether:FrameChecked(i)
     end
 end
-
 local Default={
-    [101]={1,1,1,1,1,1,1,1,1,1,1},
-    [111]={"Module",331,0},
-    [201]={1,1,1,1,1,1},
-    [301]={1,1,1,1,1,1,1,1,1,1,1,1,1},
-    [401]={1,1,1,1,0,1,1,0},
-    [501]={1,1,1,1,1,1,1,1,1},
-    [701]={0,0,0,0},
-    [801]={0,0,0},
-    [811]={"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\FrameGeneral\\UI-Background-Rock","Interface\\DialogFrame\\UI-DialogBox-Border"},
-    [1001]={1,1,1},
+    [1]={1,1,1,1,1,1,1,1},--Module
+    [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
+    [3]={1,1,1,1,1,1},--Create Units
+    [4]={0,0,0,0},--Update
+    [5]={1,1,1,1,1,1,1,1,1},--Indicators
+    [6]={1,1,1},--Aura
+    [7]={1,1,1,1,1,1,1,1,1,1,1,1,1},--Tooltip
+    [8]={1},--Header
+    [9]={1,1,1},--Layout
+    [10]={1,1},--CastBar
     [1002]={
-        [1]={"TOP",12,0,0},
-        [2]={"TOPLEFT",12,0,0},
-        [3]={"TOPLEFT",16,0,0},
-        [4]={"CENTER",12,0,6},
-        [5]={"RIGHT",12,0,0},
-        [6]={"BOTTOMRIGHT",12,0,12},
-        [7]={"TOP",12,0,0},
-        [8]={"LEFT",12,0,0},
-        [9]={"TOPLEFT",12,0,0},
-        ["Test"]={}
+        [1]={D[2],0,0,12},
+        [2]={D[1],0,0,12},
+        [3]={D[1],0,0,16},
+        [4]={D[2],0,0,12},
+        [5]={D[8],0,0,14},
+        [6]={D[9],0,0,12},
+        [7]={D[2],0,0,12},
+        [8]={D[4],0,0,12},
+        [9]={D[1],0,0,12},
     },
     [1003]={},
-    [1101]={1,1,1},
-    [1201]={1,1},
-    [1301]={16,12,12,16,12,12},
     [1401]={
-        [1]={"CENTER","UIParent","CENTER",0,90},
-        [2]={"CENTER","UIParent","CENTER",0,0},
-        [3]={"CENTER","UIParent","CENTER",0,-90},
+        [1]={D[5],D[10],D[5],0,90},
+        [2]={D[5],D[10],D[5],0,0},
+        [3]={D[5],D[10],D[5],0,-90},
     },
-    [1501]={1},
     [21]={
-        [1]={"TOP","UIParent","TOP",0,-100,120,280,1,1},
-        [2]={"BOTTOMRIGHT","UIParent","BOTTOMRIGHT",-350,200,320,200,1.0,1},
-        [3]={"CENTER","UIParent","CENTER",-250,-200,120,50,1,1},
-        [4]={"CENTER","UIParent","CENTER",250,-200,120,50,1,1},
-        [5]={"CENTER","UIParent","CENTER",0,-220,120,50,1,1},
-        [6]={"CENTER","UIParent","CENTER",-350,-100,120,50,1,1},
-        [7]={"CENTER","UIParent","CENTER",-270,-20,120,50,1,1},
-        [8]={"LEFT","UIParent","LEFT",500,100,120,50,1,1},
-        [9]={"BOTTOM","UIParent","BOTTOM",0,200,1,1,1,1},
-        [10]={"LEFT","UIParent","LEFT",200,0,1,1,1,1},
-        [11]={"CENTER","UIParent","CENTER",0,-180,340,15,1,1},
-        [12]={"CENTER","UIParent","CENTER",360,-270,240,15,1,1},
-        [13]={"TOPRIGHT","Minimap","TOPLEFT",-5,0,31,31,1,1},
-        [14]={"TOPLEFT","UIParent","TOPLEFT",50,-100,640,480,1,1}
-    }
+        [1]={D[2],D[10],D[2],0,-100,120,280,1,1},
+        [2]={D[9],D[10],D[9],-350,200,320,200,1.0,1},
+        [3]={D[5],D[10],D[5],-250,-200,120,50,1,1},
+        [4]={D[5],D[10],D[5],250,-200,120,50,1,1},
+        [5]={D[5],D[10],D[5],0,-220,120,50,1,1},
+        [6]={D[5],D[10],D[5],-350,-100,120,50,1,1},
+        [7]={D[5],D[10],D[5],-270,-20,120,50,1,1},
+        [8]={D[5],D[10],D[5],500,100,120,50,1,1},
+        [9]={D[8],D[10],D[8],0,200,1,1,1,1},
+        [10]={D[4],D[10],D[4],200,0,1,1,1,1},
+        [11]={D[5],D[10],D[5],0,-180,340,15,1,1},
+        [12]={D[5],D[10],D[5],360,-270,240,15,1,1},
+        [13]={D[3],D[10],D[1],-5,0,31,31,1,1},
+        [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
+    },
+    [100]={"Default",0,0,"Module",331,0,"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\FrameGeneral\\UI-Background-Rock"}
 }
 Ether.DataDefault=Default
 
@@ -97,6 +97,14 @@ function Ether:DataMigrate(old,newSize,default)
         t[i]=old[i]~=nil and old[i] or default
     end
     return t
+end
+
+function Ether:NilCheck(data)
+    for key,defaultValue in pairs(Ether.DataDefault) do
+        if data[key]==nil then
+            data[key]=Ether:CopyTable(defaultValue)
+        end
+    end
 end
 
 function Ether:CopyTable(orig,seen)
@@ -136,74 +144,34 @@ function Ether:TableSize(t)
     return count
 end
 
-function Ether:NilCheckData(data,number)
-    if data[number] then
-        for subkey in pairs(Ether.DataDefault[number]) do
-            if data[number][subkey]==nil then
-                data[number]=Ether:CopyTable(Ether.DataDefault[number])
-                break
+function Ether:ArrayMigrate(data)
+    if not data or type(data)~="table" then return end
+    for i,v in ipairs(A) do
+        if i<=10 then
+            if #data[i]~=v then
+                data[i]=Ether:DataMigrate(data[i],v,1)
             end
+        else
+            break
         end
     end
 end
 
-function Ether:ArrayMigrateData(data)
-    for arrayID,expectedLength in pairs(data) do
-        if data[arrayID] and type(data[arrayID])=="table" then
-            if #data[arrayID]~=expectedLength then
-                data[arrayID]=Ether:DataMigrate(data[arrayID],expectedLength,1)
-            end
-        end
-    end
-end
-
-function Ether:RefreshAllSettings()
-    Ether:FrameChecked(1,401)
-    Ether:FrameChecked(2,101)
-    Ether:FrameChecked(3,201)
-    Ether:FrameChecked(4,701)
-    Ether:FrameChecked(5,1001)
-    Ether:FrameChecked(6,501)
-    Ether:FrameChecked(7,301)
-    Ether:FrameChecked(8,801)
-    Ether:FrameChecked(9,1201)
-    Ether:FrameChecked(11,1501)
-end
-
-local mergeCache={}
-function Ether:MergeToLeft(ORIG,NEW)
-    mergeCache[ORIG]=NEW
-    local LEFT=ORIG
-    while LEFT~=nil do
-        local RIGHT=mergeCache[LEFT]
-        for NEW_KEY,NEW_VAL in pairs(RIGHT) do
-            local OLD_VAL=LEFT[NEW_KEY]
-            if OLD_VAL==nil then
-                LEFT[NEW_KEY]=NEW_VAL
-            else
-                local OLD_TYPE=type(OLD_VAL)
-                local NEW_TYPE=type(NEW_VAL)
-                if OLD_TYPE=="table" and NEW_TYPE=="table" then
-                    mergeCache[OLD_VAL]=NEW_VAL
-                else
-                    LEFT[NEW_KEY]=NEW_VAL
-                end
-            end
-        end
-        mergeCache[LEFT]=nil
-        LEFT=next(mergeCache)
-    end
-end
-
-function Ether:FrameChecked(number,data)
+function Ether:FrameChecked(number)
     if Ether.UIPanel.Buttons[number] then
-        for i=1,#Ether.DB[data] do
+        for i=1,#Ether.DB[number] do
             local checkbox=Ether.UIPanel.Buttons[number][i]
             if checkbox then
-                checkbox:SetChecked(Ether.DB[data][i]==1)
+                checkbox:SetChecked(Ether.DB[number][i]==1)
             end
         end
     end
+end
+
+function Ether:EtherFrameSetClick(number,number2)
+    local check=Ether.UIPanel.Buttons[number][number2]
+    check:SetChecked(not check:GetChecked())
+    check:GetScript("OnClick")(check)
 end
 
 function Ether:RefreshFramePositions()
@@ -248,8 +216,27 @@ function Ether:ApplyFramePosition(frame,index)
     end
 end
 
-function Ether:EtherFrameSetClick(number,number2,number3)
-    local check=Ether.UIPanel.Buttons[number][number2][number3] or Ether.UIPanel.Buttons[number][number2]
-    check:SetChecked(not check:GetChecked())
-    check:GetScript("OnClick")(check)
+local mergeCache={}
+function Ether:MergeToLeft(ORIG,NEW)
+    mergeCache[ORIG]=NEW
+    local LEFT=ORIG
+    while LEFT~=nil do
+        local RIGHT=mergeCache[LEFT]
+        for NEW_KEY,NEW_VAL in pairs(RIGHT) do
+            local OLD_VAL=LEFT[NEW_KEY]
+            if OLD_VAL==nil then
+                LEFT[NEW_KEY]=NEW_VAL
+            else
+                local OLD_TYPE=type(OLD_VAL)
+                local NEW_TYPE=type(NEW_VAL)
+                if OLD_TYPE=="table" and NEW_TYPE=="table" then
+                    mergeCache[OLD_VAL]=NEW_VAL
+                else
+                    LEFT[NEW_KEY]=NEW_VAL
+                end
+            end
+        end
+        mergeCache[LEFT]=nil
+        LEFT=next(mergeCache)
+    end
 end

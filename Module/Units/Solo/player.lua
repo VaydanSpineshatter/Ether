@@ -5,10 +5,10 @@ local function FullUpdate(self)
     Ether:UpdateHealth(self)
     Ether:UpdatePower(self)
     Ether:UpdateName(self,10)
-    if Ether.DB[701][1]==1 then
+    if Ether.DB[4][1]==1 then
         Ether:UpdateHealthTextRounded(self)
     end
-    if Ether.DB[701][2]==1 then
+    if Ether.DB[4][2]==1 then
         Ether:UpdatePowerTextRounded(self)
     end
     Ether:InitialHealth(self)
@@ -31,12 +31,12 @@ local function Event(self,event)
         Ether:UpdatePrediction(self)
     elseif event=="UNIT_MAXHEALTH" or event=="UNIT_HEALTH" then
         Ether:UpdateHealth(self)
-        if Ether.DB[701][1]==1 then
+        if Ether.DB[4][1]==1 then
             Ether:UpdateHealthTextRounded(self)
         end
     elseif event=="UNIT_POWER_UPDATE" or event=="UNIT_MAXPOWER" or event=="UNIT_DISPLAYPOWER" then
         Ether:UpdatePower(self)
-        if Ether.DB[701][2]==1 then
+        if Ether.DB[4][2]==1 then
             Ether:UpdatePowerTextRounded(self)
         end
     end
@@ -52,7 +52,6 @@ function Ether:CreateUnitButtons(token)
         return
     end
     local button=CreateFrame("Button","Ether_"..token.."_UnitButton",UIParent,"EtherUnitTemplate")
-
     button:SetSize(120,40)
     button.unit=token
     button:SetAttribute("unit",button.unit)
@@ -91,7 +90,7 @@ function Ether:CreateUnitButtons(token)
             break
         end
     end
-    if self.unit~="player" then
+    if button.unit~="player" then
         RegisterUnitWatch(button)
     end
     button:HookScript("OnAttributeChanged",OnAttributeChanged)

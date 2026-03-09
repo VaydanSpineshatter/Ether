@@ -136,7 +136,7 @@ end
 
 local function PowerChanged(self,event,unit)
     if event=="UNIT_POWER_UPDATE" or event=="UNIT_MAXPOWER" or event=="UNIT_DISPLAYPOWER" then
-        if Ether.DB[701][4]==1 then
+        if Ether.DB[4][4]==1 then
             Ether:UpdatePowerTextRounded(self.unit)
         end
     end

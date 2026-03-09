@@ -16,22 +16,23 @@ function Ether:HideBlizzard()
     if InCombatLockdown() then
         return
     end
-    if Ether.DB[101][1]==1 then
+    local DB=Ether.DB[2]
+    if DB[1]==1 then
         HiddenFrame(PlayerFrame)
     end
-    if Ether.DB[101][2]==1 then
+    if DB[2]==1 then
         HiddenFrame(PetFrame)
     end
-    if Ether.DB[101][3]==1 then
+    if DB[3]==1 then
         HiddenFrame(TargetFrame)
     end
-    if Ether.DB[101][4]==1 then
+    if DB[4]==1 then
         HiddenFrame(FocusFrame)
     end
-    if Ether.DB[101][5]==1 then
+    if DB[5]==1 then
         HiddenFrame(PlayerCastingBarFrame)
     end
-    if Ether.DB[101][6]==1 then
+    if DB[6]==1 then
         UIParent:UnregisterEvent("GROUP_ROSTER_UPDATE")
         if CompactPartyFrame then
             CompactPartyFrame:UnregisterAllEvents()
@@ -51,7 +52,7 @@ function Ether:HideBlizzard()
             HiddenFrame(PartyMemberBackground)
         end
     end
-    if Ether.DB[101][7]==1 then
+    if DB[7]==1 then
         if CompactRaidFrameContainer then
             CompactRaidFrameContainer:UnregisterAllEvents()
             hooksecurefunc(CompactRaidFrameContainer,'Show',CompactRaidFrameContainer.Hide)
@@ -62,7 +63,7 @@ function Ether:HideBlizzard()
             end)
         end
     end
-    if Ether.DB[101][8]==1 then
+    if DB[8]==1 then
         if CompactRaidFrameManager_SetSetting then
             CompactRaidFrameManager_SetSetting('IsShown','0')
         end
@@ -70,13 +71,13 @@ function Ether:HideBlizzard()
             HiddenFrame(CompactRaidFrameManager)
         end
     end
-    if Ether.DB[101][9]==1 then
+    if DB[9]==1 then
         HiddenFrame(MicroMenu)
     end
-    if Ether.DB[101][10]==1 then
+    if DB[10]==1 then
         HiddenFrame(MainStatusTrackingBarContainer)
     end
-    if Ether.DB[101][11]==1 then
+    if DB[11]==1 then
         HiddenFrame(BagsBar)
     end
 end

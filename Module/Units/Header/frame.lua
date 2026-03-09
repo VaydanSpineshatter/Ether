@@ -93,7 +93,7 @@ local function OnAttributeChanged(self,name,unit)
     end
     raidButtons[newUnit]=self
     if newUnit and UnitExists(newUnit) then
-        if Ether.DB[1001][3]==1 then
+        if Ether.DB[6][3]==1 then
             C_After(0.3,function()
                 if GUID then
                     --   Ether:UpdateRaidIsHelpful(self, self.unitGUID)
@@ -113,7 +113,7 @@ local function CreateChildren(header,button)
     Ether:SetupName(b,-5)
     Ether:DispelLineSetup(b)
     Ether:DispelIconSetup(b)
-       Ether:SavePosition(b)
+    Ether:SavePosition(b)
     Ether:SetupButtonLayout(b)
     if header:GetAttribute("TypePet") then
         b.TypePet=true
@@ -207,7 +207,7 @@ function Ether:ChangeDirectionHeader(horizontal)
         Ether.Header.raid:Hide()
         Ether.Header.raid:Show()
     end
-    if Ether.DB[1001][1]==1 then
+    if Ether.DB[6][1]==1 then
         Ether:AuraDisable()
         Ether:AuraEnable()
     end

@@ -13,12 +13,13 @@ local function UpdateSendChannel()
         sendChannel="PARTY"
     end
 end
+
 local function HandleVersion(message)
     local theirVersion=tonumber(message)
-    local myVersion=Ether:GetDataVersion()
-    local lastCheck=ETHER_DATABASE_DX_AA["Last"] or 0
+    local myVersion=Ether.metaData[3]
+    local lastCheck=ETHER_DATABASE_DX_AA[100][3] or 0
     if (time()-lastCheck>=9000) and theirVersion and myVersion and myVersion<theirVersion then
-        ETHER_DATABASE_DX_AA["Last"]=time()
+        ETHER_DATABASE_DX_AA[100][3]=time()
         local msg=string.format("New version found (%d). Please visit %s to get the latest version.",theirVersion,"|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
         Ether:EtherInfo(msg)
     end
@@ -27,22 +28,24 @@ end
 local function Message(self,event,prefix,message,channel,sender,...)
     if event=="CHAT_MSG_ADDON" then
         if prefix~=Ether.metaData[1] then return end
-        if sender==Ether:GetCharacterKey() then return end
+        if sender==Ether.metaData[2] then return end
         if Received[message]==message then
             return
         end
         Received[message]=message
         HandleVersion(message)
     elseif event=="GROUP_ROSTER_UPDATE" then
-        self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-        if IsInGroup() and updatedChannel==false then
-            updatedChannel=true
-            UpdateSendChannel()
-            C_ChatInfo.SendAddonMessage(Ether.metaData[1],Ether:GetDataVersion(),sendChannel)
+        if IsInGroup() then
+            if not updatedChannel then
+                updatedChannel=true
+                UpdateSendChannel()
+                C_ChatInfo.SendAddonMessage(Ether.metaData[1],Ether.metaData[3],sendChannel)
+            end
+        else
+            updatedChannel=false
         end
     end
 end
-
 local msgFrame
 if not msgFrame then
     msgFrame=CreateFrame("Frame")

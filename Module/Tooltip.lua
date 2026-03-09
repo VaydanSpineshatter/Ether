@@ -112,8 +112,7 @@ local function UpdateTooltip(self,unit)
     if not unit or not UnitExists(unit) then
         return
     end
-
-    local DB=Ether.DB[301]
+    local DB=Ether.DB[7]
     local name=UnitName(unit)
     local isPlayer=UnitIsPlayer(unit)
     local _,classFileName=UnitClass(unit)
@@ -145,7 +144,6 @@ local function UpdateTooltip(self,unit)
     end
 
     self.name:SetTextColor(nameColorR,nameColorG,nameColorB)
-
     if DB[1]==1 and UnitIsAFK(unit) then
         self.flags:SetText(AFK)
         self.flags:Show()
@@ -242,7 +240,7 @@ function Ether:ToolTipInitialize()
     end
     local frame=Ether.toolFrame
     GameTooltip:HookScript("OnTooltipSetUnit",function(self)
-        if Ether.DB[401][3]~=1 then
+        if Ether.DB[1][3]~=1 then
             return
         end
         local _,unit=self:GetUnit()
@@ -254,7 +252,7 @@ function Ether:ToolTipInitialize()
         end
     end)
     GameTooltip:HookScript("OnTooltipCleared",function()
-        if Ether.DB[401][3]~=1 then
+        if Ether.DB[1][3]~=1 then
             return
         end
         if frame and frame:IsShown() then

@@ -242,32 +242,32 @@ end
 local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLoot","PlayerRoles","ReadyCheck"}
 local state=false
 local function isAway(DB)
-    if DB[1201][1]==1 then
+    if DB[10][1]==1 then
         Ether:CastBarDisable("player")
     end
-    if DB[1201][2]==1 then
+    if DB[10][2]==1 then
         Ether:CastBarDisable("target")
     end
-    if DB[401][5]==1 then
+    if DB[1][5]==1 then
         Ether:RangeDisable()
     end
     Ether:IndicatorsNormalFullUpdate()
 end
 
 local function isNotAway(DB)
-    if DB[1201][1]==1 then
+    if DB[10][1]==1 then
         Ether:CastBarEnable("player")
     end
-    if DB[1201][2]==1 then
+    if DB[10][2]==1 then
         Ether:CastBarEnable("target")
     end
-    if DB[401][5]==1 then
+    if DB[1][5]==1 then
         Ether:RangeEnable()
     end
 end
 
 local function isUserIdle()
-    if Ether.DB[401][4]~=1 then return end
+    if Ether.DB[1][4]~=1 then return end
     local DB=Ether.DB
     local afk=UnitIsAFK("player")
     if afk and not state then
@@ -464,12 +464,12 @@ function Ether:UpdateIndicatorsPosition(number)
 end
 
 function Ether:SavePosition(button)
-      local C=Ether.DB[1002]
+    local C=Ether.DB[1002]
     for index,data in ipairs(iTbl) do
         if button.Indicators[data] then
-             button.Indicators[data]:Hide()
+            button.Indicators[data]:Hide()
             button.Indicators[data]:ClearAllPoints()
-            button.Indicators[data]:SetPoint(C[index][1], button.healthBar,C[index][1],C[index][2],C[index][3])
+            button.Indicators[data]:SetPoint(C[index][1],button.healthBar,C[index][1],C[index][2],C[index][3])
             button.Indicators[data]:SetSize(C[index][4],C[index][4])
         end
     end
@@ -525,28 +525,29 @@ do
     function Toggle(number)
         if not number or type(number)~="number" then return end
         if number<5 then
-            for index,info in ipairs(uSTR) do
-                if number==index then
-                    if U[info] and token:IsEventRegistered(info) then
-                        token:UnregisterEvent(info)
-                        U[info]=nil
-                    else
-                        token:RegisterEvent(info)
-                        U[info]=UH[index]
-                    end
-                end
+            local info=uSTR[number]
+            local handler=UH[number]
+            if not info then return end
+
+            if U[info] and token:IsEventRegistered(info) then
+                token:UnregisterEvent(info)
+                U[info]=nil
+            else
+                token:RegisterEvent(info)
+                U[info]=handler
             end
         else
-            for index,info in ipairs(nSTR) do
-                if number==index+4 then
-                    if N[info] and frame:IsEventRegistered(info) then
-                        frame:UnregisterEvent(info)
-                        N[info]=nil
-                    else
-                        frame:RegisterEvent(info)
-                        N[info]=NH[index]
-                    end
-                end
+            local idx=number-4
+            local info=nSTR[idx]
+            local handler=NH[idx]
+            if not info then return end
+
+            if N[info] and frame:IsEventRegistered(info) then
+                frame:UnregisterEvent(info)
+                N[info]=nil
+            else
+                frame:RegisterEvent(info)
+                N[info]=handler
             end
         end
     end
@@ -554,11 +555,11 @@ do
 end
 
 function Ether:IndicatorsEnable()
-     Ether:InitialIndicatorsPosition()
+    Ether:InitialIndicatorsPosition()
     Register()
 
     Ether:UpdateSoloIndicator("player")
-     Ether:IndicatorsNormalFullUpdate()
+    Ether:IndicatorsNormalFullUpdate()
 end
 
 function Ether:IndicatorsDisable()

@@ -8,7 +8,7 @@ local function SelectAura(editor,spellId)
 end
 
 function Ether:UpdateAuraStatus(spellId)
-    if Ether.DB[1001][3]~=1 then return end
+    if Ether.DB[6][3]~=1 then return end
     if not spellId then return end
     local debuff=Ether.DB[1003][spellId][8]
     local editor=Ether.UIPanel.Frames["EDITOR"]
@@ -123,7 +123,6 @@ function Ether:UpdateAuraList()
     end
 end
 
-
 function Ether:UpdateEditor(editor)
     if not Ether.DB[1003][Ether.UIPanel.SpellId] then
         editor.nameInput:SetText("")
@@ -131,9 +130,9 @@ function Ether:UpdateEditor(editor)
         editor.spellIdInput:SetText("")
         editor.spellIdInput:Disable()
         editor.colorBtn:Disable()
-        editor.sizeSlider:Disable()
-        editor.offsetXSlider:Disable()
-        editor.YSlider:Disable()
+        editor.s:Disable()
+        editor.x:Disable()
+        editor.y:Disable()
         editor.icon:Hide()
         for _,btn in pairs(editor.cube) do
             btn:Disable()
@@ -148,14 +147,14 @@ function Ether:UpdateEditor(editor)
     editor.spellIdInput:Enable()
     editor.colorBtn.bg:SetColorTexture(data[2][1],data[2][2],data[2][3],data[2][4])
     editor.colorBtn:Enable()
-    editor.offsetXSlider:Enable()
-    editor.offsetXSlider:Show()
-    editor.YSlider:Enable()
-    editor.YSlider:Show()
-    editor.sizeSlider:SetValue(data[3])
-    editor.sizeSlider:Enable()
-    editor.sizeSlider:Show()
-    editor.sizeValue:SetText(string.format("%.0f px",data[3]))
+    editor.x:Enable()
+    editor.x:Show()
+    editor.y:Enable()
+    editor.y:Show()
+    editor.s:SetValue(data[3])
+    editor.s:Enable()
+    editor.s:Show()
+    editor.s.v:SetText(string.format("%.0f px",data[3]))
     for pos,btn in pairs(editor.cube) do
         if pos==data[4] then
             btn.bg:SetColorTexture(0.8,0.6,0,0.5)
@@ -165,10 +164,10 @@ function Ether:UpdateEditor(editor)
             btn:Enable()
         end
     end
-    editor.offsetXSlider:SetValue(data[5])
-    editor.offsetXValue:SetText(string.format("%.0f",data[5]))
-    editor.YSlider:SetValue(data[6])
-    editor.offsetYValue:SetText(string.format("%.0f",data[6]))
+    editor.x:SetValue(data[5])
+    editor.x.v:SetText(string.format("%.0f",data[5]))
+    editor.y:SetValue(data[6])
+    editor.y.v:SetText(string.format("%.0f",data[6]))
     Ether:UpdatePreview(editor)
 end
 
@@ -198,23 +197,27 @@ function Ether:UpdatePreview(editor)
     end
 end
 
-
 function Ether:AddTemplateAuras(templateName)
     local template=Ether.PredefinedAuras[templateName]
-    if not template then return end
-    local DB=Ether.DB
+    if not template then
+        return
+    end
+
     local added=0
     local skipped=0
+
     for spellID,auraData in pairs(template) do
-        if not DB[1003][spellID] then
-            DB[1003][spellID]=Ether:CopyTable(auraData)
-            DB[1003][spellID][9]=true
+        if not Ether.DB[1003][spellID] then
+            Ether.DB[1003][spellID]=Ether:CopyTable(auraData)
+            Ether.DB[1003][spellID][9]=true
             added=added+1
         else
             skipped=skipped+1
         end
     end
+
     Ether:UpdateAuraList()
+
     local msg=string.format("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
     if added>0 then
         msg=msg..string.format("|cff00ff00+%d new auras|r",added)

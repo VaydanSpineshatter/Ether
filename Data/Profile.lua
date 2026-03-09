@@ -1,16 +1,29 @@
 local _,Ether=...
-local playerName,realmName=UnitName("player"),GetRealmName()
-local tinsert,tsort,tconcat=table.insert,table.sort,table.concat
+local tinsert,tremove,tsort,tconcat=table.insert,table.remove,table.sort,table.concat
 local pairs,ipairs=pairs,ipairs
-local tostring=tostring
+local tostring,tonumber=tostring,tonumber
 local string_format=string.format
 local type,next=type,next
-local math_floor=math.floor
 local string_char=string.char
 local string_rep=string.rep
-local unpack,wipe=unpack,wipe
+local string_gsub=string.gsub
+local string_byte=string.byte
+local string_sub=string.sub
+local string_find=string.find
+local string_match=string.match
+local string_len=string.len
+local string_lower=string.lower
+local string_upper=string.upper
+local unpack,select=unpack,select
 local CompressString=C_EncodingUtil.CompressString
 local DecompressString=C_EncodingUtil.DecompressString
+local math_floor=math.floor
+local math_ceil=math.ceil
+local math_abs=math.abs
+local math_max=math.max
+local math_min=math.min
+local math_random=math.random
+local math_sqrt=math.sqrt
 
 local function StringToTbl(str)
     if not str or str=="" then
@@ -21,32 +34,32 @@ local function StringToTbl(str)
     end
     local env={
         string={
-            sub=string.sub,
-            find=string.find,
-            match=string.match,
-            gsub=string.gsub,
-            byte=string.byte,
-            char=string.char,
-            len=string.len,
-            lower=string.lower,
-            upper=string.upper,
-            rep=string.rep,
-            format=string.format,
+            sub=string_sub,
+            find=string_find,
+            match=string_match,
+            gsub=string_gsub,
+            byte=string_byte,
+            char=string_char,
+            len=string_len,
+            lower=string_lower,
+            upper=string_upper,
+            rep=string_rep,
+            format=string_format,
         },
         table={
-            insert=table.insert,
-            remove=table.remove,
-            concat=table.concat,
-            sort=table.sort,
+            insert=tinsert,
+            remove=tremove,
+            concat=tconcat,
+            sort=tsort,
         },
         math={
-            floor=math.floor,
-            ceil=math.ceil,
-            abs=math.abs,
-            max=math.max,
-            min=math.min,
-            random=math.random,
-            sqrt=math.sqrt,
+            floor=math_floor,
+            ceil=math_ceil,
+            abs=math_abs,
+            max=math_max,
+            min=math_min,
+            random=math_random,
+            sqrt=math_sqrt,
         },
         tonumber=tonumber,
         tostring=tostring,
@@ -266,11 +279,13 @@ local function ProfileRefresh()
     Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
     Ether:AuraDisable()
     Ether:AuraEnable()
-    Ether:InitialIndicatorsPosition()
     Ether:RefreshLayout(Ether.raidButtons)
     Ether:RefreshLayout(Ether.soloButtons)
+    Ether.UIPanel.SpellId=nil
+    Ether:InitialIndicatorsPosition()
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
+    Ether:IndicatorsNormalFullUpdate()
 end
 
 function Ether:ExportCurrentProfile()
@@ -282,6 +297,7 @@ function Ether:ExportCurrentProfile()
     end
     local exportData={
         name=Ether:GetProfileName(),
+        version=ETHER_DATABASE_DX_AA["Version"] or 0,
         data=userData
     }
     local serialized=TblToString(exportData)
@@ -311,6 +327,10 @@ function Ether:ImportProfile(encodedString)
     if type(import)~="table" then
         return false,"Invalid data: No profile data found"
     end
+    local importVersion=import.version or 0
+    if importVersion<41500 then
+        return false,"Invalid data version"
+    end
     local name=import.name or "Imported"
     local baseName=name
     local counter=1
@@ -319,6 +339,8 @@ function Ether:ImportProfile(encodedString)
         name=baseName.."_"..counter
     end
     ETHER_DATABASE_DX_AA["Profiles"][name]=Ether:CopyTable(import.data)
+    Ether:NilCheck(ETHER_DATABASE_DX_AA["Profiles"][name])
+    Ether:ArrayMigrate(ETHER_DATABASE_DX_AA["Profiles"][name])
     ETHER_DATABASE_DX_AA["Current"]=name
     Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["Profiles"][name])
     ProfileRefresh()
@@ -380,32 +402,66 @@ function Ether:DeleteProfile(name)
     return true,"Profile deleted"
 end
 
-function Ether:GetCharacterKey()
-    return playerName.."-"..realmName or "UNKNOWN-UNKNOWN"
-end
-
 function Ether:GetProfile()
     return ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]
 end
 
+function Ether:ResetProfile()
+    Ether.DB=Ether:CopyTable(Ether.DataDefault)
+    ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DataDefault)
+    Ether:NilCheck(Ether:GetProfile())
+    Ether:ArrayMigrate(Ether:GetProfile())
+    ETHER_DATABASE_DX_AA["Current"]=Ether:GetProfileName()
+    ProfileRefresh()
+    return true,"Profile reset to default"
+end
+
+function Ether:ResetDataBase()
+    wipe(ETHER_DATABASE_DX_AA["Profiles"])
+    ETHER_DATABASE_DX_AA["Profiles"]={
+        ["Default"]=Ether:CopyTable(Ether.DataDefault),
+    }
+    ETHER_DATABASE_DX_AA[100][1]="Default"
+    ETHER_DATABASE_DX_AA[100][2]=Ether.metaData[3] or 0
+end
+
+function Ether:VerifyDefaultData()
+    if not ETHER_DATABASE_DX_AA["Profiles"]["Default"] then
+        ETHER_DATABASE_DX_AA["Profiles"]["Default"]=Ether:CopyTable(Ether.DataDefault)
+    end
+end
+
+function Ether:VerifyVersion()
+     ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3] or 0
+end
+
+function Ether:LoadAddon(self)
+    for _,v in ipairs({"PLAYER_LOGOUT","PLAYER_LOGIN","PLAYER_ENTERING_WORLD"}) do
+        if not self:IsEventRegistered(v) then
+            self:RegisterEvent(v)
+        end
+    end
+end
+
 function Ether:GetProfileName()
-    local Current=ETHER_DATABASE_DX_AA["Current"]
-    return Current or Ether.metaData[2]
+    local name=ETHER_DATABASE_DX_AA["Current"]
+    if not name or name=="" then return "Default" end
+    return name
 end
 
 function Ether:GetProfileList()
     return Ether:GetTableData(ETHER_DATABASE_DX_AA["Profiles"])
 end
 
-function Ether:GetDataVersion()
-    return tonumber(ETHER_DATABASE_DX_AA["Version"])
-end
-
 function Ether:CreateProfile(name)
     if ETHER_DATABASE_DX_AA["Profiles"][name] then
         return false,"Profile already exists"
     end
-    ETHER_DATABASE_DX_AA["Profiles"][name]=Ether.DataDefault
+    ETHER_DATABASE_DX_AA["Profiles"]={
+        [name]=Ether:CopyTable(Ether.DataDefault),
+        ["Version"]=Ether.metaData[3] or 0
+    }
+    ETHER_DATABASE_DX_AA["Current"]="Default"
     ProfileRefresh()
     return true,"Profile created"
 end
@@ -420,14 +476,6 @@ function Ether:RenameProfile(oldName,newName)
     ETHER_DATABASE_DX_AA["Profiles"][newName]=ETHER_DATABASE_DX_AA["Profiles"][oldName]
     ETHER_DATABASE_DX_AA["Current"]=newName
     return true,"Profile renamed"
-end
-
-function Ether:ResetProfile()
-    Ether.DB=Ether.DataDefault
-    ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether.DataDefault
-    Ether.UIPanel.SpellId=nil
-    ProfileRefresh()
-    return true,"Profile reset to default"
 end
 
 function Ether:ExportProfileToClipboard()
@@ -469,16 +517,13 @@ function Ether:RefreshLayout(data)
             return
         end
         if button.background then
-            button.background:SetTexture(Ether.DB[811][3])
-        end
-        if button.border then
-            button.border:SetTexture(Ether.DB[811][4])
+            button.background:SetTexture(Ether.DB[100][9])
         end
         if button.name then
-            button.name:SetFont(Ether.DB[811][1] or unpack(Ether.media.expressway),12,"OUTLINE")
+            button.name:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
         end
         if button.healthBar then
-            button.healthBar:SetStatusBarTexture((Ether.DB[811][2] or unpack(Ether.media.blankBar)))
+            button.healthBar:SetStatusBarTexture((Ether.DB[100][8] or unpack(Ether.media.blankBar)))
         end
     end
 end

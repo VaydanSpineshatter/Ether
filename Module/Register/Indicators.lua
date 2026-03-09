@@ -2,8 +2,6 @@ local _,Ether=...
 --local DB = Ether.DB[1002]["Test"]
 
 
-
-
 local function UpdateIndicators(number)
     if not number then
         return

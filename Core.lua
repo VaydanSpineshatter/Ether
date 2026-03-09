@@ -16,10 +16,11 @@ Ether.media={
         [1]={cmd="/ether",desc="Toggle Commands"},
         [2]={cmd="/ether settings",desc="Toggle settings"},
         [3]={cmd="/ether rl",desc="Reload Interface"},
-        [4]={cmd="/ether Msg",desc="Ether whisper enable"}
+        [4]={cmd="/ether Msg",desc="Ether whisper enable"},
+        [5]={cmd="/ether Msg",desc="www.hallo.de"},
+        [6]={cmd="/ether Msg",desc="http://www.hallo.de"}
     }
 }
-
 local function CreateSettingsButtons(name,parent,layer,onClick,isTopButton)
     local btn=CreateFrame("Button",nil,parent)
     if isTopButton then
@@ -105,13 +106,13 @@ do
                 break
             end
         end
-        for _,layers in pairs(self.Buttons[10]) do
+        for _,layers in pairs(self.Buttons[11]) do
             for _,topBtn in pairs(layers) do
                 topBtn:Hide()
             end
         end
-        if tabLayer and self.Buttons[10][tabLayer] then
-            for _,topBtn in pairs(self.Buttons[10][tabLayer]) do
+        if tabLayer and self.Buttons[11][tabLayer] then
+            for _,topBtn in pairs(self.Buttons[11][tabLayer]) do
                 topBtn:Show()
             end
         end
@@ -119,35 +120,35 @@ do
             child:Hide()
         end
         if category=="Module" then
-            Ether:CreateModuleSection(EtherFrame)
+            Ether:CreateModuleSection(self)
         elseif category=="Blizzard" then
-            Ether:CreateBlizzardSection(EtherFrame)
+            Ether:CreateBlizzardSection(self)
         elseif category=="About" then
-            Ether:CreateAboutSection(EtherFrame)
+            Ether:CreateAboutSection(self)
         elseif category=="Create" then
-            Ether:CreateCreationSection(EtherFrame)
+            Ether:CreateCreationSection(self)
         elseif category=="Fake" then
-            Ether:CreateFakeSection(EtherFrame)
+            Ether:CreateFakeSection(self)
         elseif category=="Update" then
-            Ether:CreateUpdateSection(EtherFrame)
+            Ether:CreateUpdateSection(self)
         elseif category=="Settings" then
-            Ether:CreateSettingsSection(EtherFrame)
+            Ether:CreateAuraSection(self)
         elseif category=="Effects" then
-            Ether:CreateEffectsSection(EtherFrame)
+            Ether:CreateEffectsSection(self)
         elseif category=="Helper" then
-            Ether:CreateHelperSection(EtherFrame)
+            Ether:CreateHelperSection(self)
         elseif category=="Tooltip" then
-            Ether:CreateTooltipSection(EtherFrame)
+            Ether:CreateTooltipSection(self)
         elseif category=="Header" then
-            Ether:CreateHeaderSection(EtherFrame)
+            Ether:CreateHeaderSection(self)
         elseif category=="Layout" then
-            Ether:CreateLayoutSection(EtherFrame)
+            Ether:CreateLayoutSection(self)
         elseif category=="CastBar" then
-            Ether:CreateCastBarSection(EtherFrame)
+            Ether:CreateCastBarSection(self)
         elseif category=="Config" then
-            Ether:CreateConfigSection(EtherFrame)
+            Ether:CreateConfigSection(self)
         elseif category=="Edit" then
-            Ether:CreateEditSection(EtherFrame)
+            Ether:CreateEditSection(self)
         end
         local target=self["CONTENT"]["CHILDREN"][category]
         if target then
@@ -167,7 +168,7 @@ do
             end
             for layer=1,8 do
                 if self.Menu["TOP"][layer] then
-                    self.Buttons[10][layer]={}
+                    self.Buttons[11][layer]={}
                     local BtnConfig={}
                     for idx,itemName in ipairs(self.Menu["TOP"][layer]) do
                         local btn=CreateSettingsButtons(itemName,self.Frames["TOP"],layer,function(btnName)
@@ -179,7 +180,7 @@ do
                             name=itemName,
                             width=btn:GetWidth()
                         }
-                        self.Buttons[10][layer][itemName]=btn
+                        self.Buttons[11][layer][itemName]=btn
                     end
                     if #BtnConfig>0 then
                         local spacing=10
@@ -203,14 +204,14 @@ do
                     for _,itemName in ipairs(self.Menu["LEFT"][layer]) do
                         local btn=CreateSettingsButtons(itemName,self.Frames["LEFT"],layer,function(_,btnLayer)
                             local firstTabName=self.Menu["TOP"][btnLayer][1]
-                            Ether.DB[111][1]=firstTabName
-                            for _,layers in pairs(self.Buttons[10]) do
+                            Ether.DB[100][4]=firstTabName
+                            for _,layers in pairs(self.Buttons[11]) do
                                 for _,topBtn in pairs(layers) do
                                     topBtn:Hide()
                                 end
                             end
-                            if self.Buttons[10][btnLayer] then
-                                for _,topBtn in pairs(self.Buttons[10][btnLayer]) do
+                            if self.Buttons[11][btnLayer] then
+                                for _,topBtn in pairs(self.Buttons[11][btnLayer]) do
                                     topBtn:Show()
                                 end
                             end
@@ -230,12 +231,12 @@ do
                     end
                 end
             end
-
             self.Frames["AURAS"]:SetParent(self["CONTENT"]["CHILDREN"]["Custom"])
             self.Frames["EDITOR"]:SetParent(self["CONTENT"]["CHILDREN"]["Custom"])
             self.Created=true
         end
     end
+
     local function ShowHideSettings(state)
         if InCombatLockdown() then
             return
@@ -285,10 +286,10 @@ do
                 self.Frames[value]=CreateFrame("Frame",nil,self.Frames["MAIN"])
             end
             self.Frames["MAIN"]:SetScript("OnShow",function()
-                Ether.DB[111][3]=1
+                Ether.DB[100][6]=1
             end)
             self.Frames["MAIN"]:SetScript("OnHide",function()
-                Ether.DB[111][3]=0
+                Ether.DB[100][6]=0
             end)
             self.Frames["TOP"]:SetPoint("TOPLEFT",10,-15)
             self.Frames["TOP"]:SetPoint("TOPRIGHT",-10,0)
@@ -372,12 +373,11 @@ do
         else
             EtherFrame.Frames["MAIN"]:Show()
         end
-        local category=Ether.DB[111][1]
+        local category=Ether.DB[100][4]
         if EtherFrame["CONTENT"]["CHILDREN"][category] then
             ShowCategory(EtherFrame,category)
         end
     end
-
     local function WrapSettingsColor(color)
         if type(color)~="table" then
             return
@@ -402,44 +402,29 @@ local function OnInitialize(self,event,...)
         if type(_G.ETHER_DATABASE_DX_AA)~="table" then
             _G.ETHER_DATABASE_DX_AA={}
         end
-        if type(ETHER_DATABASE_DX_AA["Version"])~="number" then
-            ETHER_DATABASE_DX_AA["Version"]=0
-        end
-        if type(ETHER_DATABASE_DX_AA["Last"])~="number" then
-            ETHER_DATABASE_DX_AA["Last"]=0
-        end
         if type(ETHER_DATABASE_DX_AA["Profiles"])~="table" then
             ETHER_DATABASE_DX_AA["Profiles"]={}
         end
-        if type(ETHER_DATABASE_DX_AA["Current"])~="string" then
-            ETHER_DATABASE_DX_AA["Current"]=""
+        if type(ETHER_DATABASE_DX_AA[100])~="table" then
+            ETHER_DATABASE_DX_AA[100]={}
         end
-        local System=C_AddOns.GetAddOnMetadata("Ether","Version")
-        local CharKey=Ether:GetCharacterKey()
-        Ether.metaData[2]=CharKey
-        Ether.metaData[3]=tonumber(System)
-        local User=ETHER_DATABASE_DX_AA["Version"]
-        if User<41500 then
-            wipe(ETHER_DATABASE_DX_AA["Profiles"])
-            ETHER_DATABASE_DX_AA["Profiles"]={
-                ["Default"]=Ether.DataDefault,
-            }
-            ETHER_DATABASE_DX_AA["Version"]=Ether.metaData[3]
-            ETHER_DATABASE_DX_AA["Current"]="Default"
+        local system=tonumber(C_AddOns.GetAddOnMetadata("Ether","Version"))
+        Ether.metaData[2]=UnitName("player")
+        Ether.metaData[3]=tonumber(system)
+        Ether:VerifyDefaultData()
+        local success,msg=pcall(function()
+            Ether:NilCheck(Ether:GetProfile())
+            Ether:ArrayMigrate(Ether:GetProfile())
+        end)
+        if not success then
+            Ether:EtherInfo(string.format("Migration failed. Reset data to default values - %s",msg))
+            Ether:ResetDataBase()
         else
-            if ETHER_DATABASE_DX_AA["Current"][Ether:GetProfileName()] then
-                ETHER_DATABASE_DX_AA["Profiles"][Ether:GetProfileName()]=Ether:MergeToLeft(Ether:CopyTable(Ether:GetProfile()),Ether.DataDefault)
-            end
-            if not ETHER_DATABASE_DX_AA["Profiles"]["Default"] then
-                ETHER_DATABASE_DX_AA["Profiles"]["Default"]=Ether:CopyTable(Ether.DataDefault)
-            end
+            Ether:LoadAddon(self)
         end
-        Ether.DB=Ether:GetProfile()
-        self:RegisterEvent("PLAYER_LOGIN")
     elseif (event=="PLAYER_LOGIN") then
         self:UnregisterEvent("PLAYER_LOGIN")
-        self:RegisterEvent("PLAYER_ENTERING_WORLD")
-        self:RegisterEvent("PLAYER_LOGOUT")
+        Ether.DB=Ether:CopyTable(Ether:GetProfile())
         C_ChatInfo.RegisterAddonMessagePrefix(Ether.metaData[1])
         Ether:CreatePopupBox()
         Ether:HideBlizzard()
@@ -478,12 +463,12 @@ local function OnInitialize(self,event,...)
                 LSM:Register("statusbar","BlankBar",[[Interface\AddOns\Ether\Media\StatusBar\BlankBar.tga]])
             end
         end
-        if Ether.DB[401][2]==1 then
+        if Ether.DB[1][2]==1 then
             Ether.EnableMsgEvents()
         end
         Ether:CreateGroupHeader()
         Ether:CreatePetHeader()
-        if Ether.DB[1501][1]==1 then
+        if Ether.DB[8][1]==1 then
             Ether:ChangeDirectionHeader(true)
         end
         self:RegisterEvent("PLAYER_REGEN_DISABLED")
@@ -507,17 +492,17 @@ local function OnInitialize(self,event,...)
         if Ether.EtherIcon then
             Ether.EtherIcon:ClearAllPoints()
             Ether.EtherIcon:SetPoint("CENTER",Minimap,"CENTER",Ether.DB[21][13][4],Ether.DB[21][13][5])
-            if Ether.DB[401][1]==1 then
+            if Ether.DB[1][1]==1 then
                 Ether:ToggleIcon(1)
             end
         end
         for _,unit in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
             Ether:CreateUnitButtons(unit)
         end
-        if Ether.DB[1201][1]==1 then
+        if Ether.DB[10][1]==1 then
             Ether:CastBarEnable("player")
         end
-        if Ether.DB[1201][2]==1 then
+        if Ether.DB[10][2]==1 then
             Ether:CastBarEnable("target")
         end
         if Ether.soloButtons["pet"] then
@@ -542,7 +527,7 @@ local function OnInitialize(self,event,...)
             Ether.UIPanel.Frames["MAIN"]:Show()
         end
     elseif (event=="PLAYER_LOGOUT") then
-        ETHER_DATABASE_DX_AA["Profiles"][ETHER_DATABASE_DX_AA["Current"]]=Ether:CopyTable(Ether.DB)
+        ETHER_DATABASE_DX_AA["Profiles"][Ether.DB[100][1]]=Ether:CopyTable(Ether.DB)
     end
 end
 local Initialize=CreateFrame("Frame")

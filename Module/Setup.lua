@@ -108,7 +108,7 @@ function Ether:SetupName(button,number)
     end
     local name=button.healthBar:CreateFontString(nil,"OVERLAY")
     button.name=name
-    name:SetFont(Ether.DB[811][1] or unpack(Ether.media.expressway),12,"OUTLINE")
+    name:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
     name:SetPoint("CENTER",button.healthBar,"CENTER",0,number)
     name:SetTextColor(1,1,1)
     return button
@@ -119,7 +119,7 @@ function Ether:SetupButtonLayout(button)
         return
     end
     button.background=button:CreateTexture(nil,"BACKGROUND")
-    button.background:SetTexture(Ether.DB[811][3])
+    button.background:SetTexture(Ether.DB[100][9])
     button.background:SetAllPoints(button)
     return button
 end
@@ -154,7 +154,7 @@ function Ether:SetupHealthBar(button,orient)
     button.healthBar=healthBar
     healthBar:SetAllPoints(button)
     healthBar:SetOrientation(orient)
-    local bar=Ether.DB[811][2] or unpack(Ether.media.blankBar)
+    local bar=Ether.DB[100][8] or unpack(Ether.media.blankBar)
     healthBar:SetStatusBarTexture(bar)
     healthBar:SetMinMaxValues(0,100)
     healthBar:SetFrameLevel(button:GetFrameLevel()+3)
@@ -222,11 +222,11 @@ function Ether:SetupCastBar(button,number)
     drop:SetColorTexture(0.2,0.2,0.4,.5)
     local text=frame:CreateFontString(nil,"OVERLAY")
     frame.text=text
-    text:SetFont(Ether.DB[811][1] or unpack(Ether.media.expressway),12,"OUTLINE")
+    text:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
     text:SetPoint("LEFT",31,0)
     local time=frame:CreateFontString(nil,"OVERLAY")
     frame.time=time
-    time:SetFont(Ether.DB[811][1] or unpack(Ether.media.expressway),12,"OUTLINE")
+    time:SetFont(Ether.DB[100][7] or unpack(Ether.media.expressway),12,"OUTLINE")
     time:SetPoint("RIGHT",frame,"RIGHT",-12,0)
     local icon=frame:CreateTexture(nil,"OVERLAY")
     icon:SetSize(16,16)
@@ -251,7 +251,7 @@ function Ether:SetupCastBar(button,number)
     frame:Hide()
 end
 
-function Ether:CreateSlider(parent,label,text,l,h,point,rel,x,y,callback)
+function Ether:CreateSlider(parent,label,text,l,h,s,point,rel,x,y,callback)
     local slider=CreateFrame("Slider",nil,parent,"OptionsSliderTemplate")
     slider.l=slider:CreateFontString(nil,"OVERLAY")
     slider.l:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
@@ -260,7 +260,7 @@ function Ether:CreateSlider(parent,label,text,l,h,point,rel,x,y,callback)
     slider:SetPoint("TOPLEFT",slider.l,"BOTTOMLEFT")
     slider:SetWidth(100)
     slider:SetMinMaxValues(tonumber(l),tonumber(h))
-    slider:SetValueStep(1)
+    slider:SetValueStep(s)
     slider:SetObeyStepOnDrag(true)
     slider.Low:SetText(tostring(l))
     slider.High:SetText(tostring(h))
@@ -286,37 +286,37 @@ local position={
 }
 
 local function GetShortName(pos)
-    if pos == "CENTER" then return "C" end
-    local first = pos:match("TOP") or pos:match("BOTTOM") or ""
-    local second = pos:match("LEFT") or pos:match("RIGHT") or ""
-    if first ~= "" and second ~= "" then
-        return first:sub(1,1) .. second:sub(1,1)
+    if pos=="CENTER" then return "C" end
+    local first=pos:match("TOP") or pos:match("BOTTOM") or ""
+    local second=pos:match("LEFT") or pos:match("RIGHT") or ""
+    if first~="" and second~="" then
+        return first:sub(1,1)..second:sub(1,1)
     else
         return pos:sub(1,1)
     end
 end
 
-function Ether:CreateCube(parent, s, x, y, click, enter, leave)
-    local data = {}
-    for row = 1, 3 do
-        for col = 1, 3 do
-            local pos = position[row][col]
-            local text = GetShortName(pos)
-            local btn = CreateFrame("Button", nil, parent)
-            data[pos] = btn
-            btn:SetSize(s, s)
-            btn:SetPoint("TOPLEFT", x + (col - 1) * (s + 1), y - (row - 1) * (s + 1))
-            btn.bg = btn:CreateTexture(nil, "BACKGROUND")
+function Ether:CreateCube(parent,s,x,y,click,enter,leave)
+    local data={}
+    for row=1,3 do
+        for col=1,3 do
+            local pos=position[row][col]
+            local text=GetShortName(pos)
+            local btn=CreateFrame("Button",nil,parent)
+            data[pos]=btn
+            btn:SetSize(s,s)
+            btn:SetPoint("TOPLEFT",x+(col-1)*(s+1),y-(row-1)*(s+1))
+            btn.bg=btn:CreateTexture(nil,"BACKGROUND")
             btn.bg:SetAllPoints()
-            btn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.8)
-            btn.text = btn:CreateFontString(nil, "OVERLAY")
-            btn.text:SetFont(unpack(Ether.media.expressway), 10, "OUTLINE")
+            btn.bg:SetColorTexture(0.2,0.2,0.2,0.8)
+            btn.text=btn:CreateFontString(nil,"OVERLAY")
+            btn.text:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
             btn.text:SetPoint("CENTER")
             btn.text:SetText(text)
-            btn.position = pos
-            btn:SetScript("OnClick", click)
-            btn:SetScript("OnEnter", enter)
-            btn:SetScript("OnLeave", leave)
+            btn.position=pos
+            btn:SetScript("OnClick",click)
+            btn:SetScript("OnEnter",enter)
+            btn:SetScript("OnLeave",leave)
         end
     end
     return data
@@ -779,7 +779,7 @@ end
 
 ---@return any
 function ObjPool:Acquire(...)
-    if self.activeCount>=220 then
+    if self.activeCount>=310 then
         return nil
     end
     local obj=table.remove(self.inactive)
