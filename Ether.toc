@@ -21,6 +21,7 @@ Core.lua
 Module/Register/Indicators.lua
 Module/Register/Auras.lua
 Module/Setup.lua
+Combat/Combat.lua
 Module/Units/Solo/player.lua
 Module/Units/Solo/hunter.lua
 Module/Units/Header/frame.lua

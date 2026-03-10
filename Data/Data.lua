@@ -62,7 +62,7 @@ local Default={
         [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
     },
     ["USER"]={},
-    [100]={"Module",1,0,"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\DialogFrame\\UI-DialogBox-Background-Dark"}
+    [100]={"Module",1,false,"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\DialogFrame\\UI-DialogBox-Background-Dark"}
 }
 Ether.DataDefault=Default
 

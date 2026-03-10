@@ -40,16 +40,16 @@ local TEMP_CAT={}
 local function Output(...)
     if not Ether.infoFrame then
         print(...)
-        return
+    else
+        for i=1,select('#',...) do
+            local arg=select(i,...)
+            tinsert(TEMP_CAT,tostring(arg))
+        end
+        local concat=tconcat(TEMP_CAT,"")
+        SendOutput(concat)
+        wipe(TEMP_CAT)
+        hide()
     end
-    for i=1,select('#',...) do
-        local arg=select(i,...)
-        tinsert(TEMP_CAT,tostring(arg))
-    end
-    local concat=tconcat(TEMP_CAT,"")
-    SendOutput(concat)
-    wipe(TEMP_CAT)
-    hide()
 end
 function Ether:EtherInfo(...)
     if Ether.DB[1][7]~=1 then return end

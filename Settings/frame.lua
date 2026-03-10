@@ -239,7 +239,7 @@ local function CreateLineInput(parent,width,height)
         bg:SetColorTexture(1,1,1,0.1)
     end)
     input:SetScript("OnEscapePressed",function()
-         input:ClearFocus()
+        input:ClearFocus()
     end)
     return input
 end
@@ -1164,7 +1164,7 @@ function Ether:CreateCustomSection(self)
     editor.nameInput=nameInput
     nameInput:SetPoint("TOPLEFT",name,"BOTTOMLEFT",0,-10)
     nameInput:SetScript("OnEnterPressed",function(_)
-           if type(self.SpellId) ~= nil then
+        if type(self.SpellId)~=nil then
             DB[1003][self.SpellId].name=nameInput:GetText()
             Ether:UpdateAuraList()
         end
@@ -1197,14 +1197,14 @@ function Ether:CreateCustomSection(self)
     local isDebuff=EtherPanelButton(editor,50,25,"Debuff","LEFT",spellIdInput,"RIGHT",10,0)
     editor.isDebuff=isDebuff
     isDebuff:SetScript("OnClick",function()
-         if type(self.SpellId) ~= nil then
+        if type(self.SpellId)~=nil then
             DB[1003][self.SpellId][8]=not DB[1003][self.SpellId][8]
             Ether:UpdateAuraStatus(self.SpellId)
         end
     end)
 
     local cube=Ether:CreateCube(editor,24,120,-120,function(self)
-        if type(Ether.UIPanel.SpellId) ~= nil then
+        if type(Ether.UIPanel.SpellId)~=nil then
             Ether.DB[1003][Ether.UIPanel.SpellId][4]=self.position
             Ether:UpdateEditor(editor)
             Ether:UpdatePreview(editor)
@@ -1222,7 +1222,7 @@ function Ether:CreateCustomSection(self)
     editor.cube=cube
 
     local s=Ether:CreateSlider(spellIdInput,"Size","6 px","4","20",1,"TOPLEFT","BOTTOMLEFT",0,-110,function(_,value)
-        if type(self.SpellId) ~= nil then
+        if type(self.SpellId)~=nil then
             DB[1003][self.SpellId][3]=value
             editor.s.v:SetText(string_format("%.0f px",value))
             Ether:UpdatePreview(editor)
@@ -1231,7 +1231,7 @@ function Ether:CreateCustomSection(self)
     editor.s=s
 
     local x=Ether:CreateSlider(s,"X-Off","0","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,function(_,value)
-         if type(self.SpellId) ~= nil then
+        if type(self.SpellId)~=nil then
             DB[1003][self.SpellId][5]=value
             editor.x.v:SetText(string_format("%.0f",value))
             Ether:UpdatePreview(editor)
@@ -1240,7 +1240,7 @@ function Ether:CreateCustomSection(self)
     editor.x=x
 
     local y=Ether:CreateSlider(x,"Y-Off","0","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,function(_,value)
-       if type(self.SpellId) ~= nil then
+        if type(self.SpellId)~=nil then
             DB[1003][self.SpellId][6]=value
             editor.y.v:SetText(string_format("%.0f",value))
             Ether:UpdatePreview(editor)
@@ -1256,7 +1256,7 @@ function Ether:CreateCustomSection(self)
     editor.colorBtn.bg:SetAllPoints()
     editor.colorBtn.bg:SetColorTexture(1,1,0,1)
     editor.colorBtn:SetScript("OnClick",function()
-        if type(self.SpellId) ~= nil then return end
+        if type(self.SpellId)~=nil then return end
         local data=Ether.DB[1003][self.SpellId]
         originalColor=data.color
         currentEditor=editor
@@ -1454,12 +1454,14 @@ function Ether:CreateConfigSection(self)
     SetupSliderText(a,"0","1")
     SetupSliderThump(s,10,{0.8,0.6,0,1})
     SetupSliderThump(a,10,{0.8,0.6,0,1})
-
+    local show = false
     local unlock=EtherPanelButton(parent,60,25,"Unlock","TOPLEFT",s,"BOTTOMLEFT",0,-50)
     unlock:SetScript("OnClick",function()
-        if not Ether.Anchor.raid.tex:IsShown() then
+        if not show then
+            show = true
             Ether.ShowHideSettings(true)
         else
+            show = false
             Ether.ShowHideSettings(false)
         end
     end)
@@ -1674,7 +1676,7 @@ function Ether:CreateEditSection(self)
     local renameButton=EtherPanelButton(parent,60,25,"Rename","TOPLEFT",createButton,"BOTTOMLEFT",0,-20)
     renameButton:SetScript("OnClick",function()
         inputTitle:SetText("Rename profile")
-        local name = Ether:GetProfileName()
+        local name=Ether:GetProfileName()
         inputBox:SetText(name)
         inputDialog:Show()
         inputBox:SetFocus()
@@ -1802,8 +1804,8 @@ function Ether:CreateEditSection(self)
     end)
     importBox:SetScript("OnEditFocusLost",function()
         if importBox:GetText()=="" then
-           importBox:SetText("Paste export data here...")
-           importBox:SetTextColor(0.7,0.7,0.7)
+            importBox:SetText("Paste export data here...")
+            importBox:SetTextColor(0.7,0.7,0.7)
         end
     end)
     importBox:SetScript("OnEscapePressed",function()

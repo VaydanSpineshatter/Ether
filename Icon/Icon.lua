@@ -64,7 +64,9 @@ end
 
 local function Click(_,btn)
     if btn=="RightButton" then
-        Ether.EtherToggle()
+        if InCombatLockdown() then return end
+        Ether.DB[100][3] = not Ether.DB[100][3]
+        Ether.EtherToggle(Ether.DB[100][3])
     end
 end
 

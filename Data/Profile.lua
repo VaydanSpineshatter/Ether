@@ -473,7 +473,7 @@ function Ether:RenameProfile(oldName,newName)
     if ETHER_DATABASE_DX_AA["PROFILES"][newName] then
         return false,"Name already taken"
     end
-     ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
+    ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
     ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
     ETHER_DATABASE_DX_AA["CURRENT"]=newName
     ETHER_DATABASE_DX_AA["PROFILES"][oldName]=nil
@@ -506,7 +506,7 @@ end
 local function GetProfiles(tbl)
     local data={}
     for name in pairs(tbl) do
-        if name ~= "VERSION" then
+        if name~="VERSION" then
             tinsert(data,name)
         end
     end
