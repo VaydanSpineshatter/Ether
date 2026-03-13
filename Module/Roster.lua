@@ -98,10 +98,7 @@ local function refreshButtons()
                     Ether:AuraEnable()
                 end
                 if Ether.DB[1][6]==1 then
-                    local btn=raidButtons["player"]
-                    if btn then
-                        Ether:IndicatorsFullUpdateByeUnit(btn)
-                    end
+                     Ether:IndicatorsFullUpdate()
                 end
             else
                 if Ether.DB[6][3]==1 then
