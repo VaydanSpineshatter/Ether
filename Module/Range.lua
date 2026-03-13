@@ -92,7 +92,7 @@ local rangeTicker=nil
 
 function Ether:RangeEnable()
     if not rangeTicker then
-        rangeTicker=C_Ticker(1.3,function()
+        rangeTicker=C_Ticker(1,function()
             UpdateTargetAlpha()
             UpdateRaidAlpha()
         end)

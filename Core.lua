@@ -325,11 +325,10 @@ local function OnInitialize(self,event,...)
             if not soundsRegistered then
                 soundsRegistered=true
                 local LSM=LibStub("LibSharedMedia-3.0")
-                LSM:Register("font","Expressway",[[Interface\AddOns\Ether\Media\Font\expressway.ttf]])
                 LSM:Register("font","Venite",[[Interface\AddOns\Ether\Media\Font\venite.ttf]])
-                LSM:Register("statusbar","BlankBar",[[Interface\AddOns\Ether\Media\StatusBar\BlankBar.tga]])
             end
         end
+        Ether:RosterEnable()
         Ether:CreateGroupHeader()
         Ether:CreatePetHeader()
         if Ether.DB[8][1]==1 then
@@ -380,7 +379,6 @@ local function OnInitialize(self,event,...)
         for _,unit in ipairs({"player","target","pet"}) do
             Ether:SoloAuraSetup(Ether.soloButtons[unit])
         end
-        Ether:RosterEnable()
         Ether.EtherToggle(Ether.DB[100][3])
     elseif (event=="PLAYER_LOGOUT") then
         ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)

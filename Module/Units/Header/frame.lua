@@ -39,7 +39,6 @@ local function Leave()
 end
 
 local function Update(self)
-    self.unit=self:GetAttribute("unit")
     Ether:UpdateHealth(self)
     Ether:UpdateName(self,3)
     Ether:InitialHealth(self)
@@ -54,12 +53,16 @@ local function CheckStatus(self)
         self.destGUID=guid
         if guid then
             Update(self)
+            if UnitExists(self.unit) then
+                C_After(2,function()
+                    Ether:RaidAurasFullUpdate(self, guid)
+                end)
+            end
         end
     end
 end
 
 local function Show(self)
-    self.unit=self:GetAttribute("unit")
     self:RegisterEvent("UNIT_NAME_UPDATE")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     if self.TypePet then
@@ -75,9 +78,7 @@ local function Hide(self)
         self:UnregisterEvent("UNIT_PET")
     end
     if self.destGUID then
-        Ether:UpdateDispelFrame(self,{0,0,0,0})
-        Ether:UpdatePrediction(self)
-        Ether:GuidStatus(self.destGUID)
+        Ether.CheckOldGUID(self.destGUID)
     end
 end
 
@@ -86,21 +87,12 @@ local function OnAttributeChanged(self,name,unit)
         return
     end
     local oldUnit=self.unit
-    local newUnit=unit
-    local GUID=UnitGUID(unit)
+    local newUnit=unit or self:GetAttribute("unit")
     if oldUnit and oldUnit~=newUnit then
         raidButtons[oldUnit]=nil
     end
-    raidButtons[newUnit]=self
-    if newUnit and UnitExists(newUnit) then
-        if Ether.DB[6][3]==1 then
-            C_After(0.3,function()
-                if GUID then
-                    --   Ether:UpdateRaidIsHelpful(self, self.unitGUID)
-                    --  Ether:UpdateRaidIsHarmful(self, self.unitGUID)
-                end
-            end)
-        end
+    if newUnit then
+         raidButtons[newUnit]=self
     end
     CheckStatus(self)
 end

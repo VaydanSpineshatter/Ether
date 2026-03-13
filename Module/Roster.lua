@@ -28,36 +28,6 @@ end
 function Ether:IsValidAura(unit)
     return cacheSoloAura[unit]
 end
---[[
-
-
-     for index = 1, GetNumGroupMembers() do
-                    local unit = "raid" .. index
-                    if UnitExists(unit) then
-                        local button, _, guid =CheckRaidButtons(unit)
-                        if not button then return end
-                        UpdateAuraByIndex(unit, guid)
-                    end
-                end
-
-local function UpdateAuraByIndex(unit,guid)
-    local C=Ether.DB[1003]
-     if not Ether.dataSpell[guid] then
-        Ether.dataSpell[guid]={}
-     end
-    local index=1
-    while true do
-        local aura=C_UnitAuras.GetBuffDataByIndex(unit,index)
-        if not aura then
-            break
-        end
-        if not C[aura.spellId] or not C[aura.spellId].isEnabled then return end
-        Ether.dataSpell[guid][aura.spellId] = Ether.texPool:Acquire(C[aura.spellId],unit)
-        Ether.spellInstance[aura.auraInstanceID]=aura
-        index=index+1
-    end
-end
-]]
 
 local raidButtons=Ether.raidButtons
 local function CheckRaidButtons(unit)
@@ -101,11 +71,9 @@ local function refreshButtons()
                     Ether:IndicatorsFullUpdate()
                 end
             else
-                if Ether.DB[6][3]==1 then
-                    for _,button in pairs(raidButtons) do
-                        if button and button:IsVisible() then
-                            Ether:UpdateClassColor(button)
-                        end
+                for _,button in pairs(raidButtons) do
+                    if button and button:IsVisible() then
+                        Ether:UpdateClassColor(button)
                     end
                 end
                 if Ether.DB[1][6]==1 then
@@ -149,7 +117,7 @@ local function initialButtons()
                 if button then
                     if UnitExists(unit) then
                         Ether:InitialHealth(button)
-                        Ether:IndicatorsFullUpdateUnit(button)
+                        Ether:IndicatorsFullUpdateByUnit(button)
                     end
                 end
             end
