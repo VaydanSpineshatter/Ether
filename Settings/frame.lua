@@ -98,18 +98,22 @@ local function CreateEtherDropdown(parent,width,text,options,position)
     dropdown.bottom:SetPoint("BOTTOMRIGHT")
     dropdown.bottom:SetHeight(1)
     dropdown.bottom:SetColorTexture(0.80,0.40,1.00,1)
-    if position then
+    if position=="NONE" then
+        dropdown.bottom:Hide()
+    elseif position then
         dropdown.left=dropdown:CreateTexture(nil,"BORDER")
         dropdown.left:SetPoint("TOPLEFT")
         dropdown.left:SetPoint("BOTTOMLEFT")
         dropdown.left:SetWidth(-1)
         dropdown.left:SetColorTexture(0.80,0.40,1.00,1)
+        dropdown.bottom:Show()
     else
         dropdown.right=dropdown:CreateTexture(nil,"BORDER")
         dropdown.right:SetPoint("TOPRIGHT")
         dropdown.right:SetPoint("BOTTOMRIGHT")
         dropdown.right:SetWidth(1)
         dropdown.right:SetColorTexture(0.80,0.40,1.00,1)
+        dropdown.bottom:Show()
     end
     dropdown.text=dropdown:CreateFontString(nil,"OVERLAY")
     dropdown.text:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
@@ -131,18 +135,22 @@ local function CreateEtherDropdown(parent,width,text,options,position)
     menu.bottom:SetPoint("BOTTOMRIGHT")
     menu.bottom:SetHeight(1)
     menu.bottom:SetColorTexture(0.00,0.80,1.00,1)
-    if position then
+    if position=="NONE" then
+        menu.bottom:Hide()
+    elseif position then
         menu.left=menu:CreateTexture(nil,"BORDER")
         menu.left:SetPoint("TOPLEFT")
         menu.left:SetPoint("BOTTOMLEFT")
         menu.left:SetWidth(-1)
         menu.left:SetColorTexture(0.00,0.80,1.00,1)
+        menu.bottom:Show()
     else
         menu.right=menu:CreateTexture(nil,"BORDER")
         menu.right:SetPoint("TOPRIGHT")
         menu.right:SetPoint("BOTTOMRIGHT")
         menu.right:SetWidth(1)
         menu.right:SetColorTexture(0.00,0.80,1.00,1)
+        menu.bottom:Show()
     end
     local totalHeight=4
     for _,data in ipairs(options) do
@@ -1458,7 +1466,7 @@ function Ether:CreateConfigSection(panel)
     SetupSliderThump(s,10,{0.8,0.6,0,1})
     SetupSliderThump(a,10,{0.8,0.6,0,1})
 
-    local dropdowns,frameOptions={},{}
+    local dropdowns,frameOptions,flagOptions={},{},{}
     local function UpdateLabel()
         local SELECTED=ID
         if not SELECTED or not DB[21] or not DB[21][SELECTED] then
@@ -1588,6 +1596,18 @@ function Ether:CreateConfigSection(panel)
     SetupSliderText(fontSize,"8","24")
     SetupSliderThump(fontSize,10,{0.8,0.6,0,1})
     UpdateSliders()
+    for _,name in ipairs({"OUTLINE","THICKOUTLINE","MONOCHROME","NONE"}) do
+        table.insert(flagOptions,{
+            text=name,
+            func=function(self)
+                if name then
+                    Ether:SetupFontFlags(name)
+                end
+            end
+        })
+    end
+    dropdowns.flag=CreateEtherDropdown(parent,120,"Select Font Flags",flagOptions,"NONE")
+    dropdowns.flag:SetPoint("LEFT",fontSize,"RIGHT",60,0)
 end
 
 function Ether:CreateEditSection(panel)

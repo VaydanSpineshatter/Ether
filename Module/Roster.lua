@@ -98,7 +98,7 @@ local function refreshButtons()
                     Ether:AuraEnable()
                 end
                 if Ether.DB[1][6]==1 then
-                     Ether:IndicatorsFullUpdate()
+                    Ether:IndicatorsFullUpdate()
                 end
             else
                 if Ether.DB[6][3]==1 then

@@ -329,6 +329,28 @@ function Ether:UpdateButtonFont(data)
     end
 end
 
+function Ether:SetupFontFlags(update)
+    if update=="NONE" then
+        update=""
+    end
+    local size=Ether.DB[100][7] or 12
+    local font=Ether.DB[100][4] or unpack(Ether.media.venite)
+    local flag=update or "OUTLINE"
+    Ether.DB[100][8]=flag
+    for _,button in pairs(Ether.raidButtons) do
+        if not button then return end
+        if button.name then
+            button.name:SetFont(font,size,flag)
+        end
+    end
+    for _,button in pairs(Ether.soloButtons) do
+        if not button then return end
+        if button.name then
+            button.name:SetFont(font,size,flag)
+        end
+    end
+end
+
 function Ether:RefreshLayout(data)
     if not data then return end
     for _,button in pairs(data) do

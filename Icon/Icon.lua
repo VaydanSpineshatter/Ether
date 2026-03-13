@@ -52,8 +52,8 @@ local function Enter(self)
     if not isDragging then
         GameTooltip:SetOwner(self,"ANCHOR_BOTTOMLEFT")
         GameTooltip:SetText("Ether",0,0.8,1)
-        GameTooltip:AddLine(L.MINIMAP_TOOLTIP_RIGHT,1,1,1,1)
-        GameTooltip:AddLine(L.MINIMAP_TOOLTIP_LOCALE,1,1,1,1)
+        GameTooltip:AddLine(L.MINIMAP_TOOLTIP_RIGHT,1,1,1)
+        GameTooltip:AddLine(L.MINIMAP_TOOLTIP_LOCALE,1,1,1)
         GameTooltip:Show()
     end
 end

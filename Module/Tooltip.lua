@@ -11,6 +11,7 @@ local UnitReaction=UnitReaction
 local UnitExists=UnitExists
 local UnitIsPVP=UnitIsPVP
 local UnitIsPVPFreeForAll=UnitIsPVPFreeForAll
+local UnitRealmRelationship=UnitRealmRelationship
 local IsResting=IsResting
 local UnitIsUnit=UnitIsUnit
 local UnitFactionGroup=UnitFactionGroup

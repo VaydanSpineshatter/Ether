@@ -12,6 +12,7 @@ Ether.media={
     expressway={"Interface\\AddOns\\Ether\\Media\\Font\\expressway.ttf"},
     blankBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
     elvUIBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\ElvUI.tga"},
+    venite={"Interface\\AddOns\\Ether\\Media\\Font\\venite.ttf"},
     slash={
         [1]={cmd="/ether",desc="Toggle Commands"},
         [2]={cmd="/ether settings",desc="Toggle settings"},
@@ -325,6 +326,7 @@ local function OnInitialize(self,event,...)
                 soundsRegistered=true
                 local LSM=LibStub("LibSharedMedia-3.0")
                 LSM:Register("font","Expressway",[[Interface\AddOns\Ether\Media\Font\expressway.ttf]])
+                LSM:Register("font","Venite",[[Interface\AddOns\Ether\Media\Font\venite.ttf]])
                 LSM:Register("statusbar","BlankBar",[[Interface\AddOns\Ether\Media\StatusBar\BlankBar.tga]])
             end
         end

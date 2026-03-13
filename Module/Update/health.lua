@@ -1,13 +1,10 @@
 local _,Ether=...
 local UnitHealth=UnitHealth
 local UnitHealthMax=UnitHealthMax
-local UnitIsPlayer=UnitIsPlayer
-local UnitClass=UnitClass
 local math_max=math.max
 local math_min=math.min
 local UnitGetIncomingHeals=UnitGetIncomingHeals
 local string_format=string.format
-local math_floor=math.floor
 local fm="%.1f"
 local f2m="%s%d%%|r"
 local raidButtons=Ether.raidButtons

@@ -1,6 +1,7 @@
 local _,Ether=...
 local UnitName=UnitName
 local string_byte=string.byte
+local ME="|cffcc66ffME|r"
 
 function Ether:ShortenName(name,maxLength)
     if not name then
@@ -52,5 +53,6 @@ function Ether:UpdateName(button,number)
     local name=UnitName(button.unit)
     if name then
         button.name:SetText(Ether:UTF8SUB(name,1,number))
+
     end
 end

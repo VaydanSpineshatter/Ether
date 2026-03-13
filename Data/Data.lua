@@ -62,7 +62,7 @@ local Default={
         [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
     },
     ["USER"]={},
-    [100]={"Module",1,false,"Fonts\\FRIZQT__.TTF","Interface\\AddOns\\Ether\\Media\\StatusBar\\ElvUI.tga","Interface\\DialogFrame\\UI-DialogBox-Background-Dark",12}
+    [100]={"Module",1,false,"Interface\\AddOns\\Ether\\Media\\Font\\venite.ttf","Interface\\AddOns\\Ether\\Media\\StatusBar\\ElvUI.tga","Interface\\DialogFrame\\UI-DialogBox-Background-Dark",12,"OUTLINE"}
 }
 Ether.DataDefault=Default
 

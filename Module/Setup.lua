@@ -103,14 +103,14 @@ function Ether:SetupUpdateText(button,tbl,p)
 end
 
 function Ether:SetupName(button,number)
-    if not button or not button.healthBar then
-        return
-    end
+    if not button then return end
     local name=button.healthBar:CreateFontString(nil,"OVERLAY")
     button.name=name
-    name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),Ether.DB[100][7] or 12,"OUTLINE")
+    local size=Ether.DB[100][7] or 12
+    local font=Ether.DB[100][4] or unpack(Ether.media.venite)
+    local flag=Ether.DB[100][8] or "OUTLINE"
+    name:SetFont(font,size,flag)
     name:SetPoint("CENTER",button.healthBar,"CENTER",0,number)
-    name:SetTextColor(1,1,1)
     return button
 end
 
