@@ -30,6 +30,8 @@ function Ether:UpdateIndicatorsPos(number,icon)
 
     if number==5 then
         indicator.preview.tex:SetTexCoord(0.75,1,0.25,0.5)
+    elseif number==9 then
+        indicator.preview.tex:SetTexCoord(20/64,39/64,22/64,41/64)
     else
         indicator.preview.tex:SetTexCoord(0,1,0,1)
     end

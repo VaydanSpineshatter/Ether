@@ -182,36 +182,6 @@ function Ether:UpdateHealth(button)
     button.healthBar:SetMinMaxValues(0,mh)
 end
 
---[[
-
-local HealthColors = {
-    {0.0, 'ff0000'},
-    {0.3, 'ff4500'},
-    {0.5, 'ffa500'},
-    {0.7, 'ffd700'},
-    {0.9, 'adff2f'},
-    {1.0, '00ff00'},
-}
-local HealthGradient = Ether:BuildGradientTable(HealthColors)
-local lastHealth = {}
-
-function Ether:UpdateHealthTextRounded(button)
-    if not button or not button.unit or not button.health then return end
-
-    local unit = button.unit
-    local h, maxH = UnitHealth(unit), UnitHealthMax(unit)
-    local pct = maxH > 0 and h / maxH or 0
-    local roundedPct = math_floor(pct * 100 + 0.5)
-
-    if lastHealth[unit] == roundedPct then
-        return
-    end
-    lastHealth[unit] = roundedPct
-
-    local colorCode = HealthGradient[roundedPct]
-    button.health:SetText(string_format(f2m, colorCode, roundedPct))
-end
-]]
 function Ether:UpdateHealthTextRounded(button)
     if not button or not button.unit or not button.health then
         return

@@ -4,7 +4,6 @@ local math_ceil=math.ceil
 local pairs,ipairs=pairs,ipairs
 local GetBuffDataByIndex=C_UnitAuras.GetBuffDataByIndex
 local GetDebuffDataByIndex=C_UnitAuras.GetDebuffDataByIndex
-local GetUnitAuras=C_UnitAuras.GetUnitAuras
 local UnitGUID=UnitGUID
 local UnitExists=UnitExists
 local GetAuraDataByAuraInstanceID=C_UnitAuras.GetAuraDataByAuraInstanceID
@@ -39,7 +38,6 @@ local dataHelpful={}
 local dataHarmful={}
 local dataDispel={}
 local dataIcon={}
-local dispelCache={}
 
 local function CheckRaidButtons(unit)
     for _,button in pairs(raidButtons) do
@@ -191,9 +189,12 @@ function Ether:GuidStatus(guid)
 end
 
 local TexPool=Ether:CreateObjPool(Ether.TextureMethod)
+local raidUpdate=false
 local function raidAuraUpdate(unit,updateInfo)
+    if not raidUpdate then return end
     local button=CheckRaidButtons(unit)
     if not button then return end
+    -- local isFullUpdate = not updateInfo or updateInfo.isFullUpdate
     local guid=UnitGUID(unit)
     if not guid then return end
     if not Ether.guidData[guid] then
@@ -358,36 +359,39 @@ local function CheckDispelType(self,dispelName)
         self:Hide()
     end
 end
-local function SoloAuraIsHelpful(unit)
+
+local auraIndexBuff={}
+local auraIndexDebuff={}
+
+local function GetAuras(unit)
+    if not unit then return end
     local button=soloButtons[unit]
-    if not button or not button.Aura then
-        return
-    end
+    if not button or not button.Aura then return end
+    button.Aura.LastBuffs=button.Aura.LastBuffs or {}
+    button.Aura.LastDebuffs=button.Aura.LastDebuffs or {}
     local visibleBuffCount=0
-    local allAuras=GetUnitAuras(unit,"HELPFUL")
-    if not allAuras then
-        return
-    end
-    for index,auraData in ipairs(allAuras) do
-        if index>16 then
-            break
-        end
+    local index=1
+    while true do
+        local aura=GetBuffDataByIndex(unit,index)
+        if not aura then break end
         local now=button.Aura.Buffs[index]
         if now then
-            local last=button.Aura.LastBuffs[index] or {}
-            if last.auraInstanceID~=auraData.auraInstanceID or last.name~=auraData.name or last.icon~=auraData.icon then
-                now.icon:SetTexture(auraData.icon)
+            if not button.Aura.LastBuffs[index] then
+                button.Aura.LastBuffs[index]={}
+            end
+            local last=button.Aura.LastBuffs[index]
+            if last.auraInstanceID~=aura.auraInstanceID or last.name~=aura.name or last.icon~=aura.icon then
+                now.icon:SetTexture(aura.icon)
                 now.icon:Show()
-                last.auraInstanceID=auraData.auraInstanceID
-                last.name=auraData.name
-                last.icon=auraData.icon
-                button.Aura.LastBuffs[index]=last
+                last.auraInstanceID=aura.auraInstanceID
+                last.name=aura.name
+                last.icon=aura.icon
             end
-            if CheckCount then
-                CheckCount(now,auraData.applications or 0)
+            if aura.applications then
+                CheckCount(now,aura.applications or 0)
             end
-            if CheckDuration then
-                CheckDuration(now,auraData.duration or 0,auraData.expirationTime or 0)
+            if aura.duration then
+                CheckDuration(now,aura.duration or 0,aura.expirationTime or 0)
             end
             local xOffset,yOffset=AuraPosition(index)
             now:ClearAllPoints()
@@ -395,300 +399,169 @@ local function SoloAuraIsHelpful(unit)
             now:Show()
             visibleBuffCount=visibleBuffCount+1
         end
+        index=index+1
     end
-    for i=visibleBuffCount+1,16 do
-        local now=button.Aura.Buffs[i]
-        if now then
-            now:Hide()
-        end
-        button.Aura.LastBuffs[i]=nil
-    end
-    button.Aura.visibleBuffCount=visibleBuffCount
-end
 
-local function SoloAuraIsHarmful(unit)
-    local button=soloButtons[unit]
-    if not button or not button.Aura then
-        return
-    end
-    local visibleBuffCount=button.Aura.visibleBuffCount or 0
     local visibleDebuffCount=0
-    local buffRows=math_ceil(visibleBuffCount/8)
-    local startY=buffRows*(14+1)+2
-    local allAuras=GetUnitAuras(unit,"HARMFUL")
-    if not allAuras then
-        return
-    end
-    for index,auraData in ipairs(allAuras) do
-        if index>16 then
-            break
-        end
+    index=1
+    while true do
+        local aura=GetDebuffDataByIndex(unit,index)
+        if not aura then break end
+        local buffRows=math_ceil(visibleBuffCount/8)
+        local startY=buffRows*(14+1)+2
         local now=button.Aura.Debuffs[index]
         if now then
             local row=math_floor((index-1)/8)
             local col=(index-1)%8
             local yOffset=startY+row*(14+1)
-
             now:ClearAllPoints()
             now:SetPoint("BOTTOMLEFT",button,"TOPLEFT",col*(14+1)-1,yOffset+2)
-
-            local last=button.Aura.LastDebuffs[index] or {}
-
-            if last.auraInstanceID~=auraData.auraInstanceID then
-                now.icon:SetTexture(auraData.icon)
+            if not button.Aura.LastDebuffs[index] then
+                button.Aura.LastDebuffs[index]={}
+            end
+            local last=button.Aura.LastDebuffs[index]
+            if last.auraInstanceID~=aura.auraInstanceID then
+                now.icon:SetTexture(aura.icon)
                 now.icon:Show()
                 if CheckDispelType and now.border then
-                    CheckDispelType(now.border,auraData.dispelName)
+                    CheckDispelType(now.border,aura.dispelName)
                 elseif now.border then
                     now.border:Show()
                 end
-
-                last.auraInstanceID=auraData.auraInstanceID
-                last.name=auraData.name
-                last.icon=auraData.icon
-                last.dispelName=auraData.dispelName
-                button.Aura.LastDebuffs[index]=last
+                last.auraInstanceID=aura.auraInstanceID
+                last.name=aura.name
+                last.icon=aura.icon
+                last.dispelName=aura.dispelName
             end
-
-            if CheckCount then
-                CheckCount(now,auraData.applications or 0)
+            if aura.applications then
+                CheckCount(now,aura.applications or 0)
             end
-            if CheckDuration then
-                CheckDuration(now,auraData.duration or 0,auraData.expirationTime or 0)
+            if aura.duration then
+                CheckDuration(now,aura.duration or 0,aura.expirationTime or 0)
             end
-
             now:Show()
             visibleDebuffCount=visibleDebuffCount+1
+        end
+        index=index+1
+    end
+    for i=visibleBuffCount+1,16 do
+        local now=button.Aura.Buffs[i]
+        if now then now:Hide() end
+        if button.Aura.LastBuffs[i] then
+            button.Aura.LastBuffs[i].auraInstanceID=nil
         end
     end
     for i=visibleDebuffCount+1,16 do
         local now=button.Aura.Debuffs[i]
-        if now then
-            now:Hide()
+        if now then now:Hide() end
+        if button.Aura.LastDebuffs[i] then
+            button.Aura.LastDebuffs[i].auraInstanceID=nil
         end
-        button.Aura.LastDebuffs[i]=nil
     end
 end
 
-local function CheckDispel(icon,dispelName)
-    if icon.currentDispel==dispelName then return end
-    local color=dispelColors[dispelName or ""]
-    if color then
-        icon.border:SetColorTexture(unpack(color))
-        icon.border:Show()
-    else
-        icon.border:Hide()
-    end
-    icon.currentDispel=dispelName
-end
-
-local function CheckSoloButtons(unit)
+local UpdateSolo = false
+local function UnitAuraUpdate(unit,updateInfo)
+    if not UpdateSolo then return end
     local button=soloButtons[unit]
-    if button and UnitExists(unit) then
-        return button
-    end
-    return nil
-end
-
-local helpfulSolo={}
-local harmfulSolo={}
-local function UpdateInstanceId(auraInstance,unit)
-    local button=CheckSoloButtons(unit)
-    for _,aura in ipairs(auraInstance) do
-        if aura.isHelpful then
-            local icon=button.Aura.Buffs
-            if aura and aura.applications then
-                print(aura.applications..unit)
-                CheckCount(button,aura.applications or 0)
-            end
-            if aura and aura.duration then
-                if aura and aura.duration then
-                    print(aura.duration..unit)
-                    CheckDuration(icon,aura.duration,aura.expirationTime)
+    if not button or not button.Aura then return end
+    local buffs=button.Aura.Buffs
+    local debuffs=button.Aura.Debuffs
+    local LastBuffs=button.Aura.LastBuffs
+    local LastDebuffs=button.Aura.LastDebuffs
+    local buffCount,debuffCount=0,0
+    local isFullUpdate=not updateInfo or updateInfo.isFullUpdate
+    if isFullUpdate then
+        GetAuras(unit)
+    else
+        if updateInfo.removedAuraInstanceIDs then
+            for _,instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
+                for i=1,16 do
+                    local last=LastBuffs[i]
+                    if last and last.auraInstanceID==instanceID then
+                        if buffs[i] then buffs[i]:Hide() end
+                        LastBuffs[i]=nil
+                        break
+                    end
+                end
+                for i=1,16 do
+                    local last=LastDebuffs[i]
+                    if last and last.auraInstanceID==instanceID then
+                        if debuffs[i] then debuffs[i]:Hide() end
+                        LastDebuffs[i]=nil
+                        break
+                    end
                 end
             end
         end
-        if aura.isHarmful then
-            local icon=button.Aura.Debuffs
-            if aura and aura.applications then
-                print(aura.applications.." "..unit)
-                CheckCount(button,aura.applications or 0)
-            end
-            if aura and aura.duration then
-                print(aura.duration.." "..unit)
-                CheckDuration(button,aura.duration or 0,aura.expirationTime or 0)
-            end
-        end
-    end
-end
-
-local auraInstance={}
---[[
-local function soloAuraUpdate(unit,updateInfo)
-    if not UnitExists(unit) then return end
-    local button=soloButtons[unit]
-    local visibleBuffCount=0
-    if updateInfo.isFullUpdate then
-        print("Full Update "..unit)
-        SoloAuraIsHelpful(unit)
-        SoloAuraIsHarmful(unit)
-    else
         if updateInfo.addedAuras then
-            for index,aura in ipairs(updateInfo.addedAuras) do
-                if aura.isHelpful then
-                    if index>16 then
-                        break
-                    end
-                    SortAuraIcons(button,true)
-                    local now=button.Aura.Buffs[index]
-                    if now then
-                        local last=button.Aura.LastBuffs[index] or {}
-                        if last.auraInstanceID~=aura.auraInstanceID or last.name~=aura.name or last.icon~=aura.icon then
+            for _,aura in ipairs(updateInfo.addedAuras) do
+                if aura.isHelpful and aura.icon then
+                    for index=1,16 do
+                        local now=buffs[index]
+                        if now and not now:IsShown() then
+                            if not LastBuffs[index] then
+                                LastBuffs[index]={}
+                            end
+                            local last=LastBuffs[index]
                             now.icon:SetTexture(aura.icon)
                             now.icon:Show()
                             last.auraInstanceID=aura.auraInstanceID
                             last.name=aura.name
                             last.icon=aura.icon
-                            button.Aura.LastBuffs[index]=last
+                            LastBuffs[index]=last
+                            if aura.applications then
+                                if CheckCount then CheckCount(now,aura.applications or 0) end
+                            end
+                            if aura.duration then
+                                if CheckDuration then CheckDuration(now,aura.duration or 0,aura.expirationTime or 0) end
+                            end
+                            local xOffset,yOffset=AuraPosition(index)
+                            now:ClearAllPoints()
+                            now:SetPoint("BOTTOMLEFT",button,"TOPLEFT",xOffset-1,yOffset+3)
+                            now:Show()
+                            buffCount=buffCount+1
+                            break
                         end
-                        local xOffset,yOffset=AuraPosition(index)
-                        now:ClearAllPoints()
-                        now:SetPoint("BOTTOMLEFT",button,"TOPLEFT",xOffset-1,yOffset+3)
-                        now:Show()
-                        visibleBuffCount=visibleBuffCount+1
                     end
                 end
-                if aura.isHarmful then
-                    if index>16 then
-                        break
-                    end
-                    local now=button.Aura.Debuffs[index]
-                    if now then
-                        local visibleDebuffCount=0
-                        local buffRows=math_ceil(visibleBuffCount/8)
-                        local startY=buffRows*(14+1)+2
-                        local row=math_floor((index-1)/8)
-                        local col=(index-1)%8
-                        local yOffset=startY+row*(14+1)
-                        now:ClearAllPoints()
-                        now:SetPoint("BOTTOMLEFT",button,"TOPLEFT",col*(14+1)-1,yOffset+2)
-                        local last=button.Aura.LastDebuffs[index] or {}
-                        if last.auraInstanceID~=aura.auraInstanceID then
+                if aura.isHarmful and aura.icon then
+                    for index=1,16 do
+                        local now=debuffs[index]
+                        if now and not now:IsShown() then
+                            if not LastDebuffs[index] then
+                                LastDebuffs[index]={}
+                            end
+                            local last=LastDebuffs[index]
                             now.icon:SetTexture(aura.icon)
                             now.icon:Show()
-                            if aura.dispelName and now.border then
-                                CheckDispelType(now.border,aura.dispelName)
-                            elseif now.border then
-                                now.border:Show()
-                            end
+
                             last.auraInstanceID=aura.auraInstanceID
                             last.name=aura.name
                             last.icon=aura.icon
                             last.dispelName=aura.dispelName
-                            button.Aura.LastDebuffs[index]=last
-                        end
-                        if aura.applications then
-                            CheckCount(now,aura.applications or 0)
-                        end
-                        if aura.duration then
-                            CheckDuration(now,aura.duration or 0,aura.expirationTime or 0)
-                        end
-                        now:Show()
-                        visibleDebuffCount=visibleDebuffCount+1
-                    end
-                end
-            end
-        end
-
-        -- Warning:	GetAuraDataByAuraInstanceID will not work on removed aura InstanceIDs, so it might be a good idea to cache the information.
-
-        if updateInfo.updatedAuraInstanceIDs then
-            wipe(auraInstance)
-            for _,instanceID in ipairs(updateInfo.updatedAuraInstanceIDs) do
-                local data=GetAuraDataByAuraInstanceID(unit,instanceID)
-                table.insert(auraInstance,data)
-                UpdateInstanceId(auraInstance,unit)
-            end
-        end
-        if updateInfo.removedAuraInstanceIDs then
-            for _,instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-                for i=1,16 do
-                    local aura=button.Aura.Buffs[i]
-                    aura:Hide()
-                    aura.auraInstanceID=nil
-                end
-                for i=1,16 do
-                    local aura=button.Aura.Debuffs[i]
-                    if aura.auraInstanceID==instanceID then
-                        aura:Hide()
-                        aura.auraInstanceID=nil
-                        break
-
-                    end
-
-                end
-
-            end
-        end
-    end
-end
-
-]]
-local function SortAuraIcons(button,isBuffs)
-    local targetTable=isBuffs and button.Aura.Buffs or button.Aura.Debuffs
-    local activeCount=0
-    for i=1,16 do
-        local icon=targetTable[i]
-        if icon.auraInstanceID then
-            activeCount=activeCount+1
-            local x,y=AuraPosition(activeCount)
-            icon:ClearAllPoints()
-            icon:SetPoint("BOTTOMLEFT",button,"TOPLEFT",x-1,y+3)
-            icon:Show()
-        else
-            icon:Hide()
-        end
-    end
-end
-
-local function UpdateSingleIcon(icon,data)
-    if not icon or not data then return end
-    icon.icon:SetTexture(data.icon)
-    CheckCount(icon,data.applications or 0)
-    CheckDuration(icon,data.duration or 0,data.expirationTime or 0)
-    if icon.border and data.dispelName then
-        CheckDispelType(icon.border,data.dispelName)
-    end
-    icon:Show()
-end
-
-local function soloAuraUpdate(unit,updateInfo)
-    local button=soloButtons[unit]
-    if not button or not button.Aura then return end
-    if updateInfo.isFullUpdate then
-        SoloAuraIsHelpful(unit)
-        SoloAuraIsHarmful(unit)
-    else
-        if updateInfo.addedAuras then
-            for _,aura in ipairs(updateInfo.addedAuras) do
-                if aura.isHelpful then
-                    local data=button.Aura.Buffs
-                    for i=1,16 do
-                        local icon=data[i]
-                        if not icon:IsShown() or icon.auraInstanceID==aura.auraInstanceID then
-                            icon.auraInstanceID=aura.auraInstanceID
-                            UpdateSingleIcon(icon,aura)
-                            break
-                        end
-                    end
-                end
-                if aura.isHarmful then
-                    local data=button.Aura.Debuffs
-                    for i=1,16 do
-                        local icon=data[i]
-                        if not icon:IsShown() or icon.auraInstanceID==aura.auraInstanceID then
-                            icon.auraInstanceID=aura.auraInstanceID
-                            UpdateSingleIcon(icon,aura)
+                            LastDebuffs[index]=last
+                            if aura.dispelName and now.border then
+                                CheckDispelType(now.border,aura.dispelName)
+                                if now.border then
+                                    now.border:Show()
+                                end
+                            end
+                            if aura.applications then
+                                CheckCount(now,aura.applications or 0)
+                            end
+                            if aura.duration then
+                                CheckDuration(now,aura.duration or 0,aura.expirationTime or 0)
+                            end
+                            local buffRows=math_ceil(buffCount/8)
+                            local startY=buffRows*(14+1)+2
+                            local row=math_floor((index-1)/8)
+                            local col=(index-1)%8
+                            local yOffset=startY+row*(14+1)
+                            now:ClearAllPoints()
+                            now:SetPoint("BOTTOMLEFT",button,"TOPLEFT",col*(14+1)-1,yOffset+2)
+                            now:Show()
+                            debuffCount=debuffCount+1
                             break
                         end
                     end
@@ -697,44 +570,36 @@ local function soloAuraUpdate(unit,updateInfo)
         end
         if updateInfo.updatedAuraInstanceIDs then
             for _,instanceID in ipairs(updateInfo.updatedAuraInstanceIDs) do
-                for i=1,16 do
-                    local icon=button.Aura.Buffs[i]
-                    if icon.auraInstanceID==instanceID then
-                        local data=C_UnitAuras.GetAuraDataByAuraInstanceID(unit,instanceID)
-                        UpdateSingleIcon(icon,data)
-                        break
+                local newData=GetAuraDataByAuraInstanceID(unit,instanceID)
+                if newData then
+                    for i=1,16 do
+                        local last=LastBuffs[i]
+                        if last and last.auraInstanceID==instanceID then
+                            local now=buffs[i]
+                            if CheckCount then CheckCount(now,newData.applications or 0) end
+                            if CheckDuration then CheckDuration(now,newData.duration or 0,newData.expirationTime or 0) end
+                            break
+                        end
                     end
-
-                end
-            end
-        end
-        if updateInfo.removedAuraInstanceIDs then
-            for _,instanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-                for i=1,16 do
-                    local icon=button.Aura.Buffs[i]
-                    if icon.auraInstanceID==instanceID then
-                        icon:Hide()
-                        icon.auraInstanceID=nil
-                        break
-                    end
-                    local data=button.Aura.Buffs[i]
-                    if data.auraInstanceID==instanceID then
-                        data:Hide()
-                        data.auraInstanceID=nil
-                        break
+                    for i=1,16 do
+                        local last=button.Aura.LastDebuffs[i]
+                        if last and last.auraInstanceID==instanceID then
+                            local now=debuffs[i]
+                            if CheckCount then CheckCount(now,newData.applications or 0) end
+                            if CheckDuration then CheckDuration(now,newData.duration or 0,newData.expirationTime or 0) end
+                            break
+                        end
                     end
                 end
             end
-            SortAuraIcons(button,true)
-            SortAuraIcons(button,false)
         end
     end
 end
 
 function Ether:SoloAuraFullInitial(unit)
     local button=soloButtons[unit]
+    Ether:SoloAuraSetup(Ether.soloButtons[unit])
     if not button then return end
-    Ether:SoloAuraSetup(button)
     for i=1,16 do
         if button.Aura.Buffs and button.Aura.Buffs[i] then
             button.Aura.Buffs[i]:SetShown(true)
@@ -743,15 +608,12 @@ function Ether:SoloAuraFullInitial(unit)
             button.Aura.Debuffs[i]:SetShown(true)
         end
     end
-    SoloAuraIsHelpful(button.unit)
-    SoloAuraIsHarmful(button.unit)
+    GetAuras(unit)
 end
 
-function Ether:TargetAuraFullUpdate()
-    local button=soloButtons["target"]
-    if button then
-        SoloAuraIsHelpful("target")
-        SoloAuraIsHarmful("target")
+function Ether:TargetAuraFullUpdate(unit)
+    if UnitExists("target") then
+        GetAuras(unit)
     end
 end
 
@@ -779,12 +641,14 @@ function Ether:EnableSoloAuras()
     for _,unit in ipairs(soloTbl) do
         Ether:SoloAuraFullInitial(unit)
     end
+    UpdateSolo = true
 end
 
 function Ether:DisableSoloAuras()
     for _,unit in ipairs(soloTbl) do
         auraTblReset(unit)
     end
+    UpdateSolo = false
 end
 
 function Ether:EnableSoloUnitAura(info)
@@ -805,50 +669,38 @@ function Ether:DisableSoloUnitAura(info)
     end
 end
 
-function Ether:DisableHeaderAuras()
-    Ether:CleanupRaidIcons()
-    Ether:AuraWipe()
-end
-
-function Ether:EnableHeaderAuras()
-    if true then return end
-    for unit,button in pairs(raidButtons) do
-        if button and UnitExists(unit) then
-            local guid=UnitGUID(unit)
-            if guid then
-                Ether:UpdateRaidIsHelpful(button,guid)
-                Ether:UpdateRaidIsHarmful(button,guid)
-            end
-        end
-    end
-end
-
 function Ether:FullAuraReset()
     Ether.StopAllBlinks()
     TexPool:ReleaseAll()
     Ether:CleanupGUID()
-    Ether:DisableHeaderAuras()
     Ether:DisableSoloAuras()
-    Ether:EnableHeaderAuras()
     Ether:EnableSoloAuras()
 end
 
 local function Aura(_,event,arg1,...)
     if event~="UNIT_AURA" then return end
-    if not arg1 then return end
+    if not arg1 or not UnitExists(arg1) then return end
     local updateInfo=...
-    if updateInfo then
-        if raidButtons[arg1] then
-            raidAuraUpdate(arg1,updateInfo)
-        end
-        if Ether:IsValidAura(arg1) then
-            soloAuraUpdate(arg1,updateInfo)
-        end
+    if raidButtons[arg1] then
+        raidAuraUpdate(arg1,updateInfo)
+    end
+    if Ether:IsValidAura(arg1) then
+        UnitAuraUpdate(arg1,updateInfo)
     end
 end
 
---Ether.DB[1001][2]==1
---Ether.DB[1001][3]==1
+function Ether:ToggleHeaderAuras()
+    if Ether.DB[6][3]==1 then
+        raidUpdate=true
+    else
+        raidUpdate=false
+        TexPool:ReleaseAll()
+        Ether.StopAllBlinks()
+        Ether:CleanupGUID()
+        Ether:AuraWipe()
+    end
+end
+
 local update
 if not update then
     update=CreateFrame("Frame")
@@ -859,15 +711,10 @@ function Ether:AuraEnable()
         update:RegisterEvent("UNIT_AURA")
         update:SetScript("OnEvent",Aura)
     end
-    if Ether.DB[6][3]==1 then
-        C_Timer.After(1,function()
-            Ether:EnableHeaderAuras()
-        end)
-    end
     if Ether.DB[6][2]==1 then
         Ether:EnableSoloAuras()
     end
-
+    Ether:ToggleHeaderAuras()
 end
 
 function Ether:AuraWipe()
@@ -879,7 +726,6 @@ function Ether:AuraWipe()
     wipe(dataHarmful)
     wipe(dataIcon)
     wipe(dataDispel)
-    wipe(dispelCache)
 end
 
 function Ether:AuraDisable()

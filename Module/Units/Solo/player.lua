@@ -52,7 +52,7 @@ function Ether:CreateUnitButtons(token)
         return
     end
     local button=CreateFrame("Button","Ether_"..token.."_UnitButton",UIParent,"EtherUnitTemplate")
-    button:SetSize(120,40)
+    button:SetSize(110,40)
     button.unit=token
     button:SetAttribute("unit",button.unit)
     button:SetAttribute("*type1","target")

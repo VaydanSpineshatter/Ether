@@ -25,8 +25,8 @@ local function OnMsg(_,event,...)
     elseif event=="CHAT_MSG_BN_WHISPER" or event=="CHAT_MSG_WHISPER" then
         local message,sender=...
         if NotValid(sender) then return end
-        local senderName=string_split('-',message)
-        Ether:EtherInfo(string_format("|cffcc66ffFrom %s:|r %s",message,senderName))
+        local senderName=string_split('-',sender)
+        Ether:EtherInfo(string_format("|cffcc66ffFrom %s:|r %s",senderName,message))
     end
 end
 local frame

@@ -1,9 +1,8 @@
 local _,Ether=...
-local tinsert,tsort=table.insert,table.sort
 local pairs,ipairs=pairs,ipairs
 local type,next=type,next
 local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
-local A={8,11,6,4,9,3,13,1,3,2}
+local A={8,11,6,4,10,3,13,1,3,2}
 local PosMap={}
 for i,v in ipairs(D) do
     PosMap[v]=i -- "TOPLEFT" -> 1
@@ -22,14 +21,14 @@ local Default={
     [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
     [3]={1,1,1,1,1,1},--Create Units
     [4]={0,0,0,0},--Update
-    [5]={1,1,1,1,1,1,1,1,1},--Indicators
+    [5]={1,1,1,1,1,1,1,1,1,1},--Indicators
     [6]={1,1,1},--Aura
     [7]={1,1,1,1,1,1,1,1,1,1,1,1,1},--Tooltip
     [8]={1},--Header
     [9]={1,1,1},--Layout
     [10]={1,1},--CastBar
     [1002]={
-        [1]={D[2],0,0,12},
+        [1]={D[1],0,0,24},
         [2]={D[1],0,0,12},
         [3]={D[1],0,0,16},
         [4]={D[2],0,0,12},
@@ -38,6 +37,7 @@ local Default={
         [7]={D[2],0,0,12},
         [8]={D[4],0,0,12},
         [9]={D[1],0,0,12},
+        [10]={D[1],0,0,12}
     },
     [1003]={},
     [1401]={
@@ -48,12 +48,12 @@ local Default={
     [21]={
         [1]={D[2],D[10],D[2],0,-100,120,280,1,1},
         [2]={D[9],D[10],D[9],-350,200,320,200,1.0,1},
-        [3]={D[5],D[10],D[5],-250,-200,120,50,1,1},
-        [4]={D[5],D[10],D[5],250,-200,120,50,1,1},
-        [5]={D[5],D[10],D[5],0,-220,120,50,1,1},
-        [6]={D[5],D[10],D[5],-350,-100,120,50,1,1},
-        [7]={D[5],D[10],D[5],-270,-20,120,50,1,1},
-        [8]={D[5],D[10],D[5],500,100,120,50,1,1},
+        [3]={D[5],D[10],D[5],-250,-200,110,50,1,1},
+        [4]={D[5],D[10],D[5],250,-200,110,50,1,1},
+        [5]={D[5],D[10],D[5],0,-220,110,50,1,1},
+        [6]={D[5],D[10],D[5],-350,-100,110,50,1,1},
+        [7]={D[5],D[10],D[5],-270,-20,110,50,1,1},
+        [8]={D[5],D[10],D[5],500,100,110,50,1,1},
         [9]={D[8],D[10],D[8],0,200,1,1,1,1},
         [10]={D[4],D[10],D[4],200,0,1,1,1,1},
         [11]={D[5],D[10],D[5],0,-180,340,15,1,1},
@@ -62,7 +62,7 @@ local Default={
         [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
     },
     ["USER"]={},
-    [100]={"Module",1,false,"Fonts\\FRIZQT__.TTF","Interface\\RaidFrame\\Raid-Bar-Hp-Fill","Interface\\DialogFrame\\UI-DialogBox-Background-Dark"}
+    [100]={"Module",1,false,"Fonts\\FRIZQT__.TTF","Interface\\AddOns\\Ether\\Media\\StatusBar\\ElvUI.tga","Interface\\DialogFrame\\UI-DialogBox-Background-Dark",12}
 }
 Ether.DataDefault=Default
 

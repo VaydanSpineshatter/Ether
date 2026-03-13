@@ -285,7 +285,8 @@ local function ProfileRefresh()
     Ether:InitialIndicatorsPosition()
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
-    Ether:IndicatorsNormalFullUpdate()
+    Ether:IndicatorsFullUpdate()
+    Ether.UpdateSliders()
 end
 
 function Ether:ExportProfileToClipboard()
@@ -318,12 +319,22 @@ function Ether:ShowExportPopup(encoded)
     Ether.ExportPopup:Show()
 end
 
+function Ether:UpdateButtonFont(data)
+    if not data then return end
+    for _,button in pairs(data) do
+        if not button then return end
+        if button.name then
+            button.name:SetFontHeight(Ether.DB[100][7] or 12)
+        end
+    end
+end
+
 function Ether:RefreshLayout(data)
     if not data then return end
     for _,button in pairs(data) do
         if not button then return end
         if button.name then
-            button.name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),12,"OUTLINE")
+            button.name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),Ether.DB[100][7] or 12,"OUTLINE")
         end
         if button.healthBar then
             button.healthBar:SetStatusBarTexture((Ether.DB[100][5] or unpack(Ether.media.blankBar)))

@@ -75,7 +75,7 @@ function Ether:UpdateRaidButtons()
         if UnitExists(unit) then
             local button=CheckRaidButtons(unit)
             if button then
-                Ether:IndicatorsFullUpdateUnit(button)
+                Ether:IndicatorsFullUpdateByUnit(button)
             end
         end
     end
@@ -100,15 +100,14 @@ local function refreshButtons()
                 if Ether.DB[1][6]==1 then
                     local btn=raidButtons["player"]
                     if btn then
-                        Ether:IndicatorsFullUpdateUnit(btn)
+                        Ether:IndicatorsFullUpdateByeUnit(btn)
                     end
                 end
             else
                 if Ether.DB[6][3]==1 then
                     for _,button in pairs(raidButtons) do
                         if button and button:IsVisible() then
-                            -- Ether:UpdateRaidIsHelpful(button)
-                            -- Ether:UpdateRaidIsHarmful(button)
+                            Ether:UpdateClassColor(button)
                         end
                     end
                 end
@@ -168,6 +167,7 @@ function Ether:UpdateColors()
         Ether:UpdatePowerColor(soloButtons[info])
     end
 end
+
 local sendChannel
 local updatedChannel=false
 local function UpdateSendChannel()
@@ -201,7 +201,7 @@ local function Roster(_,event)
         end
         Ether:UpdateColors()
         if Ether.DB[6][2]==1 then
-            Ether:TargetAuraFullUpdate()
+            Ether:TargetAuraFullUpdate("target")
         end
     end
 end

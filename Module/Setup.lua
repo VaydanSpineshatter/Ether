@@ -108,7 +108,7 @@ function Ether:SetupName(button,number)
     end
     local name=button.healthBar:CreateFontString(nil,"OVERLAY")
     button.name=name
-    name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),12,"OUTLINE")
+    name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),Ether.DB[100][7] or 12,"OUTLINE")
     name:SetPoint("CENTER",button.healthBar,"CENTER",0,number)
     name:SetTextColor(1,1,1)
     return button
@@ -170,8 +170,8 @@ function Ether:CreateMainFrame(self)
         end
 
         self.Frames["MAIN"]:SetScript("OnHide",function()
-            if  Ether.DB[100][3] then Ether.DB[100][3] = false end
-                Ether.ShowHideSettings(false)
+            if Ether.DB[100][3] then Ether.DB[100][3]=false end
+            Ether.ShowHideSettings(false)
         end)
         self.Frames["TOP"]:SetPoint("TOPLEFT",10,-15)
         self.Frames["TOP"]:SetPoint("TOPRIGHT",-10,0)
@@ -279,14 +279,14 @@ function Ether:SetupHealthBar(button,orient)
     button.healthBar=healthBar
     healthBar:SetAllPoints(button)
     healthBar:SetOrientation(orient)
-    local bar=Ether.DB[100][5] or unpack(Ether.media.blankBar)
+    local bar=Ether.DB[100][5] or unpack(Ether.media.elvUIBar)
     healthBar:SetStatusBarTexture(bar)
     healthBar:SetMinMaxValues(0,100)
     healthBar:SetFrameLevel(button:GetFrameLevel()+3)
     local healthDrop=button:CreateTexture(nil,"OVERLAY")
     button.healthDrop=healthDrop
     healthDrop:SetAllPoints(healthBar)
-    healthDrop:SetTexture(unpack(Ether.media.blankBar))
+    healthDrop:SetTexture(unpack(Ether.media.elvUIBar))
     return button
 end
 
@@ -907,13 +907,13 @@ function ObjPool:Acquire(...)
     if self.activeCount>=310 then
         return nil
     end
+
     local obj=table.remove(self.inactive)
     if not obj then
         obj=self.create()
     end
     self.activeCount=self.activeCount+1
-    self.active[self.activeCount]=obj
-    obj._poolIndex=self.activeCount
+    self.active[obj]=true
     if obj.Setup then
         obj:Setup(...)
     end
@@ -922,20 +922,10 @@ function ObjPool:Acquire(...)
 end
 
 function ObjPool:Release(obj)
-    if not obj or not obj._poolIndex then
+    if not obj or not self.active[obj] then
         return
     end
-    local index=obj._poolIndex
-    if index<=0 or index>self.activeCount then
-        return
-    end
-    local last=self.active[self.activeCount]
-    self.active[index]=last
-    self.active[self.activeCount]=nil
-    if last and last~=obj then
-        last._poolIndex=index
-    end
-    obj._poolIndex=-1
+    self.active[obj]=nil
     self.activeCount=self.activeCount-1
     if obj.Reset then
         obj:Reset()
@@ -943,18 +933,17 @@ function ObjPool:Release(obj)
     if #self.inactive<150 then
         self.inactive[#self.inactive+1]=obj
     end
+
     Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
 end
 
 function ObjPool:ReleaseAll()
-    for i=1,self.activeCount do
-        self.temp[i]=self.active[i]
+    for obj in pairs(self.active) do
+        self.temp[#self.temp+1]=obj
     end
-
     for i=1,#self.temp do
         self:Release(self.temp[i])
     end
-
     for i=1,#self.temp do
         self.temp[i]=nil
     end
@@ -1090,4 +1079,33 @@ function Ether:BuildGradientTable(colorDef)
     return steps
 end
 
+
+
+local HealthColors = {
+    {0.0, 'ff0000'},
+    {0.3, 'ff4500'},
+    {0.5, 'ffa500'},
+    {0.7, 'ffd700'},
+    {0.9, 'adff2f'},
+    {1.0, '00ff00'},
+}
+local HealthGradient = Ether:BuildGradientTable(HealthColors)
+local lastHealth = {}
+
+function Ether:UpdateHealthTextRounded(button)
+    if not button or not button.unit or not button.health then return end
+
+    local unit = button.unit
+    local h, maxH = UnitHealth(unit), UnitHealthMax(unit)
+    local pct = maxH > 0 and h / maxH or 0
+    local roundedPct = math_floor(pct * 100 + 0.5)
+
+    if lastHealth[unit] == roundedPct then
+        return
+    end
+    lastHealth[unit] = roundedPct
+
+    local colorCode = HealthGradient[roundedPct]
+    button.health:SetText(string_format(f2m, colorCode, roundedPct))
+end
 ]]

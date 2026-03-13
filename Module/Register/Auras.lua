@@ -1,6 +1,7 @@
 local _,Ether=...
 
 local function SelectAura(editor,spellId)
+    if not spellId then return end
     Ether.UIPanel.SpellId=spellId
     Ether.DB[1003][spellId][9]=true
     Ether:UpdateAuraList()

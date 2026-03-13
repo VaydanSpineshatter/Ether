@@ -11,6 +11,7 @@ Ether.media={
     emblem={"Interface\\AddOns\\Ether\\Media\\Texture\\emblem.png"},
     expressway={"Interface\\AddOns\\Ether\\Media\\Font\\expressway.ttf"},
     blankBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
+    elvUIBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\ElvUI.tga"},
     slash={
         [1]={cmd="/ether",desc="Toggle Commands"},
         [2]={cmd="/ether settings",desc="Toggle settings"},
@@ -304,9 +305,9 @@ local function OnInitialize(self,event,...)
             input=string.lower(input or "")
             rest=string.lower(rest or "")
             if input=="settings" then
-            if InCombatLockdown() then return end
-            Ether.DB[100][3] = not Ether.DB[100][3]
-            Ether.EtherToggle(Ether.DB[100][3])
+                if InCombatLockdown() then return end
+                Ether.DB[100][3]=not Ether.DB[100][3]
+                Ether.EtherToggle(Ether.DB[100][3])
             elseif input=="rl" then
                 if not InCombatLockdown() then
                     ReloadUI()
@@ -374,6 +375,9 @@ local function OnInitialize(self,event,...)
         end
     elseif (event=="PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
+        for _,unit in ipairs({"player","target","pet"}) do
+            Ether:SoloAuraSetup(Ether.soloButtons[unit])
+        end
         Ether:RosterEnable()
         Ether.EtherToggle(Ether.DB[100][3])
     elseif (event=="PLAYER_LOGOUT") then
