@@ -460,7 +460,7 @@ local function GetAuras(unit)
     end
 end
 
-local UpdateSolo = false
+local UpdateSolo=false
 local function UnitAuraUpdate(unit,updateInfo)
     if not UpdateSolo then return end
     local button=soloButtons[unit]
@@ -641,14 +641,14 @@ function Ether:EnableSoloAuras()
     for _,unit in ipairs(soloTbl) do
         Ether:SoloAuraFullInitial(unit)
     end
-    UpdateSolo = true
+    UpdateSolo=true
 end
 
 function Ether:DisableSoloAuras()
     for _,unit in ipairs(soloTbl) do
         auraTblReset(unit)
     end
-    UpdateSolo = false
+    UpdateSolo=false
 end
 
 function Ether:EnableSoloUnitAura(info)

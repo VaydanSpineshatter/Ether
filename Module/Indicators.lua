@@ -521,18 +521,14 @@ do
     function Register()
         for index,info in ipairs(uSTR) do
             if not U[info] and not token:IsEventRegistered(info) then
-                if iTbl[index]==index then
-                    token:RegisterEvent(info)
-                    U[info]=UH[index]
-                end
+                token:RegisterEvent(info)
+                U[info]=UH[index]
             end
         end
         for index,info in ipairs(nSTR) do
             if not N[info] and not frame:IsEventRegistered(info) then
-                if iTbl[index]==index then
-                    frame:RegisterEvent(info)
-                    N[info]=NH[index]
-                end
+                frame:RegisterEvent(info)
+                N[info]=NH[index]
             end
         end
     end
@@ -566,6 +562,7 @@ function Ether:IndicatorsEnable()
     Register()
     Ether:UpdateSoloIndicator("player")
     Ether:IndicatorsFullUpdate()
+    HideReadyCheckIcons()
 end
 
 function Ether:IndicatorsDisable()
