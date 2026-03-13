@@ -148,6 +148,7 @@ Ether.CheckOldGUID = function(guid)
         Ether:EtherDebug("GUID cleared: ",tostring(guid))
     end
 end
+
 local TexPool=Ether:CreateObjPool(Ether.TextureMethod)
 function Ether:RaidAurasFullUpdate(button, guid)
     if not button then return end
@@ -721,6 +722,16 @@ function Ether:AuraEnable()
         Ether:EnableSoloAuras()
     end
     Ether:ToggleHeaderAuras()
+    Ether.RegisterCallback("UNIT_IS_DEAD","UnitIsDead", function(unit)
+        local guid = UnitGUID(unit)
+        if not dataDispel[guid] then return end
+        for _, info in pairs(dataDispel[guid]) do
+            if info and type(info) == "userdata" then
+                Ether:EtherDebug("Dispel found: ",guid)
+                Ether:UpdateDispelFrame(info,{0,0,0,0})
+            end
+        end
+    end)
 end
 
 function Ether:AuraWipe()
@@ -742,4 +753,5 @@ function Ether:AuraDisable()
     update:UnregisterAllEvents()
     update:SetScript("OnEvent",nil)
     Ether:AuraWipe()
+    Ether.UnregisterCallback("UNIT_IS_DEAD", "UnitIsDead")
 end

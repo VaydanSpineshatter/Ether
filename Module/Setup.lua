@@ -861,13 +861,13 @@ end
 local frame,TextureMethod
 do
     frame=CreateFrame("Frame",nil,UIParent)
+    frame:SetFrameStrata("HIGH")
     TextureMethod=function()
-        local method=frame:CreateTexture(nil,"OVERLAY")
+        local method=frame:CreateTexture(nil,"OVERLAY", nil, 7)
         local raidButtons=Ether.raidButtons
         method.Setup=function(self,CFG,unit)
             local button=raidButtons[unit]
             if not button then return end
-            self:SetParent(button.healthBar)
             self:SetColorTexture(unpack(CFG[2]))
             self:SetSize(CFG[3],CFG[3])
             self:SetPoint(CFG[4],button.healthBar,CFG[4],CFG[5],CFG[6])
@@ -876,7 +876,6 @@ do
         method.Reset=function(self)
             self:Hide()
             self:ClearAllPoints()
-            self:SetParent(nil)
         end
         return method
     end

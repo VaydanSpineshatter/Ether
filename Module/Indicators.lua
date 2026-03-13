@@ -210,12 +210,6 @@ local function UpdateHealthBar(button)
     button.healthBar:SetMinMaxValues(0,0)
 end
 
-local function UpdateDispelFrame(button)
-    if not button or not button.dispelLeft then return end
-    button.dispelLeft:SetColorTexture(0,0,0,0)
-    button.dispelRight:SetColorTexture(0,0,0,0)
-end
-
 local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLoot","MainTank","GroupRole","ReadyCheck"}
 local state=false
 local function isAway(DB)
@@ -279,7 +273,8 @@ local function UnitFlags(self)
         self.Indicators.UnitFlags:Show()
     elseif dead then
         UpdateHealthBar(self)
-        UpdateDispelFrame(self)
+        Ether.Fire("UNIT_IS_DEAD", self.unit)
+        Ether:UpdatePrediction(self)
         self.Indicators.UnitFlags:SetTexture(deadIcon)
         self.Indicators.UnitFlags:Show()
     else
