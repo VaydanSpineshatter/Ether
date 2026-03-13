@@ -128,8 +128,8 @@ local function AddGUID(guid)
     end
 end
 
-local guidData = Ether.guidData
-Ether.CheckNewGUID = function(guid)
+local guidData=Ether.guidData
+Ether.CheckNewGUID=function(guid)
     if not guid then return end
     if not guidData[guid] then
         guidData[guid]=true
@@ -139,7 +139,7 @@ Ether.CheckNewGUID = function(guid)
     end
 end
 
-Ether.CheckOldGUID = function(guid)
+Ether.CheckOldGUID=function(guid)
     if not guid then return end
     if guidData[guid] then
         guidData[guid]=nil
@@ -150,7 +150,7 @@ Ether.CheckOldGUID = function(guid)
 end
 
 local TexPool=Ether:CreateObjPool(Ether.TextureMethod)
-function Ether:RaidAurasFullUpdate(button, guid)
+function Ether:RaidAurasFullUpdate(button,guid)
     if not button then return end
     Ether.CheckNewGUID(guid)
     if not guid or not guidData[guid] then return end
@@ -187,7 +187,7 @@ function Ether:RaidAurasFullUpdate(button, guid)
                 guid=guid
             }
         end
-     index=index+1
+        index=index+1
     end
 end
 
@@ -199,10 +199,10 @@ local function raidAuraUpdate(unit,updateInfo)
     local guid=UnitGUID(unit)
     if not guid then return end
     Ether.CheckNewGUID(guid)
-    local isFullUpdate = not updateInfo or updateInfo.isFullUpdate
+    local isFullUpdate=not updateInfo or updateInfo.isFullUpdate
     local C=Ether.DB[1003]
     if isFullUpdate then
-         Ether:RaidAurasFullUpdate(button, unit)
+        Ether:RaidAurasFullUpdate(button,unit)
     else
         if updateInfo.addedAuras then
             for _,aura in ipairs(updateInfo.addedAuras) do
@@ -546,35 +546,47 @@ local function UnitAuraUpdate(unit,updateInfo)
             for _,instanceID in ipairs(updateInfo.updatedAuraInstanceIDs) do
                 local aura=GetAuraDataByAuraInstanceID(unit,instanceID)
                 if not aura then return end
-                    if aura.isHelpful then
+                if aura.isHelpful then
                     for i=1,16 do
                         local last=LastBuffs[i]
                         if last and last.auraInstanceID==instanceID then
                             local now=buffs[i]
-                            if aura.applications then
-                                 now.count:SetText(aura.applications)
+                            if aura.applications and aura.applications>1 then
+                                now.count:SetText(aura.applications)
+                                now.count:Show()
+                            else
+                                now.count:Hide()
                             end
-                            if aura.duration and aura.duration ~= aura.expirationTime then
+                            if aura.duration and aura.duration>0 and aura.expirationTime and aura.expirationTime>0 then
                                 local startTime=aura.expirationTime-aura.duration
                                 now.timer:SetCooldown(startTime,aura.duration)
+                                now.timer:Show()
+                            else
+                                now.timer:Hide()
                             end
                         end
                         break
                     end
                     if aura.isHarmful then
-                    for i=1,16 do
-                        local last=button.Aura.LastDebuffs[i]
-                        if last and last.auraInstanceID==instanceID then
-                            local now=debuffs[i]
-                            if aura.applications then
-                                 now.count:SetText(aura.applications)
+                        for i=1,16 do
+                            local last=button.Aura.LastDebuffs[i]
+                            if last and last.auraInstanceID==instanceID then
+                                local now=debuffs[i]
+                                if aura.applications and aura.applications>1 then
+                                    now.count:SetText(aura.applications)
+                                    now.count:Show()
+                                else
+                                    now.count:Hide()
+                                end
+                                if aura.duration and aura.duration>0 and aura.expirationTime and aura.expirationTime>0 then
+                                    local startTime=aura.expirationTime-aura.duration
+                                    now.timer:SetCooldown(startTime,aura.duration)
+                                    now.timer:Show()
+                                else
+                                    now.timer:Hide()
+                                end
                             end
-                            if aura.duration and aura.duration ~= aura.expirationTime then
-                                local startTime=aura.expirationTime-aura.duration
-                                now.timer:SetCooldown(startTime,aura.duration)
-                            end
-                        end
-                        break
+                            break
                         end
                     end
                 end
@@ -645,9 +657,9 @@ end
 
 local soloTbl={"player","target","pet"}
 function Ether:EnableSoloAuras()
-    for _,unit in ipairs(soloTbl) do
-        Ether:SoloAuraFullInitial(unit)
-    end
+    Ether:SoloAuraFullInitial("player")
+    Ether:SoloAuraFullInitial("target")
+    Ether:SoloAuraFullInitial("pet")
     UpdateSolo=true
 end
 
@@ -722,11 +734,11 @@ function Ether:AuraEnable()
         Ether:EnableSoloAuras()
     end
     Ether:ToggleHeaderAuras()
-    Ether.RegisterCallback("UNIT_IS_DEAD","UnitIsDead", function(unit)
-        local guid = UnitGUID(unit)
+    Ether.RegisterCallback("UNIT_IS_DEAD","UnitIsDead",function(unit)
+        local guid=UnitGUID(unit)
         if not dataDispel[guid] then return end
-        for _, info in pairs(dataDispel[guid]) do
-            if info and type(info) == "userdata" then
+        for _,info in pairs(dataDispel[guid]) do
+            if info and type(info)=="userdata" then
                 Ether:EtherDebug("Dispel found: ",guid)
                 Ether:UpdateDispelFrame(info,{0,0,0,0})
             end
@@ -753,5 +765,5 @@ function Ether:AuraDisable()
     update:UnregisterAllEvents()
     update:SetScript("OnEvent",nil)
     Ether:AuraWipe()
-    Ether.UnregisterCallback("UNIT_IS_DEAD", "UnitIsDead")
+    Ether.UnregisterCallback("UNIT_IS_DEAD","UnitIsDead")
 end

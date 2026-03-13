@@ -273,7 +273,7 @@ local function UnitFlags(self)
         self.Indicators.UnitFlags:Show()
     elseif dead then
         UpdateHealthBar(self)
-        Ether.Fire("UNIT_IS_DEAD", self.unit)
+        Ether.Fire("UNIT_IS_DEAD",self.unit)
         Ether:UpdatePrediction(self)
         self.Indicators.UnitFlags:SetTexture(deadIcon)
         self.Indicators.UnitFlags:Show()
@@ -553,11 +553,13 @@ do
 end
 
 function Ether:IndicatorsEnable()
-    Ether:InitialIndicatorsPosition()
     Register()
     Ether:UpdateSoloIndicator("player")
-    Ether:IndicatorsFullUpdate()
     HideReadyCheckIcons()
+    C_Timer.After(2,function()
+        Ether:InitialIndicatorsPosition()
+        Ether:IndicatorsFullUpdate()
+    end)
 end
 
 function Ether:IndicatorsDisable()

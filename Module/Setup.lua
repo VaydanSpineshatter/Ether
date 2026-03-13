@@ -863,7 +863,7 @@ do
     frame=CreateFrame("Frame",nil,UIParent)
     frame:SetFrameStrata("HIGH")
     TextureMethod=function()
-        local method=frame:CreateTexture(nil,"OVERLAY", nil, 7)
+        local method=frame:CreateTexture(nil,"OVERLAY",nil,7)
         local raidButtons=Ether.raidButtons
         method.Setup=function(self,CFG,unit)
             local button=raidButtons[unit]

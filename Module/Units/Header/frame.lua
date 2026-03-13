@@ -43,6 +43,7 @@ local function Update(self)
     Ether:UpdateName(self,3)
     Ether:InitialHealth(self)
     Ether:UpdateClassColor(self)
+    Ether:SavePosition(self)
     Ether:IndicatorsFullUpdateByUnit(self)
 end
 
@@ -55,7 +56,7 @@ local function CheckStatus(self)
             Update(self)
             if UnitExists(self.unit) then
                 C_After(2,function()
-                    Ether:RaidAurasFullUpdate(self, guid)
+                    Ether:RaidAurasFullUpdate(self,guid)
                 end)
             end
         end
@@ -92,7 +93,7 @@ local function OnAttributeChanged(self,name,unit)
         raidButtons[oldUnit]=nil
     end
     if newUnit then
-         raidButtons[newUnit]=self
+        raidButtons[newUnit]=self
     end
     CheckStatus(self)
 end
@@ -105,7 +106,6 @@ local function CreateChildren(header,button)
     Ether:SetupName(b,-5)
     Ether:DispelLineSetup(b)
     Ether:DispelIconSetup(b)
-    Ether:SavePosition(b)
     Ether:SetupButtonLayout(b)
     if header:GetAttribute("TypePet") then
         b.TypePet=true

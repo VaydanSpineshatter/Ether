@@ -378,6 +378,7 @@ local function OnInitialize(self,event,...)
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
         for _,unit in ipairs({"player","target","pet"}) do
             Ether:SoloAuraSetup(Ether.soloButtons[unit])
+            Ether:SoloAuraFullInitial(unit)
         end
         Ether.EtherToggle(Ether.DB[100][3])
     elseif (event=="PLAYER_LOGOUT") then
