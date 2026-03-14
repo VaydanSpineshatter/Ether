@@ -6,6 +6,7 @@ local Anchor,Header={},{}
 Ether.Header,Ether.Anchor=Anchor,Header
 local soundsRegistered=false
 Ether.Anchor.toolFrame=CreateFrame("Frame",nil,UIParent)
+
 Ether.media={
     icon={"Interface\\AddOns\\Ether\\Media\\Texture\\icon.blp"},
     emblem={"Interface\\AddOns\\Ether\\Media\\Texture\\emblem.png"},
@@ -13,6 +14,7 @@ Ether.media={
     blankBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\BlankBar.tga"},
     elvUIBar={"Interface\\AddOns\\Ether\\Media\\StatusBar\\ElvUI.tga"},
     venite={"Interface\\AddOns\\Ether\\Media\\Font\\venite.ttf"},
+    etherBg={"Interface\\AddOns\\Ether\\Media\\Texture\\etherBg.tga"},
     slash={
         [1]={cmd="/ether",desc="Toggle Commands"},
         [2]={cmd="/ether settings",desc="Toggle settings"},
@@ -277,8 +279,7 @@ local function OnInitialize(self,event,...)
         Ether.metaData[3]=tonumber(system)
         Ether:VerifyDefaultData()
         local success,msg=pcall(function()
-            Ether:NilCheck(Ether:GetProfile())
-            Ether:ArrayMigrate(Ether:GetProfile())
+            Ether:MergeToLeft(Ether:GetProfile(),Ether.DataDefault)
         end)
         if not success then
             Ether:EtherInfo(string.format("Migration failed. Reset data to default values - %s",msg))
@@ -381,6 +382,7 @@ local function OnInitialize(self,event,...)
             Ether:SoloAuraFullInitial(unit)
         end
         Ether.EtherToggle(Ether.DB[100][3])
+        Ether:MergeAnalyse()
     elseif (event=="PLAYER_LOGOUT") then
         ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
     end

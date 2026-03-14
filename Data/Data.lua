@@ -1,7 +1,8 @@
 local _,Ether=...
 local pairs,ipairs=pairs,ipairs
 local type,next=type,next
-local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
+local tinsert,tconcat=table.insert,table.concat
+local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent","Module"}
 local A={8,11,6,4,10,3,13,1,3,2}
 local PosMap={}
 for i,v in ipairs(D) do
@@ -39,12 +40,6 @@ local Default={
         [9]={D[1],0,0,12},
         [10]={D[1],0,0,12}
     },
-    [1003]={},
-    [1401]={
-        [1]={D[5],D[10],D[5],0,90},
-        [2]={D[5],D[10],D[5],0,0},
-        [3]={D[5],D[10],D[5],0,-90},
-    },
     [21]={
         [1]={D[2],D[10],D[2],0,-100,120,280,1,1},
         [2]={D[9],D[10],D[9],-350,200,320,200,1.0,1},
@@ -61,8 +56,14 @@ local Default={
         [13]={D[3],D[10],D[1],-5,0,31,31,1,1},
         [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
     },
+    [1003]={},
+    [1401]={
+        [1]={D[5],D[10],D[5],0,90},
+        [2]={D[5],D[10],D[5],0,0},
+        [3]={D[5],D[10],D[5],0,-90},
+    },
     ["USER"]={},
-    [100]={"Module",1,false,"Interface\\AddOns\\Ether\\Media\\Font\\venite.ttf","Interface\\AddOns\\Ether\\Media\\StatusBar\\ElvUI.tga","Interface\\DialogFrame\\UI-DialogBox-Background-Dark",12,"OUTLINE"}
+    [100]={D[11],1,false,unpack(Ether.media.venite),unpack(Ether.media.elvUIBar),unpack(Ether.media.etherBg),12,"OUTLINE"}
 }
 Ether.DataDefault=Default
 
@@ -100,12 +101,21 @@ function Ether:DataMigrate(old,newSize,default)
     return t
 end
 
-function Ether:NilCheck(data)
-    for key,defaultValue in pairs(Ether.DataDefault) do
-        if data[key]==nil then
-            data[key]=Ether:CopyTable(defaultValue)
+function Ether:FrameChecked(number)
+    if Ether.UIPanel.Buttons[number] then
+        for i=1,#Ether.DB[number] do
+            local checkbox=Ether.UIPanel.Buttons[number][i]
+            if checkbox then
+                checkbox:SetChecked(Ether.DB[number][i]==1)
+            end
         end
     end
+end
+
+function Ether:EtherFrameSetClick(number,number2)
+    local check=Ether.UIPanel.Buttons[number][number2]
+    check:SetChecked(not check:GetChecked())
+    check:GetScript("OnClick")(check)
 end
 
 function Ether:CopyTable(orig,seen)
@@ -134,36 +144,6 @@ function Ether:TableSize(t)
         count=count+1
     end
     return count
-end
-
-function Ether:ArrayMigrate(data)
-    if not data or type(data)~="table" then return end
-    for i,v in ipairs(A) do
-        if i<=10 then
-            if #data[i]~=v then
-                data[i]=Ether:DataMigrate(data[i],v,1)
-            end
-        else
-            break
-        end
-    end
-end
-
-function Ether:FrameChecked(number)
-    if Ether.UIPanel.Buttons[number] then
-        for i=1,#Ether.DB[number] do
-            local checkbox=Ether.UIPanel.Buttons[number][i]
-            if checkbox then
-                checkbox:SetChecked(Ether.DB[number][i]==1)
-            end
-        end
-    end
-end
-
-function Ether:EtherFrameSetClick(number,number2)
-    local check=Ether.UIPanel.Buttons[number][number2]
-    check:SetChecked(not check:GetChecked())
-    check:GetScript("OnClick")(check)
 end
 
 function Ether:RefreshFramePositions()
@@ -209,26 +189,41 @@ function Ether:ApplyFramePosition(frame,index)
 end
 
 local mergeCache={}
+local pathCache={}
+local mergeResult={}
+local concat
+concat=nil
 function Ether:MergeToLeft(ORIG,NEW)
+    local profile=Ether:GetProfileName()..": "
     mergeCache[ORIG]=NEW
+    pathCache[ORIG]=" path"
     local LEFT=ORIG
     while LEFT~=nil do
         local RIGHT=mergeCache[LEFT]
+        local CURRENT_PATH=pathCache[LEFT]
+        tinsert(mergeResult,profile..CURRENT_PATH)
         for NEW_KEY,NEW_VAL in pairs(RIGHT) do
             local OLD_VAL=LEFT[NEW_KEY]
             if OLD_VAL==nil then
+                tinsert(mergeResult,"  Missing Key '"..tostring(NEW_KEY).."' in "..CURRENT_PATH)
                 LEFT[NEW_KEY]=NEW_VAL
-            else
-                local OLD_TYPE=type(OLD_VAL)
-                local NEW_TYPE=type(NEW_VAL)
-                if OLD_TYPE=="table" and NEW_TYPE=="table" then
-                    mergeCache[OLD_VAL]=NEW_VAL
-                else
-                    LEFT[NEW_KEY]=NEW_VAL
-                end
+            elseif type(OLD_VAL)=="table" and type(NEW_VAL)=="table" then
+                mergeCache[OLD_VAL]=NEW_VAL
+                pathCache[OLD_VAL]=CURRENT_PATH.."."..tostring(NEW_KEY)
             end
         end
         mergeCache[LEFT]=nil
+        pathCache[LEFT]=nil
         LEFT=next(mergeCache)
     end
+end
+
+function Ether:MergeAnalyse()
+    concat=tconcat(mergeResult,"\n")
+    if type(concat)=="nil" then return end
+    Ether:EtherDebug(concat)
+    concat=nil
+    wipe(mergeCache)
+    wipe(mergeResult)
+    wipe(pathCache)
 end

@@ -170,11 +170,6 @@ function Ether:UpdateHealth(button)
     end
     local h=UnitHealth(button.unit)
     local mh=UnitHealthMax(button.unit)
-    if h<=0 then
-        if button.destGUID then
-            Ether:UpdateDispelFrame(button,{0,0,0,0})
-        end
-    end
     button.healthBar:SetValue(h)
     button.healthBar:SetMinMaxValues(0,mh)
 end

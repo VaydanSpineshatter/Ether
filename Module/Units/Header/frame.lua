@@ -43,8 +43,8 @@ local function Update(self)
     Ether:UpdateName(self,3)
     Ether:InitialHealth(self)
     Ether:UpdateClassColor(self)
-    Ether:SavePosition(self)
-    Ether:IndicatorsFullUpdateByUnit(self)
+    Ether:InitialIndicatorsPosition()
+    Ether:IndicatorsFullUpdate()
 end
 
 local function CheckStatus(self)
@@ -57,6 +57,7 @@ local function CheckStatus(self)
             if UnitExists(self.unit) then
                 C_After(2,function()
                     Ether:RaidAurasFullUpdate(self,guid)
+                    Ether:SavePosition(self)
                 end)
             end
         end
@@ -79,7 +80,12 @@ local function Hide(self)
         self:UnregisterEvent("UNIT_PET")
     end
     if self.destGUID then
-        Ether.CheckOldGUID(self.destGUID)
+        if UnitExists(self.unit) then
+            Ether.Fire("UNIT_IS_DEAD",self.unit)
+        end
+        C_After(0.3,function()
+            Ether.CheckOldGUID(self.destGUID)
+        end)
     end
 end
 
@@ -104,7 +110,6 @@ local function CreateChildren(header,button)
     Ether:SetupHealthBar(b,"VERTICAL")
     Ether:SetupPrediction(b)
     Ether:SetupName(b,-5)
-    Ether:DispelLineSetup(b)
     Ether:DispelIconSetup(b)
     Ether:SetupButtonLayout(b)
     if header:GetAttribute("TypePet") then
@@ -118,10 +123,13 @@ local function CreateChildren(header,button)
     b:SetScript("OnHide",Hide)
     b:SetScript("OnEnter",Enter)
     b:SetScript("OnLeave",Leave)
+    if Ether.SavePosition then
+        Ether:SavePosition(b)
+    end
     if not InCombatLockdown() then
         b:RegisterForClicks("AnyUp")
     end
-    return
+    return b
 end
 
 function Ether:CreateGroupHeader()

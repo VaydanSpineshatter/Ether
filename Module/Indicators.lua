@@ -310,27 +310,6 @@ local function PlayerFlags(self)
     isUserIdle()
 end
 
-local function ReadyCheckToken(self)
-    IndictorsTexture(self,"ReadyCheck")
-    if UnitExists(self.unit) then
-        local status=GetReadyCheckStatus(self.unit)
-        if (status) then
-            if (status=="ready") then
-                self.Indicators.ReadyCheck:SetTexture(Rdy)
-                self.Indicators.ReadyCheck:Show()
-            elseif (status=="notready") then
-                self.Indicators.ReadyCheck:SetTexture(NotRdy)
-                self.Indicators.ReadyCheck:Show()
-            elseif (status=="waiting") then
-                self.Indicators.ReadyCheck:SetTexture(Waiting)
-                self.Indicators.ReadyCheck:Show()
-            end
-        else
-            self.Indicators.ReadyCheck:Hide()
-        end
-    end
-end
-
 local function RaidTargetToken(self)
     IndictorsTexture(self,"RaidTarget")
     if UnitExists(self.unit) then
@@ -359,6 +338,30 @@ local function GroupLeaderToken(self)
     end
 end
 
+local function UpdateGroupRole(self)
+    if Ether.DB[5][9]==0 then return end
+    IndictorsTexture(self,"GroupRole")
+    if not IsInGroup() then
+        self.Indicators.GroupRole:Hide()
+    end
+    local role=UnitGroupRolesAssigned(self.unit)
+    if (role) then
+        self.Indicators.GroupRole:SetTexture(Roles)
+        if (role=="TANK") then
+            self.Indicators.GroupRole:SetTexCoord(0,19/64,22/64,41/64)
+            self.Indicators.GroupRole:Show()
+        elseif (role=="HEALER") then
+            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,1/64,20/64)
+            self.Indicators.GroupRole:Show()
+        elseif (role=="DAMAGER") then
+            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,22/64,41/64)
+            self.Indicators.GroupRole:Show()
+        else
+            self.Indicators.GroupRole:Hide()
+        end
+    end
+end
+
 local function MainTankToken(self)
     IndictorsTexture(self,"MainTank")
     if not IsInRaid() then
@@ -374,6 +377,7 @@ local function MainTankToken(self)
             self.Indicators.MainTank:Hide()
         end
     end
+    UpdateGroupRole(self)
 end
 
 local function MasterLootToken(self)
@@ -393,27 +397,6 @@ local function MasterLootToken(self)
     end
 end
 
-local function UpdateGroupRole(self)
-    if Ether.DB[5][9]==0 then return end
-    IndictorsTexture(self,"GroupRole")
-    local role=UnitGroupRolesAssigned(self.unit)
-    if (role) then
-        self.Indicators.GroupRole:SetTexture(Roles)
-        if (role=="TANK") then
-            self.Indicators.GroupRole:SetTexCoord(0,19/64,22/64,41/64)
-            self.Indicators.GroupRole:Show()
-        elseif (role=="HEALER") then
-            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,1/64,20/64)
-            self.Indicators.GroupRole:Show()
-        elseif (role=="DAMAGER") then
-            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,22/64,41/64)
-            self.Indicators.GroupRole:Show()
-        else
-            self.Indicators.GroupRole:Hide()
-        end
-    end
-end
-
 function Ether:IndicatorsFullUpdate()
     for _,button in pairs(raidButtons) do
         if button then
@@ -426,22 +409,19 @@ function Ether:IndicatorsFullUpdate()
             MainTankToken(button)
             MasterLootToken(button)
             UpdateGroupRole(button)
-            ReadyCheckToken(button)
         end
     end
 end
-
-function Ether:IndicatorsFullUpdateByUnit(self)
-    Connection(self)
-    Resurrection(self)
-    PlayerFlags(self)
-    UnitFlags(self)
-    RaidTargetToken(self)
-    GroupLeaderToken(self)
-    MainTankToken(self)
-    MasterLootToken(self)
-    UpdateGroupRole(self)
-    ReadyCheckToken(self)
+function Ether:IndicatorsFullUpdateByUnit(button)
+    Connection(button)
+    Resurrection(button)
+    PlayerFlags(button)
+    UnitFlags(button)
+    RaidTargetToken(button)
+    GroupLeaderToken(button)
+    MainTankToken(button)
+    MasterLootToken(button)
+    UpdateGroupRole(button)
 end
 
 function Ether:UpdateIndicatorsPosition(number)
@@ -462,10 +442,15 @@ function Ether:SavePosition(button)
     local C=Ether.DB[1002]
     for index,data in ipairs(iTbl) do
         if button.Indicators[data] then
+            button.Indicators[data].Shown=button.Indicators[data]:IsShown()
             button.Indicators[data]:Hide()
             button.Indicators[data]:ClearAllPoints()
             button.Indicators[data]:SetPoint(C[index][1],button.healthBar,C[index][1],C[index][2],C[index][3])
             button.Indicators[data]:SetSize(C[index][4],C[index][4])
+            if button.Indicators[data].Shown then
+                button.Indicators[data]:Show()
+                button.Indicators[data].Shown=nil
+            end
         end
     end
 end
@@ -530,7 +515,7 @@ do
     function Unregister()
         token:UnregisterAllEvent()
         frame:UnregisterAllEvent()
-        wipe(N);
+        wipe(N)
         wipe(U)
     end
     function Toggle(number)

@@ -286,7 +286,6 @@ local function ProfileRefresh()
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
     Ether:IndicatorsFullUpdate()
-    Ether.UpdateSliders()
 end
 
 function Ether:ExportProfileToClipboard()
@@ -413,8 +412,7 @@ function Ether:ImportProfile(encodedString)
         name=baseName.."_"..counter
     end
     ETHER_DATABASE_DX_AA["PROFILES"][name]=Ether:CopyTable(import.data)
-    Ether:NilCheck(ETHER_DATABASE_DX_AA["PROFILES"][name])
-    Ether:ArrayMigrate(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    Ether:MergeToLeft(ETHER_DATABASE_DX_AA["PROFILES"][name],Ether.DataDefault)
     ETHER_DATABASE_DX_AA["CURRENT"]=name
     Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][name])
     ProfileRefresh()
@@ -507,7 +505,6 @@ function Ether:RenameProfile(oldName,newName)
         return false,"Name already taken"
     end
     ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
-    ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
     ETHER_DATABASE_DX_AA["CURRENT"]=newName
     ETHER_DATABASE_DX_AA["PROFILES"][oldName]=nil
     return true,"Profile "..oldName.." renamed to "..newName
@@ -516,9 +513,7 @@ end
 function Ether:VerifyDefaultData()
     if not ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"] then
         ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"]=Ether:CopyTable(Ether.DataDefault)
-    else
-        Ether:NilCheck(ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"])
-        Ether:ArrayMigrate(ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"])
+        ETHER_DATABASE_DX_AA["CURRENT"]=Ether:GetProfileName()
     end
 end
 
@@ -550,6 +545,4 @@ end
 function Ether:GetProfileList()
     return GetProfiles(ETHER_DATABASE_DX_AA["PROFILES"])
 end
-
-
 

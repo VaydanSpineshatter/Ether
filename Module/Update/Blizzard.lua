@@ -55,7 +55,6 @@ function Ether:HideBlizzard()
     if DB[7]==1 then
         if CompactRaidFrameContainer then
             CompactRaidFrameContainer:UnregisterAllEvents()
-            hooksecurefunc(CompactRaidFrameContainer,'Show',CompactRaidFrameContainer.Hide)
             hooksecurefunc(CompactRaidFrameContainer,'SetShown',function(frame,shown)
                 if shown then
                     frame:Hide()

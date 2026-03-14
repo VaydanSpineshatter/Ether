@@ -30,26 +30,6 @@ function Ether:IsValidAura(unit)
 end
 
 local raidButtons=Ether.raidButtons
-local function CheckRaidButtons(unit)
-    for _,button in pairs(raidButtons) do
-        if button and button.unit==unit then
-            return button
-        end
-    end
-    return nil
-end
-
-function Ether:UpdateRaidButtons()
-    for index=1,GetNumGroupMembers() do
-        local unit="raid"..index
-        if UnitExists(unit) then
-            local button=CheckRaidButtons(unit)
-            if button then
-                Ether:IndicatorsFullUpdateByUnit(button)
-            end
-        end
-    end
-end
 
 local status=false
 local function refreshButtons()
@@ -59,13 +39,11 @@ local function refreshButtons()
             if not UnitInAnyGroup("player") then
                 for _,button in pairs(raidButtons) do
                     if button then
-                        Ether:UpdateDispelFrame(button,{0,0,0,0})
                         Ether:UpdatePrediction(button)
                     end
                 end
                 if Ether.DB[6][1]==1 then
-                    Ether:AuraDisable()
-                    Ether:AuraEnable()
+                    Ether:AuraReset()
                 end
                 if Ether.DB[1][6]==1 then
                     Ether:IndicatorsFullUpdate()
@@ -77,7 +55,7 @@ local function refreshButtons()
                     end
                 end
                 if Ether.DB[1][6]==1 then
-                    Ether:UpdateRaidButtons()
+                    Ether:IndicatorsFullUpdate()
                 end
             end
             status=false
@@ -121,21 +99,27 @@ local function initialButtons()
                     end
                 end
             end
+            Ether:DisableSoloUnitAura(Ether.soloButtons["player"])
+            Ether:EnableSoloUnitAura(Ether.soloButtons["player"])
             initial=false
         end)
     end
 end
 
 function Ether:UpdateColors()
-    for _,info in ipairs({"target","targettarget","pettarget"}) do
-        Ether:UpdateClassColor(soloButtons[info])
-        Ether:UpdatePowerColor(soloButtons[info])
+    Ether:UpdateClassColor(soloButtons["target"])
+    Ether:UpdatePowerColor(soloButtons["target"])
+    if UnitExists("targettarget") then
+        Ether:UpdateClassColor(soloButtons["targettarget"])
+        Ether:UpdatePowerColor(soloButtons["targettarget"])
     end
 end
 
-local sendChannel
+
 local updatedChannel=false
 local function UpdateSendChannel()
+    local sendChannel
+    sendChannel = nil
     if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
         sendChannel="INSTANCE_CHAT"
     elseif IsInRaid() then
@@ -143,18 +127,20 @@ local function UpdateSendChannel()
     else
         sendChannel="PARTY"
     end
+    return sendChannel
 end
+
 local function Roster(_,event)
     if event=="PLAYER_UNGHOST" then
-        if not UnitInBattleground("player") then return end
         initialButtons()
     elseif event=="GROUP_ROSTER_UPDATE" then
         refreshButtons()
         if IsInGroup() then
             if not updatedChannel then
                 updatedChannel=true
-                UpdateSendChannel()
-                C_ChatInfo.SendAddonMessage(Ether.metaData[1],Ether.metaData[3],sendChannel)
+                local channel = UpdateSendChannel()
+                Ether:EtherInfo("trigger")
+                C_ChatInfo.SendAddonMessage(Ether.metaData[1],tostring(Ether.metaData[3]),channel)
             end
         else
             updatedChannel=false
@@ -162,7 +148,10 @@ local function Roster(_,event)
     elseif event=="PLAYER_TARGET_CHANGED" then
         if Ether.DB[1][6]==1 then
             Ether:UpdateSoloIndicator("target")
-            Ether:UpdateSoloIndicator("targettarget")
+            if UnitExists("targettarget") then
+                Ether:UpdateSoloIndicator("targettarget")
+            end
+            Ether:UpdateColors()
         end
         Ether:UpdateColors()
         if Ether.DB[6][2]==1 then

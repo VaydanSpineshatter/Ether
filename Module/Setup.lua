@@ -683,7 +683,6 @@ local function AuraPosition(i)
     local col=(i-1)%8
     local xOffset=col*(14+1)
     local yOffset=1+row*(14+1)
-
     return xOffset,yOffset
 end
 
@@ -768,25 +767,6 @@ function Ether:SoloAuraSetup(button)
     end
 end
 
-function Ether:DispelLineSetup(button)
-    if not button then return end
-    if button.dispelLeft then return end
-    local frame=CreateFrame("Frame",nil,UIParent)
-    frame:SetFrameLevel(button:GetFrameLevel()+6)
-    local r,g,b,a=0,0,0,0
-    local left=frame:CreateTexture(nil,"BORDER")
-    left:SetColorTexture(r,g,b,a)
-    left:SetPoint("LEFT",button,"LEFT",5,0)
-    left:SetSize(5,27)
-    local right=frame:CreateTexture(nil,"BORDER")
-    right:SetColorTexture(r,g,b,a)
-    right:SetPoint("RIGHT",button,"RIGHT",-5,0)
-    right:SetSize(5,27)
-    button.dispelLeft=left
-    button.dispelRight=right
-    return button
-end
-
 function Ether:DispelIconSetup(button)
     if not button then return end
     if button.dispelFrame then return end
@@ -858,16 +838,20 @@ function Ether:CreatePopupBox()
     Ether.popupCallback=left
 end
 
-local frame,TextureMethod
+local TextureMethod,DispelMethod
 do
-    frame=CreateFrame("Frame",nil,UIParent)
+    local colors={
+        ["Magic"]={0.2,0.6,1.0,1},
+        ["Disease"]={0.6,0.4,0.0,1},
+        ["Curse"]={0.6,0.2,1.0,1},
+        ["Poison"]={0.2,1.0,0.2,1},
+        [""]={0,0,0,1}
+    }
+    local frame=CreateFrame("Frame",nil,UIParent)
     frame:SetFrameStrata("HIGH")
     TextureMethod=function()
         local method=frame:CreateTexture(nil,"OVERLAY",nil,7)
-        local raidButtons=Ether.raidButtons
-        method.Setup=function(self,CFG,unit)
-            local button=raidButtons[unit]
-            if not button then return end
+        method.Setup=function(self,CFG,button)
             self:SetColorTexture(unpack(CFG[2]))
             self:SetSize(CFG[3],CFG[3])
             self:SetPoint(CFG[4],button.healthBar,CFG[4],CFG[5],CFG[6])
@@ -879,9 +863,24 @@ do
         end
         return method
     end
+    DispelMethod=function()
+        local method=frame:CreateTexture(nil,"BORDER",nil,7)
+        method.Setup=function(self,button,dispelName)
+            local dispel=colors[dispelName] or {0,0,0,1}
+            self:SetColorTexture(unpack(dispel))
+            self:SetPoint("TOP",button.healthBar,"TOP")
+            self:SetSize(12,12)
+            self:Show()
+        end
+        method.Reset=function(self)
+            self:Hide()
+            self:ClearAllPoints()
+        end
+        return method
+    end
     Ether.TextureMethod=TextureMethod
+    Ether.DispelMethod=DispelMethod
 end
-
 ---@class ObjPool
 ---@field active table
 ---@field inactive table
@@ -904,9 +903,11 @@ end
 ---@return any
 function ObjPool:Acquire(...)
     if self.activeCount>=310 then
-        return nil
+        if Ether.AuraReleaseAll then
+            Ether:AuraReleaseAll()
+        end
+        return
     end
-
     local obj=table.remove(self.inactive)
     if not obj then
         obj=self.create()
@@ -916,7 +917,6 @@ function ObjPool:Acquire(...)
     if obj.Setup then
         obj:Setup(...)
     end
-    Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
     return obj
 end
 
@@ -932,8 +932,6 @@ function ObjPool:Release(obj)
     if #self.inactive<150 then
         self.inactive[#self.inactive+1]=obj
     end
-
-    Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
 end
 
 function ObjPool:ReleaseAll()
@@ -946,7 +944,6 @@ function ObjPool:ReleaseAll()
     for i=1,#self.temp do
         self.temp[i]=nil
     end
-    Ether:EtherDebug("Pool Count: ",tostring(self.activeCount))
 end
 
 function Ether:SpellInfo(info,result,icon)

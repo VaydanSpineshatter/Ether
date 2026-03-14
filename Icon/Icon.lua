@@ -80,12 +80,10 @@ if not button then
     button:SetHighlightTexture("Interface/Minimap/UI-Minimap-ZoomButton-Highlight")
     button:EnableMouse(true)
     button:SetMovable(true)
-
     local icon=button:CreateTexture(nil,"BACKGROUND")
     icon:SetSize(20,20)
     icon:SetPoint("CENTER",button,"CENTER",0,1)
     icon:SetTexture(unpack(Ether.media.icon))
-
     local border=button:CreateTexture(nil,"OVERLAY")
     border:SetSize(53,53)
     border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
@@ -93,18 +91,22 @@ if not button then
     button:Hide()
 end
 
-function Ether:ToggleIcon(number)
-    if number==0 and button:GetScript("OnDragStart") then
+function Ether:ToggleIcon()
+    if button:GetScript("OnDragStart") then
+        Ether.DB[1][1]=0
         button:SetScript("OnDragStart",nil)
         button:SetScript("OnDragStop",nil)
         button:SetScript("OnEnter",nil)
         button:SetScript("OnLeave",nil)
         button:SetScript("OnClick",nil)
-        button:SetScript("OnUpdate",nil)
+        if button:GetScript("OnUpdate") then
+            button:SetScript("OnUpdate",nil)
+        end
         button:RegisterForClicks()
         button:RegisterForDrag()
         button:Hide()
-    elseif number==1 and not button:GetScript("OnDragStart") then
+    else
+        Ether.DB[1][1]=1
         button:RegisterForClicks("AnyUp")
         button:RegisterForDrag("LeftButton")
         button:SetScript("OnDragStart",DragStart)

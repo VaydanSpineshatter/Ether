@@ -2,7 +2,7 @@ local _,Ether=...
 local Received={}
 local function OnVersion(message)
     local theirVersion=tonumber(message)
-    local myVersion=Ether.metaData[3]
+    local myVersion=tonumber(Ether.metaData[3])
     local lastCheck=ETHER_DATABASE_DX_AA["LAST"] or 0
     if (time()-lastCheck>=9000) and theirVersion and myVersion and myVersion<theirVersion then
         ETHER_DATABASE_DX_AA["LAST"]=time()

@@ -315,11 +315,7 @@ function Ether:CreateModuleSection(panel)
             local checked=self:GetChecked()
             Ether.DB[1][i]=checked and 1 or 0
             if i==1 then
-                if Ether.DB[1][1]==1 then
-                    Ether:ToggleIcon(1)
-                else
-                    Ether:ToggleIcon(0)
-                end
+                Ether:ToggleIcon()
             elseif i==2 then
                 Ether:EnableMsgEvents()
             elseif i==5 then
@@ -342,9 +338,7 @@ end
 
 function Ether:CreateBlizzardSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Blizzard"]
-    if parent.Created then
-        return
-    end
+    if parent.Created then return end
     parent.Created=true
     local blizzard={"Player frame","Pet frame","Target frame","Focus frame","CastBar","Party","Raid","Raid Manager","MicroMenu","XP Bar","BagsBar"}
     local bF=CreateFrame("Frame",nil,parent)
@@ -372,9 +366,7 @@ end
 
 function Ether:CreateCreationSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Create"]
-    if parent.Created then
-        return
-    end
+    if parent.Created then return end
     parent.Created=true
     local units={"|cffCC66FFPlayer|r","|cE600CCFFTarget|r","Target of Target","|cffCC66FFPet|r","|cffCC66FFPetTarget|r","|cff3399FFFocus|r"}
     local uF=CreateFrame('Frame',nil,parent)
@@ -1599,7 +1591,7 @@ function Ether:CreateConfigSection(panel)
     for _,name in ipairs({"OUTLINE","THICKOUTLINE","MONOCHROME","NONE"}) do
         table.insert(flagOptions,{
             text=name,
-            func=function(self)
+            func=function()
                 if name then
                     Ether:SetupFontFlags(name)
                 end
@@ -1680,7 +1672,7 @@ function Ether:CreateEditSection(panel)
         okButton:SetScript("OnClick",function()
             local name=inputBox:GetText()
             if name and name~="" then
-                local success,msg=pcall(Ether:CreateProfile(name))
+                local success,msg=Ether:CreateProfile(name)
                 if success then
                     RefreshDropdown()
                     Ether:EtherInfo(eColor,msg)
