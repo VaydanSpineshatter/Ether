@@ -283,9 +283,9 @@ local function ProfileRefresh()
     Ether:RefreshLayout(Ether.soloButtons)
     Ether.UIPanel.SpellId=nil
     Ether:InitialIndicatorsPosition()
+    Ether:IndicatorsFullUpdate()
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
-    Ether:IndicatorsFullUpdate()
 end
 
 function Ether:ExportProfileToClipboard()
@@ -317,7 +317,42 @@ function Ether:ShowExportPopup(encoded)
     Ether.ExportPopup.EditBox:SetText(encoded)
     Ether.ExportPopup:Show()
 end
-
+function Ether:CreateImportBox(backdrop)
+    local importBox=CreateFrame("EditBox",nil,backdrop)
+    importBox:SetPoint("TOPLEFT",backdrop,"TOPLEFT",8,-8)
+    importBox:SetPoint("BOTTOMRIGHT",backdrop,"BOTTOMRIGHT",-8,8)
+    importBox:SetMultiLine(true)
+    importBox:SetAutoFocus(false)
+    importBox:SetClipsChildren(true)
+    importBox:SetFont(unpack(Ether.media.expressway),9,"OUTLINE")
+    importBox:SetText("Paste export data here...")
+    importBox:SetTextColor(0.7,0.7,0.7)
+    importBox:SetScript("OnMouseWheel",function(self,delta)
+        local current=self:GetText()
+        if delta>0 then
+            self:SetCursorPosition(0)
+        else
+            self:SetCursorPosition(#current)
+        end
+    end)
+    importBox:SetScript("OnEditFocusGained",function(self)
+        if self:GetText()=="Paste export data here..." then
+            self:SetText("")
+            self:SetTextColor(1,1,1)
+        end
+        self:HighlightText()
+    end)
+    importBox:SetScript("OnEditFocusLost",function(self)
+        if self:GetText()=="" then
+            self:SetText("Paste export data here...")
+            self:SetTextColor(0.7,0.7,0.7)
+        end
+    end)
+    importBox:SetScript("OnEscapePressed",function(self)
+        self:ClearFocus()
+    end)
+    return importBox
+end
 function Ether:UpdateButtonFont(data)
     if not data then return end
     for _,button in pairs(data) do
@@ -337,15 +372,17 @@ function Ether:SetupFontFlags(update)
     local flag=update or "OUTLINE"
     Ether.DB[100][8]=flag
     for _,button in pairs(Ether.raidButtons) do
-        if not button then return end
-        if button.name then
+        if button and button.name then
+            button.name:Hide()
             button.name:SetFont(font,size,flag)
+            button.name:Show()
         end
     end
     for _,button in pairs(Ether.soloButtons) do
-        if not button then return end
-        if button.name then
+        if button and button.name then
+            button.name:Hide()
             button.name:SetFont(font,size,flag)
+            button.name:Show()
         end
     end
 end
@@ -416,6 +453,7 @@ function Ether:ImportProfile(encodedString)
     ETHER_DATABASE_DX_AA["CURRENT"]=name
     Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][name])
     ProfileRefresh()
+    Ether:MergeAnalyse()
     return true,"Successfully imported as: "..name
 end
 
@@ -430,13 +468,15 @@ function Ether:CopyProfile(sourceName,targetName)
     ETHER_DATABASE_DX_AA["PROFILES"][targetName]=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][sourceName])
     return true,"Profile "..sourceName.."  copied"
 end
-
 function Ether:SwitchProfile(name)
     if not ETHER_DATABASE_DX_AA["PROFILES"][name] then
         return false,"Profile "..name.." not found"
     end
     ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
+    Ether.EtherToggle(false)
+    wipe(Ether.DB)
     Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    Ether.EtherToggle(true)
     ETHER_DATABASE_DX_AA["CURRENT"]=name
     ProfileRefresh()
     return true,"Switched to "..name

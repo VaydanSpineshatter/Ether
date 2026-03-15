@@ -50,6 +50,7 @@ end
 local RegisterUpdateFrame,UnregisterUpdateFrame,UpdateFrameInfo
 local RegisterCastBarEvent,UnregisterCastBarEvent
 do
+    local updateCount=0
     local eventFrame
     local Events,Updates={},{}
     function RegisterCastBarEvent(castEvent,func)
@@ -91,20 +92,18 @@ do
         if not Updates[onUpdate] then
             Updates[onUpdate]=onUpdate
             Updates[onUpdate]:SetScript("OnUpdate",OnUpdate)
+            updateCount=updateCount+1
         end
     end
     function UnregisterUpdateFrame(onUpdate)
         if Updates[onUpdate] then
             Updates[onUpdate]:SetScript("OnUpdate",nil)
             Updates[onUpdate]=nil
+            updateCount=updateCount-1
         end
     end
     function UpdateFrameInfo()
-        for info in pairs(Updates) do
-            if info then
-                return true
-            end
-        end
+        return updateCount>0
     end
 end
 

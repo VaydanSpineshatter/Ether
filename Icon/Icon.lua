@@ -88,12 +88,26 @@ if not button then
     border:SetSize(53,53)
     border:SetTexture("Interface/Minimap/MiniMap-TrackingBorder")
     border:SetPoint("TOPLEFT",button,"TOPLEFT")
-    button:Hide()
+    button:RegisterForClicks("AnyUp")
+    button:RegisterForDrag("LeftButton")
+    button:SetScript("OnDragStart",DragStart)
+    button:SetScript("OnDragStop",DragStop)
+    button:SetScript("OnEnter",Enter)
+    button:SetScript("OnLeave",Leave)
+    button:SetScript("OnClick",Click)
 end
 
-function Ether:ToggleIcon()
-    if button:GetScript("OnDragStart") then
-        Ether.DB[1][1]=0
+function Ether:ToggleIcon(status)
+    if status and not button:GetScript("OnDragStart") then
+        button:RegisterForClicks("AnyUp")
+        button:RegisterForDrag("LeftButton")
+        button:SetScript("OnDragStart",DragStart)
+        button:SetScript("OnDragStop",DragStop)
+        button:SetScript("OnEnter",Enter)
+        button:SetScript("OnLeave",Leave)
+        button:SetScript("OnClick",Click)
+        button:Show()
+    else
         button:SetScript("OnDragStart",nil)
         button:SetScript("OnDragStop",nil)
         button:SetScript("OnEnter",nil)
@@ -105,15 +119,5 @@ function Ether:ToggleIcon()
         button:RegisterForClicks()
         button:RegisterForDrag()
         button:Hide()
-    else
-        Ether.DB[1][1]=1
-        button:RegisterForClicks("AnyUp")
-        button:RegisterForDrag("LeftButton")
-        button:SetScript("OnDragStart",DragStart)
-        button:SetScript("OnDragStop",DragStop)
-        button:SetScript("OnEnter",Enter)
-        button:SetScript("OnLeave",Leave)
-        button:SetScript("OnClick",Click)
-        button:Show()
     end
 end

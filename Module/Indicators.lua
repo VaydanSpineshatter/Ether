@@ -222,7 +222,26 @@ local function isAway(DB)
     if DB[1][5]==1 then
         Ether:RangeDisable()
     end
-    Ether:IndicatorsFullUpdate()
+    if DB[6][1]==1 then
+        Ether:AuraDisable()
+    end
+    if DB[1][1]==1 then
+        Ether:ToggleIcon(false)
+    end
+    if Ether.DB[1][6]==1 then
+        for i=1,10 do
+            Ether.IndicatorToggle(i)
+        end
+    end
+    for _,button in pairs(raidButtons) do
+        if button and button.Indicators then
+            for _,info in pairs(button.Indicators) do
+                if info then
+                    info:Hide()
+                end
+            end
+        end
+    end
 end
 
 local function isNotAway(DB)
@@ -235,6 +254,18 @@ local function isNotAway(DB)
     if DB[1][5]==1 then
         Ether:RangeEnable()
     end
+    if DB[6][1]==1 then
+        Ether:AuraEnable()
+    end
+    if DB[1][1]==1 then
+        Ether:ToggleIcon(true)
+    end
+    if Ether.DB[1][6]==1 then
+        for i=1,10 do
+            Ether.IndicatorToggle(i)
+        end
+    end
+    Ether:IndicatorsFullUpdate()
 end
 
 local function isUserIdle()
@@ -252,8 +283,9 @@ local function isUserIdle()
 end
 
 local function Connection(self)
+    local unit=self.unit
     IndictorsTexture(self,"Connection")
-    local isConnected=UnitIsConnected(self.unit)
+    local isConnected=UnitIsConnected(unit)
     if not isConnected then
         self.healthBar:SetStatusBarColor(0.5,0.5,0.5)
         self.Indicators.Connection:SetTexture(connectionIcon)
@@ -264,16 +296,16 @@ local function Connection(self)
 end
 
 local function UnitFlags(self)
+    local unit=self.unit
     IndictorsTexture(self,"UnitFlags")
-    local charmed=UnitIsCharmed(self.unit)
-    local dead=UnitIsDeadOrGhost(self.unit)
+    local charmed=UnitIsCharmed(unit)
+    local dead=UnitIsDeadOrGhost(unit)
     if charmed then
         self.name:SetTextColor(1.00,0.00,0.00)
         self.Indicators.UnitFlags:SetTexture(charmedIcon)
         self.Indicators.UnitFlags:Show()
     elseif dead then
         UpdateHealthBar(self)
-        Ether.Fire("UNIT_IS_DEAD",self.unit)
         Ether:UpdatePrediction(self)
         self.Indicators.UnitFlags:SetTexture(deadIcon)
         self.Indicators.UnitFlags:Show()
@@ -284,8 +316,9 @@ local function UnitFlags(self)
 end
 
 local function Resurrection(self)
+    local unit=self.unit
     IndictorsTexture(self,"Resurrection")
-    local Resurrect=UnitHasIncomingResurrection(self.unit)
+    local Resurrect=UnitHasIncomingResurrection(unit)
     if (Resurrect) then
         self.Indicators.Resurrection:SetTexture(rezIcon)
         self.Indicators.Resurrection:Show()
@@ -295,9 +328,10 @@ local function Resurrection(self)
 end
 
 local function PlayerFlags(self)
+    local unit=self.unit
     IndictorsTexture(self,"PlayerFlags")
-    local away=UnitIsAFK(self.unit)
-    local dnd=UnitIsDND(self.unit)
+    local away=UnitIsAFK(unit)
+    local dnd=UnitIsDND(unit)
     if away then
         self.Indicators.PlayerFlags:SetTexture(AFK)
         self.Indicators.PlayerFlags:Show()
@@ -311,9 +345,10 @@ local function PlayerFlags(self)
 end
 
 local function RaidTargetToken(self)
+    local unit=self.unit
     IndictorsTexture(self,"RaidTarget")
-    if UnitExists(self.unit) then
-        local index=GetRaidTargetIndex(self.unit)
+    if UnitExists(unit) then
+        local index=GetRaidTargetIndex(unit)
         if index then
             self.Indicators.RaidTarget:SetTexture(targetIcon)
             SetRaidTargetIconTexture(self.Indicators.RaidTarget,index)
@@ -325,11 +360,12 @@ local function RaidTargetToken(self)
 end
 
 local function GroupLeaderToken(self)
+    local unit=self.unit
     IndictorsTexture(self,"GroupLeader")
     if not UnitInAnyGroup("player") then
         self.Indicators.GroupLeader:Hide()
     end
-    local IsLeader=UnitIsGroupLeader(self.unit)
+    local IsLeader=UnitIsGroupLeader(unit)
     if (IsLeader) then
         self.Indicators.GroupLeader:SetTexture(leaderIcon)
         self.Indicators.GroupLeader:Show()
@@ -340,11 +376,12 @@ end
 
 local function UpdateGroupRole(self)
     if Ether.DB[5][9]==0 then return end
+    local unit=self.unit
     IndictorsTexture(self,"GroupRole")
     if not IsInGroup() then
         self.Indicators.GroupRole:Hide()
     end
-    local role=UnitGroupRolesAssigned(self.unit)
+    local role=UnitGroupRolesAssigned(unit)
     if (role) then
         self.Indicators.GroupRole:SetTexture(Roles)
         if (role=="TANK") then
@@ -363,14 +400,15 @@ local function UpdateGroupRole(self)
 end
 
 local function MainTankToken(self)
+    local unit=self.unit
     IndictorsTexture(self,"MainTank")
     if not IsInRaid() then
         self.Indicators.MainTank:Hide()
     else
-        if (GetPartyAssignment("MAINTANK",self.unit)) then
+        if (GetPartyAssignment("MAINTANK",unit)) then
             self.Indicators.MainTank:SetTexture(mainTankIcon)
             self.Indicators.MainTank:Show()
-        elseif (GetPartyAssignment("MAINASSIST",self.unit)) then
+        elseif (GetPartyAssignment("MAINASSIST",unit)) then
             self.Indicators.MainTank:SetTexture(mainAssistIcon)
             self.Indicators.MainTank:Show()
         else
@@ -381,6 +419,7 @@ local function MainTankToken(self)
 end
 
 local function MasterLootToken(self)
+    local unit=self.unit
     IndictorsTexture(self,"MasterLoot")
     if not UnitInAnyGroup("player") then
         self.Indicators.MasterLoot:Hide()
@@ -388,7 +427,7 @@ local function MasterLootToken(self)
     local lootType,partyID,raidID=GetLootMethod()
     if lootType==Enum.LootMethod.Masterlooter then
         local masterLooterUnit=raidID and ((raidID==0) and "player" or "raid"..raidID) or partyID and ((partyID==0) and "player" or "party"..partyID)
-        if masterLooterUnit and UnitIsUnit(self.unit,masterLooterUnit) then
+        if masterLooterUnit and UnitIsUnit(unit,masterLooterUnit) then
             self.Indicators.MasterLoot:SetTexture(masterlootIcon)
             self.Indicators.MasterLoot:Show()
         else
@@ -461,22 +500,6 @@ function Ether:InitialIndicatorsPosition()
     end
 end
 
-local function HideIconsByIndex(index)
-    for _,button in pairs(raidButtons) do
-        if button and button.Indicators and button.Indicators[iTbl[index]] then
-            button.Indicators[iTbl[index]]:Hide()
-        end
-    end
-end
-
-local function ShowIconsByIndex(index)
-    for _,button in pairs(raidButtons) do
-        if button and button.Indicators and button.Indicators[iTbl[index]] then
-            button.Indicators[iTbl[index]]:Show()
-        end
-    end
-end
-
 local Toggle,Register,Unregister
 do
     local uSTR={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
@@ -526,11 +549,9 @@ do
         if not info then return end
         if N[info] and frame:IsEventRegistered(info) then
             frame:UnregisterEvent(info)
-            HideIconsByIndex(number)
             N[info]=nil
         else
             frame:RegisterEvent(info)
-            ShowIconsByIndex(number)
             N[info]=handler
         end
     end

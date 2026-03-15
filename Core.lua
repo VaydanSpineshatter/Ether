@@ -113,8 +113,6 @@ do
             Ether:CreateLayoutSection(self)
         elseif category=="CastBar" then
             Ether:CreateCastBarSection(self)
-        elseif category=="Config" then
-            Ether:CreateConfigSection(self)
         elseif category=="Edit" then
             Ether:CreateEditSection(self)
         end
@@ -228,8 +226,7 @@ do
         Ether:HideCastBar("player",state)
         Ether:HideCastBar("target",state)
         if not state then
-            Ether:CleanUpButtons(EtherFrame.Frames["EDITOR"],EtherFrame.Frames["INDICATORS"])
-            Ether.WrapSettingsColor({0.80,0.40,1.00,1})
+            Ether:CleanUpButtons(EtherFrame.Frames["EDITOR"],EtherFrame.Frames["INDICATORS"],EtherFrame["CONTENT"]["CHILDREN"]["Config"])
         end
     end
     function EtherToggle(state)
@@ -240,16 +237,7 @@ do
             ShowCategory(EtherFrame,category)
         end
     end
-    local function WrapSettingsColor(color)
-        if type(color)~="table" then
-            return
-        end
-        for _,borders in pairs(EtherFrame.Borders) do
-            borders:SetColorTexture(unpack(color))
-        end
-    end
     Ether.UIPanel=EtherFrame
-    Ether.WrapSettingsColor=WrapSettingsColor
     Ether.ShowHideSettings=ShowHideSettings
     Ether.EtherToggle=EtherToggle
     Ether.InitializeLayer=InitializeLayer
@@ -336,7 +324,6 @@ local function OnInitialize(self,event,...)
             Ether:ChangeDirectionHeader(true)
         end
         Ether.CombatFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
-        EtherToggle()
         if Ether.DB[1][2]==1 then
             Ether:EnableMsgEvents()
         end
@@ -359,8 +346,8 @@ local function OnInitialize(self,event,...)
         if Ether.EtherIcon then
             Ether.EtherIcon:ClearAllPoints()
             Ether.EtherIcon:SetPoint("CENTER",Minimap,"CENTER",Ether.DB[21][13][4],Ether.DB[21][13][5])
-            if Ether.DB[1][1]==1 then
-                Ether:ToggleIcon(1)
+            if Ether.DB[1][1]==0 then
+                Ether:ToggleIcon(false)
             end
         end
         for _,unit in ipairs({"player","target","targettarget","pet","pettarget","focus"}) do
@@ -381,7 +368,7 @@ local function OnInitialize(self,event,...)
             Ether:SoloAuraSetup(Ether.soloButtons[unit])
             Ether:SoloAuraFullInitial(unit)
         end
-        Ether.EtherToggle(Ether.DB[100][3])
+        EtherToggle(Ether.DB[100][3])
         Ether:MergeAnalyse()
     elseif (event=="PLAYER_LOGOUT") then
         ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
@@ -390,3 +377,4 @@ end
 local Initialize=CreateFrame("Frame")
 Initialize:RegisterEvent("ADDON_LOADED")
 Initialize:SetScript("OnEvent",OnInitialize)
+

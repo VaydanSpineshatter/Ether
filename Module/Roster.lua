@@ -99,27 +99,27 @@ local function initialButtons()
                     end
                 end
             end
-            Ether:DisableSoloUnitAura(Ether.soloButtons["player"])
-            Ether:EnableSoloUnitAura(Ether.soloButtons["player"])
             initial=false
         end)
     end
 end
 
 function Ether:UpdateColors()
-    Ether:UpdateClassColor(soloButtons["target"])
-    Ether:UpdatePowerColor(soloButtons["target"])
+    if UnitExists("target") then
+        Ether:UpdateClassColor(soloButtons["target"])
+        Ether:UpdatePowerColor(soloButtons["target"])
+
+    end
     if UnitExists("targettarget") then
         Ether:UpdateClassColor(soloButtons["targettarget"])
         Ether:UpdatePowerColor(soloButtons["targettarget"])
     end
 end
 
-
 local updatedChannel=false
 local function UpdateSendChannel()
     local sendChannel
-    sendChannel = nil
+    sendChannel=nil
     if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
         sendChannel="INSTANCE_CHAT"
     elseif IsInRaid() then
@@ -132,14 +132,15 @@ end
 
 local function Roster(_,event)
     if event=="PLAYER_UNGHOST" then
+        Ether:DisableSoloAuras()
+        Ether:EnableSoloAuras()
         initialButtons()
     elseif event=="GROUP_ROSTER_UPDATE" then
         refreshButtons()
         if IsInGroup() then
             if not updatedChannel then
                 updatedChannel=true
-                local channel = UpdateSendChannel()
-                Ether:EtherInfo("trigger")
+                local channel=UpdateSendChannel()
                 C_ChatInfo.SendAddonMessage(Ether.metaData[1],tostring(Ether.metaData[3]),channel)
             end
         else
@@ -155,7 +156,7 @@ local function Roster(_,event)
         end
         Ether:UpdateColors()
         if Ether.DB[6][2]==1 then
-            Ether:TargetAuraFullUpdate("target")
+            Ether:TargetAuraFullUpdate()
         end
     end
 end

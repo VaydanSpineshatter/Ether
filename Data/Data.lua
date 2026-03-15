@@ -3,7 +3,6 @@ local pairs,ipairs=pairs,ipairs
 local type,next=type,next
 local tinsert,tconcat=table.insert,table.concat
 local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent","Module"}
-local A={8,11,6,4,10,3,13,1,3,2}
 local PosMap={}
 for i,v in ipairs(D) do
     PosMap[v]=i -- "TOPLEFT" -> 1
@@ -146,39 +145,37 @@ function Ether:TableSize(t)
     return count
 end
 
+local soloButtons=Ether.soloButtons
 function Ether:RefreshFramePositions()
-    local frame={
+    local frameKeys={
         [1]=Ether.infoFrame,
         [2]=Ether.toolFrame,
-        [3]=Ether.soloButtons["player"],
-        [4]=Ether.soloButtons["target"],
-        [5]=Ether.soloButtons["targettarget"],
-        [6]=Ether.soloButtons["pet"],
-        [7]=Ether.soloButtons["pettarget"],
-        [8]=Ether.soloButtons["focus"],
+        [3]=soloButtons["player"],
+        [4]=soloButtons["target"],
+        [5]=soloButtons["targettarget"],
+        [6]=soloButtons["pet"],
+        [7]=soloButtons["pettarget"],
+        [8]=soloButtons["focus"],
         [9]=Ether.Anchor.raid,
         [10]=Ether.Anchor.pet,
-        [11]=Ether.soloButtons["player"].castBar,
-        [12]=Ether.soloButtons["target"].castBar,
+        [11]=soloButtons["player"].castBar,
+        [12]=soloButtons["target"].castBar,
         [13]=Ether.EtherIcon,
         [14]=Ether.UIPanel.Frames["MAIN"]
     }
 
     for frameID in pairs(Ether.DB[21]) do
         if frameID then
-            Ether:ApplyFramePosition(frame[frameID],frameID)
+            Ether:ApplyFramePosition(frameKeys[frameID],frameID)
         end
     end
 end
 
 function Ether:ApplyFramePosition(frame,index)
-    if type(index)~="number" then
-        return
-    end
+    if type(index)~="number" then return end
+
     local pos=Ether.DB[21][index]
-    for i,default in ipairs({"CENTER","UIParent","CENTER",0,0,100,100,1,1}) do
-        pos[i]=pos[i] or default
-    end
+
     if frame and pos then
         local relTo=(pos[2]=="UIParent") and UIParent or frame[pos[2]]
         frame:ClearAllPoints()

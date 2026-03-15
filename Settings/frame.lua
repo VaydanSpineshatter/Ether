@@ -1,6 +1,7 @@
 local _,Ether=...
 local string_format=string.format
 local pairs,ipairs=pairs,ipairs
+local tinsert,tremove=table.insert,table.remove
 local eColor="|cffcc66ffEther|r "
 local function CreateHeaderPreview(parent,name,numb,size)
     local preview=CreateFrame("Frame",nil,parent,"BackdropTemplate")
@@ -17,7 +18,18 @@ local function CreateHeaderPreview(parent,name,numb,size)
     preview.tex:SetPoint("TOP",preview.healthBar,"TOP",0,0)
     return preview
 end
-
+local function popupBox()
+    local box=Ether.popupBox
+    local callback=Ether.popupCallback
+    if not box then return end
+    if callback:GetScript("OnClick") then
+        callback:SetScript("OnClick",nil)
+    end
+    if not box:IsShown() then
+        box:SetShown(true)
+        Ether.UIPanel.Frames["MAIN"]:SetShown(false)
+    end
+end
 local originalColor,currentEditor
 local GenericColor,GenericCancel,OnCancel
 do
@@ -87,7 +99,7 @@ do
     end
 end
 
-local function CreateEtherDropdown(parent,width,text,options,position)
+local function CreateEtherDropdown(parent,width,text,options,position,callback)
     local dropdown=CreateFrame("Button",nil,parent)
     dropdown:SetSize(width,25)
     dropdown.bg=dropdown:CreateTexture(nil,"BACKGROUND")
@@ -123,18 +135,18 @@ local function CreateEtherDropdown(parent,width,text,options,position)
     dropdown.text:SetText(text)
     local menu=CreateFrame("Button",nil,dropdown)
     dropdown.menu=menu
-    menu:SetPoint("TOPLEFT")
+    menu:SetPoint("TOPLEFT",dropdown,"BOTTOMLEFT",0,-2)
     menu:SetWidth(width)
+    menu:SetFrameLevel(parent:GetFrameLevel()+10)
+    menu:Hide()
     menu.bg=menu:CreateTexture(nil,"BACKGROUND")
     menu.bg:SetAllPoints()
     menu.bg:SetColorTexture(0.2,0.2,0.2,1)
-    menu:SetFrameLevel(parent:GetFrameLevel()+10)
-    menu:Hide()
     menu.bottom=menu:CreateTexture(nil,"BORDER")
     menu.bottom:SetPoint("BOTTOMLEFT")
     menu.bottom:SetPoint("BOTTOMRIGHT")
     menu.bottom:SetHeight(1)
-    menu.bottom:SetColorTexture(0.00,0.80,1.00,1)
+    menu.bottom:SetColorTexture(0.80,0.40,1.00,1)
     if position=="NONE" then
         menu.bottom:Hide()
     elseif position then
@@ -142,55 +154,66 @@ local function CreateEtherDropdown(parent,width,text,options,position)
         menu.left:SetPoint("TOPLEFT")
         menu.left:SetPoint("BOTTOMLEFT")
         menu.left:SetWidth(-1)
-        menu.left:SetColorTexture(0.00,0.80,1.00,1)
+        menu.left:SetColorTexture(0.80,0.40,1.00,1)
         menu.bottom:Show()
     else
         menu.right=menu:CreateTexture(nil,"BORDER")
         menu.right:SetPoint("TOPRIGHT")
         menu.right:SetPoint("BOTTOMRIGHT")
         menu.right:SetWidth(1)
-        menu.right:SetColorTexture(0.00,0.80,1.00,1)
+        menu.right:SetColorTexture(0.80,0.40,1.00,1)
         menu.bottom:Show()
     end
-    local totalHeight=4
-    for _,data in ipairs(options) do
-        local btn=CreateFrame("Button",nil,menu)
-        btn:SetSize(width-8,20)
-        btn:SetPoint("TOPLEFT",4,-totalHeight)
-        btn.text=btn:CreateFontString(nil,"OVERLAY")
-        btn.text:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
-        btn.text:SetJustifyH("CENTER")
-        btn.text:SetJustifyV("MIDDLE")
-        btn.text:SetPoint("CENTER")
-        btn.text:SetText(data.text)
-        btn:SetScript("OnEnter",function()
-            btn.text:SetTextColor(0.00,0.80,1.00,1)
-        end)
-        btn:SetScript("OnLeave",function()
-            btn.text:SetTextColor(1,1,1,1)
-        end)
-        btn:SetScript("OnClick",function()
-            if data.func then
-                data.func()
-                menu:SetShown(false)
+    menu.buttons={}
+    function dropdown:SetOptions(newList)
+        if newList then
+            options=newList
+        end
+        local totalHeight=4
+        for _,btn in ipairs(menu.buttons) do
+            btn:Hide()
+        end
+
+        for i,data in ipairs(options) do
+            local btn=menu.buttons[i]
+            if not btn then
+                btn=CreateFrame("Button",nil,menu)
+                btn:SetSize(width-8,20)
+                btn.text=btn:CreateFontString(nil,"OVERLAY")
+                btn.text:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+                btn.text:SetJustifyH("CENTER")
+                btn.text:SetJustifyV("MIDDLE")
+                btn.text:SetPoint("CENTER")
+
+                btn:SetScript("OnEnter",function(self)
+                    self.text:SetTextColor(0.00,0.80,1.00,1)
+                end)
+                btn:SetScript("OnLeave",function(self)
+                    self.text:SetTextColor(1,1,1,1)
+                end)
+
+                tinsert(menu.buttons,btn)
             end
-        end)
-        totalHeight=totalHeight+20
+
+            btn:SetPoint("TOPLEFT",4,-totalHeight)
+            btn.text:SetText(data.text)
+            btn:SetScript("OnClick",function()
+                if callback then
+                    callback(dropdown,data)
+                end
+                dropdown.text:SetText(data.text)
+                menu:Hide()
+            end)
+            btn:Show()
+            totalHeight=totalHeight+20
+        end
+        menu:SetHeight(totalHeight+4)
     end
-    menu:SetHeight(totalHeight+4)
+
     dropdown:SetScript("OnClick",function()
-        menu:SetShown(true)
+        menu:SetShown(not menu:IsShown())
     end)
-    menu:SetScript("OnLeave",function()
-        menu:SetShown(false)
-    end)
-    menu:SetScript("OnShow",function()
-        Ether.WrapSettingsColor({0.00,0.80,1.00,1})
-    end)
-    menu:SetScript("OnHide",function()
-        Ether.WrapSettingsColor({0.80,0.40,1.00,1})
-        menu:SetShown(false)
-    end)
+    if options then dropdown:SetOptions(options) end
     return dropdown
 end
 
@@ -315,7 +338,11 @@ function Ether:CreateModuleSection(panel)
             local checked=self:GetChecked()
             Ether.DB[1][i]=checked and 1 or 0
             if i==1 then
-                Ether:ToggleIcon()
+                if Ether.DB[1][1]==1 then
+                    Ether:ToggleIcon(true)
+                else
+                    Ether:ToggleIcon(false)
+                end
             elseif i==2 then
                 Ether:EnableMsgEvents()
             elseif i==5 then
@@ -718,10 +745,34 @@ function Ether:CreateFakeSection(panel)
         CleanUpCustom(dataNumber)
     end)
 end
-
 local iNumber
 iNumber=nil
 local iIcon=""
+local function OnIndicatorSelect(self,data)
+    local iK={
+        [1]="Interface\\CharacterFrame\\Disconnect-Icon",
+        [2]="Interface\\RaidFrame\\Raid-Icon-Rez",
+        [3]="Interface\\FriendsFrame\\StatusIcon-Away",
+        [4]="Interface\\Icons\\Spell_Holy_GuardianSpirit",
+        [5]="Interface\\TargetingFrame\\UI-RaidTargetingIcons",
+        [6]="Interface\\GroupFrame\\UI-Group-LeaderIcon",
+        [7]="Interface\\GroupFrame\\UI-Group-MasterLooter",
+        [8]="Interface\\GroupFrame\\UI-Group-MainTankIcon",
+        [9]="Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES",
+        [10]="Interface\\RaidFrame\\ReadyCheck-Ready"
+    }
+    local Indicator=Ether.UIPanel.Frames["INDICATORS"]
+    if data.index and data.value then
+        for _,btn in pairs(Indicator.cube) do
+            btn:Enable()
+        end
+        iNumber=data.index
+        iIcon=iK[data.index]
+        self.text:SetText(data.value)
+        Ether:UpdateIndicatorsPos(iNumber,iIcon)
+    end
+end
+
 function Ether:CreateIndicatorsSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Position"]
     if parent.Created then return end
@@ -752,38 +803,12 @@ function Ether:CreateIndicatorsSection(panel)
     end
 
     local Indicator=panel.Frames["INDICATORS"]
-    local iK={
-        [1]="Interface\\CharacterFrame\\Disconnect-Icon",
-        [2]="Interface\\RaidFrame\\Raid-Icon-Rez",
-        [3]="Interface\\FriendsFrame\\StatusIcon-Away",
-        [4]="Interface\\Icons\\Spell_Holy_GuardianSpirit",
-        [5]="Interface\\TargetingFrame\\UI-RaidTargetingIcons",
-        [6]="Interface\\GroupFrame\\UI-Group-LeaderIcon",
-        [7]="Interface\\GroupFrame\\UI-Group-MasterLooter",
-        [8]="Interface\\GroupFrame\\UI-Group-MainTankIcon",
-        [9]="Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES",
-        [10]="Interface\\RaidFrame\\ReadyCheck-Ready"
-    }
-    local dropdown
-    local Func_i={}
-    for index,name in ipairs(iTbl) do
-        table.insert(Func_i,{
-            text=name,
-            func=function()
-                if index and name then
-                    for _,btn in pairs(Indicator.cube) do
-                        btn:Enable()
-                    end
-                    iNumber=index
-                    iIcon=iK[index]
-                    dropdown.text:SetText(name)
-                    Ether:UpdateIndicatorsPos(iNumber,iIcon)
-                end
-            end
-        })
-    end
 
-    dropdown=CreateEtherDropdown(parent,160,"Select Indicator",Func_i)
+    local indicatorList={}
+    for index,name in ipairs(iTbl) do
+        tinsert(indicatorList,{text=name,value=name,index=index})
+    end
+    local dropdown=CreateEtherDropdown(parent,160,"Select Indicator",indicatorList,false,OnIndicatorSelect)
     Indicator.dropdown=dropdown
     dropdown:SetPoint("TOPLEFT")
 
@@ -1076,7 +1101,14 @@ function Ether:CreateCastBarSection(panel)
         panel.Buttons[10][i]=btn
     end
 end
-
+local function OnAuraSelect(self,data)
+    local editor=Ether.UIPanel["CONTENT"]["CHILDREN"]["Custom"]
+    if not editor:IsShown() then
+        editor:Show()
+    end
+    Ether:AddTemplateAuras(data.value)
+    self.text:SetText(data.value)
+end
 function Ether:CreateCustomSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Custom"]
     if parent.Created then return end
@@ -1084,21 +1116,15 @@ function Ether:CreateCustomSection(panel)
     local DB=Ether.DB
     local editor=panel.Frames["EDITOR"]
     local auras=panel.Frames["AURAS"]
-    local auraWipe={}
-    for templateName,_ in pairs(Ether.PredefinedAuras) do
-        table.insert(auraWipe,{
-            text=templateName,
-            func=function()
-                if not editor:IsShown() then
-                    editor:Show()
-                end
-                Ether:AddTemplateAuras(templateName)
-            end
-        })
+    local auraList={}
+
+    for name in pairs(Ether.PredefinedAuras) do
+        tinsert(auraList,{text=name,value=name})
     end
-    local auraDropdown=CreateEtherDropdown(parent,160,"Predefined Auras",auraWipe)
-    auraDropdown:SetPoint("TOPLEFT")
-    auras:SetPoint("TOPLEFT",auraDropdown,"BOTTOMLEFT",0,0)
+
+    local dropdown=CreateEtherDropdown(parent,160,"Predefined Auras",auraList,false,OnAuraSelect)
+    dropdown:SetPoint("TOPLEFT")
+    auras:SetPoint("TOPLEFT",dropdown,"BOTTOMLEFT",0,0)
     auras:SetSize(230,400)
     editor:SetPoint("TOPRIGHT",parent,"TOPRIGHT",70,-50)
     editor:SetSize(320,300)
@@ -1152,7 +1178,7 @@ function Ether:CreateCustomSection(panel)
             Ether:UpdateAuraList()
             Ether:UpdateEditor(editor)
             Ether:EtherInfo("|cff00ccffAuras|r: Custom auras cleared")
-            auraDropdown.menu:Hide()
+            dropdown.menu:Hide()
             Ether.popupBox:SetShown(false)
             Ether.UIPanel.Frames["MAIN"]:SetShown(true)
         end)
@@ -1314,16 +1340,14 @@ function Ether:CreateCustomSection(panel)
     Ether:UpdateEditor(editor)
 end
 
-function Ether:CreateEffectsSection(EtherFrame)
-    local parent=EtherFrame["CONTENT"]["CHILDREN"]["Effects"]
-    if parent.Created then
-        return
-    end
+function Ether:CreateEffectsSection(panel)
+    local parent=panel["CONTENT"]["CHILDREN"]["Effects"]
+    if parent.Created then return end
     parent.Created=true
 end
 
-function Ether:CreateHelperSection(EtherFrame)
-    local parent=EtherFrame["CONTENT"]["CHILDREN"]["Helper"]
+function Ether:CreateHelperSection(panel)
+    local parent=panel["CONTENT"]["CHILDREN"]["Helper"]
     if parent.Created then return end
     parent.Created=true
     local spellIDPanel=CreateFrame("Frame",nil,parent)
@@ -1350,11 +1374,11 @@ function Ether:CreateHelperSection(EtherFrame)
     resultFrame:SetSize(230,40)
 
     resultText=resultFrame:CreateFontString(nil,"OVERLAY")
+    parent.resultText=resultText
     resultText:SetFont(unpack(Ether.media.expressway),14,"OUTLINE")
     resultText:SetPoint("TOPLEFT",resultFrame,"BOTTOMLEFT",0,0)
     resultText:SetWidth(230)
     resultText:SetJustifyH("LEFT")
-
     spellIcon=resultFrame:CreateTexture(nil,"OVERLAY")
     spellIcon:SetPoint("TOP",resultText,"BOTTOM",0,-40)
     spellIcon:SetSize(64,64)
@@ -1404,7 +1428,17 @@ function Ether:CreateHelperSection(EtherFrame)
     end)
     local clear=EtherPanelButton(parent,50,25,"Delete ignore list","LEFT",search,"RIGHT",50,0)
     clear:SetScript("OnClick",function()
-        wipe(Ether.DB["USER"])
+        if Ether:TableSize(Ether.DB["USER"])==0 then
+            Ether:EtherInfo("|cffcc66ffEther|r The ignore list is empty")
+            return
+        end
+        popupBox()
+        Ether.popupBox.font:SetText("|cffcc66ffDelete ignore list|r ?")
+        Ether.popupCallback:SetScript("OnClick",function()
+            wipe(Ether.DB["USER"])
+            Ether.popupBox:SetShown(false)
+            panel.Frames["MAIN"]:SetShown(true)
+        end)
     end)
     local label=parent:CreateFontString(nil,"OVERLAY")
     label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
@@ -1412,13 +1446,49 @@ function Ether:CreateHelperSection(EtherFrame)
     label:SetText("Enter name to ignore")
 end
 
-function Ether:CreateConfigSection(panel)
-    local parent=panel["CONTENT"]["CHILDREN"]["Config"]
-    if parent.Created then return end
-    parent.Created=true
+local function OnMediaSelect(self,data)
+    local LSM=LibStub("LibSharedMedia-3.0")
+    local DB=Ether.DB
+    self.text:SetText(data.value)
+    if self.type=="font" then
+        local path=LSM:Fetch("font",data.value)
+        DB[100][4]=path
+    elseif self.type=="statusbar" then
+        local path=LSM:Fetch("statusbar",data.value)
+        DB[100][5]=path
+    elseif self.type=="background" then
+        local path=LSM:Fetch("background",data.value)
+        DB[100][6]=path
+    end
+    Ether:RefreshLayout(Ether.soloButtons)
+    Ether:RefreshLayout(Ether.raidButtons)
+end
+
+local function OnFlagsSelect(self,data)
+    self.text:SetText(data.value)
+    Ether:SetupFontFlags(data.value)
+end
+
+local function UpdateSliders()
+    local parent=Ether.UIPanel["CONTENT"]["CHILDREN"]["Config"]
     local DB=Ether.DB
     local ID=DB[100][2]
-    local K={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidFrame","PetFrame","PlayerCastBar","TargetCastBar"}
+    local pos=DB[21][ID]
+    parent.s:SetValue(pos[8] or 1)
+    parent.a:SetValue(pos[9] or 1)
+    parent.f:SetValue(DB[100][7] or 12)
+    parent.s.v:SetText(string_format("%.1f",pos[8] or 1))
+    parent.a.v:SetText(string_format("%.1f",pos[9] or 1))
+    parent.f.v:SetText(string_format("%.0f px",DB[100][7] or 12))
+end
+
+local function OnFrameSelect(self,data)
+    Ether.DB[100][2]=data.index
+    UpdateSliders()
+    self.text:SetText(data.value)
+end
+
+local function UpdateFrames(id)
     local F={
         [1]=Ether.infoFrame,
         [2]=Ether.toolFrame,
@@ -1434,77 +1504,69 @@ function Ether:CreateConfigSection(panel)
         [12]=Ether.soloButtons["target"].castBar,
         [13]=Ether.EtherIcon
     }
+    Ether:ApplyFramePosition(F[id],id)
+end
 
-    local s=Ether:CreateSlider(parent,"Size","6 px","0.5","2",0.1,"TOPLEFT","TOPLEFT",100,-150,function(_,value)
-        if DB[21][ID] then
-            DB[21][ID][8]=value
-            Ether:ApplyFramePosition(F[ID],ID)
-            parent.UpdateLabel()
+local function UpdateFontSize()
+    Ether:UpdateButtonFont(Ether.raidButtons)
+    Ether:UpdateButtonFont(Ether.soloButtons)
+end
+
+function Ether:CreateConfigSection(panel)
+    local parent=panel["CONTENT"]["CHILDREN"]["Config"]
+    if parent.Created then return end
+    parent.Created=true
+    local DB=Ether.DB
+
+    local s=Ether:CreateSlider(parent,"Size","6 px","0.5","2",0.1,"TOPLEFT","TOPLEFT",100,-150,function(self,value)
+        local currentID=Ether.DB[100][2]
+        if DB[21][currentID] then
+            DB[21][currentID][8]=value
+            UpdateFrames(currentID)
+            self:SetValue(value)
+            self.v:SetText(string_format("%.1f",value))
         end
     end)
     parent.s=s
 
-    local a=Ether:CreateSlider(parent,"Alpha","0","0","1",0.1,"TOPLEFT","TOPLEFT",100,-200,function(_,value)
-        if DB[21][ID] then
-            DB[21][ID][9]=value
-            Ether:ApplyFramePosition(F[ID],ID)
-            parent.UpdateLabel()
+    local a=Ether:CreateSlider(parent,"Alpha","0","0","1",0.1,"TOPLEFT","TOPLEFT",100,-200,function(self,value)
+        local currentID=Ether.DB[100][2]
+        if DB[21][currentID] then
+            DB[21][currentID][9]=value
+            UpdateFrames(currentID)
+            self:SetValue(value)
+            self.v:SetText(string_format("%.1f",value))
         end
     end)
     parent.a=a
 
+    local f=Ether:CreateSlider(parent,"Font","8 px","8","24",1,"TOPLEFT","TOPLEFT",100,-250,function(self,value)
+        if value then
+            DB[100][7]=value
+            UpdateFontSize()
+            self.v:SetText(string_format("%.0f px",value))
+            self:SetValue(value)
+        end
+    end)
+    parent.f=f
+
+    SetupSliderText(f,"8","24")
+    SetupSliderThump(f,10,{0.8,0.6,0,1})
     SetupSliderText(s,"0.5","2.0")
     SetupSliderText(a,"0","1")
     SetupSliderThump(s,10,{0.8,0.6,0,1})
     SetupSliderThump(a,10,{0.8,0.6,0,1})
 
-    local dropdowns,frameOptions,flagOptions={},{},{}
-    local function UpdateLabel()
-        local SELECTED=ID
-        if not SELECTED or not DB[21] or not DB[21][SELECTED] then
-            s.v:SetText("")
-            a.v:SetText("")
-            return
-        end
-        local pos=DB[21][SELECTED]
-        s.v:SetText(string_format("%.1f",pos[8] or 1))
-        a.v:SetText(string_format("%.1f",pos[9] or 1))
-        parent.fontSize.v:SetText(string.format("%.0f px",DB[100][7] or 12))
+    local frames={"InfoFrame","Tooltip","player","target","targettarget","pet","pettarget","focus","RaidButtons","RaidPetButtons","PlayerCastBar","TargetCastBar","EtherIcon"}
+    local frameList={}
+    for index,name in ipairs(frames) do
+        tinsert(frameList,{text=name,value=name,index=index})
     end
-    parent.UpdateLabel=UpdateLabel
+    local frameDropDown=CreateEtherDropdown(parent,200,"Select Frame",frameList,false,OnFrameSelect)
+    frameDropDown:SetPoint("TOPLEFT")
 
-    local function UpdateSliders()
-        local SELECTED=ID
-        if not SELECTED or not DB[21][SELECTED] then
-            s:Disable()
-            a:Disable()
-            UpdateLabel()
-            return
-        end
-        s:Enable()
-        a:Enable()
-        local pos=DB[21][SELECTED]
-        s:SetValue(pos[8] or 1)
-        a:SetValue(pos[9] or 1)
-        parent.fontSize:SetValue(DB[100][7] or 12)
-        UpdateLabel()
-    end
-    Ether.UpdateSliders=UpdateSliders
-    for frameID,frameData in pairs(K) do
-        table.insert(frameOptions,{
-            text=frameData,
-            func=function()
-                ID=frameID
-                UpdateSliders()
-                dropdowns.frame.text:SetText(K[frameID])
-            end
-        })
-    end
-
-    dropdowns.frame=CreateEtherDropdown(parent,160,"Select Frame",frameOptions)
-    dropdowns.frame:SetPoint("TOPLEFT")
     local show=false
-    local unlock=EtherPanelButton(parent,60,25,"Unlock","LEFT",dropdowns.frame,"RIGHT",10,0)
+    local unlock=EtherPanelButton(parent,60,25,"Unlock","LEFT",frameDropDown,"RIGHT",10,0)
     unlock:SetScript("OnClick",function()
         if not show then
             show=true
@@ -1515,101 +1577,63 @@ function Ether:CreateConfigSection(panel)
         end
     end)
 
-    local function RefreshLayout()
-        Ether:RefreshLayout(Ether.soloButtons)
-        Ether:RefreshLayout(Ether.raidButtons)
-    end
-    local function RefreshFontSize()
-        Ether:UpdateButtonFont(Ether.raidButtons)
-        Ether:UpdateButtonFont(Ether.soloButtons)
-    end
-
     if not LibStub or not LibStub("LibSharedMedia-3.0",true) then return end
-    local fontOptions,barOptions,bgOptions={},{},{}
     local LSM=LibStub("LibSharedMedia-3.0")
-    for frameID,frameData in pairs(K) do
-        table.insert(frameOptions,{
-            text=frameData,
-            func=function()
-                ID=frameID
-                UpdateSliders()
-                dropdowns.frame.text:SetText(K[frameID])
-            end
-        })
+
+    local fontList,barList,bgList,flagList={},{},{},{}
+    for name in pairs(LSM:HashTable("font")) do
+        tinsert(fontList,{text=name,value=name})
+    end
+    for name in pairs(LSM:HashTable("statusbar")) do
+        tinsert(barList,{text=name,value=name})
+    end
+    for name in pairs(LSM:HashTable("background")) do
+        tinsert(bgList,{text=name,value=name})
+    end
+    for _,name in pairs({"OUTLINE","THICKOUTLINE","MONOCHROME","NONE"}) do
+        tinsert(flagList,{text=name,value=name})
     end
 
-    local fm=LSM:HashTable("font")
-    for font,path in pairs(fm) do
-        table.insert(fontOptions,{
-            text=font,
-            func=function()
-                dropdowns.font.text:SetText(font)
-                DB[100][4]=path
-                RefreshLayout()
-            end})
-    end
-    dropdowns.font=CreateEtherDropdown(parent,200,"Select Font",fontOptions,true)
-    dropdowns.font:SetPoint("TOPRIGHT",0,0)
-
-    local sbm=LSM:HashTable("statusbar")
-    for bar,path in pairs(sbm) do
-        table.insert(barOptions,{
-            text=bar,
-            func=function()
-                dropdowns.bar.text:SetText(bar)
-                DB[100][5]=path
-                RefreshLayout()
-            end})
-    end
-    dropdowns.bar=CreateEtherDropdown(parent,200,"Select Statusbar",barOptions,true)
-    dropdowns.bar:SetPoint("TOP",dropdowns.font,"BOTTOM")
-
-    local bgMedia=LSM:HashTable("background")
-    for background,path in pairs(bgMedia) do
-        table.insert(bgOptions,{
-            text=background,
-            func=function()
-                dropdowns.bg.text:SetText(background)
-                DB[100][6]=path
-                RefreshLayout()
-            end})
-    end
-    dropdowns.bg=CreateEtherDropdown(parent,200,"Select Background",bgOptions,true)
-    dropdowns.bg:SetPoint("TOP",dropdowns.bar,"BOTTOM")
-    local fontSize=Ether:CreateSlider(parent,"Font","8 px","8","24",1,"TOPLEFT","TOPLEFT",100,-250,function(_,value)
-        if value then
-            DB[100][7]=value
-            parent.fontSize.v:SetText(string.format("%.0f px",value))
-            RefreshFontSize()
-        end
-    end)
-
-    parent.fontSize=fontSize
-    SetupSliderText(fontSize,"8","24")
-    SetupSliderThump(fontSize,10,{0.8,0.6,0,1})
-    UpdateSliders()
-    for _,name in ipairs({"OUTLINE","THICKOUTLINE","MONOCHROME","NONE"}) do
-        table.insert(flagOptions,{
-            text=name,
-            func=function()
-                if name then
-                    Ether:SetupFontFlags(name)
-                end
-            end
-        })
-    end
-    dropdowns.flag=CreateEtherDropdown(parent,120,"Select Font Flags",flagOptions,"NONE")
-    dropdowns.flag:SetPoint("LEFT",fontSize,"RIGHT",60,0)
+    local fontDropDown=CreateEtherDropdown(parent,200,"Select Font",fontList,true,OnMediaSelect)
+    fontDropDown.type="font"
+    local barDropDown=CreateEtherDropdown(parent,200,"Select Bar",barList,true,OnMediaSelect)
+    barDropDown.type="statusbar"
+    local bgDropDown=CreateEtherDropdown(parent,200,"Select Background",bgList,true,OnMediaSelect)
+    bgDropDown.type="background"
+    local flagDropDown=CreateEtherDropdown(parent,120,"Select Font Flags",flagList,"NONE",OnFlagsSelect)
+    fontDropDown:SetPoint("TOPRIGHT")
+    barDropDown:SetPoint("TOP",fontDropDown,"BOTTOM")
+    bgDropDown:SetPoint("TOP",barDropDown,"BOTTOM")
+    flagDropDown:SetPoint("LEFT",f,"RIGHT",60,0)
 end
 
 function Ether:CreateEditSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Edit"]
     if parent.Created then return end
     parent.Created=true
+
+    local profileData={}
+    for _,name in ipairs(Ether:GetProfileList()) do
+        tinsert(profileData,{text=name,value=name})
+    end
+    local function OnProfileChange(self,data)
+        if data.value==Ether:GetProfileName() then return end
+        Ether:SwitchProfile(data.value)
+        self.text:SetText(data.value)
+    end
+
+    local function GetUpdatedProfileList()
+        local newList={}
+        for _,name in pairs(Ether:GetProfileList()) do
+            tinsert(newList,{text=name,value=name})
+        end
+        return newList
+    end
     local main=panel.Frames["MAIN"]
-    local dropdown=CreateFrame("Frame",nil,parent,"UIDropDownMenuTemplate")
-    dropdown:SetPoint("TOPLEFT",parent,"TOPLEFT",0,-5)
-    UIDropDownMenu_SetWidth(dropdown,130)
+
+    local dropdown=CreateEtherDropdown(parent,130,"Select Profile",profileData,false,OnProfileChange)
+    dropdown:SetPoint("TOPLEFT")
+    dropdown.text:SetText(Ether:GetProfileName())
     local inputDialog=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
     inputDialog:SetSize(300,120)
     inputDialog:SetPoint("CENTER")
@@ -1638,30 +1662,6 @@ function Ether:CreateEditSection(panel)
     cancelButton:SetScript("OnClick",function()
         inputDialog:Hide()
     end)
-    local function RefreshDropdown()
-        UIDropDownMenu_Initialize(dropdown,function(dFunc,level)
-            local info=UIDropDownMenu_CreateInfo()
-            for _,profileName in ipairs(Ether:GetProfileList()) do
-                info.text=profileName
-                info.value=profileName
-                info.func=function(self)
-                    local success,msg=Ether:SwitchProfile(self.value)
-                    if success then
-                        UIDropDownMenu_SetSelectedValue(dropdown,self.value)
-                        UIDropDownMenu_SetText(dropdown,self.value)
-                        Ether:EtherInfo(eColor,msg)
-                    else
-                        Ether:EtherInfo(eColor,msg)
-                    end
-                end
-                info.checked=(profileName==dFunc.value)
-                UIDropDownMenu_AddButton(info,level)
-            end
-        end)
-        UIDropDownMenu_SetSelectedValue(dropdown,Ether:GetProfileName())
-        UIDropDownMenu_SetText(dropdown,Ether:GetProfileName())
-    end
-    RefreshDropdown()
 
     local createButton=EtherPanelButton(parent,60,25,"New","TOPLEFT",dropdown,"BOTTOMLEFT",5,-30)
     createButton:SetScript("OnClick",function()
@@ -1674,7 +1674,9 @@ function Ether:CreateEditSection(panel)
             if name and name~="" then
                 local success,msg=Ether:CreateProfile(name)
                 if success then
-                    RefreshDropdown()
+                    local freshData=GetUpdatedProfileList()
+                    dropdown:SetOptions(freshData)
+                    dropdown.text:SetText(name)
                     Ether:EtherInfo(eColor,msg)
                 else
                     Ether:EtherInfo(eColor,msg)
@@ -1696,7 +1698,9 @@ function Ether:CreateEditSection(panel)
             if name and name~="" then
                 local success,msg=Ether:CopyProfile(Ether:GetProfileName(),name)
                 if success then
-                    RefreshDropdown()
+                    local freshData=GetUpdatedProfileList()
+                    dropdown:SetOptions(freshData)
+                    dropdown.text:SetText(name)
                     Ether:EtherInfo(eColor,msg)
                 else
                     Ether:EtherInfo(eColor,msg)
@@ -1717,7 +1721,9 @@ function Ether:CreateEditSection(panel)
             if newName and newName~="" then
                 local success,msg=Ether:RenameProfile(name,newName)
                 if success then
-                    RefreshDropdown()
+                    local freshData=GetUpdatedProfileList()
+                    dropdown:SetOptions(freshData)
+                    dropdown.text:SetText(name)
                     Ether:EtherInfo(eColor,msg)
                 else
                     Ether:EtherInfo(eColor,msg)
@@ -1735,21 +1741,18 @@ function Ether:CreateEditSection(panel)
             Ether:EtherInfo("|cffcc66ffEther|r Cannot delete the only profile")
             return
         end
-        if not Ether.popupBox then
+        if Ether:GetProfileName()=="DEFAULT" then
+            Ether:EtherInfo("|cffcc66ffEther|r Cannot delete Default profile")
             return
         end
-        if Ether.popupCallback:GetScript("OnClick") then
-            Ether.popupCallback:SetScript("OnClick",nil)
-        end
-        if not Ether.popupBox:IsShown() then
-            Ether.popupBox:SetShown(true)
-            main:SetShown(false)
-        end
+        popupBox()
         Ether.popupBox.font:SetText("Delete profile |cffcc66ff"..profileToDelete.."|r ?")
         Ether.popupCallback:SetScript("OnClick",function()
             local success,msg=Ether:DeleteProfile(profileToDelete)
             if success then
-                RefreshDropdown()
+                local freshData=GetUpdatedProfileList()
+                dropdown:SetOptions(freshData)
+                dropdown.text:SetText(Ether:GetProfileName())
                 Ether:EtherInfo(eColor..msg)
                 if parent.RefreshConfig then
                     parent.RefreshConfig()
@@ -1765,23 +1768,16 @@ function Ether:CreateEditSection(panel)
     end)
     local resetButton=EtherPanelButton(parent,60,25,"Reset","TOPLEFT",renameButton,"BOTTOMLEFT",0,-80)
     resetButton:SetScript("OnClick",function()
-        if not Ether.popupBox then
-            return
-        end
+        popupBox()
         local profileToRest=Ether:GetProfileName()
-        if Ether.popupCallback:GetScript("OnClick") then
-            Ether.popupCallback:SetScript("OnClick",nil)
-        end
-        if not Ether.popupBox:IsShown() then
-            Ether.popupBox:SetShown(true)
-            main:SetShown(false)
-        end
         Ether.popupBox.font:SetText("Reset profile |cffcc66ff"..profileToRest.."|r ?")
         Ether.popupCallback:SetScript("OnClick",function()
             local success,msg=Ether:ResetProfile()
             if success then
                 Ether:EtherInfo("|cffcc66ffEther|r "..msg)
-                RefreshDropdown()
+                local freshData=GetUpdatedProfileList()
+                dropdown:SetOptions(freshData)
+                dropdown.text:SetText(Ether:GetProfileName())
                 if parent.RefreshConfig then
                     parent.RefreshConfig()
                 end
@@ -1797,8 +1793,6 @@ function Ether:CreateEditSection(panel)
     local transfer=CreateFrame("Frame",nil,parent)
     transfer:SetPoint("TOP",parent,"TOP",50,-5)
     transfer:SetSize(250,200)
-    local importBox
-
     local importBackdrop=CreateFrame("Frame",nil,transfer,"BackdropTemplate")
     importBackdrop:SetPoint("BOTTOMRIGHT",parent,"BOTTOMRIGHT",-5,5)
     importBackdrop:SetSize(285,280)
@@ -1810,39 +1804,8 @@ function Ether:CreateEditSection(panel)
     })
     importBackdrop:SetBackdropColor(0.1,0.1,0.1,0.8)
     importBackdrop:SetBackdropBorderColor(0.4,0.4,0.4)
-    importBox=CreateFrame("EditBox",nil,importBackdrop)
-    importBox:SetPoint("TOPLEFT",importBackdrop,"TOPLEFT",8,-8)
-    importBox:SetPoint("BOTTOMRIGHT",importBackdrop,"BOTTOMRIGHT",-8,8)
-    importBox:SetMultiLine(true)
-    importBox:SetAutoFocus(false)
-    importBox:SetClipsChildren(true)
-    importBox:SetFont(unpack(Ether.media.expressway),9,"OUTLINE")
-    importBox:SetText("Paste export data here...")
-    importBox:SetTextColor(0.7,0.7,0.7)
-    importBox:SetScript("OnMouseWheel",function(_,delta)
-        local current=importBox:GetText()
-        if delta>0 then
-            importBox:SetCursorPosition(0)
-        else
-            importBox:SetCursorPosition(#current)
-        end
-    end)
-    importBox:SetScript("OnEditFocusGained",function()
-        if importBox:GetText()=="Paste export data here..." then
-            importBox:SetText("")
-            importBox:SetTextColor(1,1,1)
-        end
-        importBox:HighlightText()
-    end)
-    importBox:SetScript("OnEditFocusLost",function()
-        if importBox:GetText()=="" then
-            importBox:SetText("Paste export data here...")
-            importBox:SetTextColor(0.7,0.7,0.7)
-        end
-    end)
-    importBox:SetScript("OnEscapePressed",function()
-        importBox:ClearFocus()
-    end)
+    local importBox=Ether:CreateImportBox(importBackdrop)
+
     local import=EtherPanelButton(transfer,60,25,"Import","BOTTOMLEFT",importBox,"TOPLEFT",0,20)
     import.text:SetPoint("LEFT")
     local export=EtherPanelButton(transfer,60,25,"Export","LEFT",import,"RIGHT",20,0)
@@ -1857,6 +1820,9 @@ function Ether:CreateEditSection(panel)
         if data and data~="" and data~="Paste export data here..." then
             local success,msg=Ether:ImportProfile(data)
             if success then
+                local freshData=GetUpdatedProfileList()
+                dropdown:SetOptions(freshData)
+                dropdown.text:SetText(Ether:GetProfileName())
                 Ether:EtherInfo("|cff00ff00"..msg.."|r")
                 importBox:SetText("")
                 parent.Refresh()
@@ -1873,7 +1839,6 @@ function Ether:CreateEditSection(panel)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")
     frame:Hide()
-
     frame:SetBackdrop({
         bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
         edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -1901,13 +1866,12 @@ function Ether:CreateEditSection(panel)
         frame:Hide()
     end)
     Ether.ExportPopup=frame
-    parent.Refresh=RefreshDropdown
+    parent.Refresh=GetUpdatedProfileList
     parent.RefreshConfig=function()
     end
 end
 
 function Ether:CleanUpButtons(editor,indicator)
-    Ether.WrapSettingsColor({0.80,0.40,1.00,1})
     indicator:Hide()
     editor:Hide()
     indicator.dropdown.text:SetText("Select Indicator")
