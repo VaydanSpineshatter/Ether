@@ -242,7 +242,7 @@ function Ether:CreateMainFrame(self)
         close:SetScript("OnClick",function()
             self.Frames["MAIN"]:Hide()
             Ether.DB[100][3]=false
-            Ether.ShowHideSettings(false)
+            Ether.ToggleUnlock(false)
             ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
         end)
         Ether.InitializeLayerLevel(self)
@@ -344,7 +344,6 @@ function Ether:SetupSlash()
             for _,entry in ipairs(Ether.media.slash) do
                 Ether:EtherInfo(string.format("%s  –  %s",entry.cmd,entry.desc))
             end
-            Ether:SoloAuraReset()
         end
     end
 end
@@ -1078,6 +1077,119 @@ function Ether.ValidMessage(sender)
         return true
     end
     return false
+end
+function Ether:CreateEtherDropdown(parent,width,text,options,pos,callback)
+    local dropdown=CreateFrame("Button",nil,parent)
+    dropdown:SetSize(width,25)
+    dropdown.bg=dropdown:CreateTexture(nil,"BACKGROUND")
+    dropdown.bg:SetAllPoints()
+    dropdown.bg:SetColorTexture(1,1,1,0.1)
+    dropdown.bottom=dropdown:CreateTexture(nil,"BORDER")
+    dropdown.bottom:SetPoint("BOTTOMLEFT")
+    dropdown.bottom:SetPoint("BOTTOMRIGHT")
+    dropdown.bottom:SetHeight(1)
+    dropdown.bottom:SetColorTexture(0.80,0.40,1.00,1)
+    if pos=="NONE" then
+        dropdown.bottom:Hide()
+    elseif pos then
+        dropdown.left=dropdown:CreateTexture(nil,"BORDER")
+        dropdown.left:SetPoint("TOPLEFT")
+        dropdown.left:SetPoint("BOTTOMLEFT")
+        dropdown.left:SetWidth(-1)
+        dropdown.left:SetColorTexture(0.80,0.40,1.00,1)
+        dropdown.bottom:Show()
+    else
+        dropdown.right=dropdown:CreateTexture(nil,"BORDER")
+        dropdown.right:SetPoint("TOPRIGHT")
+        dropdown.right:SetPoint("BOTTOMRIGHT")
+        dropdown.right:SetWidth(1)
+        dropdown.right:SetColorTexture(0.80,0.40,1.00,1)
+        dropdown.bottom:Show()
+    end
+    dropdown.text=dropdown:CreateFontString(nil,"OVERLAY")
+    dropdown.text:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+    dropdown.text:SetPoint("CENTER")
+    dropdown.text:SetJustifyH("CENTER")
+    dropdown.text:SetJustifyV("MIDDLE")
+    dropdown.text:SetText(text)
+    local menu=CreateFrame("Button",nil,dropdown)
+    dropdown.menu=menu
+    menu:SetPoint("TOPLEFT",dropdown,"BOTTOMLEFT",0,-2)
+    menu:SetWidth(width)
+    menu:SetFrameLevel(parent:GetFrameLevel()+10)
+    menu:Hide()
+    menu.bg=menu:CreateTexture(nil,"BACKGROUND")
+    menu.bg:SetAllPoints()
+    menu.bg:SetColorTexture(0.2,0.2,0.2,1)
+    menu.bottom=menu:CreateTexture(nil,"BORDER")
+    menu.bottom:SetPoint("BOTTOMLEFT")
+    menu.bottom:SetPoint("BOTTOMRIGHT")
+    menu.bottom:SetHeight(1)
+    menu.bottom:SetColorTexture(0.80,0.40,1.00,1)
+    if pos=="NONE" then
+        menu.bottom:Hide()
+    elseif pos then
+        menu.left=menu:CreateTexture(nil,"BORDER")
+        menu.left:SetPoint("TOPLEFT")
+        menu.left:SetPoint("BOTTOMLEFT")
+        menu.left:SetWidth(-1)
+        menu.left:SetColorTexture(0.80,0.40,1.00,1)
+        menu.bottom:Show()
+    else
+        menu.right=menu:CreateTexture(nil,"BORDER")
+        menu.right:SetPoint("TOPRIGHT")
+        menu.right:SetPoint("BOTTOMRIGHT")
+        menu.right:SetWidth(1)
+        menu.right:SetColorTexture(0.80,0.40,1.00,1)
+        menu.bottom:Show()
+    end
+    menu.buttons={}
+    function dropdown:SetOptions(newList)
+        if newList then
+            options=newList
+        end
+        local totalHeight=4
+        for _,btn in ipairs(menu.buttons) do
+            btn:Hide()
+        end
+        for i,data in ipairs(options) do
+            local btn=menu.buttons[i]
+            if not btn then
+                btn=CreateFrame("Button",nil,menu)
+                btn:SetSize(width-8,20)
+                btn.text=btn:CreateFontString(nil,"OVERLAY")
+                btn.text:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+                btn.text:SetJustifyH("CENTER")
+                btn.text:SetJustifyV("MIDDLE")
+                btn.text:SetPoint("CENTER")
+
+                btn:SetScript("OnEnter",function(self)
+                    self.text:SetTextColor(0.00,0.80,1.00,1)
+                end)
+                btn:SetScript("OnLeave",function(self)
+                    self.text:SetTextColor(1,1,1,1)
+                end)
+                tinsert(menu.buttons,btn)
+            end
+            btn:SetPoint("TOPLEFT",4,-totalHeight)
+            btn.text:SetText(data.text)
+            btn:SetScript("OnClick",function()
+                if callback then
+                    callback(dropdown,data)
+                end
+                dropdown.text:SetText(data.text)
+                menu:Hide()
+            end)
+            btn:Show()
+            totalHeight=totalHeight+20
+        end
+        menu:SetHeight(totalHeight+4)
+    end
+    dropdown:SetScript("OnClick",function()
+        menu:SetShown(not menu:IsShown())
+    end)
+    if options then dropdown:SetOptions(options) end
+    return dropdown
 end
 --[[
 local function HexToRGB(hex)

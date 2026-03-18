@@ -904,15 +904,14 @@ function Ether:DisableSoloAuras()
     end
 end
 
-function Ether:EnableSoloUnitAura(string)
-    Ether:SoloAuraFullInitial(soloButtons[Ether:UnitNumber(string)])
+function Ether:EnableSoloUnitAura(unit)
+    Ether:SoloAuraSetup(soloButtons[Ether:UnitNumber(unit)])
+    auraTblRefresh(soloButtons[Ether:UnitNumber(unit)],true)
+    GetAuras(Ether:UnitNumber(unit))
 end
 
-function Ether:DisableSoloUnitAura(index)
-    local button=soloButtons[Ether:UnitNumber(index)]
-    if button then
-        auraTblRefresh(button)
-    end
+function Ether:DisableSoloUnitAura(unit)
+    auraTblRefresh(soloButtons[Ether:UnitNumber(unit)],false)
 end
 
 function Ether:AuraReset()

@@ -1,5 +1,9 @@
 local _,Ether=...
-
+local tinsert=table.insert
+local ipairs,pairs=ipairs,pairs
+local wipe,unpack=wipe,unpack
+local string_format=string.format
+local OF="%.0f"
 local function SelectAura(editor,spellId)
     if not spellId then return end
     Ether.UIPanel.SpellId=spellId
@@ -114,8 +118,7 @@ function Ether:UpdateAuraList()
             self:GetParent():GetScript("OnLeave")(self:GetParent())
         end)
         btn.spellId=spellId
-        table.insert(Ether.UIPanel.Buttons["LIST"],btn)
-
+        tinsert(Ether.UIPanel.Buttons["LIST"],btn)
         if Ether.UIPanel.SpellId==spellId then
             btn.bg:SetColorTexture(0,0.8,1,0.8,.3)
         end
@@ -155,7 +158,7 @@ function Ether:UpdateEditor(editor)
     editor.s:SetValue(data[3])
     editor.s:Enable()
     editor.s:Show()
-    editor.s.v:SetText(string.format("%.0f px",data[3]))
+    editor.s.v:SetText(string_format("%.0f px",data[3]))
     for pos,btn in pairs(editor.cube) do
         if pos==data[4] then
             btn.bg:SetColorTexture(0.8,0.6,0,0.5)
@@ -166,9 +169,9 @@ function Ether:UpdateEditor(editor)
         end
     end
     editor.x:SetValue(data[5])
-    editor.x.v:SetText(string.format("%.0f",data[5]))
+    editor.x.v:SetText(string_format(OF,data[5]))
     editor.y:SetValue(data[6])
-    editor.y.v:SetText(string.format("%.0f",data[6]))
+    editor.y.v:SetText(string_format(OF,data[6]))
     Ether:UpdatePreview(editor)
 end
 
@@ -219,12 +222,12 @@ function Ether:AddTemplateAuras(templateName)
 
     Ether:UpdateAuraList()
 
-    local msg=string.format("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
+    local msg=string_format("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
     if added>0 then
-        msg=msg..string.format("|cff00ff00+%d new auras|r",added)
+        msg=msg..string_format("|cff00ff00+%d new auras|r",added)
     end
     if skipped>0 then
-        msg=msg..string.format(" (%d already existed)",skipped)
+        msg=msg..string_format(" (%d already existed)",skipped)
     end
     Ether:EtherInfo(msg)
     Ether.UIPanel.SpellId=nil

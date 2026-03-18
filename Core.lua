@@ -177,9 +177,9 @@ do
                             end
                             if self.Menu["TOP"][btnLayer] and self.Menu["TOP"][btnLayer][1] then
                                 ShowCategory(self,firstTabName)
+                                Ether.DB[100][1]=firstTabName
                             end
                         end,false)
-
                         if target then
                             btn:SetPoint("TOPLEFT",target,"BOTTOMLEFT",0,0)
                             btn:SetPoint("TOPRIGHT",target,"BOTTOMRIGHT",0,-2)
@@ -324,7 +324,7 @@ local function OnInitialize(self,event,...)
         Ether:SetupDrag(11)
         if Ether.EtherIcon then
             Ether.EtherIcon:ClearAllPoints()
-            Ether.EtherIcon:SetPoint("CENTER",Minimap,"CENTER",Ether.DB[21][16][4],Ether.DB[21][16][5])
+            Ether.EtherIcon:SetPoint("CENTER",Minimap,"CENTER",Ether.DB[21][16][4] or -5,Ether.DB[21][16][5] or 0)
             if Ether.DB[1][1]==0 then
                 Ether:ToggleIcon(false)
             end

@@ -310,15 +310,55 @@ function Ether:ExportProfileToClipboard()
     return encoded
 end
 
+local function CreateExportPopup()
+    if Ether.ExportPopup then return end
+    local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
+    Ether.ExportPopup = frame
+    frame:SetSize(400,300)
+    frame:SetPoint("CENTER")
+    frame:SetFrameStrata("DIALOG")
+    frame:Hide()
+    frame:SetBackdrop({
+    bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile=true,tileSize=32,edgeSize=32,
+    insets={left=11,right=12,top=12,bottom=11}
+    })
+    local title=frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
+    title:SetPoint("TOP",frame,"TOP",0,-15)
+    title:SetText("Export Data (copied to clipboard)")
+    local scrollFrame=CreateFrame("ScrollFrame",nil,frame,"UIPanelScrollFrameTemplate")
+    scrollFrame:SetPoint("TOPLEFT",frame,"TOPLEFT",15,-40)
+    scrollFrame:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-30,40)
+    frame.EditBox=CreateFrame("EditBox",nil,scrollFrame)
+    frame.EditBox:SetSize(350,200)
+    frame.EditBox:SetMultiLine(true)
+    frame.EditBox:SetFont(unpack(Ether.media.expressway),9,"OUTLINE")
+    frame.EditBox:SetAutoFocus(false)
+    frame.EditBox:SetTextInsets(5,5,5,5)
+    scrollFrame:SetScrollChild(frame.EditBox)
+    local closeBtn=CreateFrame("Button",nil,frame,"GameMenuButtonTemplate")
+    closeBtn:SetSize(100,25)
+    closeBtn:SetPoint("BOTTOM",frame,"BOTTOM",0,15)
+    closeBtn:SetText("Close")
+    closeBtn:SetScript("OnClick",function()
+        frame:Hide()
+    end)
+    return frame
+end
+
 function Ether:ShowExportPopup(encoded)
     if not Ether.ExportPopup then
-        Ether:CreateExportPopup()
+         CreateExportPopup()
     end
     Ether.ExportPopup.EditBox:SetText(encoded)
     Ether.ExportPopup:Show()
 end
+
 function Ether:CreateImportBox(backdrop)
+    if Ether.importBox then return end
     local importBox=CreateFrame("EditBox",nil,backdrop)
+    Ether.importBox = importBox
     importBox:SetPoint("TOPLEFT",backdrop,"TOPLEFT",8,-8)
     importBox:SetPoint("BOTTOMRIGHT",backdrop,"BOTTOMRIGHT",-8,8)
     importBox:SetMultiLine(true)
@@ -353,6 +393,7 @@ function Ether:CreateImportBox(backdrop)
     end)
     return importBox
 end
+
 function Ether:UpdateButtonFont(data)
     if not data then return end
     for _,button in pairs(data) do

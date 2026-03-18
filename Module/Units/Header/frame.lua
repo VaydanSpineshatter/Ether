@@ -134,7 +134,7 @@ end
 local Sort={"GROUP","CLASS","ASSIGNEDROLE"}
 local group={"1,2,3,4,5,6,7,8"}
 local class={"DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR"}
-local assigned = {"TANK,HEALER,DAMAGER,NONE"}
+local assigned={"TANK,HEALER,DAMAGER,NONE"}
 local function OrderMethod(string)
     if not string or type(string)~="string" then return end
     local sort,data
@@ -147,11 +147,32 @@ local function OrderMethod(string)
     end
     return sort,data
 end
-
+local function getRelativePointAnchor(point)
+    point=point:upper();
+    if (point=='TOP') then
+        return 'BOTTOM',0,-1;
+    elseif (point=='BOTTOM') then
+        return 'TOP',0,1;
+    elseif (point=='LEFT') then
+        return 'RIGHT',1,0;
+    elseif (point=='RIGHT') then
+        return 'LEFT',-1,0;
+    elseif (point=='TOPLEFT') then
+        return 'BOTTOMRIGHT',1,-1;
+    elseif (point=='TOPRIGHT') then
+        return 'BOTTOMLEFT',-1,-1;
+    elseif (point=='BOTTOMLEFT') then
+        return 'TOPRIGHT',1,1;
+    elseif (point=='BOTTOMRIGHT') then
+        return 'TOPLEFT',-1,1;
+    else
+        return 'CENTER',0,0;
+    end
+end
 function Ether:CreateGroupHeader()
     local DB=Ether.DB
     local data=DB[21][10]
-    local by,order = OrderMethod(Sort[DB[100][9]])
+    local by,order=OrderMethod(Sort[DB[100][9]])
     local header=CreateFrame("Frame","EtherGroupHeader",raid,"SecureGroupHeaderTemplate")
     Ether.Header.raid=header
     header:SetPoint("BOTTOM",raid,"TOP")
@@ -235,7 +256,7 @@ end
 
 function Ether:ChangeSortMethod(data)
     if InCombatLockdown() or not data then return end
-    local by,order = OrderMethod(data)
+    local by,order=OrderMethod(data)
     Ether.Header.raid:SetAttribute("groupBy",by or "GROUP")
     Ether.Header.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
     local name=Ether.Header.raid:GetName().."UnitButton"
