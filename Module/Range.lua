@@ -75,8 +75,8 @@ function Ether:UpdateAlpha(button)
 end
 
 local function UpdateTargetAlpha()
-    if soloButtons["target"] and soloButtons["target"]:IsVisible() then
-        Ether:UpdateAlpha(soloButtons["target"])
+    if soloButtons[2] and soloButtons[2]:IsVisible() then
+        Ether:UpdateAlpha(soloButtons[2])
     end
 end
 
@@ -104,8 +104,8 @@ function Ether:RangeDisable()
         rangeTicker:Cancel()
         rangeTicker=nil
     end
-    if soloButtons["target"] and soloButtons["target"]:IsVisible() then
-        soloButtons["target"]:SetAlpha(1)
+    if soloButtons[2] and soloButtons[2]:IsVisible() then
+        soloButtons[2]:SetAlpha(1)
     end
     for _,button in pairs(raidButtons) do
         if button and button:IsVisible() then

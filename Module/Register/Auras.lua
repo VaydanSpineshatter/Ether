@@ -32,11 +32,11 @@ end
 function Ether:UpdateAuraList()
     local editor=Ether.UIPanel.Frames["EDITOR"]
     local auras=Ether.UIPanel.Frames["AURAS"]
-    for _,btn in ipairs(Ether.UIPanel.Buttons[12]) do
+    for _,btn in ipairs(Ether.UIPanel.Buttons["LIST"]) do
         btn:Hide()
         btn:SetParent(nil)
     end
-    wipe(Ether.UIPanel.Buttons[12])
+    wipe(Ether.UIPanel.Buttons["LIST"])
     local yOffset=0
     local index=1
     for spellId,data in pairs(Ether.DB[1003]) do
@@ -114,7 +114,7 @@ function Ether:UpdateAuraList()
             self:GetParent():GetScript("OnLeave")(self:GetParent())
         end)
         btn.spellId=spellId
-        table.insert(Ether.UIPanel.Buttons[12],btn)
+        table.insert(Ether.UIPanel.Buttons["LIST"],btn)
 
         if Ether.UIPanel.SpellId==spellId then
             btn.bg:SetColorTexture(0,0.8,1,0.8,.3)

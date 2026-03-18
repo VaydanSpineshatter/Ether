@@ -18,9 +18,6 @@ local function CreateLinkBox()
     end
 end
 local function SendOutput(input)
-    if not Ether.infoFrame then
-        return
-    end
     Ether.infoFrame:Show()
     debugText=debugText..'\n'..input
     Ether.infoText:SetText(debugText)
@@ -52,11 +49,11 @@ local function Output(...)
     end
 end
 function Ether:EtherInfo(...)
-    if Ether.DB[1][7]~=1 then return end
+    if Ether.DB[1][8]~=1 then return end
     Output(...)
 end
 function Ether:EtherDebug(...)
-    if Ether.DB[1][8]~=1 then return end
+    if Ether.DB[1][9]~=1 then return end
     Output(...)
 end
 

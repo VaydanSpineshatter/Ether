@@ -216,24 +216,15 @@ function Ether:UpdatePrediction(button)
 end
 
 local function HealthChanged(self,event,unit)
-    if not unit or self.unit~=unit then
-        return
-    end
+    if not unit or self.unit~=unit then return end
     if event=="UNIT_HEALTH" or event=="UNIT_MAXHEALTH" then
         Ether:UpdateHealth(self)
-        if Ether.DB[4][3]==1 then
-            Ether:UpdateHealthTextRounded(self)
-        end
     end
 end
 
 local function PredictionChanged(self,event,unit)
-    if not unit or self.unit~=unit then
-        return
-    end
-    if event~="UNIT_HEAL_PREDICTION" then
-        return
-    end
+    if not unit or self.unit~=unit then return end
+    if event~="UNIT_HEAL_PREDICTION" then return end
     Ether:UpdatePrediction(self)
 end
 

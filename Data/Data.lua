@@ -1,83 +1,83 @@
 local _,Ether=...
 local pairs,ipairs=pairs,ipairs
-local type,next=type,next
+local type,next,tostring=type,next,tostring
 local tinsert,tconcat=table.insert,table.concat
 local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent","Module"}
-local PosMap={}
+local U={"player","target","targettarget","pet","pettarget","focus"}
+local PosMap,UnitMap={},{}
 for i,v in ipairs(D) do
     PosMap[v]=i -- "TOPLEFT" -> 1
     PosMap[i]=v -- 1 -> "TOPLEFT"
 end
+for i,v in ipairs(U) do
+    UnitMap[v]=i -- "player" -> 1
+    UnitMap[i]=v -- 1 -> "player"
+end
+local Default={
+    [1]={1,1,1,1,1,1,1,0,0},--Module
+    [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
+    [3]={1,1,1,1,1,1,1,1,1,1},--Indicators
+    [4]={1,1,1,1,1,1,1,1,1,1,1,1,1},--Tooltip
+    [5]={1},--Header
+    [6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},--Layout
+    [20]={
+        [1]={D[1],0,0,24},
+        [2]={D[8],0,0,17},
+        [3]={D[3],0,0,18},
+        [4]={D[2],0,0,15},
+        [5]={D[8],0,0,14},
+        [6]={D[9],0,0,17},
+        [7]={D[7],0,0,15},
+        [8]={D[1],0,-9,13},
+        [9]={D[3],0,0,14},
+        [10]={D[2],0,0,24}
+    },
+    [21]={
+        [1]={D[5],D[10],D[5],-250,-200,110,35,1,1},--player
+        [2]={D[5],D[10],D[5],250,-200,110,35,1,1},--target
+        [3]={D[5],D[10],D[5],0,-220,110,35,1,1},--targettarget
+        [4]={D[5],D[10],D[5],-350,-100,110,35,1,1},--pet
+        [5]={D[5],D[10],D[5],-270,-20,110,35,1,1},--pettarget
+        [6]={D[5],D[10],D[5],500,100,110,35,1,1},--focus
+        [7]={D[5],D[10],D[5],0,90,110,35,1,1},--custom 1
+        [8]={D[5],D[10],D[5],0,0,110,35,1,1},--custom 2
+        [9]={D[5],D[10],D[5],0,-90,110,35,1,1},--custom 3
+        [10]={D[8],D[10],D[8],0,200,55,55,1,1},--raidButtons
+        [11]={D[4],D[10],D[4],200,0,50,50,1,1},--petButtons
+        [12]={D[5],D[10],D[5],0,-180,340,15,1,1},--Player CastBar
+        [13]={D[5],D[10],D[5],360,-270,240,15,1,1},--Target CastBar
+        [14]={D[2],D[10],D[2],0,-100,320,200,1,1},--Info Frame
+        [15]={D[9],D[10],D[9],-350,200,280,120,1,1},--Tooltip
+        [16]={D[3],D[10],D[1],-5,0,31,31,1,1},--Ether Icon
+        [17]={D[1],D[10],D[1],50,-100,640,480,1,1} --SettingsFrame
+    },
+
+    [1003]={},
+    ["USER"]={},
+    [100]={D[11],1,false,unpack(Ether.media.venite),unpack(Ether.media.elvUIBar),unpack(Ether.media.etherBg),12,"OUTLINE",1}
+}
+Ether.DataDefault=Default
 function Ether:PosNumber(input)
     return PosMap[input]
+end
+function Ether:UnitNumber(input)
+    return UnitMap[input]
 end
 function Ether:RefreshAllSettings()
     for i=1,10 do
         Ether:FrameChecked(i)
     end
 end
-local Default={
-    [1]={1,1,1,1,1,1,0,0},--Module
-    [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
-    [3]={1,1,1,1,1,1},--Create Units
-    [4]={0,0,0,0},--Update
-    [5]={1,1,1,1,1,1,1,1,1,1},--Indicators
-    [6]={1,1,1},--Aura
-    [7]={1,1,1,1,1,1,1,1,1,1,1,1,1},--Tooltip
-    [8]={1},--Header
-    [9]={1,1,1},--Layout
-    [10]={1,1},--CastBar
-    [1002]={
-        [1]={D[1],0,0,24},
-        [2]={D[1],0,0,12},
-        [3]={D[1],0,0,16},
-        [4]={D[2],0,0,12},
-        [5]={D[8],0,0,14},
-        [6]={D[9],0,0,12},
-        [7]={D[2],0,0,12},
-        [8]={D[4],0,0,12},
-        [9]={D[1],0,0,12},
-        [10]={D[1],0,0,12}
-    },
-    [21]={
-        [1]={D[2],D[10],D[2],0,-100,120,280,1,1},
-        [2]={D[9],D[10],D[9],-350,200,320,200,1.0,1},
-        [3]={D[5],D[10],D[5],-250,-200,110,50,1,1},
-        [4]={D[5],D[10],D[5],250,-200,110,50,1,1},
-        [5]={D[5],D[10],D[5],0,-220,110,50,1,1},
-        [6]={D[5],D[10],D[5],-350,-100,110,50,1,1},
-        [7]={D[5],D[10],D[5],-270,-20,110,50,1,1},
-        [8]={D[5],D[10],D[5],500,100,110,50,1,1},
-        [9]={D[8],D[10],D[8],0,200,1,1,1,1},
-        [10]={D[4],D[10],D[4],200,0,1,1,1,1},
-        [11]={D[5],D[10],D[5],0,-180,340,15,1,1},
-        [12]={D[5],D[10],D[5],360,-270,240,15,1,1},
-        [13]={D[3],D[10],D[1],-5,0,31,31,1,1},
-        [14]={D[1],D[10],D[1],50,-100,640,480,1,1}
-    },
-    [1003]={},
-    [1401]={
-        [1]={D[5],D[10],D[5],0,90},
-        [2]={D[5],D[10],D[5],0,0},
-        [3]={D[5],D[10],D[5],0,-90},
-    },
-    ["USER"]={},
-    [100]={D[11],1,false,unpack(Ether.media.venite),unpack(Ether.media.elvUIBar),unpack(Ether.media.etherBg),12,"OUTLINE"}
-}
-Ether.DataDefault=Default
-
 function Ether:DataEnableAll(t)
     for i=1,#t do
         t[i]=1
     end
 end
-
 function Ether:DataDisableAll(t)
     for i=1,#t do
         t[i]=0
     end
 end
-
 function Ether:DataSnapShot(t)
     local copy={}
     for i=1,#t do
@@ -85,13 +85,11 @@ function Ether:DataSnapShot(t)
     end
     return copy
 end
-
 function Ether:DataRestore(t,snapshot)
     for i=1,#snapshot do
         t[i]=snapshot[i]
     end
 end
-
 function Ether:DataMigrate(old,newSize,default)
     local t={}
     for i=1,newSize do
@@ -99,24 +97,22 @@ function Ether:DataMigrate(old,newSize,default)
     end
     return t
 end
-
 function Ether:FrameChecked(number)
-    if Ether.UIPanel.Buttons[number] then
+    local buttons=Ether.UIPanel.Buttons
+    if buttons[number] then
         for i=1,#Ether.DB[number] do
-            local checkbox=Ether.UIPanel.Buttons[number][i]
+            local checkbox=buttons[number][i]
             if checkbox then
                 checkbox:SetChecked(Ether.DB[number][i]==1)
             end
         end
     end
 end
-
 function Ether:EtherFrameSetClick(number,number2)
     local check=Ether.UIPanel.Buttons[number][number2]
     check:SetChecked(not check:GetChecked())
     check:GetScript("OnClick")(check)
 end
-
 function Ether:CopyTable(orig,seen)
     if type(orig)~="table" then
         return orig
@@ -136,7 +132,6 @@ function Ether:CopyTable(orig,seen)
     end
     return copy
 end
-
 function Ether:TableSize(t)
     local count=0
     for _ in pairs(t) do
@@ -144,47 +139,54 @@ function Ether:TableSize(t)
     end
     return count
 end
-
-local soloButtons=Ether.soloButtons
-function Ether:RefreshFramePositions()
-    local frameKeys={
-        [1]=Ether.infoFrame,
-        [2]=Ether.toolFrame,
-        [3]=soloButtons["player"],
-        [4]=soloButtons["target"],
-        [5]=soloButtons["targettarget"],
-        [6]=soloButtons["pet"],
-        [7]=soloButtons["pettarget"],
-        [8]=soloButtons["focus"],
-        [9]=Ether.Anchor.raid,
-        [10]=Ether.Anchor.pet,
-        [11]=soloButtons["player"].castBar,
-        [12]=soloButtons["target"].castBar,
-        [13]=Ether.EtherIcon,
-        [14]=Ether.UIPanel.Frames["MAIN"]
+local function ReturnFrame(id)
+    local soloButtons=Ether.soloButtons
+    local customButtons=Ether.customButtons
+    local castBar=Ether.castBar
+    local key={
+        [1]=soloButtons[1],--player
+        [2]=soloButtons[2],--target
+        [3]=soloButtons[3],--targettarget
+        [4]=soloButtons[4],--pet
+        [5]=soloButtons[5],--pettarget
+        [6]=soloButtons[6],--focus
+        [7]=customButtons[1],--custom1
+        [8]=customButtons[2],--custom2
+        [9]=customButtons[3],--custom3
+        [10]=Ether.Anchor.raid,
+        [11]=Ether.Anchor.pet,
+        [12]=castBar[1],--Player CastBar
+        [13]=castBar[2],--Target CastBar
+        [14]=Ether.infoFrame,
+        [15]=Ether.toolFrame,
+        [16]=Ether.EtherIcon,
+        [17]=Ether.UIPanel.Frames["MAIN"]
     }
-
+    return key[id]
+end
+Ether.ReturnFrame=ReturnFrame
+function Ether:RefreshFramePositions()
     for frameID in pairs(Ether.DB[21]) do
         if frameID then
-            Ether:ApplyFramePosition(frameKeys[frameID],frameID)
+            Ether:ApplyFramePosition(frameID)
         end
     end
 end
 
-function Ether:ApplyFramePosition(frame,index)
+function Ether:ApplyFramePosition(index)
     if type(index)~="number" then return end
 
     local pos=Ether.DB[21][index]
-
+    local frame=ReturnFrame(index)
     if frame and pos then
-        local relTo=(pos[2]=="UIParent") and UIParent or frame[pos[2]]
         frame:ClearAllPoints()
-        frame:SetPoint(pos[1],relTo,pos[3],pos[4],pos[5])
+        frame:SetPoint(pos[1],UIParent,pos[3],pos[4],pos[5])
+        frame:SetWidth(pos[6])
+        frame:SetHeight(pos[7])
         frame:SetScale(pos[8])
         frame:SetAlpha(pos[9])
     end
 end
-
 local mergeCache={}
 local pathCache={}
 local mergeResult={}
@@ -214,11 +216,12 @@ function Ether:MergeToLeft(ORIG,NEW)
         LEFT=next(mergeCache)
     end
 end
-
 function Ether:MergeAnalyse()
     concat=tconcat(mergeResult,"\n")
     if type(concat)=="nil" then return end
-    Ether:EtherDebug(concat)
+    if Ether.EtherDebug then
+        Ether:EtherDebug(concat)
+    end
     concat=nil
     wipe(mergeCache)
     wipe(mergeResult)

@@ -107,17 +107,16 @@ end
 local function CreateChildren(header,button)
     local b=_G[button]
     b.Indicators={}
+    b.Dispel={}
+    Ether:SetupButtonLayout(b)
     Ether:SetupHealthBar(b,"VERTICAL")
+    if header:GetAttribute("TypePet") then
+        b.TypePet=true
+    end
     Ether:SetupPrediction(b)
     Ether:SetupName(b,-5)
     Ether:DispelIconSetup(b)
-    Ether:SetupButtonLayout(b)
-    if header:GetAttribute("TypePet") then
-        b.TypePet=true
-    else
-        Ether:SetupUpdateText(b,"health")
-        Ether:SetupUpdateText(b,"power",true)
-    end
+    Ether.SetupDispelAuraButton(b)
     b:HookScript("OnAttributeChanged",OnAttributeChanged)
     b:SetScript("OnShow",Show)
     b:SetScript("OnHide",Hide)
@@ -133,6 +132,9 @@ local function CreateChildren(header,button)
 end
 
 function Ether:CreateGroupHeader()
+    local DB=Ether.DB
+    local data=DB[21][10]
+    local Sort={"GROUP","CLASS","ROLE","ASSIGNEDROLE"}
     local header=CreateFrame("Frame","EtherGroupHeader",raid,"SecureGroupHeaderTemplate")
     Ether.Header.raid=header
     header:SetPoint("BOTTOM",raid,"TOP")
@@ -140,11 +142,11 @@ function Ether:CreateGroupHeader()
     header:SetAttribute("initial-unitWatch",true)
     header:SetAttribute("initialConfigFunction",initialConfigFunction)
     header.CreateChildren=CreateChildren
-    header:SetAttribute("ButtonWidth",55)
-    header:SetAttribute("ButtonHeight",55)
+    header:SetAttribute("ButtonWidth",data[6] or 55)
+    header:SetAttribute("ButtonHeight",data[7] or 55)
     header:SetAttribute("columnAnchorPoint","LEFT")
     header:SetAttribute("point","TOP")
-    header:SetAttribute("groupBy","GROUP")
+    header:SetAttribute("groupBy",Sort[DB[100][9]] or "GROUP")
     header:SetAttribute("groupingOrder","1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset",0)
     header:SetAttribute("yOffset",0)
@@ -159,6 +161,7 @@ function Ether:CreateGroupHeader()
 end
 
 function Ether:CreatePetHeader()
+    local data=Ether.DB[21][11]
     local header=CreateFrame("Frame","EtherPetGroupHeader",pet,"SecureGroupPetHeaderTemplate")
     Ether.Header.pet=header
     header:SetPoint("BOTTOMLEFT",pet,"TOPLEFT",0,10)
@@ -166,8 +169,8 @@ function Ether:CreatePetHeader()
     header:SetAttribute("initialConfigFunction",initialConfigFunction)
     header.CreateChildren=CreateChildren
     header:SetAttribute("TypePet",true)
-    header:SetAttribute("ButtonHeight",50)
-    header:SetAttribute("ButtonWidth",50)
+    header:SetAttribute("ButtonHeight",data[6] or 50)
+    header:SetAttribute("ButtonWidth",data[7] or 50)
     header:SetAttribute("xOffset",0)
     header:SetAttribute("yOffset",0)
     header:SetAttribute("showRaid",true)
@@ -195,6 +198,27 @@ function Ether:ChangeDirectionHeader(horizontal)
         Ether.Header.raid:SetAttribute("point","TOP")
     end
 
+    local name=Ether.Header.raid:GetName().."UnitButton"
+    local index=1
+    local child=_G[name..index]
+    while (child) do
+        child:ClearAllPoints()
+        index=index+1
+        child=_G[name..index]
+    end
+    if Ether.Header.raid:IsShown() then
+        Ether.Header.raid:Hide()
+        Ether.Header.raid:Show()
+    end
+    if Ether.DB[6][1]==1 then
+        Ether:AuraDisable()
+        Ether:AuraEnable()
+    end
+end
+
+function Ether:ChangeSortMethod(data)
+    if InCombatLockdown() or not data then return end
+    Ether.Header.raid:SetAttribute("groupBy",data)
     local name=Ether.Header.raid:GetName().."UnitButton"
     local index=1
     local child=_G[name..index]

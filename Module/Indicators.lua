@@ -211,74 +211,21 @@ local function UpdateHealthBar(button)
 end
 
 local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLoot","MainTank","GroupRole","ReadyCheck"}
-local state=false
-local function isAway(DB)
-    if DB[10][1]==1 then
-        Ether:CastBarDisable("player")
-    end
-    if DB[10][2]==1 then
-        Ether:CastBarDisable("target")
-    end
-    if DB[1][5]==1 then
-        Ether:RangeDisable()
-    end
-    if DB[6][1]==1 then
-        Ether:AuraDisable()
-    end
-    if DB[1][1]==1 then
-        Ether:ToggleIcon(false)
-    end
-    if Ether.DB[1][6]==1 then
-        for i=1,10 do
-            Ether.IndicatorToggle(i)
-        end
-    end
+local IndiMap={}
+for i,v in ipairs(iTbl) do
+    IndiMap[v]=i -- "ICON" -> 1
+    IndiMap[i]=v -- 1 -> "ICON"
+end
+function Ether:ToggleIndicatorIcon(index)
+    local number=IndiMap[index]
     for _,button in pairs(raidButtons) do
-        if button and button.Indicators then
-            for _,info in pairs(button.Indicators) do
-                if info then
-                    info:Hide()
-                end
+        if button and button.Indicators and button.Indicators[number] then
+            if not button.Indicators[number]:IsShown() then
+                button.Indicators[number]:Show()
+            else
+                button.Indicators[number]:Hide()
             end
         end
-    end
-end
-
-local function isNotAway(DB)
-    if DB[10][1]==1 then
-        Ether:CastBarEnable("player")
-    end
-    if DB[10][2]==1 then
-        Ether:CastBarEnable("target")
-    end
-    if DB[1][5]==1 then
-        Ether:RangeEnable()
-    end
-    if DB[6][1]==1 then
-        Ether:AuraEnable()
-    end
-    if DB[1][1]==1 then
-        Ether:ToggleIcon(true)
-    end
-    if Ether.DB[1][6]==1 then
-        for i=1,10 do
-            Ether.IndicatorToggle(i)
-        end
-    end
-    Ether:IndicatorsFullUpdate()
-end
-
-local function isUserIdle()
-    if Ether.DB[1][4]~=1 then return end
-    local DB=Ether.DB
-    local afk=UnitIsAFK("player")
-    if afk and not state then
-        state=true
-        isAway(DB)
-    end
-    if not afk and state then
-        state=false
-        isNotAway(DB)
     end
 end
 
@@ -306,6 +253,7 @@ local function UnitFlags(self)
         self.Indicators.UnitFlags:Show()
     elseif dead then
         UpdateHealthBar(self)
+        Ether:HideButtonDispel(self)
         Ether:UpdatePrediction(self)
         self.Indicators.UnitFlags:SetTexture(deadIcon)
         self.Indicators.UnitFlags:Show()
@@ -341,7 +289,7 @@ local function PlayerFlags(self)
     else
         self.Indicators.PlayerFlags:Hide()
     end
-    isUserIdle()
+    Ether:isUserIdle()
 end
 
 local function RaidTargetToken(self)
@@ -464,7 +412,7 @@ function Ether:IndicatorsFullUpdateByUnit(button)
 end
 
 function Ether:UpdateIndicatorsPosition(number)
-    local C=Ether.DB[1002][number]
+    local C=Ether.DB[20][number]
     local data=iTbl[number]
     for _,button in pairs(raidButtons) do
         if button.Indicators[data] then
@@ -478,7 +426,7 @@ function Ether:UpdateIndicatorsPosition(number)
 end
 
 function Ether:SavePosition(button)
-    local C=Ether.DB[1002]
+    local C=Ether.DB[20]
     for index,data in ipairs(iTbl) do
         if button.Indicators[data] then
             button.Indicators[data].Shown=button.Indicators[data]:IsShown()
@@ -497,6 +445,18 @@ end
 function Ether:InitialIndicatorsPosition()
     for _,button in pairs(raidButtons) do
         Ether:SavePosition(button)
+    end
+end
+
+function Ether:HideIndicators()
+    for _,button in pairs(raidButtons) do
+        if button and button.Indicators then
+            for _,info in pairs(button.Indicators) do
+                if info then
+                    info:Hide()
+                end
+            end
+        end
     end
 end
 

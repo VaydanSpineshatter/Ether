@@ -5,8 +5,18 @@ local UnitCast=UnitCastingInfo
 local UnitChannel=UnitChannelInfo
 local timeStr="%.1f|cffff0000-%.1f|r"
 local tStr="%.1f"
-local IsEventValid=C_EventUtils.IsEventValid
-local soloButtons=Ether.soloButtons
+
+local function updateSafeZone(self)
+    local safeZone=self.safeZone
+    local width=self:GetWidth()
+    local _,_,_,ms=GetNetStats()
+    local safeZoneRatio=(ms/1e3)/self.max
+    if (safeZoneRatio>1) then
+        safeZoneRatio=1
+    end
+    safeZone:SetWidth(width*safeZoneRatio)
+end
+
 local function OnUpdate(self,elapsed)
     if (self.casting) then
         local duration=self.duration+elapsed
@@ -47,87 +57,59 @@ local function OnUpdate(self,elapsed)
     end
 end
 
-local RegisterUpdateFrame,UnregisterUpdateFrame,UpdateFrameInfo
-local RegisterCastBarEvent,UnregisterCastBarEvent
+local soloButtons=Ether.soloButtons
+local RegisterEvent,UnregisterEvent,RegisterUpdate,UnregisterUpdate,UpdateInfo
 do
-    local updateCount=0
-    local eventFrame
+    local count=0
+    local frame
     local Events,Updates={},{}
-    function RegisterCastBarEvent(castEvent,func)
-        if not eventFrame then
-            eventFrame=CreateFrame("Frame")
-            eventFrame:SetScript("OnEvent",function(self,event,unit,...)
-                local bar=soloButtons[unit]
-                if not bar then
-                    return
-                end
+    function RegisterEvent(cast,func)
+        if not frame then
+            frame=CreateFrame("Frame")
+            frame:SetScript("OnEvent",function(self,event,unit,...)
+                local bar=soloButtons[Ether:UnitNumber(unit)]
+                if not bar then return end
                 self.unit=bar:GetAttribute("unit")
-                if self.unit~="player" and self.unit~="target" then
-                    return
-                end
+                if self.unit~=unit then return end
                 Events[event](bar,event,unit,...)
             end)
         end
-        if not Events[castEvent] then
-            if IsEventValid(castEvent) and not eventFrame:IsEventRegistered(castEvent) then
-                eventFrame:RegisterEvent(castEvent)
-            end
+        if not Events[cast] and not frame:IsEventRegistered(cast) then
+            frame:RegisterEvent(cast)
         end
-        Events[castEvent]=func
+        Events[cast]=func
     end
-    function UnregisterCastBarEvent(...)
-        if eventFrame then
-            for i=select("#",...),1,-1 do
-                local event=select(i,...)
-                if IsEventValid(event) then
-                    if Events[event] and eventFrame:IsEventRegistered(event) then
-                        eventFrame:UnregisterEvent(event)
-                    end
-                end
-                Events[event]=nil
-            end
+    function UnregisterEvent(event)
+        if frame and Events[event] and frame:IsEventRegistered(event) then
+            frame:UnregisterEvent(event)
         end
+        Events[event]=nil
     end
-    function RegisterUpdateFrame(onUpdate)
+    function RegisterUpdate(onUpdate)
         if not Updates[onUpdate] then
             Updates[onUpdate]=onUpdate
             Updates[onUpdate]:SetScript("OnUpdate",OnUpdate)
-            updateCount=updateCount+1
+            count=count+1
         end
     end
-    function UnregisterUpdateFrame(onUpdate)
+    function UnregisterUpdate(onUpdate)
         if Updates[onUpdate] then
             Updates[onUpdate]:SetScript("OnUpdate",nil)
             Updates[onUpdate]=nil
-            updateCount=updateCount-1
+            count=count-1
         end
     end
-    function UpdateFrameInfo()
-        return updateCount>0
+    function UpdateInfo()
+        return count>0
     end
-end
-
-local function updateSafeZone(self)
-    local safeZone=self.safeZone
-    local width=self:GetWidth()
-    local _,_,_,ms=GetNetStats()
-    local safeZoneRatio=(ms/1e3)/self.max
-    if (safeZoneRatio>1) then
-        safeZoneRatio=1
-    end
-    safeZone:SetWidth(width*safeZoneRatio)
 end
 
 local function CastStart(self,event,unit)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_START" then
         local bar=self.castBar
-        local name,text,texture,startTimeMS,endTimeMS,_,castID,notInterruptible,spellID=UnitCast(unit)
-        if not bar or not name then
-            return
-        end
+        local name,text,texture,startTimeMS,endTimeMS,_,castID,notInterruptible,spellID=UnitCast(self.unit)
+        if not bar or not name then return end
         endTimeMS=endTimeMS/1e3
         startTimeMS=startTimeMS/1e3
         local max=endTimeMS-startTimeMS
@@ -161,14 +143,10 @@ local function CastStart(self,event,unit)
 end
 
 local function CastFailed(self,event,unit,castID)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_FAILED" then
         local bar=self.castBar
-        if (not bar or bar.castID~=castID) then
-            return
-        end
+        if not bar or bar.castID~=castID then return end
         bar:SetStatusBarColor(1.0,0.1,0.1,0.8)
         if (bar.text) then
             bar.text:SetText("Cast - "..(bar.spellName or "Failed"))
@@ -180,14 +158,10 @@ local function CastFailed(self,event,unit,castID)
 end
 
 local function CastInterrupted(self,event,unit,castID)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_INTERRUPTED" then
         local bar=self.castBar
-        if (not bar or bar.castID~=castID) then
-            return
-        end
+        if not bar or bar.castID~=castID then return end
         bar:SetStatusBarColor(0.50,0.00,0.50,0.8)
         if (bar.text) then
             bar.text:SetText("Cast - "..(bar.spellName or "Interrupted"))
@@ -199,15 +173,11 @@ local function CastInterrupted(self,event,unit,castID)
 end
 
 local function CastDelayed(self,event,unit)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_DELAYED" then
         local bar=self.castBar
-        local _,_,_,startTime=UnitCast(unit)
-        if (not bar or not startTime or not bar:IsShown()) then
-            return
-        end
+        local _,_,_,startTime=UnitCast(self.unit)
+        if not bar or not startTime or not bar:IsVisible() then return end
         local duration=GetTime()-(startTime/1000)
         if (duration<0) then
             duration=0
@@ -219,29 +189,21 @@ local function CastDelayed(self,event,unit)
 end
 
 local function CastStop(self,event,unit,castID)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_STOP" then
         local bar=self.castBar
-        if (not bar or bar.castID~=castID) then
-            return
-        end
+        if not bar or bar.castID~=castID then return end
         bar.casting=nil
         bar.notInterruptible=nil
     end
 end
 
 local function ChannelStart(self,event,unit,_,spellID)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_CHANNEL_START" then
         local bar=self.castBar
-        local name,text,textureID,startTimeMS,endTimeMS,_,notInterruptible=UnitChannel(unit)
-        if not bar or not name then
-            return
-        end
+        local name,text,textureID,startTimeMS,endTimeMS,_,notInterruptible=UnitChannel(self.unit)
+        if not bar or not name then return end
         endTimeMS=endTimeMS/1e3
         startTimeMS=startTimeMS/1e3
         local max=endTimeMS-startTimeMS
@@ -276,15 +238,11 @@ local function ChannelStart(self,event,unit,_,spellID)
 end
 
 local function ChannelUpdate(self,event,unit)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_CHANNEL_UPDATE" then
         local bar=self.castBar
-        local name,_,_,startTimeMS,endTimeMS=UnitChannel(unit)
-        if not bar or not name then
-            return
-        end
+        local name,_,_,startTimeMS,endTimeMS=UnitChannel(self.unit)
+        if not bar or not name then return end
         local duration=(endTimeMS/1000)-GetTime()
         bar.delay=bar.delay+bar.duration-duration
         bar.duration=duration
@@ -295,12 +253,10 @@ local function ChannelUpdate(self,event,unit)
 end
 
 local function ChannelStop(self,event,unit)
-    if self.unit~=unit then
-        return
-    end
+    if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_CHANNEL_STOP" then
         local bar=self.castBar
-        if (bar:IsShown()) then
+        if (bar:IsVisible()) then
             bar.channeling=nil
             bar.notInterruptible=nil
         end
@@ -318,68 +274,66 @@ local event={
     "UNIT_SPELLCAST_CHANNEL_STOP"
 }
 local handler={CastStart,CastStop,CastFailed,CastInterrupted,CastDelayed,ChannelStart,ChannelUpdate,ChannelStop}
-
 local function castBarEvents(status)
     if status then
         for index,info in ipairs(event) do
-            RegisterCastBarEvent(info,handler[index])
+            RegisterEvent(info,handler[index])
         end
     else
         for _,info in ipairs(event) do
-            UnregisterCastBarEvent(info)
+            UnregisterEvent(info)
         end
     end
 end
 
 function Ether:CastBarEnable(unit)
-    local bar=soloButtons[unit]
+    local bar=soloButtons[Ether:UnitNumber(unit)]
     if not bar then
         return
     end
     if not bar.castBar then
         if unit=="player" then
-            Ether:SetupCastBar(bar,11)
-        else
             Ether:SetupCastBar(bar,12)
+        else
+            Ether:SetupCastBar(bar,13)
         end
-        RegisterUpdateFrame(bar.castBar)
+        RegisterUpdate(bar.castBar)
     end
-    if UpdateFrameInfo() then
+    if UpdateInfo() then
         castBarEvents(true)
     end
 end
 
 function Ether:HideCastBar(unit,bool)
-    local bar=soloButtons[unit]
+    local bar=soloButtons[Ether:UnitNumber(unit)]
     if not bar then
         return
     end
     if bar.castBar then
         if bool and UpdateFrameInfo() then
-            UnregisterUpdateFrame(bar.castBar)
+            UnregisterUpdate(bar.castBar)
             bar.castBar.text:SetText("Move CastBar")
             bar.castBar:SetShown(bool)
         else
-            RegisterUpdateFrame(bar.castBar)
+            RegisterUpdate(bar.castBar)
         end
     end
 end
 
 function Ether:CastBarDisable(unit)
-    local bar=soloButtons[unit]
+    local bar=soloButtons[Ether:UnitNumber(unit)]
     if not bar then
         return
     elseif bar.castBar then
         bar.castBar:Hide()
-        UnregisterUpdateFrame(bar.castBar)
+        UnregisterUpdate(bar.castBar)
         bar.castBar:ClearAllPoints()
         bar.castBar:SetParent(nil)
         bar.castBar:SetScript("OnDragStart",nil)
         bar.castBar:SetScript("OnDragStop",nil)
         bar.castBar=nil
     end
-    if not UpdateFrameInfo() then
+    if not UpdateInfo() then
         castBarEvents(false)
     end
 end
-

@@ -2,7 +2,7 @@
 ## Title: |cffcc66ffEther|r
 ## Notes: Ether Unit Frames
 ## Author: Vaydan-Spineshatter
-## Version: 45222
+## Version: 47888
 ## SavedVariables: ETHER_DATABASE_DX_AA
 ## IconTexture: Interface\AddOns\Ether\Media\Texture\icon
 ## OptionalDeps: LibSharedMedia-3.0
@@ -36,6 +36,7 @@ Module/Tooltip.lua
 Module/Effects.lua
 Module/Range.lua
 Module/Update/Blizzard.lua
+Module/Update/AFK.lua
 Module/Update/health.lua
 Module/Update/name.lua
 Module/Update/power.lua

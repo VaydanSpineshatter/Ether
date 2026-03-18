@@ -5,7 +5,7 @@ local tinsert,tconcat=table.insert,table.concat
 local IsEventValid=C_EventUtils.IsEventValid
 local pairs,ipairs=pairs,ipairs
 --local UnitGUID=UnitGUID
-local soloButtons=Ether.soloButtons
+--local soloButtons=Ether.soloButtons
 local cacheSolo={
     player=true,
     pet=true,
@@ -42,7 +42,7 @@ local function refreshButtons()
                         Ether:UpdatePrediction(button)
                     end
                 end
-                if Ether.DB[6][1]==1 then
+                if Ether.DB[1][7]==1 then
                     Ether:AuraReset()
                 end
                 if Ether.DB[1][6]==1 then
@@ -104,18 +104,6 @@ local function initialButtons()
     end
 end
 
-function Ether:UpdateColors()
-    if UnitExists("target") then
-        Ether:UpdateClassColor(soloButtons["target"])
-        Ether:UpdatePowerColor(soloButtons["target"])
-
-    end
-    if UnitExists("targettarget") then
-        Ether:UpdateClassColor(soloButtons["targettarget"])
-        Ether:UpdatePowerColor(soloButtons["targettarget"])
-    end
-end
-
 local updatedChannel=false
 local function UpdateSendChannel()
     local sendChannel
@@ -132,8 +120,7 @@ end
 
 local function Roster(_,event)
     if event=="PLAYER_UNGHOST" then
-        Ether:DisableSoloAuras()
-        Ether:EnableSoloAuras()
+        Ether:SoloAuraReset()
         initialButtons()
     elseif event=="GROUP_ROSTER_UPDATE" then
         refreshButtons()
@@ -152,10 +139,8 @@ local function Roster(_,event)
             if UnitExists("targettarget") then
                 Ether:UpdateSoloIndicator("targettarget")
             end
-            Ether:UpdateColors()
         end
-        Ether:UpdateColors()
-        if Ether.DB[6][2]==1 then
+        if Ether.DB[6][4]==1 then
             Ether:TargetAuraFullUpdate()
         end
     end
@@ -175,19 +160,20 @@ function Ether:RosterEnable()
             end
         end
     end
-    if Ether.DB[6][1]==1 then
+    if Ether.DB[1][7]==1 then
         Ether:AuraEnable()
     end
     if Ether.DB[1][6]==1 then
         Ether:IndicatorsEnable()
     end
     Ether:HealthEnable()
-    Ether:PowerEnable()
+    --  Ether:PowerEnable()
     if Ether.DB[1][5]==1 then
         C_After(0.1,function()
             Ether:RangeEnable()
         end)
     end
+    --[[
     C_Timer.After(0.8,function()
         for _,button in pairs(raidButtons) do
             if Ether.DB[4][3]==1 then
@@ -198,6 +184,7 @@ function Ether:RosterEnable()
             end
         end
     end)
+    ]]
 end
 
 function Ether:RosterDisable()
@@ -208,7 +195,7 @@ function Ether:RosterDisable()
     Ether:AuraDisable()
     Ether:IndicatorsDisable()
     Ether:HealthDisable()
-    Ether:PowerDisable()
+    -- Ether:PowerDisable()
     Ether:RangeDisable()
 end
 

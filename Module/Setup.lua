@@ -1,15 +1,20 @@
 local _,Ether=...
-local math_floor=math.floor
-local tinsert=table.insert
+local tinsert,tremove=table.insert,table.remove
+local pairs,ipairs=pairs,ipairs
+local GameTooltip=GameTooltip
+local unpack,CreateFrame=unpack,CreateFrame
+local tostring,tonumber=tostring,tonumber
+local UIParent=UIParent
 
 function Ether:CreateToolFrame()
-    if Ether.toolFrame then
-        return
-    end
+    if Ether.toolFrame then return end
     local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
     Ether.toolFrame=frame
+    local DB=Ether.DB[21][2]
     frame:SetFrameStrata("TOOLTIP")
-    frame:SetSize(280,120)
+    frame:SetSize(DB[6] or 280,DB[7] or 120)
+    frame:SetScale(DB[8] or 1)
+    frame:SetScale(DB[9] or 1)
     frame:SetBackdrop({
         bgFile="Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
@@ -86,8 +91,8 @@ function Ether:CreateToolFrame()
     resting:SetPoint("CENTER",restBg)
     resting:SetAllPoints(restBg)
     frame:Hide()
-    Ether:ApplyFramePosition(Ether.toolFrame,2)
-    Ether:SetupDrag(frame,2,10)
+    Ether:ApplyFramePosition(15)
+    Ether:SetupDrag(15)
 end
 
 function Ether:SetupUpdateText(button,tbl,p)
@@ -168,10 +173,9 @@ function Ether:CreateMainFrame(self)
         for _,value in ipairs({"TOP","BOTTOM","LEFT","RIGHT"}) do
             self.Frames[value]=CreateFrame("Frame",nil,self.Frames["MAIN"])
         end
-
         self.Frames["MAIN"]:SetScript("OnHide",function()
             if Ether.DB[100][3] then Ether.DB[100][3]=false end
-            Ether.ShowHideSettings(false)
+            Ether.ToggleUnlock(false)
         end)
         self.Frames["TOP"]:SetPoint("TOPLEFT",10,-15)
         self.Frames["TOP"]:SetPoint("TOPRIGHT",-10,0)
@@ -239,13 +243,14 @@ function Ether:CreateMainFrame(self)
             self.Frames["MAIN"]:Hide()
             Ether.DB[100][3]=false
             Ether.ShowHideSettings(false)
+            ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
         end)
-        Ether.InitializeLayer(self)
+        Ether.InitializeLayerLevel(self)
         Ether:CreateIndicatorsSection(self)
-        Ether:CreateCustomSection(self)
+        Ether:CreateAuraSection(self)
         Ether:CreateConfigSection(self)
-        Ether:ApplyFramePosition(self.Frames["MAIN"],14)
-        Ether:SetupDrag(self.Frames["MAIN"],14,10)
+        Ether:ApplyFramePosition(17)
+        Ether:SetupDrag(17)
     end
 end
 
@@ -287,8 +292,20 @@ function Ether:SetupHealthBar(button,orient)
     local healthDrop=button:CreateTexture(nil,"OVERLAY")
     button.healthDrop=healthDrop
     healthDrop:SetAllPoints(healthBar)
-    healthDrop:SetTexture(unpack(Ether.media.elvUIBar))
+    healthDrop:SetTexture(bar)
     return button
+end
+
+function Ether:CleanUpButtons(editor,indicator)
+    indicator:Hide()
+    editor:Hide()
+    indicator.dropdown.text:SetText("Select Indicator")
+    for _,btn in pairs(editor.cube) do
+        btn:Disable()
+    end
+    for _,btn in pairs(indicator.cube) do
+        btn:Disable()
+    end
 end
 
 function Ether:SetupPowerBar(button)
@@ -305,6 +322,38 @@ function Ether:SetupPowerBar(button)
     button.powerDrop=powerDrop
     powerDrop:SetAllPoints(powerBar)
     return button
+end
+
+function Ether:SetupSlash()
+    SLASH_ETHER1="/ether"
+    SlashCmdList["ETHER"]=function(msg)
+        local input,rest=msg:match("^(%S*)%s*(.-)$")
+        input=string.lower(input or "")
+        rest=string.lower(rest or "")
+        if input=="settings" then
+            Ether:SettingsToggleSlash()
+        elseif input=="rl" then
+            if not InCombatLockdown() then
+                ReloadUI()
+            end
+        elseif input=="msg" then
+            if Ether.EtherFrameSetClick then
+                Ether:EtherFrameSetClick(1,2)
+            end
+        else
+            for _,entry in ipairs(Ether.media.slash) do
+                Ether:EtherInfo(string.format("%s  –  %s",entry.cmd,entry.desc))
+            end
+            Ether:SoloAuraReset()
+        end
+    end
+end
+function Ether:SettingsToggleSlash()
+    if InCombatLockdown() then return end
+    if Ether.EtherToggle then
+        Ether.DB[100][3]=not Ether.DB[100][3]
+        Ether.EtherToggle(Ether.DB[100][3])
+    end
 end
 
 function Ether:SetupPrediction(button)
@@ -333,11 +382,13 @@ function Ether:SetupPrediction(button)
 end
 
 function Ether:SetupCastBar(button,number)
-    if not button then
-        return
-    end
+    if not button or not number then return end
+    local pos=Ether.DB[21][number]
     local frame=CreateFrame("StatusBar",nil,UIParent)
-    frame:SetParent(button)
+    frame:SetWidth(pos[6] or 300)
+    frame:SetHeight(pos[7] or 15)
+    frame:SetScale(pos[8] or 1)
+    frame:SetAlpha(pos[9] or 1)
     button.castBar=frame
     frame:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
     local drop=frame:CreateTexture(nil,"OVERLAY")
@@ -366,14 +417,8 @@ function Ether:SetupCastBar(button,number)
     frame.duration=0
     frame.delay=0
     frame.timeToHold=0.1
-    if number then
-        local pos=Ether.DB[21][number]
-        frame:SetSize(pos[6],pos[7])
-        frame:SetScale(pos[8])
-        frame:SetAlpha(pos[9])
-        frame:SetPoint(pos[1],UIParent,pos[3],pos[4],pos[5])
-        Ether:SetupDrag(frame,number,10)
-    end
+    frame:SetPoint(pos[1] or "CENTER",UIParent,pos[3] or "CENTER",pos[4] or 0,pos[5] or 0)
+    Ether:SetupDrag(number)
     frame:Hide()
 end
 
@@ -620,31 +665,30 @@ local function onStop(self,index,grid)
     self:SetPoint(point,anchorRelTo,relPoint,DB[4],DB[5])
 end
 
-function Ether:SetupDrag(button,index,grid)
-    if not button then
-        return
+function Ether:SetupDrag(index)
+    if not index or type(index)~="number" then return end
+    local frame=Ether.ReturnFrame(index)
+    if frame then
+        frame:EnableMouse(true)
+        frame:RegisterForDrag("LeftButton")
+        frame:SetMovable(true)
+        frame:SetClampedToScreen(true)
+        frame:SetScript("OnDragStart",onStart)
+        frame:SetScript("OnDragStop",function(self)
+            onStop(self,index,10)
+        end)
     end
-    if type(index)~="number" or type(grid)~="number" then
-        return
-    end
-    button:EnableMouse(true)
-    button:RegisterForDrag("LeftButton")
-    button:SetMovable(true)
-    button:SetClampedToScreen(true)
-    button:SetScript("OnDragStart",onStart)
-    button:SetScript("OnDragStop",function(self)
-        onStop(self,index,grid)
-    end)
 end
 
 function Ether:SetupInfoFrame()
-    if Ether.infoFrame then
-        return
-    end
+    if Ether.infoFrame then return end
     local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
     Ether.infoFrame=frame
+    local DB=Ether.DB[21][1]
     frame:SetPoint("CENTER")
-    frame:SetSize(320,200)
+    frame:SetSize(DB[6] or 320,DB[7] or 200)
+    frame:SetScale(DB[8] or 1)
+    frame:SetScale(DB[9] or 1)
     frame:SetBackdrop({
         bgFile="Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
@@ -674,8 +718,8 @@ function Ether:SetupInfoFrame()
     top:SetPoint("TOP",0,-10)
     top:SetText("|cE600CCFFEther|r")
     frame:Hide()
-    Ether:ApplyFramePosition(frame,1)
-    Ether:SetupDrag(frame,1,10)
+    Ether:ApplyFramePosition(14)
+    Ether:SetupDrag(14)
     return frame
 end
 
@@ -718,6 +762,7 @@ local function SetupAuraBorder(button)
     border:Hide()
     return border
 end
+
 local function Aura_OnEnter(self)
     GameTooltip:SetOwner(self,"ANCHOR_RIGHT")
     GameTooltip:SetUnitAura(self.unit,self.id,self.filter)
@@ -728,9 +773,7 @@ local function Aura_OnLeave()
 end
 
 function Ether:SoloAuraSetup(button)
-    if not button then
-        return
-    end
+    if not button then return end
     if not button.Aura then
         button.Aura={
             Buffs={},
@@ -741,56 +784,59 @@ function Ether:SoloAuraSetup(button)
     end
     local unit=button.unit
     for id=1,16 do
-        local aura=CreateFrame("Frame",nil,button)
-        aura.unit=unit
-        aura.filter="HELPFUL"
-        aura:SetSize(13,13)
-        aura:SetShown(false)
-        aura.icon=SetupAuraIcon(aura)
-        aura.count=SetupAuraCount(aura)
-        aura.timer=SetupAuraTimer(aura,aura.icon)
-        aura.stacks=SetupAuraStacks(aura)
-        aura.id=id
-        aura:SetScript("OnEnter",Aura_OnEnter)
-        aura:SetScript("OnLeave",Aura_OnLeave)
-        button.Aura.Buffs[id]=aura
+        if not button.Aura.Buffs[id] then
+            local aura=CreateFrame("Frame",nil,button)
+            aura.unit=unit
+            aura.filter="HELPFUL"
+            aura:SetSize(13,13)
+            aura.icon=SetupAuraIcon(aura)
+            aura.count=SetupAuraCount(aura)
+            aura.timer=SetupAuraTimer(aura,aura.icon)
+            aura.stacks=SetupAuraStacks(aura)
+            aura.id=id
+            aura:SetScript("OnEnter",Aura_OnEnter)
+            aura:SetScript("OnLeave",Aura_OnLeave)
+            button.Aura.Buffs[id]=aura
+        end
     end
     for id=1,16 do
-        local aura=CreateFrame("Frame",nil,button)
-        aura.unit=unit
-        aura.filter="HARMFUL"
-        aura:SetSize(13,13)
-        aura:SetShown(false)
-        aura.icon=SetupAuraIcon(aura)
-        aura.count=SetupAuraCount(aura)
-        aura.timer=SetupAuraTimer(aura,aura.icon)
-        aura.stacks=SetupAuraStacks(aura)
-        aura.border=SetupAuraBorder(aura)
-        aura.id=id
-        aura:SetScript("OnEnter",Aura_OnEnter)
-        aura:SetScript("OnLeave",Aura_OnLeave)
-        button.Aura.Debuffs[id]=aura
+        if not button.Aura.Debuffs[id] then
+            local aura=CreateFrame("Frame",nil,button)
+            aura.unit=unit
+            aura.filter="HARMFUL"
+            aura:SetSize(13,13)
+            aura.icon=SetupAuraIcon(aura)
+            aura.count=SetupAuraCount(aura)
+            aura.timer=SetupAuraTimer(aura,aura.icon)
+            aura.stacks=SetupAuraStacks(aura)
+            aura.border=SetupAuraBorder(aura)
+            aura.id=id
+            aura:SetScript("OnEnter",Aura_OnEnter)
+            aura:SetScript("OnLeave",Aura_OnLeave)
+            button.Aura.Debuffs[id]=aura
+        end
     end
 end
 
 function Ether:DispelIconSetup(button)
     if not button then return end
-    if button.dispelFrame then return end
-    local frame=CreateFrame("Frame",nil,UIParent)
-    frame:SetFrameLevel(button:GetFrameLevel()+6)
-    frame:SetPoint("CENTER",button,"CENTER",0,8)
-    frame:SetSize(12,12)
-    local icon=frame:CreateTexture(nil,"OVERLAY")
-    icon:SetAllPoints()
-    icon:SetTexCoord(0.07,0.93,0.07,0.93)
-    local border=frame:CreateTexture(nil,"BORDER")
-    border:SetColorTexture(1,1,1,0)
-    border:SetPoint("TOPLEFT",frame,"TOPLEFT",-1,1)
-    border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",1,-1)
-    button.dispelFrame=frame
-    button.dispelIcon=icon
-    button.dispelBorder=border
-    return button
+    if not button.dispelFrame then
+        local frame=CreateFrame("Frame",nil,UIParent)
+        frame:SetFrameLevel(button:GetFrameLevel()+6)
+        frame:SetPoint("CENTER",button,"CENTER",0,8)
+        frame:SetSize(12,12)
+        local icon=frame:CreateTexture(nil,"OVERLAY")
+        icon:SetAllPoints()
+        icon:SetTexCoord(0.07,0.93,0.07,0.93)
+        local border=frame:CreateTexture(nil,"BORDER")
+        border:SetColorTexture(1,1,1,0)
+        border:SetPoint("TOPLEFT",frame,"TOPLEFT",-1,1)
+        border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",1,-1)
+        button.dispelFrame=frame
+        button.dispelIcon=icon
+        button.dispelBorder=border
+        return button
+    end
 end
 
 function Ether:CreatePopupBox()
@@ -844,15 +890,8 @@ function Ether:CreatePopupBox()
     Ether.popupCallback=left
 end
 
-local TextureMethod,DispelMethod
+local TextureMethod,SetupDispelAuraButton
 do
-    local colors={
-        ["Magic"]={0.2,0.6,1.0,1},
-        ["Disease"]={0.6,0.4,0.0,1},
-        ["Curse"]={0.6,0.2,1.0,1},
-        ["Poison"]={0.2,1.0,0.2,1},
-        [""]={0,0,0,1}
-    }
     local frame=CreateFrame("Frame",nil,UIParent)
     frame:SetFrameStrata("HIGH")
     TextureMethod=function()
@@ -869,23 +908,24 @@ do
         end
         return method
     end
-    DispelMethod=function()
-        local method=frame:CreateTexture(nil,"BORDER",nil,7)
-        method.Setup=function(self,button,dispelName)
-            local dispel=colors[dispelName] or {0,0,0,1}
-            self:SetColorTexture(unpack(dispel))
-            self:SetPoint("TOP",button.healthBar,"TOP")
-            self:SetSize(12,12)
-            self:Show()
+    function SetupDispelAuraButton(button)
+        if not button or not button.Dispel then return end
+        if not button.Dispel.indicator then
+            local indicator=frame:CreateTexture(nil,"OVERLAY",nil,7)
+            indicator:Hide()
+            indicator:SetSize(14,14)
+            indicator:SetPoint("TOPRIGHT",button.healthBar,"TOPRIGHT",-2,-2)
+            local border=frame:CreateTexture(nil,"BORDER")
+            border:Hide()
+            border:SetColorTexture(1,0,0,1)
+            border:SetPoint("TOPLEFT",indicator,"TOPLEFT",-1,1)
+            border:SetPoint("BOTTOMRIGHT",indicator,"BOTTOMRIGHT",1,-1)
+            button.Dispel.indicator=indicator
+            button.Dispel.border=border
         end
-        method.Reset=function(self)
-            self:Hide()
-            self:ClearAllPoints()
-        end
-        return method
     end
+    Ether.SetupDispelAuraButton=SetupDispelAuraButton
     Ether.TextureMethod=TextureMethod
-    Ether.DispelMethod=DispelMethod
 end
 ---@class ObjPool
 ---@field active table
@@ -909,12 +949,10 @@ end
 ---@return any
 function ObjPool:Acquire(...)
     if self.activeCount>=310 then
-        if Ether.AuraReleaseAll then
-            Ether:AuraReleaseAll()
-        end
+        Ether.TexPool:ReleaseAll()
         return
     end
-    local obj=table.remove(self.inactive)
+    local obj=tremove(self.inactive)
     if not obj then
         obj=self.create()
     end

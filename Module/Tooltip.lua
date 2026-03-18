@@ -113,7 +113,7 @@ local function UpdateTooltip(self,unit)
     if not unit or not UnitExists(unit) then
         return
     end
-    local DB=Ether.DB[7]
+    local DB=Ether.DB[4]
     local name=UnitName(unit)
     local isPlayer=UnitIsPlayer(unit)
     local _,classFileName=UnitClass(unit)

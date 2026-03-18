@@ -6,7 +6,7 @@ local function UpdateIndicators(number)
     if not number then
         return
     end
-    local data=Ether.DB[1002][number]
+    local data=Ether.DB[20][number]
     if not data then
         return
     end
@@ -20,7 +20,7 @@ function Ether:UpdateIndicatorsPos(number,icon)
     if not number then
         return
     end
-    local data=Ether.DB[1002][number]
+    local data=Ether.DB[20][number]
     if not data then
         return
     end
@@ -60,16 +60,4 @@ function Ether:UpdateIndicatorsPos(number,icon)
     end
 
     UpdateIndicators(number)
-end
-
-local function Register()
-
-end
-
-local function Data()
-
-end
-
-local function Position()
-
 end
