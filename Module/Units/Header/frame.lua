@@ -132,8 +132,8 @@ local function CreateChildren(header,button)
 end
 
 local Sort={"GROUP","CLASS","ASSIGNEDROLE"}
-local group={"GROUP","CLASS","ASSIGNEDROLE"}
-local class={"GROUP","CLASS","ASSIGNEDROLE"}
+local group={"1,2,3,4,5,6,7,8"}
+local class={"DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR"}
 local assigned = {"TANK,HEALER,DAMAGER,NONE"}
 local function OrderMethod(string)
     if not string or type(string)~="string" then return end
