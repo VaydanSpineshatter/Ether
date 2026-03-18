@@ -310,7 +310,7 @@ function Ether:HideCastBar(unit,bool)
         return
     end
     if bar.castBar then
-        if bool and UpdateFrameInfo() then
+        if bool and UpdateInfo() then
             UnregisterUpdate(bar.castBar)
             bar.castBar.text:SetText("Move CastBar")
             bar.castBar:SetShown(bool)

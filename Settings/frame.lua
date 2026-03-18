@@ -798,7 +798,7 @@ function Ether:CreateHeaderSection(panel)
         end)
         panel.Buttons[5][i]=btn
     end
-    local Sort={"GROUP","CLASS","ROLE","ASSIGNEDROLE"}
+    local Sort={"GROUP","CLASS","ASSIGNEDROLE"}
     local Config={}
     for index,name in ipairs(Sort) do
         tinsert(Config,{text=name,value=name,index=index})

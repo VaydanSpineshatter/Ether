@@ -131,10 +131,27 @@ local function CreateChildren(header,button)
     return b
 end
 
+local Sort={"GROUP","CLASS","ASSIGNEDROLE"}
+local group={"GROUP","CLASS","ASSIGNEDROLE"}
+local class={"GROUP","CLASS","ASSIGNEDROLE"}
+local assigned = {"TANK,HEALER,DAMAGER,NONE"}
+local function OrderMethod(string)
+    if not string or type(string)~="string" then return end
+    local sort,data
+    if string=="GROUP" then
+        sort,data="GROUP",group
+    elseif string=="CLASS" then
+        sort,data="CLASS",class
+    elseif string=="ASSIGNEDROLE" then
+        sort,data="ASSIGNEDROLE",assigned
+    end
+    return sort,data
+end
+
 function Ether:CreateGroupHeader()
     local DB=Ether.DB
     local data=DB[21][10]
-    local Sort={"GROUP","CLASS","ROLE","ASSIGNEDROLE"}
+    local by,order = OrderMethod(Sort[DB[100][9]])
     local header=CreateFrame("Frame","EtherGroupHeader",raid,"SecureGroupHeaderTemplate")
     Ether.Header.raid=header
     header:SetPoint("BOTTOM",raid,"TOP")
@@ -146,8 +163,8 @@ function Ether:CreateGroupHeader()
     header:SetAttribute("ButtonHeight",data[7] or 55)
     header:SetAttribute("columnAnchorPoint","LEFT")
     header:SetAttribute("point","TOP")
-    header:SetAttribute("groupBy",Sort[DB[100][9]] or "GROUP")
-    header:SetAttribute("groupingOrder","1,2,3,4,5,6,7,8")
+    header:SetAttribute("groupBy",by or "GROUP")
+    header:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset",0)
     header:SetAttribute("yOffset",0)
     header:SetAttribute("unitsPerColumn",5)
@@ -218,7 +235,9 @@ end
 
 function Ether:ChangeSortMethod(data)
     if InCombatLockdown() or not data then return end
-    Ether.Header.raid:SetAttribute("groupBy",data)
+    local by,order = OrderMethod(data)
+    Ether.Header.raid:SetAttribute("groupBy",by or "GROUP")
+    Ether.Header.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
     local name=Ether.Header.raid:GetName().."UnitButton"
     local index=1
     local child=_G[name..index]

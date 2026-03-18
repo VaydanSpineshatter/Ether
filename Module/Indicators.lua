@@ -384,6 +384,15 @@ local function MasterLootToken(self)
     end
 end
 
+local function GetClassCoords(class)
+    local coords=CLASS_ICON_TCOORDS[class]
+    if not coords then
+        return 0,1,0,1
+    end
+    local crop=0.015
+    return coords[1]+crop,coords[2]-crop,coords[3]+crop,coords[4]-crop
+end
+
 function Ether:IndicatorsFullUpdate()
     for _,button in pairs(raidButtons) do
         if button then
