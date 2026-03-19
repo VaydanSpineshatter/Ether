@@ -22,7 +22,7 @@ local classFriendly={
 }
 
 local classHostile={
-    PRIEST=585,-- Smite
+    PRIEST=15407,-- Mind Flay
     SHAMAN=403,-- Lightning Bolt
     DRUID=8921,-- Moonfire
     PALADIN=21084,-- seal-of-righteousness
@@ -39,10 +39,8 @@ local hostile=classHostile[playerClass] or 772
 local raidButtons=Ether.raidButtons
 local soloButtons=Ether.soloButtons
 
-function Ether:IsUnitInRange(unit)
-    if not unit then
-        return
-    end
+local function IsInRange(unit)
+    if not unit then return end
 
     local inRange
     if UnitCanAssist("player",unit) then
@@ -56,19 +54,33 @@ function Ether:IsUnitInRange(unit)
     return inRange
 end
 
-function Ether:UpdateAlpha(button)
-    if not button or not button.unit then
+local function IsUnitInRange(unit)
+    if not unit then return end
+
+    local inRange
+    if UnitCanAssist("player",unit) then
+        inRange=UnitInRange(unit)
+    elseif UnitCanAttack("player",unit) then
+        inRange=IsSpellInRange(hostile,unit)
+    else
         return
     end
+
+    return inRange
+end
+
+function Ether:UpdateAlpha(button)
+    if not button then return end
+    local unit=button.unit
     local inRange
-    if not UnitIsVisible(button.unit) or UnitPhaseReason(button.unit) then
+    if not UnitIsVisible(unit) or UnitPhaseReason(unit) then
         button:SetAlpha(0.45)
         return
     end
     if IsInGroup() then
-        inRange=UnitInRange(button.unit)
+        inRange=IsUnitInRange(unit)
     else
-        inRange=Ether:IsUnitInRange(button.unit)
+        inRange=IsInRange(unit)
     end
     local value=inRange and 1.0 or 0.45
     button:SetAlpha(value)

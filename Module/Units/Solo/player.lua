@@ -3,7 +3,7 @@ local ipairs=ipairs
 local UnitGUID=UnitGUID
 local soloButtons={}
 local customButtons={}
-local castBar={}
+local castBar={[1]={},[2]={},[3]={}}
 Ether.soloButtons=soloButtons
 Ether.customButtons=customButtons
 Ether.castBar=castBar
@@ -64,9 +64,12 @@ function Ether:CreateUnitButtons(index)
     Ether:SetupPrediction(button)
     Ether:SetupButtonLayout(button)
     Ether:SetupBorderLayout(button,2)
+    button.healthBar:SetPoint("TOPLEFT",button,"TOPLEFT")
+    button.healthBar:SetPoint("RIGHT",button,"RIGHT")
+    button.powerBar:SetPoint("LEFT",button,"LEFT")
+    button.powerBar:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT")
+    button.powerBar:SetHeight(button:GetHeight()%-20)
     Ether:SetupName(button,0)
-    Ether:SetupUpdateText(button,"health")
-    Ether:SetupUpdateText(button,"power",true)
     button.RaidTarget=button.healthBar:CreateTexture(nil,"OVERLAY")
     button.RaidTarget:SetSize(18,18)
     button.RaidTarget:SetPoint("LEFT",button.healthBar,"LEFT",5,0)
@@ -77,7 +80,6 @@ function Ether:CreateUnitButtons(index)
     button:SetMovable(true)
     Ether:UpdateClassColor(button)
     Ether:UpdatePowerColor(button)
-
     if button.unit~="player" then
         RegisterUnitWatch(button)
     end

@@ -3,10 +3,10 @@ local state=false
 local function isAway(DB)
     local raidButtons=Ether.raidButtons
     if DB[6][12]==1 then
-        Ether:CastBarDisable("player")
+        Ether:CastBarDisable(1)
     end
     if DB[6][13]==1 then
-        Ether:CastBarDisable("target")
+        Ether:CastBarDisable(2)
     end
     if DB[1][5]==1 then
         Ether:RangeDisable()
@@ -27,10 +27,10 @@ end
 
 local function isNotAway(DB)
     if DB[6][12]==1 then
-        Ether:CastBarEnable("player")
+        Ether:CastBarEnable(1)
     end
     if DB[6][13]==1 then
-        Ether:CastBarEnable("target")
+        Ether:CastBarEnable(2)
     end
     if DB[1][5]==1 then
         Ether:RangeEnable()

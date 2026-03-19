@@ -2,7 +2,8 @@ local _,Ether=...
 local pairs,ipairs=pairs,ipairs
 local type,next,tostring=type,next,tostring
 local tinsert,tconcat=table.insert,table.concat
-local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent","Module"}
+local math_floor=math.floor
+local D={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent","Module","Minimap"}
 local U={"player","target","targettarget","pet","pettarget","focus"}
 local PosMap,UnitMap={},{}
 for i,v in ipairs(D) do
@@ -16,7 +17,7 @@ end
 local Default={
     [1]={1,1,1,1,1,1,1,0,0},--Module
     [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
-    [3]={1,1,1,1,1,1,1,1,1,1},--Indicators
+    [3]={1,1,1,1,1,1,1,1,1,1,1},--Indicators
     [4]={1,1,1,1,1,1,1,1,1,1,1,1,1},--Tooltip
     [5]={1},--Header
     [6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},--Layout
@@ -30,7 +31,8 @@ local Default={
         [7]={D[7],0,0,15},
         [8]={D[1],0,-9,13},
         [9]={D[3],0,0,14},
-        [10]={D[2],0,0,24}
+        [10]={D[2],0,0,24},
+        [11]={D[7],0,0,12}
     },
     [21]={
         [1]={D[5],D[10],D[5],-250,-200,110,35,1,1},--player
@@ -48,8 +50,8 @@ local Default={
         [13]={D[5],D[10],D[5],360,-270,240,15,1,1},--Target CastBar
         [14]={D[2],D[10],D[2],0,-100,320,200,1,1},--Info Frame
         [15]={D[9],D[10],D[9],-350,200,280,120,1,1},--Tooltip
-        [16]={D[3],D[10],D[1],-5,0,31,31,1,1},--Ether Icon
-        [17]={D[1],D[10],D[1],50,-100,640,480,1,1} --SettingsFrame
+        [16]={D[5],D[12],D[5],-5,0,31,31,1,1},--Ether Icon
+        [17]={D[1],D[10],D[1],50,-100,640,480,1,1},--SettingsFrame
     },
 
     [1003]={},
@@ -139,7 +141,7 @@ function Ether:TableSize(t)
     end
     return count
 end
-local function ReturnFrame(id)
+local function ReturnFrame(index)
     local soloButtons=Ether.soloButtons
     local customButtons=Ether.customButtons
     local castBar=Ether.castBar
@@ -160,9 +162,9 @@ local function ReturnFrame(id)
         [14]=Ether.infoFrame,
         [15]=Ether.toolFrame,
         [16]=Ether.EtherIcon,
-        [17]=Ether.UIPanel.Frames["MAIN"]
+        [17]=Ether.UIPanel.Frames["MAIN"],
     }
-    return key[id]
+    return key[index]
 end
 Ether.ReturnFrame=ReturnFrame
 function Ether:RefreshFramePositions()
@@ -175,12 +177,20 @@ end
 
 function Ether:ApplyFramePosition(index)
     if type(index)~="number" then return end
-
+    if not Ether.DB[21][index] then return end
     local pos=Ether.DB[21][index]
     local frame=ReturnFrame(index)
+    local relToName=pos[2]
+    if relToName=="UIParent" then
+        relToName=UIParent
+    elseif relToName=="Minimap" then
+        relToName=Minimap
+    end
+    local x=math_floor(pos[4])
+    local y=math_floor(pos[5])
     if frame and pos then
         frame:ClearAllPoints()
-        frame:SetPoint(pos[1],UIParent,pos[3],pos[4],pos[5])
+        frame:SetPoint(pos[1],relToName,pos[3],x,y)
         frame:SetWidth(pos[6])
         frame:SetHeight(pos[7])
         frame:SetScale(pos[8])

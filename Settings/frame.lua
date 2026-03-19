@@ -41,7 +41,6 @@ local function popupBox()
         Ether.UIPanel.Frames["MAIN"]:SetShown(false)
     end
 end
-
 local function SetupSliderText(slider,lowText,highText)
     slider.Low:SetFont(unpack(Ether.media.expressway),9,"OUTLINE")
     slider.Low:SetText(lowText)
@@ -423,7 +422,8 @@ local function OnIndicatorSelect(self,data)
         [7]="Interface\\GroupFrame\\UI-Group-MasterLooter",
         [8]="Interface\\GroupFrame\\UI-Group-MainTankIcon",
         [9]="Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES",
-        [10]="Interface\\RaidFrame\\ReadyCheck-Ready"
+        [10]="Interface\\RaidFrame\\ReadyCheck-Ready",
+        [11]="Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES"
     }
     local Indicator=Ether.UIPanel.Frames["INDICATORS"]
     if data.index and data.value then
@@ -441,7 +441,7 @@ function Ether:CreateIndicatorsSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Indicators"]
     if parent.Created then return end
     parent.Created=true
-    local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLoot","MainTank","GroupRole","ReadyCheck"}
+    local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLoot","MainTank","GroupRole","ReadyCheck","ClassIcon"}
     local DB=Ether.DB
     local register=CreateFrame("Frame",nil,parent)
     register:SetSize(200,(#iTbl*30)+60)
@@ -503,7 +503,7 @@ function Ether:CreateIndicatorsSection(panel)
     local confirm=EtherPanelButton(preview,60,25,"Confirm","BOTTOMLEFT",preview,"TOPRIGHT",0,40)
     confirm:SetScript("OnClick",function()
         if iNumber then
-            Ether:UpdateIndicatorsPosition(iNumber)
+            Ether:SavePosition(iNumber)
         end
     end)
 
@@ -563,7 +563,6 @@ function Ether:CreateTooltipSection(panel)
         btn.label:SetText(opt)
         btn.label:SetPoint("LEFT",btn,"RIGHT",8,1)
         btn:SetChecked(DB[4][i]==1)
-
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             DB[4][i]=checked and 1 or 0
@@ -629,6 +628,9 @@ end
 local INDEX
 local function OnBarSelect(self,data)
     local buttons=Ether.UIPanel.Buttons
+    for _,v in ipairs(buttons[6]) do
+        if v then v:Hide() end
+    end
     local panel=Ether.UIPanel["CONTENT"]["CHILDREN"]["Layout"]
     local DB=Ether.DB[21]
     self.text:SetText(data.value)
@@ -642,44 +644,76 @@ local function OnBarSelect(self,data)
 
     end
 end
+local status=false
+local function ResetHeader(data)
+    if InCombatLockdown() or not data then return end
+    if not status then
+        status=true
+        local name=data:GetName().."UnitButton"
+        local index=1
+        local child=_G[name..index]
+        while (child) do
+            child:ClearAllPoints()
+            index=index+1
+            child=_G[name..index]
+        end
+        if data:IsShown() then
+            data:Hide()
+            data:Show()
+        end
+        if Ether.DB[1][7]==1 then
+            Ether:AuraReset()
+        end
+        C_Timer.After(1,function()
+            status=false
+        end)
+    end
+end
+local function unitButtons(data,number,number2)
+    if not data or not number or not number2 then return end
+    for _,button in pairs(data) do
+        if button then
+            button:SetSize(number,number2)
+        end
+    end
+end
 function Ether:ProcessUserData(index)
     if not index or type(index)~="number" or index>15 then return end
     local DB=Ether.DB[21][index]
     local raidButtons=Ether.raidButtons
     local soloButton=Ether.soloButtons[index]
-
+    local customButtons=Ether.customButtons
+    local petHeader=Ether.Header.pet
+    local raidHeader=Ether.Header.raid
     if index==15 then
-
     elseif index==14 then
-
-    elseif index>=12 then
-
-    elseif index>=10 then
-        for _,button in pairs(raidButtons) do
-            if button then
-                button:SetWidth(DB[6])
-                button:SetHeight(DB[7])
-            end
-        end
+    elseif index==13 then
+      Ether:CastBarReset(2)
+    elseif index==12 then
+       Ether:CastBarReset(1)
+    elseif index==10 then
+        unitButtons(raidButtons,DB[6],DB[7])
+        ResetHeader(raidHeader)
+    elseif index==11 then
+        unitButtons(raidButtons,DB[6],DB[7])
+        ResetHeader(petHeader)
     elseif index>=7 then
 
     else
         if soloButton then
-            soloButton:SetWidth(DB[6])
-            soloButton:SetHeight(DB[7])
+            soloButton:SetSize(DB[6],DB[7])
         end
     end
 end
-
+local layout={"playerButton","targetButton","targettargetButton","petButton","pettargetButton","focusButton","custom1","custom2","custom3","raidButtons","petButtons","PlayerCastBar","TargetCastBar","InfoFrame","Tooltip"}
 function Ether:CreateLayoutSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Layout"]
     if parent.Created then return end
     parent.Created=true
     local DB=Ether.DB[21]
-    local Frame={"playerButton","targetButton","targettargetButton","petButton","pettargetButton","focusButton","custom1","custom2","custom3","raidButtons","petButtons","PlayerCastBar","TargetCastBar","InfoFrame","Tooltip",}
     local Config={"Size","Scale","Alpha","StatusBar","Background","Font"}
     local object,data={},{}
-    for index,name in ipairs(Frame) do
+    for index,name in ipairs(layout) do
         tinsert(object,{text=name,value=name,index=index})
     end
     for index,name in ipairs(Config) do
@@ -722,15 +756,11 @@ function Ether:CreateLayoutSection(panel)
     h.label:SetText("Height:")
     h.label:SetPoint("BOTTOMLEFT",h,"TOPLEFT",0,2)
     local checkButtons=CreateFrame("Frame",nil,parent)
-    checkButtons:SetSize(200,(#Frame*30)+60)
-    for i,opt in ipairs(Frame) do
+    checkButtons:SetSize(200,(#layout*30)+60)
+    for i,opt in ipairs(layout) do
         local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
         btn:Hide()
-        if i==1 then
-            btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-300)
-        else
-            btn:SetPoint("TOPLEFT",panel.Buttons[6][i-1],"BOTTOMLEFT",0,0)
-        end
+        btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-300)
         btn:SetSize(24,24)
         btn.label=btn:CreateFontString(nil,"OVERLAY")
         btn.label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
@@ -740,6 +770,27 @@ function Ether:CreateLayoutSection(panel)
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             Ether.DB[6][i]=checked and 1 or 0
+            if i==12 then
+                if Ether.DB[6][12]==1 then
+                    Ether:CastBarEnable(i -11)
+                else
+                    Ether:CastBarDisable(i -11)
+                end
+            end
+            if i==13 then
+                if Ether.DB[6][13]==1 then
+                    Ether:CastBarEnable(i -11)
+                else
+                    Ether:CastBarDisable(i -11)
+                end
+            end
+            if i<7 then
+                if Ether.DB[6][i]==1 then
+                    Ether:ActivateUnitButton(i)
+                else
+                    Ether:DeactivateUnitButton(i)
+                end
+            end
         end)
         panel.Buttons[6][i]=btn
     end
@@ -1047,8 +1098,8 @@ function Ether:CreateHelperSection(panel)
     resultText:SetWidth(230)
     resultText:SetJustifyH("LEFT")
     spellIcon=resultFrame:CreateTexture(nil,"OVERLAY")
-    spellIcon:SetPoint("TOP",resultText,"BOTTOM",0,-40)
-    spellIcon:SetSize(64,64)
+    spellIcon:SetPoint("LEFT",resultText,"RIGHT")
+    spellIcon:SetSize(32,32)
     spellIcon:Hide()
     spellInfo:SetScript("OnClick",function()
         Ether:SpellInfo(spellNameBox:GetText(),resultText,spellIcon)
@@ -1070,7 +1121,7 @@ function Ether:CreateHelperSection(panel)
     end)
 
     local ignore=CreateLineInput(parent,180,20)
-    ignore:SetPoint("LEFT",parent,"LEFT",10,-10)
+    ignore:SetPoint("LEFT",parent,"LEFT",10,-80)
     ignore:SetAutoFocus(false)
     ignore:SetScript("OnEnterPressed",function(self)
         local name=self:GetText()
@@ -1200,9 +1251,8 @@ function Ether:CreateConfigSection(panel)
     SetupSliderText(a,"0","1")
     SetupSliderThump(s,10,{0.8,0.6,0,1})
     SetupSliderThump(a,10,{0.8,0.6,0,1})
-    local frames={"player","target","targettarget","pet","pettarget","focus","RaidButtons","RaidPetButtons","PlayerCastBar","TargetCastBar","InfoFrame","Tooltip","EtherIcon"}
     local frameList={}
-    for index,name in ipairs(frames) do
+    for index,name in ipairs(layout) do
         tinsert(frameList,{text=name,value=name,index=index})
     end
     local frameDropDown=Ether:CreateEtherDropdown(parent,200,"Select Frame",frameList,false,OnFrameSelect)
@@ -1281,10 +1331,10 @@ function Ether:CreateProfileSection(panel)
     inputDialog:SetFrameStrata("DIALOG")
     inputDialog:Hide()
     inputDialog:SetBackdrop({
-    bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile=true,tileSize=32,edgeSize=32,
-    insets={left=11,right=12,top=12,bottom=11}
+        bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile=true,tileSize=32,edgeSize=32,
+        insets={left=11,right=12,top=12,bottom=11}
     })
     local inputTitle=inputDialog:CreateFontString(nil,"OVERLAY","GameFontNormal")
     inputTitle:SetPoint("TOP",inputDialog,"TOP",0,-15)

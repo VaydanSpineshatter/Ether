@@ -215,8 +215,12 @@ do
         if Ether.Anchor.pet.tex then
             Ether.Anchor.pet.tex:SetShown(state)
         end
-        Ether:HideCastBar("player",state)
-        Ether:HideCastBar("target",state)
+        if Ether.DB[6][12]==1 then
+            Ether:HideCastBar(1,state)
+        end
+        if Ether.DB[6][13]==1 then
+            Ether:HideCastBar(2,state)
+        end
         if not state then
             Ether:CleanUpButtons(EtherFrame.Frames["EDITOR"],EtherFrame.Frames["INDICATORS"],EtherFrame["CONTENT"]["CHILDREN"]["Config"])
         end
@@ -242,7 +246,7 @@ local function OnInitialize(self,event,...)
         assert(type(Ether.DataDefault)=="table","Ether default database missing")
         assert(type(Ether.CopyTable)=="function","Ether table func missing")
         self:UnregisterEvent("ADDON_LOADED")
-        if type(_G.ETHER_DATABASE_DX_AA)~="table" then
+        if type(_G["ETHER_DATABASE_DX_AA"])~="table" then
             _G.ETHER_DATABASE_DX_AA={}
         end
         if type(ETHER_DATABASE_DX_AA["PROFILES"])~="table" then
@@ -323,8 +327,7 @@ local function OnInitialize(self,event,...)
         Ether:ApplyFramePosition(11)
         Ether:SetupDrag(11)
         if Ether.EtherIcon then
-            Ether.EtherIcon:ClearAllPoints()
-            Ether.EtherIcon:SetPoint("CENTER",Minimap,"CENTER",Ether.DB[21][16][4] or -5,Ether.DB[21][16][5] or 0)
+            Ether:ApplyFramePosition(16)
             if Ether.DB[1][1]==0 then
                 Ether:ToggleIcon(false)
             end
@@ -337,18 +340,18 @@ local function OnInitialize(self,event,...)
         end
     elseif (event=="PLAYER_ENTERING_WORLD") then
         self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-        if Ether.DB[6][12]==1 then
-            Ether:CastBarEnable("player")
-        end
-        if Ether.DB[6][13]==1 then
-            Ether:CastBarEnable("target")
-        end
         if Ether.DB[6][4]==1 then
             Ether:PetCondition(Ether.soloButtons[4])
         end
         EtherToggle(Ether.DB[100][3])
         Ether:MergeAnalyse()
         Ether:RosterEnable()
+        if Ether.DB[6][12]==1 then
+            Ether:CastBarEnable(1)
+        end
+        if Ether.DB[6][13]==1 then
+            Ether:CastBarEnable(2)
+        end
     elseif (event=="PLAYER_LOGOUT") then
         ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
     end

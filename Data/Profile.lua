@@ -277,12 +277,12 @@ end
 local function ProfileRefresh()
     Ether:UpdateAuraList()
     Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
-    Ether:AuraDisable()
-    Ether:AuraEnable()
+    if Ether.DB[1][7]==1 then
+        Ether:AuraReset()
+    end
     Ether:RefreshLayout(Ether.raidButtons)
     Ether:RefreshLayout(Ether.soloButtons)
     Ether.UIPanel.SpellId=nil
-    Ether:InitialIndicatorsPosition()
     Ether:IndicatorsFullUpdate()
     Ether:RefreshAllSettings()
     Ether:RefreshFramePositions()
@@ -313,16 +313,16 @@ end
 local function CreateExportPopup()
     if Ether.ExportPopup then return end
     local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
-    Ether.ExportPopup = frame
+    Ether.ExportPopup=frame
     frame:SetSize(400,300)
     frame:SetPoint("CENTER")
     frame:SetFrameStrata("DIALOG")
     frame:Hide()
     frame:SetBackdrop({
-    bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
-    edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
-    tile=true,tileSize=32,edgeSize=32,
-    insets={left=11,right=12,top=12,bottom=11}
+        bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
+        edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
+        tile=true,tileSize=32,edgeSize=32,
+        insets={left=11,right=12,top=12,bottom=11}
     })
     local title=frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
     title:SetPoint("TOP",frame,"TOP",0,-15)
@@ -349,7 +349,7 @@ end
 
 function Ether:ShowExportPopup(encoded)
     if not Ether.ExportPopup then
-         CreateExportPopup()
+        CreateExportPopup()
     end
     Ether.ExportPopup.EditBox:SetText(encoded)
     Ether.ExportPopup:Show()
@@ -358,7 +358,7 @@ end
 function Ether:CreateImportBox(backdrop)
     if Ether.importBox then return end
     local importBox=CreateFrame("EditBox",nil,backdrop)
-    Ether.importBox = importBox
+    Ether.importBox=importBox
     importBox:SetPoint("TOPLEFT",backdrop,"TOPLEFT",8,-8)
     importBox:SetPoint("BOTTOMRIGHT",backdrop,"BOTTOMRIGHT",-8,8)
     importBox:SetMultiLine(true)

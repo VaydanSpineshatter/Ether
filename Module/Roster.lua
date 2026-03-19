@@ -15,18 +15,8 @@ local cacheSolo={
     focus=true
 }
 
-local cacheSoloAura={
-    player=true,
-    pet=true,
-    target=true,
-}
-
 function Ether:IsValidSolo(unit)
     return cacheSolo[unit]
-end
-
-function Ether:IsValidAura(unit)
-    return cacheSoloAura[unit]
 end
 
 local raidButtons=Ether.raidButtons
@@ -37,25 +27,19 @@ local function refreshButtons()
         status=true
         C_After(3,function()
             if not UnitInAnyGroup("player") then
-                for _,button in pairs(raidButtons) do
-                    if button then
-                        Ether:UpdatePrediction(button)
+                local button=raidButtons["player"]
+                if button then
+                    Ether:UpdatePrediction(button)
+                    if Ether.DB[1][6]==1 then
+                        Ether:IndicatorsFullUpdate()
                     end
                 end
                 if Ether.DB[1][7]==1 then
                     Ether:AuraReset()
                 end
-                if Ether.DB[1][6]==1 then
-                    Ether:IndicatorsFullUpdate()
-                end
             else
-                for _,button in pairs(raidButtons) do
-                    if button and button:IsVisible() then
-                        Ether:UpdateClassColor(button)
-                    end
-                end
                 if Ether.DB[1][6]==1 then
-                    Ether:IndicatorsFullUpdate()
+                 Ether:IndicatorsFullUpdate()
                 end
             end
             status=false
@@ -95,7 +79,7 @@ local function initialButtons()
                 if button then
                     if UnitExists(unit) then
                         Ether:InitialHealth(button)
-                        Ether:IndicatorsFullUpdateByUnit(button)
+                        Ether:UpdateIndicatorsPosition(button)
                     end
                 end
             end
@@ -135,9 +119,9 @@ local function Roster(_,event)
         end
     elseif event=="PLAYER_TARGET_CHANGED" then
         if Ether.DB[1][6]==1 then
-            Ether:UpdateSoloIndicator("target")
+            Ether:UpdateSoloIndicator(2)
             if UnitExists("targettarget") then
-                Ether:UpdateSoloIndicator("targettarget")
+                Ether:UpdateSoloIndicator(3)
             end
         end
         if Ether.DB[6][4]==1 then

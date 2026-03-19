@@ -1,6 +1,5 @@
 local _,Ether=...
---local DB = Ether.DB[1002]["Test"]
-
+local className=select(2,UnitClass("player"))
 
 local function UpdateIndicators(number)
     if not number then
@@ -24,6 +23,7 @@ function Ether:UpdateIndicatorsPos(number,icon)
     if not data then
         return
     end
+
     local indicator=Ether.UIPanel.Frames["INDICATORS"]
 
     indicator.preview.tex:SetTexture(icon)
@@ -32,6 +32,8 @@ function Ether:UpdateIndicatorsPos(number,icon)
         indicator.preview.tex:SetTexCoord(0.75,1,0.25,0.5)
     elseif number==9 then
         indicator.preview.tex:SetTexCoord(20/64,39/64,22/64,41/64)
+    elseif number==11 then
+        indicator.preview.tex:SetTexCoord(Ether.GetClassCoords(className))
     else
         indicator.preview.tex:SetTexCoord(0,1,0,1)
     end

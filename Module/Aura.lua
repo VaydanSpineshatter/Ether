@@ -1,7 +1,8 @@
 local _,Ether=...
 local math_floor,math_ceil=math.floor,math.ceil
-local tinsert=table.insert
 local pairs,ipairs=pairs,ipairs
+local GetUnitAuraBySpellID=C_UnitAuras.GetUnitAuraBySpellID
+--local GetAuraDataBySpellName  =C_UnitAuras.GetAuraDataBySpellName
 local GetBuffDataByIndex=C_UnitAuras.GetBuffDataByIndex
 local GetDebuffDataByIndex=C_UnitAuras.GetDebuffDataByIndex
 local GetAuraDataByIndex=C_UnitAuras.GetAuraDataByIndex
@@ -152,15 +153,14 @@ local function UpdateButtonDispel(button,guid)
 end
 
 local function TrackSpecificAura(unit,spellId)
-    local auraData=C_UnitAuras.GetAuraDataBySpellName(unit,spellId)
+    local auraData=GetUnitAuraBySpellID(unit,spellId)
     if not auraData then return end
     return auraData
 end
-
 local function CheckAuraGroup(unit,spellIds)
     local found={}
     for _,spellId in ipairs(spellIds) do
-        local auraData=C_UnitAuras.GetAuraDataBySpellName(unit,spellId)
+        local auraData=GetUnitAuraBySpellID(unit,spellId)
         if auraData then
             found[spellId]={
                 name=auraData.name,
@@ -958,6 +958,16 @@ function Ether:ToggleHeaderAuras()
     end
 end
 
+local cache={
+    player=true,
+    pet=true,
+    target=true,
+}
+
+local function IsValidAura(arg1)
+    return cache[arg1]
+end
+
 local update
 if not update then
     update=CreateFrame("Frame")
@@ -968,7 +978,7 @@ if not update then
         if raidButtons[arg1] then
             raidAuraUpdate(arg1,updateInfo)
         end
-        if Ether:IsValidAura(arg1) then
+        if IsValidAura(arg1) then
             UnitAuraUpdate(arg1,updateInfo)
         end
     end)

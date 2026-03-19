@@ -43,8 +43,6 @@ local function Update(self)
     Ether:UpdateName(self,3)
     Ether:InitialHealth(self)
     Ether:UpdateClassColor(self)
-    Ether:InitialIndicatorsPosition()
-    Ether:IndicatorsFullUpdate()
 end
 
 local function CheckStatus(self)
@@ -57,7 +55,7 @@ local function CheckStatus(self)
             if UnitExists(self.unit) then
                 C_After(2,function()
                     Ether:RaidAurasFullUpdate(self,guid)
-                    Ether:SavePosition(self)
+                    Ether:UpdateIndicatorsPosition(self)
                 end)
             end
         end
@@ -65,6 +63,7 @@ local function CheckStatus(self)
 end
 
 local function Show(self)
+    Ether:SavePosition(self)
     self:RegisterEvent("UNIT_NAME_UPDATE")
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     if self.TypePet then
@@ -110,6 +109,7 @@ local function CreateChildren(header,button)
     b.Dispel={}
     Ether:SetupButtonLayout(b)
     Ether:SetupHealthBar(b,"VERTICAL")
+    b.healthBar:SetAllPoints(b)
     if header:GetAttribute("TypePet") then
         b.TypePet=true
     end
@@ -122,9 +122,6 @@ local function CreateChildren(header,button)
     b:SetScript("OnHide",Hide)
     b:SetScript("OnEnter",Enter)
     b:SetScript("OnLeave",Leave)
-    if Ether.SavePosition then
-        Ether:SavePosition(b)
-    end
     if not InCombatLockdown() then
         b:RegisterForClicks("AnyUp")
     end
@@ -248,9 +245,8 @@ function Ether:ChangeDirectionHeader(horizontal)
         Ether.Header.raid:Hide()
         Ether.Header.raid:Show()
     end
-    if Ether.DB[6][1]==1 then
-        Ether:AuraDisable()
-        Ether:AuraEnable()
+    if Ether.DB[1][7]==1 then
+        Ether:AuraReset()
     end
 end
 
@@ -271,9 +267,8 @@ function Ether:ChangeSortMethod(data)
         Ether.Header.raid:Hide()
         Ether.Header.raid:Show()
     end
-    if Ether.DB[6][1]==1 then
-        Ether:AuraDisable()
-        Ether:AuraEnable()
+    if Ether.DB[1][7]==1 then
+        Ether:AuraReset()
     end
 end
 

@@ -56,46 +56,38 @@ local function OnUpdate(self,elapsed)
         self:Hide()
     end
 end
-
-local soloButtons=Ether.soloButtons
+local castBar=Ether.castBar
 local RegisterEvent,UnregisterEvent,RegisterUpdate,UnregisterUpdate,UpdateInfo
 do
-    local count=0
-    local frame
-    local Events,Updates={},{}
+    local Events,count,frame={},0
     function RegisterEvent(cast,func)
-        if not frame then
-            frame=CreateFrame("Frame")
-            frame:SetScript("OnEvent",function(self,event,unit,...)
-                local bar=soloButtons[Ether:UnitNumber(unit)]
-                if not bar then return end
-                self.unit=bar:GetAttribute("unit")
-                if self.unit~=unit then return end
-                Events[event](bar,event,unit,...)
-            end)
-        end
+        frame=CreateFrame("Frame")
+        frame:SetScript("OnEvent",function(self,event,unit,...)
+            local bar=castBar[Ether:UnitNumber(unit)]
+            if not bar then return end
+            Events[event](bar,event,unit,...)
+        end)
         if not Events[cast] and not frame:IsEventRegistered(cast) then
             frame:RegisterEvent(cast)
+            Events[cast]=func
         end
-        Events[cast]=func
     end
+
     function UnregisterEvent(event)
-        if frame and Events[event] and frame:IsEventRegistered(event) then
+        if Events[event] and frame:IsEventRegistered(event) then
             frame:UnregisterEvent(event)
+            Events[event]=nil
         end
-        Events[event]=nil
     end
-    function RegisterUpdate(onUpdate)
-        if not Updates[onUpdate] then
-            Updates[onUpdate]=onUpdate
-            Updates[onUpdate]:SetScript("OnUpdate",OnUpdate)
+    function RegisterUpdate(index)
+        if not castBar[index]:GetScript("OnUpdate") then
+            castBar[index]:SetScript("OnUpdate",OnUpdate)
             count=count+1
         end
     end
-    function UnregisterUpdate(onUpdate)
-        if Updates[onUpdate] then
-            Updates[onUpdate]:SetScript("OnUpdate",nil)
-            Updates[onUpdate]=nil
+    function UnregisterUpdate(index)
+        if castBar[index]:GetScript("OnUpdate") then
+            castBar[index]:SetScript("OnUpdate",nil)
             count=count-1
         end
     end
@@ -107,158 +99,148 @@ end
 local function CastStart(self,event,unit)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_START" then
-        local bar=self.castBar
-        local name,text,texture,startTimeMS,endTimeMS,_,castID,notInterruptible,spellID=UnitCast(self.unit)
-        if not bar or not name then return end
+        local name,text,texture,startTimeMS,endTimeMS,_,castID,notInterruptible,spellID=UnitCast(unit)
+        if not name then return end
         endTimeMS=endTimeMS/1e3
         startTimeMS=startTimeMS/1e3
         local max=endTimeMS-startTimeMS
-        bar.castID=castID
-        bar.duration=GetTime()-startTimeMS
-        bar.max=max
-        bar.casting=true
-        bar.delay=0
-        bar.notInterruptible=notInterruptible
-        bar.holdTime=0
-        bar.spellID=spellID
-        bar:SetMinMaxValues(0,max)
-        bar:SetValue(0)
-        bar:SetStatusBarColor(0.2,0.6,1.0,0.8)
-        if (bar.icon) then
-            bar.icon:SetTexture(texture or "Interface\\Icons\\INV_Misc_QuestionMark")
+        self.castID=castID
+        self.duration=GetTime()-startTimeMS
+        self.max=max
+        self.casting=true
+        self.delay=0
+        self.notInterruptible=notInterruptible
+        self.holdTime=0
+        self.spellID=spellID
+        self:SetMinMaxValues(0,max)
+        self:SetValue(0)
+        self:SetStatusBarColor(0.2,0.6,1.0,0.8)
+        if (self.icon) then
+            self.icon:SetTexture(texture or "Interface\\Icons\\INV_Misc_QuestionMark")
         end
-        if (bar.text) then
-            bar.spellName=name
-            bar.text:SetText(text)
+        if (self.text) then
+            self.spellName=name
+            self.text:SetText(text)
         end
-        if (bar.safeZone) then
-            bar.safeZone:ClearAllPoints()
-            bar.safeZone:SetPoint(bar:GetReverseFill() and "LEFT" or "RIGHT")
-            bar.safeZone:SetPoint("TOP")
-            bar.safeZone:SetPoint("BOTTOM")
-            updateSafeZone(bar)
+        if (self.safeZone) then
+            self.safeZone:ClearAllPoints()
+            self.safeZone:SetPoint(self:GetReverseFill() and "LEFT" or "RIGHT")
+            self.safeZone:SetPoint("TOP")
+            self.safeZone:SetPoint("BOTTOM")
+            updateSafeZone(self)
         end
-        bar:Show()
+        self:Show()
     end
 end
 
 local function CastFailed(self,event,unit,castID)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_FAILED" then
-        local bar=self.castBar
-        if not bar or bar.castID~=castID then return end
-        bar:SetStatusBarColor(1.0,0.1,0.1,0.8)
-        if (bar.text) then
-            bar.text:SetText("Cast - "..(bar.spellName or "Failed"))
+        if self.castID~=castID then return end
+        self:SetStatusBarColor(1.0,0.1,0.1,0.8)
+        if self.text then
+            self.text:SetText("Cast - "..(self.spellName or "Failed"))
         end
-        bar.casting=nil
-        bar.notInterruptible=nil
-        bar.holdTime=bar.timeToHold or 0.1
+        self.casting=nil
+        self.notInterruptible=nil
+        self.holdTime=self.timeToHold or 0.1
     end
 end
 
 local function CastInterrupted(self,event,unit,castID)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_INTERRUPTED" then
-        local bar=self.castBar
-        if not bar or bar.castID~=castID then return end
-        bar:SetStatusBarColor(0.50,0.00,0.50,0.8)
-        if (bar.text) then
-            bar.text:SetText("Cast - "..(bar.spellName or "Interrupted"))
+        if self.castID~=castID then return end
+        self:SetStatusBarColor(0.50,0.00,0.50,0.8)
+        if self.text then
+            self.text:SetText("Cast - "..(self.spellName or "Interrupted"))
         end
-        bar.casting=nil
-        bar.channeling=nil
-        bar.holdTime=bar.timeToHold or 0.1
+        self.casting=nil
+        self.channeling=nil
+        self.holdTime=self.timeToHold or 0.1
     end
 end
 
 local function CastDelayed(self,event,unit)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_DELAYED" then
-        local bar=self.castBar
-        local _,_,_,startTime=UnitCast(self.unit)
-        if not bar or not startTime or not bar:IsVisible() then return end
+        local _,_,_,startTime=UnitCast(unit)
+        if not startTime or not self:IsShown() then return end
         local duration=GetTime()-(startTime/1000)
-        if (duration<0) then
-            duration=0
-        end
-        bar.delay=bar.delay+bar.duration-duration
-        bar.duration=duration
-        bar:SetValue(duration)
+        if duration<0 then duration=0 end
+        self.delay=self.delay+self.duration-duration
+        self.duration=duration
+        self:SetValue(duration)
     end
 end
 
 local function CastStop(self,event,unit,castID)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_STOP" then
-        local bar=self.castBar
-        if not bar or bar.castID~=castID then return end
-        bar.casting=nil
-        bar.notInterruptible=nil
+        if self.castID~=castID then return end
+        self.casting=nil
+        self.notInterruptible=nil
     end
 end
 
 local function ChannelStart(self,event,unit,_,spellID)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_CHANNEL_START" then
-        local bar=self.castBar
-        local name,text,textureID,startTimeMS,endTimeMS,_,notInterruptible=UnitChannel(self.unit)
-        if not bar or not name then return end
+        local name,text,textureID,startTimeMS,endTimeMS,_,notInterruptible=UnitChannel(unit)
+        if not name then return end
         endTimeMS=endTimeMS/1e3
         startTimeMS=startTimeMS/1e3
         local max=endTimeMS-startTimeMS
         local duration=endTimeMS-GetTime()
-        bar.duration=duration
-        bar.max=max
-        bar.delay=0
-        bar.channeling=true
-        bar.notInterruptible=notInterruptible
-        bar.holdTime=0
-        bar.spellID=spellID
-        bar.casting=nil
-        bar.castID=nil
-        bar:SetMinMaxValues(0,max)
-        bar:SetValue(duration)
-        bar:SetStatusBarColor(0.18,0.54,0.34,0.8)
-        if (bar.icon) then
-            bar.icon:SetTexture(textureID or "Interface\\Icons\\INV_Misc_QuestionMark")
+        self.duration=duration
+        self.max=max
+        self.delay=0
+        self.channeling=true
+        self.notInterruptible=notInterruptible
+        self.holdTime=0
+        self.spellID=spellID
+        self.casting=nil
+        self.castID=nil
+        self:SetMinMaxValues(0,max)
+        self:SetValue(duration)
+        self:SetStatusBarColor(0.18,0.54,0.34,0.8)
+        if self.icon then
+            self.icon:SetTexture(textureID or "Interface\\Icons\\INV_Misc_QuestionMark")
         end
-        if (bar.text) then
-            bar.text:SetText(text)
+        if self.text then
+            self.text:SetText(text)
         end
-        if (bar.safeZone) then
-            bar.safeZone:ClearAllPoints()
-            bar.safeZone:SetPoint(bar:GetReverseFill() and "LEFT" or "RIGHT")
-            bar.safeZone:SetPoint("TOP")
-            bar.safeZone:SetPoint("BOTTOM")
-            updateSafeZone(bar)
+        if self.safeZone then
+            self.safeZone:ClearAllPoints()
+            self.safeZone:SetPoint(self:GetReverseFill() and "LEFT" or "RIGHT")
+            self.safeZone:SetPoint("TOP")
+            self.safeZone:SetPoint("BOTTOM")
+            updateSafeZone(self)
         end
-        bar:Show()
+        self:Show()
     end
 end
 
 local function ChannelUpdate(self,event,unit)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_CHANNEL_UPDATE" then
-        local bar=self.castBar
-        local name,_,_,startTimeMS,endTimeMS=UnitChannel(self.unit)
-        if not bar or not name then return end
+        local name,_,_,startTimeMS,endTimeMS=UnitChannel(unit)
+        if not name then return end
         local duration=(endTimeMS/1000)-GetTime()
-        bar.delay=bar.delay+bar.duration-duration
-        bar.duration=duration
-        bar.max=(endTimeMS-startTimeMS)/1000
-        bar:SetMinMaxValues(0,bar.max)
-        bar:SetValue(duration)
+        self.delay=self.delay+self.duration-duration
+        self.duration=duration
+        self.max=(endTimeMS-startTimeMS)/1000
+        self:SetMinMaxValues(0,self.max)
+        self:SetValue(duration)
     end
 end
 
 local function ChannelStop(self,event,unit)
     if self.unit~=unit then return end
     if event=="UNIT_SPELLCAST_CHANNEL_STOP" then
-        local bar=self.castBar
-        if (bar:IsVisible()) then
-            bar.channeling=nil
-            bar.notInterruptible=nil
+        if self:IsShown() then
+            self.channeling=nil
+            self.notInterruptible=nil
         end
     end
 end
@@ -275,64 +257,50 @@ local event={
 }
 local handler={CastStart,CastStop,CastFailed,CastInterrupted,CastDelayed,ChannelStart,ChannelUpdate,ChannelStop}
 local function castBarEvents(status)
-    if status then
-        for index,info in ipairs(event) do
-            RegisterEvent(info,handler[index])
-        end
-    else
-        for _,info in ipairs(event) do
-            UnregisterEvent(info)
-        end
+    local state=status and RegisterEvent or UnregisterEvent
+    for index,info in ipairs(event) do
+        state(info,handler[index])
     end
 end
 
-function Ether:CastBarEnable(unit)
-    local bar=soloButtons[Ether:UnitNumber(unit)]
-    if not bar then
-        return
+function Ether:HideCastBar(index,bool)
+    if bool and UpdateInfo() then
+        UnregisterUpdate(index)
+        castBar[index].text:SetText("Move CastBar")
+        castBar[index]:SetShown(bool)
+    else
+        RegisterUpdate(index)
     end
-    if not bar.castBar then
-        if unit=="player" then
-            Ether:SetupCastBar(bar,12)
-        else
-            Ether:SetupCastBar(bar,13)
-        end
-        RegisterUpdate(bar.castBar)
-    end
+end
+
+function Ether:CastBarEnable(index)
+    if not index or type(index)~="number" then return end
+    castBar[index]=Ether:SetupCastBar(index)
+    Ether:ApplyFramePosition(index+11)
+    Ether:SetupDrag(index+11)
+    RegisterUpdate(index)
     if UpdateInfo() then
         castBarEvents(true)
     end
 end
 
-function Ether:HideCastBar(unit,bool)
-    local bar=soloButtons[Ether:UnitNumber(unit)]
-    if not bar then
-        return
-    end
-    if bar.castBar then
-        if bool and UpdateInfo() then
-            UnregisterUpdate(bar.castBar)
-            bar.castBar.text:SetText("Move CastBar")
-            bar.castBar:SetShown(bool)
-        else
-            RegisterUpdate(bar.castBar)
-        end
-    end
+function Ether:CastBarReset(index)
+    if not castBar[index]:GetScript("OnUpdate") then return end
+    Ether:CastBarDisable(index)
+    Ether:TimerCallBack(2,"After",function()
+            Ether:ApplyFramePosition(index+11)
+            Ether:CastBarEnable(index)
+    end,0)
 end
 
-function Ether:CastBarDisable(unit)
-    local bar=soloButtons[Ether:UnitNumber(unit)]
-    if not bar then
-        return
-    elseif bar.castBar then
-        bar.castBar:Hide()
-        UnregisterUpdate(bar.castBar)
-        bar.castBar:ClearAllPoints()
-        bar.castBar:SetParent(nil)
-        bar.castBar:SetScript("OnDragStart",nil)
-        bar.castBar:SetScript("OnDragStop",nil)
-        bar.castBar=nil
-    end
+function Ether:CastBarDisable(index)
+    if not index or type(index)~="number" then return end
+    if not castBar[index]:GetScript("OnUpdate") then return end
+    UnregisterUpdate(index)
+    castBar[index]:Hide()
+    castBar[index]:ClearAllPoints()
+    castBar[index]:SetScript("OnDragStart",nil)
+    castBar[index]:SetScript("OnDragStop",nil)
     if not UpdateInfo() then
         castBarEvents(false)
     end

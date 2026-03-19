@@ -4,19 +4,6 @@ local tconcat=table.concat
 local select,wipe=select,wipe
 local C_After=C_Timer.After
 local debugText=""
-local function CreateLinkBox()
-    local box
-    if not box then
-        box=CreateFrame("EditBox",nil,UIParent,"InputBoxTemplate")
-        box:SetSize(280,20)
-        box:SetPoint("TOP",Ether.infoFrame,"BOTTOM")
-        box:SetAutoFocus(false)
-        local text=box:CreateFontString(nil,"OVERLAY","GameFontWhite")
-        text:SetPoint("CENTER")
-        box.text=text
-        return box
-    end
-end
 local function SendOutput(input)
     Ether.infoFrame:Show()
     debugText=debugText..'\n'..input

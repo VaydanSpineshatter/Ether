@@ -5,96 +5,97 @@ local GameTooltip=GameTooltip
 local unpack,CreateFrame=unpack,CreateFrame
 local tostring,tonumber=tostring,tonumber
 local UIParent=UIParent
-
+local string_format=string.format
+local math_floor=math.floor
 function Ether:CreateToolFrame()
-    if Ether.toolFrame then return end
-    local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
-    Ether.toolFrame=frame
-    local DB=Ether.DB[21][2]
-    frame:SetFrameStrata("TOOLTIP")
-    frame:SetSize(DB[6] or 280,DB[7] or 120)
-    frame:SetScale(DB[8] or 1)
-    frame:SetScale(DB[9] or 1)
-    frame:SetBackdrop({
-        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
-        tile=true,tileSize=16,edgeSize=16,
-        insets={left=4,right=4,top=4,bottom=4}
-    })
-    frame:SetBackdropColor(0.08,0.08,0.08,0.8)
-    frame:SetBackdropBorderColor(0.3,0.3,0.3,0.7)
-    local name=frame:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
-    frame.name=name
-    name:SetFont(unpack(Ether.media.expressway),14,"OUTLINE")
-    name:SetPoint("TOPLEFT",12,-12)
-    name:SetJustifyH("LEFT")
-    name:SetTextColor(1,0.9,0.5,1)
-    local nameLine=frame:CreateTexture(nil,"ARTWORK")
-    nameLine:SetPoint("TOPLEFT",name,"BOTTOMLEFT",0,-4)
-    nameLine:SetPoint("RIGHT",frame,-12,0)
-    nameLine:SetHeight(1)
-    nameLine:SetColorTexture(0.4,0.4,0.4,0.6)
-    local guildIcon=frame:CreateTexture(nil,"OVERLAY")
-    guildIcon:SetSize(12,12)
-    guildIcon:SetTexture(135026)
-    guildIcon:SetPoint("TOPLEFT",nameLine,"BOTTOMLEFT",0,-8)
-    local guild=frame:CreateFontString(nil,"OVERLAY")
-    frame.guild=guild
-    guild:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
-    guild:SetPoint("LEFT",guildIcon,"RIGHT",4,0)
-    guild:SetTextColor(0.7,0.7,1,1)
-    local info=frame:CreateFontString(nil,"OVERLAY")
-    frame.info=info
-    info:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
-    info:SetPoint("TOPLEFT",guildIcon,"BOTTOMLEFT",0,-8)
-    info:SetTextColor(0.8,0.8,0.8,1)
-    local targetIcon=frame:CreateTexture(nil,"OVERLAY")
-    targetIcon:SetSize(14,14)
-    targetIcon:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
-    targetIcon:SetPoint("TOPLEFT",info,"BOTTOMLEFT",0,-8)
-    local target=frame:CreateFontString(nil,"OVERLAY")
-    frame.target=target
-    target:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
-    target:SetPoint("LEFT",targetIcon,"RIGHT",4,0)
-    target:SetJustifyH("LEFT")
-    target:SetTextColor(1,0.5,0.5,1)
-    local flags=frame:CreateFontString(nil,"OVERLAY")
-    frame.flags=flags
-    flags:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
-    flags:SetPoint("BOTTOMRIGHT",frame,-10,10)
-    flags:SetJustifyH("RIGHT")
-    flags:SetTextColor(0.6,0.6,0.6,1)
-    local pvpBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
-    pvpBg:SetSize(22,22)
-    pvpBg:SetPoint("TOPRIGHT",frame,-8,-8)
-    pvpBg:SetBackdrop({
-        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize=8,
-        insets={left=2,right=2,top=2,bottom=2}
-    })
-    pvpBg:SetBackdropColor(0,0,0,0.5)
-    pvpBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
-    local pvp=frame:CreateTexture(nil,"OVERLAY")
-    frame.pvp=pvp
-    pvp:SetAllPoints(pvpBg)
-    local restBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
-    restBg:SetSize(22,22)
-    restBg:SetPoint("RIGHT",pvpBg,"LEFT",-6,0)
-    restBg:SetBackdrop(pvpBg:GetBackdrop())
-    restBg:SetBackdropColor(0,0,0,0.5)
-    restBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
-    local resting=frame:CreateTexture(nil,"OVERLAY")
-    frame.resting=resting
-    resting:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
-    resting:SetTexCoord(0.0625,0.45,0.0625,0.45)
-    resting:SetPoint("CENTER",restBg)
-    resting:SetAllPoints(restBg)
-    frame:Hide()
-    Ether:ApplyFramePosition(15)
-    Ether:SetupDrag(15)
+    if not Ether.toolFrame then
+        local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
+        Ether.toolFrame=frame
+        local DB=Ether.DB[21][2]
+        frame:SetFrameStrata("TOOLTIP")
+        frame:SetSize(DB[6] or 280,DB[7] or 120)
+        frame:SetScale(DB[8] or 1)
+        frame:SetScale(DB[9] or 1)
+        frame:SetBackdrop({
+            bgFile="Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+            tile=true,tileSize=16,edgeSize=16,
+            insets={left=4,right=4,top=4,bottom=4}
+        })
+        frame:SetBackdropColor(0.08,0.08,0.08,0.8)
+        frame:SetBackdropBorderColor(0.3,0.3,0.3,0.7)
+        local name=frame:CreateFontString(nil,"OVERLAY","GameFontNormalLarge")
+        frame.name=name
+        name:SetFont(unpack(Ether.media.expressway),14,"OUTLINE")
+        name:SetPoint("TOPLEFT",12,-12)
+        name:SetJustifyH("LEFT")
+        name:SetTextColor(1,0.9,0.5,1)
+        local nameLine=frame:CreateTexture(nil,"ARTWORK")
+        nameLine:SetPoint("TOPLEFT",name,"BOTTOMLEFT",0,-4)
+        nameLine:SetPoint("RIGHT",frame,-12,0)
+        nameLine:SetHeight(1)
+        nameLine:SetColorTexture(0.4,0.4,0.4,0.6)
+        local guildIcon=frame:CreateTexture(nil,"OVERLAY")
+        guildIcon:SetSize(12,12)
+        guildIcon:SetTexture(135026)
+        guildIcon:SetPoint("TOPLEFT",nameLine,"BOTTOMLEFT",0,-8)
+        local guild=frame:CreateFontString(nil,"OVERLAY")
+        frame.guild=guild
+        guild:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+        guild:SetPoint("LEFT",guildIcon,"RIGHT",4,0)
+        guild:SetTextColor(0.7,0.7,1,1)
+        local info=frame:CreateFontString(nil,"OVERLAY")
+        frame.info=info
+        info:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+        info:SetPoint("TOPLEFT",guildIcon,"BOTTOMLEFT",0,-8)
+        info:SetTextColor(0.8,0.8,0.8,1)
+        local targetIcon=frame:CreateTexture(nil,"OVERLAY")
+        targetIcon:SetSize(14,14)
+        targetIcon:SetTexture("Interface\\TargetingFrame\\UI-TargetingFrame-Skull")
+        targetIcon:SetPoint("TOPLEFT",info,"BOTTOMLEFT",0,-8)
+        local target=frame:CreateFontString(nil,"OVERLAY")
+        frame.target=target
+        target:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+        target:SetPoint("LEFT",targetIcon,"RIGHT",4,0)
+        target:SetJustifyH("LEFT")
+        target:SetTextColor(1,0.5,0.5,1)
+        local flags=frame:CreateFontString(nil,"OVERLAY")
+        frame.flags=flags
+        flags:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
+        flags:SetPoint("BOTTOMRIGHT",frame,-10,10)
+        flags:SetJustifyH("RIGHT")
+        flags:SetTextColor(0.6,0.6,0.6,1)
+        local pvpBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
+        pvpBg:SetSize(22,22)
+        pvpBg:SetPoint("TOPRIGHT",frame,-8,-8)
+        pvpBg:SetBackdrop({
+            bgFile="Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+            edgeSize=8,
+            insets={left=2,right=2,top=2,bottom=2}
+        })
+        pvpBg:SetBackdropColor(0,0,0,0.5)
+        pvpBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
+        local pvp=frame:CreateTexture(nil,"OVERLAY")
+        frame.pvp=pvp
+        pvp:SetAllPoints(pvpBg)
+        local restBg=CreateFrame("Frame",nil,frame,"BackdropTemplate")
+        restBg:SetSize(22,22)
+        restBg:SetPoint("RIGHT",pvpBg,"LEFT",-6,0)
+        restBg:SetBackdrop(pvpBg:GetBackdrop())
+        restBg:SetBackdropColor(0,0,0,0.5)
+        restBg:SetBackdropBorderColor(0.5,0.5,0.5,1)
+        local resting=frame:CreateTexture(nil,"OVERLAY")
+        frame.resting=resting
+        resting:SetTexture("Interface\\CharacterFrame\\UI-StateIcon")
+        resting:SetTexCoord(0.0625,0.45,0.0625,0.45)
+        resting:SetPoint("CENTER",restBg)
+        resting:SetAllPoints(restBg)
+        frame:Hide()
+        Ether:ApplyFramePosition(15)
+        Ether:SetupDrag(15)
+    end
 end
-
 function Ether:SetupUpdateText(button,tbl,p)
     if not button or not button.healthBar then
         return
@@ -106,7 +107,6 @@ function Ether:SetupUpdateText(button,tbl,p)
     text:SetTextColor(1,1,1)
     return button
 end
-
 function Ether:SetupName(button,number)
     if not button then return end
     local name=button.healthBar:CreateFontString(nil,"OVERLAY")
@@ -118,17 +118,13 @@ function Ether:SetupName(button,number)
     name:SetPoint("CENTER",button.healthBar,"CENTER",0,number)
     return button
 end
-
 function Ether:SetupButtonLayout(button)
-    if not button then
-        return
-    end
+    if not button then return end
     button.background=button:CreateTexture(nil,"BACKGROUND")
     button.background:SetTexture(Ether.DB[100][6])
     button.background:SetAllPoints(button)
     return button
 end
-
 function Ether:SetupBorderLayout(target,Offset)
     local r,g,b,a=0,0,0,1
     target.t=target:CreateTexture(nil,"BORDER")
@@ -152,13 +148,13 @@ function Ether:SetupBorderLayout(target,Offset)
     target.r:SetWidth(Offset)
     target.r:SetColorTexture(r,g,b,a)
 end
-
 function Ether:CreateMainFrame(self)
     if not self.Created then
-        self.Frames["MAIN"]=CreateFrame("Frame","EtherUnitFrameAddon",UIParent,"BackdropTemplate")
-        self.Frames["MAIN"]:SetFrameLevel(500)
-        self.Frames["MAIN"]:SetSize(640,480)
-        self.Frames["MAIN"]:SetBackdrop({
+        local main=CreateFrame("Frame","EtherUnitFrameAddon",UIParent,"BackdropTemplate")
+        self.Frames["MAIN"]=main
+        main:SetFrameLevel(500)
+        main:SetSize(640,480)
+        main:SetBackdrop({
             bgFile="Interface\\ChatFrame\\ChatFrameBackground",
             edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
             tile=true,
@@ -166,14 +162,14 @@ function Ether:CreateMainFrame(self)
             edgeSize=16,
             insets={left=4,right=4,top=4,bottom=4}
         })
-        self.Frames["MAIN"]:SetBackdropColor(0.1,0.1,0.1,1)
-        self.Frames["MAIN"]:SetBackdropBorderColor(0,0.8,1,.7)
-        self.Frames["MAIN"]:Hide()
-        tinsert(UISpecialFrames,self.Frames["MAIN"]:GetName())
+        main:SetBackdropColor(0.1,0.1,0.1,1)
+        main:SetBackdropBorderColor(0,0.8,1,.7)
+        main:Hide()
+        tinsert(UISpecialFrames,main:GetName())
         for _,value in ipairs({"TOP","BOTTOM","LEFT","RIGHT"}) do
-            self.Frames[value]=CreateFrame("Frame",nil,self.Frames["MAIN"])
+            self.Frames[value]=CreateFrame("Frame",nil,main)
         end
-        self.Frames["MAIN"]:SetScript("OnHide",function()
+        main:SetScript("OnHide",function()
             if Ether.DB[100][3] then Ether.DB[100][3]=false end
             Ether.ToggleUnlock(false)
         end)
@@ -196,7 +192,7 @@ function Ether:CreateMainFrame(self)
         self.Frames["CONTENT"]:SetPoint("RIGHT",self.Frames["RIGHT"],"LEFT")
         for index,value in ipairs({"TOP","BOTTOM","LEFT","RIGHT"}) do
             self.Borders[value]=self.Frames["CONTENT"]:CreateTexture(nil,"BORDER")
-            self.Borders[value]:SetColorTexture(0.80,0.40,1.00,1)
+            self.Borders[value]:SetColorTexture(0.00,0.80,1.00,1)
             if index==1 or index==2 then
                 self.Borders[value]:SetHeight(1)
             else
@@ -212,7 +208,7 @@ function Ether:CreateMainFrame(self)
         self.Borders["RIGHT"]:SetPoint("TOPRIGHT",1,1)
         self.Borders["RIGHT"]:SetPoint("BOTTOMRIGHT",1,-1)
         for _,info in ipairs({"INDICATORS","AURAS","EDITOR"}) do
-            self.Frames[info]=CreateFrame("Frame",nil,self.Frames["MAIN"])
+            self.Frames[info]=CreateFrame("Frame",nil,main)
         end
         local version=self.Frames["BOTTOM"]:CreateFontString(nil,"OVERLAY")
         version:SetFont(unpack(Ether.media.expressway),15,"OUTLINE")
@@ -240,7 +236,7 @@ function Ether:CreateMainFrame(self)
             close.text:SetTextColor(1,1,1,1)
         end)
         close:SetScript("OnClick",function()
-            self.Frames["MAIN"]:Hide()
+            main:Hide()
             Ether.DB[100][3]=false
             Ether.ToggleUnlock(false)
             ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
@@ -278,12 +274,21 @@ function Ether:CreateSettingsButtons(name,parent,layer,onClick,isTopButton)
     end)
     return btn
 end
-
+function Ether:CleanUpButtons(editor,indicator)
+    indicator:Hide()
+    editor:Hide()
+    indicator.dropdown.text:SetText("Select Indicator")
+    for _,btn in pairs(editor.cube) do
+        btn:Disable()
+    end
+    for _,btn in pairs(indicator.cube) do
+        btn:Disable()
+    end
+end
 function Ether:SetupHealthBar(button,orient)
     if not button then return end
     local healthBar=CreateFrame("StatusBar",nil,button)
     button.healthBar=healthBar
-    healthBar:SetAllPoints(button)
     healthBar:SetOrientation(orient)
     local bar=Ether.DB[100][5] or unpack(Ether.media.elvUIBar)
     healthBar:SetStatusBarTexture(bar)
@@ -296,25 +301,11 @@ function Ether:SetupHealthBar(button,orient)
     return button
 end
 
-function Ether:CleanUpButtons(editor,indicator)
-    indicator:Hide()
-    editor:Hide()
-    indicator.dropdown.text:SetText("Select Indicator")
-    for _,btn in pairs(editor.cube) do
-        btn:Disable()
-    end
-    for _,btn in pairs(indicator.cube) do
-        btn:Disable()
-    end
-end
-
 function Ether:SetupPowerBar(button)
     if not button or not button.healthBar then return end
     local powerBar=CreateFrame("StatusBar",nil,button)
     button.powerBar=powerBar
-    powerBar:SetPoint("TOPLEFT",button,"BOTTOMLEFT")
-    local w=button:GetWidth()
-    powerBar:SetSize(w,8)
+    powerBar:SetHeight(11)
     powerBar:SetStatusBarTexture(unpack(Ether.media.blankBar))
     powerBar:SetFrameLevel(button:GetFrameLevel()+3)
     powerBar:SetMinMaxValues(0,100)
@@ -342,7 +333,7 @@ function Ether:SetupSlash()
             end
         else
             for _,entry in ipairs(Ether.media.slash) do
-                Ether:EtherInfo(string.format("%s  –  %s",entry.cmd,entry.desc))
+                Ether:EtherInfo(string_format("%s  –  %s",entry.cmd,entry.desc))
             end
         end
     end
@@ -380,15 +371,8 @@ function Ether:SetupPrediction(button)
     return button
 end
 
-function Ether:SetupCastBar(button,number)
-    if not button or not number then return end
-    local pos=Ether.DB[21][number]
+function Ether:SetupCastBar(index)
     local frame=CreateFrame("StatusBar",nil,UIParent)
-    frame:SetWidth(pos[6] or 300)
-    frame:SetHeight(pos[7] or 15)
-    frame:SetScale(pos[8] or 1)
-    frame:SetAlpha(pos[9] or 1)
-    button.castBar=frame
     frame:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
     local drop=frame:CreateTexture(nil,"OVERLAY")
     frame.drop=drop
@@ -416,9 +400,9 @@ function Ether:SetupCastBar(button,number)
     frame.duration=0
     frame.delay=0
     frame.timeToHold=0.1
-    frame:SetPoint(pos[1] or "CENTER",UIParent,pos[3] or "CENTER",pos[4] or 0,pos[5] or 0)
-    Ether:SetupDrag(number)
+    frame.unit=Ether:UnitNumber(index)
     frame:Hide()
+    return frame
 end
 
 function Ether:CreateSlider(parent,label,text,l,h,s,point,rel,x,y,callback)
@@ -630,7 +614,7 @@ local function onStart(self)
     end
 end
 
-local function onStop(self,index,grid)
+local function onStop(self,index)
     if not Ether.IsMovable then
         return
     end
@@ -638,28 +622,21 @@ local function onStop(self,index,grid)
         self:StopMovingOrSizing()
     end
     local point,relTo,relPoint,x,y=self:GetPoint(1)
-    local relToName="UIParent"
-    if relTo then
-        if relTo.GetName and relTo:GetName() then
-            relToName=relTo:GetName()
-        elseif relTo==UIParent then
-            relToName="UIParent"
-        else
-            relToName="UIParent"
-        end
+    local relToName
+    if relTo==UIParent then
+        relToName="UIParent"
+    elseif relTo==Minimap then
+        relToName="Minimap"
     end
-
-    local snapX,snapY=SnapToGrid(x,y,grid)
-    if not Ether.DB or not Ether.DB[21] or not Ether.DB[21][index] then
-        return
-    end
+    local snapX,snapY=SnapToGrid(x,y,5)
+    if not Ether.DB[21] or not Ether.DB[21][index] then return end
     local DB=Ether.DB[21][index]
     DB[1]=point
     DB[2]=relToName
     DB[3]=relPoint
-    DB[4]=math.floor(snapX)
-    DB[5]=math.floor(snapY)
-    local anchorRelTo=_G[relToName] or UIParent
+    DB[4]=math_floor(snapX)
+    DB[5]=math_floor(snapY)
+    local anchorRelTo=_G[relToName]
     self:ClearAllPoints()
     self:SetPoint(point,anchorRelTo,relPoint,DB[4],DB[5])
 end
@@ -674,52 +651,53 @@ function Ether:SetupDrag(index)
         frame:SetClampedToScreen(true)
         frame:SetScript("OnDragStart",onStart)
         frame:SetScript("OnDragStop",function(self)
-            onStop(self,index,10)
+            onStop(self,index)
         end)
     end
 end
 
 function Ether:SetupInfoFrame()
-    if Ether.infoFrame then return end
-    local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
-    Ether.infoFrame=frame
-    local DB=Ether.DB[21][1]
-    frame:SetPoint("CENTER")
-    frame:SetSize(DB[6] or 320,DB[7] or 200)
-    frame:SetScale(DB[8] or 1)
-    frame:SetScale(DB[9] or 1)
-    frame:SetBackdrop({
-        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile=true,
-        tileSize=16,
-        edgeSize=16,
-        insets={left=4,right=4,top=4,bottom=4}
-    })
-    frame:SetBackdropColor(0.1,0.1,0.1,.9)
-    frame:SetBackdropBorderColor(0.4,0.4,0.4)
-    frame:SetSize(320,200)
-    frame:SetFrameStrata("DIALOG")
-    local sF=CreateFrame("ScrollFrame",nil,frame,"UIPanelScrollFrameTemplate")
-    sF:SetPoint("TOPLEFT",10,-30)
-    sF:SetPoint("BOTTOMRIGHT",-30,10)
-    local cF=CreateFrame("Frame",nil,sF)
-    cF:SetSize(390,111)
-    sF:SetScrollChild(cF)
-    local txt=cF:CreateFontString(nil,"OVERLAY")
-    Ether.infoText=txt
-    txt:SetFont(unpack(Ether.media.expressway),12,'OUTLINE')
-    txt:SetPoint("TOPLEFT")
-    txt:SetWidth(290)
-    txt:SetJustifyH("LEFT")
-    local top=frame:CreateFontString(nil,"OVERLAY")
-    top:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
-    top:SetPoint("TOP",0,-10)
-    top:SetText("|cE600CCFFEther|r")
-    frame:Hide()
-    Ether:ApplyFramePosition(14)
-    Ether:SetupDrag(14)
-    return frame
+    if not Ether.infoFrame then
+        local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
+        Ether.infoFrame=frame
+        local DB=Ether.DB[21][1]
+        frame:SetPoint("CENTER")
+        frame:SetSize(DB[6] or 320,DB[7] or 200)
+        frame:SetScale(DB[8] or 1)
+        frame:SetScale(DB[9] or 1)
+        frame:SetBackdrop({
+            bgFile="Interface\\ChatFrame\\ChatFrameBackground",
+            edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
+            tile=true,
+            tileSize=16,
+            edgeSize=16,
+            insets={left=4,right=4,top=4,bottom=4}
+        })
+        frame:SetBackdropColor(0.1,0.1,0.1,.9)
+        frame:SetBackdropBorderColor(0.4,0.4,0.4)
+        frame:SetSize(320,200)
+        frame:SetFrameStrata("DIALOG")
+        local sF=CreateFrame("ScrollFrame",nil,frame,"UIPanelScrollFrameTemplate")
+        sF:SetPoint("TOPLEFT",10,-30)
+        sF:SetPoint("BOTTOMRIGHT",-30,10)
+        local cF=CreateFrame("Frame",nil,sF)
+        cF:SetSize(390,111)
+        sF:SetScrollChild(cF)
+        local txt=cF:CreateFontString(nil,"OVERLAY")
+        Ether.infoText=txt
+        txt:SetFont(unpack(Ether.media.expressway),12,'OUTLINE')
+        txt:SetPoint("TOPLEFT")
+        txt:SetWidth(290)
+        txt:SetJustifyH("LEFT")
+        local top=frame:CreateFontString(nil,"OVERLAY")
+        top:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
+        top:SetPoint("TOP",0,-10)
+        top:SetText("|cE600CCFFEther|r")
+        frame:Hide()
+        Ether:ApplyFramePosition(14)
+        Ether:SetupDrag(14)
+        return frame
+    end
 end
 
 local function SetupAuraIcon(button)
@@ -822,8 +800,8 @@ function Ether:DispelIconSetup(button)
     if not button.dispelFrame then
         local frame=CreateFrame("Frame",nil,UIParent)
         frame:SetFrameLevel(button:GetFrameLevel()+6)
-        frame:SetPoint("CENTER",button,"CENTER",0,8)
-        frame:SetSize(12,12)
+        frame:SetPoint("CENTER",button,"CENTER",0,10)
+        frame:SetSize(10,10)
         local icon=frame:CreateTexture(nil,"OVERLAY")
         icon:SetAllPoints()
         icon:SetTexCoord(0.07,0.93,0.07,0.93)
@@ -1025,12 +1003,12 @@ function Ether:SpellInfo(info,result,icon)
     else
         icon:Hide()
     end
-    local resultStr=string.format("Spell Name: %s\nSpellID: %d",name,spellID)
+    local resultStr=string_format("Spell Name: %s\nSpellID: %d",name,spellID)
     if subtext~="" then
-        resultStr=resultStr..string.format("\n%s",subtext)
+        resultStr=resultStr..string_format("\n%s",subtext)
     end
     if levelLearned>0 then
-        resultStr=resultStr..string.format("\nLearned at: Level %d",levelLearned)
+        resultStr=resultStr..string_format("\nLearned at: Level %d",levelLearned)
     end
     result:SetText(resultStr)
     result:SetTextColor(1,1,1)
@@ -1260,4 +1238,68 @@ function Ether:UpdateHealthTextRounded(button)
     local colorCode = HealthGradient[roundedPct]
     button.health:SetText(string_format(f2m, colorCode, roundedPct))
 end
+local function CreateLinkBox()
+    local box
+    if not box then
+        box=CreateFrame("EditBox",nil,UIParent,"InputBoxTemplate")
+        box:SetSize(280,20)
+        box:SetPoint("TOP",Ether.infoFrame,"BOTTOM")
+        box:SetAutoFocus(false)
+        local text=box:CreateFontString(nil,"OVERLAY","GameFontWhite")
+        text:SetPoint("CENTER")
+        box.text=text
+        return box
+    end
+end
 ]]
+
+local C_After,C_Ticker=C_Timer.After,C_Timer.NewTicker
+local Status,Updater=false
+local Count,Now=0
+Updater=nil
+function Ether:ClearCallBack()
+    Now=0
+    Status=false
+    if Updater then
+        Updater:Cancel()
+        if Updater:IsCancelled() then
+            Updater=nil
+        else
+            Ether:EtherInfo("Updater is not cancelled. Reload UI")
+            error("Updater is not cancelled. Reload UI")
+        end
+    end
+end
+function Ether:TimerCallBack(number,str,callback,Timer)
+    if not number or not str or not callback then return end
+    if type(number)~="number" or type(str)~="string" or type(callback)~="function" then return end
+    if not Status then
+        Status=true
+        Count,Now=0,Timer or 0
+        local method
+        if str=="After" then
+            method=C_After
+        elseif str=="Ticker" then
+            method=C_Ticker
+        else
+            Ether:ClearCallBack()
+            return
+        end
+        if not Updater then
+            Updater=method(number,function()
+                if Now~=0 then
+                    Count=Count+1
+                    if Now and Now==Count then
+                        Ether:ClearCallBack()
+                    end
+                end
+                if callback then
+                    callback()
+                end
+                if str=="After" then
+                    Status=false
+                end
+            end)
+        end
+    end
+end
