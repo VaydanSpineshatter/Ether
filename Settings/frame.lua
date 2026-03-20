@@ -570,10 +570,19 @@ function Ether:CreateTooltipSection(panel)
         panel.Buttons[4][i]=btn
     end
 end
-
-local function OnHeaderSort(_,info)
-    Ether:ChangeSortMethod(info.value)
-    Ether.DB[100][9]=info.index
+local Sort={"GROUP","CLASS","ASSIGNEDROLE","LEFT->TOP","TOP->LEFT"}
+local function OnHeaderSort(_,data)
+    local parent=Ether.UIPanel["CONTENT"]["CHILDREN"]["Header"]
+    local DB=Ether.DB
+    if data.index<3 then
+        DB[100][9]=data.index
+        parent.label:SetText("Direction: "..Sort[DB[100][9]])
+    elseif data.index>=3 then
+        DB[100][10]=data.index
+        parent.direction:SetText("Direction: "..Sort[DB[100][10]])
+    elseif data.index>=5 then
+    end
+    Ether.Fire("UPDATE_HEADER",data.index)
 end
 
 function Ether:CreateHeaderSection(panel)
@@ -581,8 +590,7 @@ function Ether:CreateHeaderSection(panel)
     if parent.Created then return end
     parent.Created=true
     local DB=Ether.DB
-    local headerData={"Sort direction"}
-    -- Ether:InitializePreview()
+    local headerData={"RaidHeader","PetHeader"}
     local header=CreateFrame("Frame",nil,parent)
     header:SetSize(200,(#headerData*30)+60)
     for i,opt in ipairs(headerData) do
@@ -601,28 +609,25 @@ function Ether:CreateHeaderSection(panel)
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             DB[5][i]=checked and 1 or 0
-            if i==1 then
-                if Ether.DB[5][1]==1 then
-                    Ether:ChangeDirectionHeader(true)
-                else
-                    Ether:ChangeDirectionHeader(false)
-                end
-            end
         end)
         panel.Buttons[5][i]=btn
     end
-    local Sort={"GROUP","CLASS","ASSIGNEDROLE"}
     local Config={}
     for index,name in ipairs(Sort) do
         tinsert(Config,{text=name,value=name,index=index})
     end
     local dropdown=Ether:CreateEtherDropdown(parent,130,"Select Method",Config,"NONE",OnHeaderSort)
     dropdown:SetPoint("CENTER")
-    dropdown.text:SetText(Sort[Ether.DB[100][9]])
     local label=parent:CreateFontString(nil,"OVERLAY")
-    label:SetFont(unpack(Ether.media.expressway),10,"OUTLINE")
-    label:SetText("Sort By")
+    parent.label = label
+    label:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+    label:SetText("Sort By: "..Sort[DB[100][9]])
     label:SetPoint("BOTTOMLEFT",dropdown,"TOPLEFT",0,10)
+    local direction=parent:CreateFontString(nil,"OVERLAY")
+    parent.direction = direction
+    direction:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
+    direction:SetText("Direction: "..Sort[DB[100][10]])
+    direction:SetPoint("BOTTOMLEFT",label,"TOPLEFT",0,10)
 end
 
 local INDEX
@@ -644,31 +649,7 @@ local function OnBarSelect(self,data)
 
     end
 end
-local status=false
-local function ResetHeader(data)
-    if InCombatLockdown() or not data then return end
-    if not status then
-        status=true
-        local name=data:GetName().."UnitButton"
-        local index=1
-        local child=_G[name..index]
-        while (child) do
-            child:ClearAllPoints()
-            index=index+1
-            child=_G[name..index]
-        end
-        if data:IsShown() then
-            data:Hide()
-            data:Show()
-        end
-        if Ether.DB[1][7]==1 then
-            Ether:AuraReset()
-        end
-        C_Timer.After(1,function()
-            status=false
-        end)
-    end
-end
+
 local function unitButtons(data,number,number2)
     if not data or not number or not number2 then return end
     for _,button in pairs(data) do
@@ -677,26 +658,27 @@ local function unitButtons(data,number,number2)
         end
     end
 end
+
 function Ether:ProcessUserData(index)
     if not index or type(index)~="number" or index>15 then return end
     local DB=Ether.DB[21][index]
     local raidButtons=Ether.raidButtons
     local soloButton=Ether.soloButtons[index]
-    local customButtons=Ether.customButtons
-    local petHeader=Ether.Header.pet
-    local raidHeader=Ether.Header.raid
+ --  local customButtons=Ether.customButtons
     if index==15 then
+        Ether:ApplyFramePosition(15)
     elseif index==14 then
+        Ether:ApplyFramePosition(14)
     elseif index==13 then
-      Ether:CastBarReset(2)
+        Ether:CastBarReset(2)
     elseif index==12 then
-       Ether:CastBarReset(1)
+        Ether:CastBarReset(1)
     elseif index==10 then
         unitButtons(raidButtons,DB[6],DB[7])
-        ResetHeader(raidHeader)
+    Ether.Fire("UPDATE_HEADER",5)
     elseif index==11 then
         unitButtons(raidButtons,DB[6],DB[7])
-        ResetHeader(petHeader)
+       Ether.Fire("UPDATE_HEADER",6)
     elseif index>=7 then
 
     else
@@ -772,16 +754,16 @@ function Ether:CreateLayoutSection(panel)
             Ether.DB[6][i]=checked and 1 or 0
             if i==12 then
                 if Ether.DB[6][12]==1 then
-                    Ether:CastBarEnable(i -11)
+                    Ether:CastBarEnable(i-11)
                 else
-                    Ether:CastBarDisable(i -11)
+                    Ether:CastBarDisable(i-11)
                 end
             end
             if i==13 then
                 if Ether.DB[6][13]==1 then
-                    Ether:CastBarEnable(i -11)
+                    Ether:CastBarEnable(i-11)
                 else
-                    Ether:CastBarDisable(i -11)
+                    Ether:CastBarDisable(i-11)
                 end
             end
             if i<7 then
@@ -1098,6 +1080,7 @@ function Ether:CreateHelperSection(panel)
     resultText:SetWidth(230)
     resultText:SetJustifyH("LEFT")
     spellIcon=resultFrame:CreateTexture(nil,"OVERLAY")
+    spellIcon:SetPoint("LEFT",resultText,"RIGHT")
     spellIcon:SetPoint("LEFT",resultText,"RIGHT")
     spellIcon:SetSize(32,32)
     spellIcon:Hide()

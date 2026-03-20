@@ -39,7 +39,7 @@ local function refreshButtons()
                 end
             else
                 if Ether.DB[1][6]==1 then
-                 Ether:IndicatorsFullUpdate()
+                    Ether:IndicatorsFullUpdate()
                 end
             end
             status=false
@@ -74,12 +74,15 @@ local initial=false
 local function initialButtons()
     if not initial then
         initial=true
-        C_After(1.5,function()
+        C_After(4,function()
+            if Ether.DB[1][7]==1 then
+                Ether:SoloAuraReset()
+            end
             for unit,button in pairs(raidButtons) do
                 if button then
                     if UnitExists(unit) then
                         Ether:InitialHealth(button)
-                        Ether:UpdateIndicatorsPosition(button)
+                        Ether:UpdateIndicatorsByUnit(button)
                     end
                 end
             end
@@ -104,7 +107,6 @@ end
 
 local function Roster(_,event)
     if event=="PLAYER_UNGHOST" then
-        Ether:SoloAuraReset()
         initialButtons()
     elseif event=="GROUP_ROSTER_UPDATE" then
         refreshButtons()

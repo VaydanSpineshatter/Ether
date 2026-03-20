@@ -3,15 +3,14 @@ local raid=CreateFrame("Frame","EtherRaidGroupAnchor",UIParent,"SecureFrameTempl
 Ether.Anchor.raid=raid
 local pet=CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplate")
 Ether.Anchor.pet=pet
-local UnitExists=UnitExists
-local UnitGUID=UnitGUID
+local UnitExists,UnitGUID=UnitExists,UnitGUID
 local GameTooltip=GameTooltip
 local raidButtons={}
 Ether.raidButtons=raidButtons
 local guidData={}
 Ether.guidData=guidData
 local C_After=C_Timer.After
-
+local unpack = unpack
 local initialConfigFunction=[[
     local header = self:GetParent()
     self:SetWidth(header:GetAttribute("ButtonWidth"))
@@ -23,19 +22,17 @@ local initialConfigFunction=[[
 ]]
 
 local function Enter(self)
-    if not GameTooltip then
-        return
+    if GameTooltip then
+        GameTooltip:SetOwner(self,"ANCHOR_RIGHT")
+        GameTooltip:SetUnit(self.unit)
+        GameTooltip:Show()
     end
-    GameTooltip:SetOwner(self,"ANCHOR_RIGHT")
-    GameTooltip:SetUnit(self.unit)
-    GameTooltip:Show()
 end
 
 local function Leave()
-    if not GameTooltip then
-        return
+    if GameTooltip then
+        GameTooltip:Hide()
     end
-    GameTooltip:Hide()
 end
 
 local function Update(self)
@@ -79,12 +76,7 @@ local function Hide(self)
         self:UnregisterEvent("UNIT_PET")
     end
     if self.destGUID then
-        if UnitExists(self.unit) then
-            Ether.Fire("UNIT_IS_DEAD",self.unit)
-        end
-        C_After(0.3,function()
-            Ether.CheckOldGUID(self.destGUID)
-        end)
+        Ether.CheckOldGUID(self.destGUID)
     end
 end
 
@@ -128,19 +120,19 @@ local function CreateChildren(header,button)
     return b
 end
 
-local Sort={"GROUP","CLASS","ASSIGNEDROLE"}
+local S={"GROUP","CLASS","ASSIGNEDROLE"}
 local group={"1,2,3,4,5,6,7,8"}
 local class={"DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR"}
 local assigned={"TANK,HEALER,DAMAGER,NONE"}
-local function OrderMethod(string)
-    if not string or type(string)~="string" then return end
+local function OrderMethod(index)
+    if not index or type(index)~="number" then return end
     local sort,data
-    if string=="GROUP" then
-        sort,data="GROUP",group
-    elseif string=="CLASS" then
-        sort,data="CLASS",class
-    elseif string=="ASSIGNEDROLE" then
-        sort,data="ASSIGNEDROLE",assigned
+    if index==1 then
+        sort,data=S[index],group
+    elseif index==2 then
+        sort,data=S[index],class
+    elseif index==3 then
+        sort,data=S[index],assigned
     end
     return sort,data
 end
@@ -166,10 +158,21 @@ local function getRelativePointAnchor(point)
         return 'CENTER',0,0;
     end
 end
+local function AnchorMethod(index)
+    if not index or type(index)~="number" then return end
+    if index==1 then
+        return "LEFT","TOP"
+    elseif index==2 then
+        return "TOP","LEFT"
+    else
+        return nil
+    end
+end
 function Ether:CreateGroupHeader()
     local DB=Ether.DB
     local data=DB[21][10]
-    local by,order=OrderMethod(Sort[DB[100][9]])
+    local v=DB[100][9]
+    local by,order=OrderMethod(v)
     local header=CreateFrame("Frame","EtherGroupHeader",raid,"SecureGroupHeaderTemplate")
     Ether.Header.raid=header
     header:SetPoint("BOTTOM",raid,"TOP")
@@ -223,52 +226,47 @@ function Ether:CreatePetHeader()
     RegisterAttributeDriver(header,"state-visibility","[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
 end
 
-function Ether:ChangeDirectionHeader(horizontal)
-    if InCombatLockdown() then return end
-    if horizontal then
-        Ether.Header.raid:SetAttribute("point","LEFT")
-        Ether.Header.raid:SetAttribute("columnAnchorPoint","TOP")
-    else
-        Ether.Header.raid:SetAttribute("columnAnchorPoint","LEFT")
-        Ether.Header.raid:SetAttribute("point","TOP")
-    end
-
-    local name=Ether.Header.raid:GetName().."UnitButton"
-    local index=1
-    local child=_G[name..index]
-    while (child) do
-        child:ClearAllPoints()
-        index=index+1
-        child=_G[name..index]
-    end
-    if Ether.Header.raid:IsShown() then
-        Ether.Header.raid:Hide()
-        Ether.Header.raid:Show()
-    end
-    if Ether.DB[1][7]==1 then
-        Ether:AuraReset()
-    end
-end
-
-function Ether:ChangeSortMethod(data)
-    if InCombatLockdown() or not data then return end
-    local by,order=OrderMethod(data)
-    Ether.Header.raid:SetAttribute("groupBy",by or "GROUP")
-    Ether.Header.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
-    local name=Ether.Header.raid:GetName().."UnitButton"
-    local index=1
-    local child=_G[name..index]
-    while (child) do
-        child:ClearAllPoints()
-        index=index+1
-        child=_G[name..index]
-    end
-    if Ether.Header.raid:IsShown() then
-        Ether.Header.raid:Hide()
-        Ether.Header.raid:Show()
-    end
-    if Ether.DB[1][7]==1 then
-        Ether:AuraReset()
+local status=false
+local function UpdateHeader(number)
+    if not number or type(number)~="number" then return end
+    if not InCombatLockdown() and not status then
+        status=true
+        local DB=Ether.DB
+        local V=DB[100][10]
+        local R,P,D=Ether.Header.raid,Ether.Header.pet,Ether.DB[21]
+        if number<3 then
+            local by,order=OrderMethod(number)
+            Ether.Header.raid:SetAttribute("groupBy",by or "GROUP")
+            Ether.Header.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
+        elseif number>=3 then
+            local column,point=AnchorMethod(V)
+            Ether.Header.raid:SetAttribute("columnAnchorPoint",column or "LEFT")
+            Ether.Header.raid:SetAttribute("point",point or "TOP")
+        elseif number==5 then
+            R:SetAttribute("ButtonWidth",D[10][6] or 55)
+            R:SetAttribute("ButtonHeight",D[10][7] or 55)
+        elseif number==6 then
+            P:SetAttribute("ButtonWidth",D[11][6] or 55)
+            P:SetAttribute("ButtonHeight",D[11][7] or 55)
+        end
+        local name=Ether.Header.raid:GetName().."UnitButton"
+        local index=1
+        local child=_G[name..index]
+        while (child) do
+            child:ClearAllPoints()
+            index=index+1
+            child=_G[name..index]
+        end
+        if Ether.Header.raid:IsShown() then
+            Ether.Header.raid:Hide()
+            Ether.Header.raid:Show()
+        end
+        C_After(1.5,function()
+            status=false
+            if Ether.DB[1][7]==1 then
+                Ether:AuraReset()
+            end
+        end)
     end
 end
 
@@ -309,3 +307,5 @@ startingIndex = [NUMBER] - the index in the final sorted unit list at which to s
 columnSpacing = [NUMBER] - the amount of space between the rows/columns (Default: 0)
 columnAnchorPoint = [STRING] - the anchor point of each new column (ie. use LEFT for the columns to grow to the right)
 ]]
+
+Ether.RegisterCallback("UPDATE_HEADER","UpdateHeader",UpdateHeader)

@@ -19,7 +19,7 @@ local Default={
     [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
     [3]={1,1,1,1,1,1,1,1,1,1,1},--Indicators
     [4]={1,1,1,1,1,1,1,1,1,1,1,1,1},--Tooltip
-    [5]={1},--Header
+    [5]={1,1},--Header
     [6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},--Layout
     [20]={
         [1]={D[1],0,0,24},
@@ -56,7 +56,7 @@ local Default={
 
     [1003]={},
     ["USER"]={},
-    [100]={D[11],1,false,unpack(Ether.media.venite),unpack(Ether.media.elvUIBar),unpack(Ether.media.etherBg),12,"OUTLINE",1}
+    [100]={D[11],1,false,unpack(Ether.media.venite),unpack(Ether.media.elvUIBar),unpack(Ether.media.etherBg),12,"OUTLINE",1,4}
 }
 Ether.DataDefault=Default
 function Ether:PosNumber(input)
@@ -66,7 +66,7 @@ function Ether:UnitNumber(input)
     return UnitMap[input]
 end
 function Ether:RefreshAllSettings()
-    for i=1,10 do
+    for i=1,6 do
         Ether:FrameChecked(i)
     end
 end

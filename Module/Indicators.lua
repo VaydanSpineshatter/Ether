@@ -8,7 +8,7 @@ local GetReadyCheckStatus=GetReadyCheckStatus
 local GetPartyAssignment=GetPartyAssignment
 local GetRaidTargetIndex=GetRaidTargetIndex
 local UnitExists=UnitExists
-local UnitIsVisible = UnitIsVisible
+local UnitIsVisible=UnitIsVisible
 local Enum=Enum
 local GetLootMethod=C_PartyInfo.GetLootMethod
 local pairs,ipairs=pairs,ipairs
@@ -271,9 +271,9 @@ local function RaidTarget()
         end
     end
 
-   if UnitIsVisible(soloButtons[1].unit) then
+    if UnitIsVisible(soloButtons[1].unit) then
         Ether:UpdateSoloIndicator(1)
-   end
+    end
     if UnitIsVisible(soloButtons[2].unit) then
         Ether:UpdateSoloIndicator(2)
     end
@@ -495,6 +495,10 @@ function Ether:UpdateIndicatorsPosition(button)
     IndicatorsFullUpdateByUnit(button)
 end
 
+function Ether:UpdateIndicatorsByUnit(self)
+    IndicatorsFullUpdateByUnit(self)
+end
+
 function Ether:SavePosition(index)
     local C=Ether.DB[20][index]
     local data=iTbl[index]
@@ -585,7 +589,6 @@ end
 
 function Ether:IndicatorsEnable()
     Register()
-    Ether:UpdateSoloIndicator("player")
     HideReadyCheckIcons()
     C_Timer.After(2,function()
         Ether:IndicatorsFullUpdate()

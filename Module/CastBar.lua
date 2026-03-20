@@ -288,8 +288,8 @@ function Ether:CastBarReset(index)
     if not castBar[index]:GetScript("OnUpdate") then return end
     Ether:CastBarDisable(index)
     Ether:TimerCallBack(2,"After",function()
-            Ether:ApplyFramePosition(index+11)
-            Ether:CastBarEnable(index)
+        Ether:ApplyFramePosition(index+11)
+        Ether:CastBarEnable(index)
     end,0)
 end
 

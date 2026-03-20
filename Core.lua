@@ -303,9 +303,6 @@ local function OnInitialize(self,event,...)
         end
         Ether:CreateGroupHeader()
         Ether:CreatePetHeader()
-        if Ether.DB[5][1]==1 then
-            Ether:ChangeDirectionHeader(true)
-        end
         Ether.CombatFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
         if Ether.DB[1][2]==1 then
             Ether:EnableMsgEvents()
