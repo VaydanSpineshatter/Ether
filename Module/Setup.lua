@@ -7,7 +7,7 @@ local tostring,tonumber=tostring,tonumber
 local UIParent=UIParent
 local string_format=string.format
 local math_floor=math.floor
-local UnitFullName,GetRealmName=UnitFullName,GetRealmName
+local C_After,C_Ticker=C_Timer.After,C_Timer.NewTicker
 function Ether:CreateToolFrame()
     if not Ether.toolFrame then
         local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
@@ -1036,108 +1036,6 @@ function Ether:SpellInfo(info,result,icon)
         GameTooltip:Hide()
     end)
 end
---local GUID = UnitGUID("target")
---local INFO = GetPlayerInfoByGUID(GUID)
-
-function Ether:GroupScanner()
-    if Ether.DB[7][2]==1 and UnitInParty("player") then
-        local USER=Ether.DB["USER"]
-        for index=1,GetNumSubgroupMembers() do
-            local unit="party"..index
-            if UnitExists(unit) then
-                local name,realm=UnitFullName(unit),GetRealmName()
-                if not name then return end
-                local fullName=name.."-"..realm
-                for _,entry in ipairs(USER) do
-                    if entry and entry==fullName then
-                        Ether:EtherInfo(string_format("Party %s",entry))
-                        Ether.StartFlash()
-                        break
-                    end
-                end
-            end
-        end
-    end
-end
-local raidButtons=Ether.raidButtons
-local function CheckRaidButtons(unit)
-    local button=raidButtons[unit]
-    if button and button.unit==unit then
-        return button
-    end
-    return nil
-end
-function Ether:RaidScanner()
-    if Ether.DB[7][3]==1 and UnitInRaid("player") and UnitInBattleground("player") then
-        local USER=Ether.DB["USER"]
-        for index = 1, 40 do
-            local unit="raid"..index
-            if UnitExists(unit) then
-                local button=CheckRaidButtons(unit)
-                if not button then return end
-                local _,_,subgroup=GetRaidRosterInfo(index)
-                local name,realm=UnitFullName(unit),GetRealmName()
-                if not name then return end
-                local fullName=name.."-"..realm
-                for _,entry in ipairs(USER) do
-                    if entry and entry==fullName then
-                        Ether:EtherInfo(string_format("Group %s - %s",subgroup,entry))
-                        Ether.StartFlash()
-                        break
-                    end
-                end
-            end
-        end
-    end
-end
-
-function Ether:IgnoreScanner()
-    if Ether.DB[7][1]~=1 then return end
-    local USER=Ether.DB["USER"]
-    if not UnitExists("target") then return end
-    local name,realm=UnitFullName("target"),GetRealmName()
-    if not name then return end
-    local fullName=name.."-"..realm
-    for _,entry in ipairs(USER) do
-        if entry==fullName then
-            Ether:EtherInfo(string_format("Found Target %s",fullName))
-            Ether.StartFlash()
-            break
-        end
-    end
-end
-function Ether:IgnoringHandler(name)
-    if not name or type(name)~="string" then return end
-    name=name:trim()
-    if name=="" then
-        return
-    else
-        for index,entry in ipairs(Ether.DB["USER"]) do
-            if index and entry==name then
-                table.remove(Ether.DB["USER"],index)
-                Ether:EtherInfo(string_format("%s",entry))
-                break
-            end
-        end
-        table.insert(Ether.DB["USER"],name)
-    end
-end
-
-function Ether:IgnoringNameByTarget()
-    if UnitExists("target") then
-        local name,realm=UnitFullName("target"),GetRealmName()
-        if not name then return end
-        local fullName=name.."-"..realm
-        for index,entry in ipairs(Ether.DB["USER"]) do
-            if index and entry==fullName then
-                table.remove(Ether.DB["USER"],index)
-                Ether:EtherInfo(string_format("%s",entry))
-                break
-            end
-        end
-        table.insert(Ether.DB["USER"],fullName)
-    end
-end
 
 function Ether.ValidMessage(sender)
     local DB=Ether.DB["USER"]
@@ -1148,6 +1046,7 @@ function Ether.ValidMessage(sender)
     end
     return false
 end
+
 function Ether:CreateEtherDropdown(parent,width,text,options,pos,callback)
     local dropdown=CreateFrame("Button",nil,parent)
     dropdown:SetSize(width,25)
@@ -1345,7 +1244,6 @@ local function CreateLinkBox()
 end
 ]]
 
-local C_After,C_Ticker=C_Timer.After,C_Timer.NewTicker
 local Status,Updater=false
 local Now=0
 Updater=nil

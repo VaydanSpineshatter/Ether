@@ -1029,13 +1029,13 @@ function Ether:CreateHelperSection(panel)
     pvp:SetScript("OnClick",function()
         Ether:CheckPvpStatus()
     end)
-    local ignore=CreateLineInput(parent,180,20)
+     local ignore=CreateLineInput(parent,180,20)
     ignore:SetPoint("LEFT",parent,"LEFT",10,-80)
     ignore:SetAutoFocus(false)
     ignore:SetScript("OnEnterPressed",function(self)
         local name=self:GetText()
         if name then
-            Ether:IgnoringHandler(resultText,name)
+           Ether:IgnoreScanData(name,resultText)
         end
         self:ClearFocus()
     end)
@@ -1043,34 +1043,27 @@ function Ether:CreateHelperSection(panel)
     insert:SetScript("OnClick",function()
         local name=ignore:GetText()
         if name then
-            Ether:IgnoringHandler(name)
+          Ether:IgnoreScanData(name,resultText)
         end
-        ignore:ClearFocus()
     end)
     local find=EtherPanelButton(parent,50,25,"Find","LEFT",insert,"RIGHT")
     find:SetScript("OnClick",function()
-        for i,v in ipairs(Ether.DB["USER"]) do
-            Ether:EtherInfo(string.format("%s %s",i,v))
-        end
+        Ether:IgnoreScanInput(resultText)
     end)
     local target=EtherPanelButton(parent,50,25,"Target","LEFT",find,"RIGHT",5,0)
     target:SetScript("OnClick",function()
-        Ether:IgnoringNameByTarget()
+        Ether:IgnoreScanByTarget(resultText)
     end)
     local remove=EtherPanelButton(parent,50,25,"Remove","LEFT",target,"RIGHT",5,0)
     remove:SetScript("OnClick",function()
         local index=tonumber(ignore:GetText())
-        if type(index) ~= "number" then
-            Ether:EtherInfo("|cffcc66ffEther Ignore|r Enter the name you want to delete as a number")
-           return
+        if type(index)~="number" then
+            Ether:EtherInfo("|cffcc66ffEtherIgnore:|r Enter Name Id")
+            return
+        else
+            Ether:IgnoreRemoveByIndex(index,resultText)
         end
-        for i,v in ipairs(Ether.DB["USER"]) do
-            if i and i == index then
-                Ether:EtherInfo(string.format("%s %s has been removed",i,v))
-                table.remove(Ether.DB["USER"],i)
-                break
-            end
-        end
+        ignore:ClearFocus()
     end)
     local clear=EtherPanelButton(parent,50,25,"Clear","LEFT",remove,"RIGHT",5,0)
     clear:SetScript("OnClick",function()
@@ -1090,8 +1083,7 @@ function Ether:CreateHelperSection(panel)
     label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
     label:SetPoint("BOTTOMLEFT",ignore,"TOPLEFT",0,10)
     label:SetText("Enter name to ignore")
-
-    local scan={"Target","Group","Raid"}
+    local scan={"Target","Group"}
     local sF=CreateFrame("Frame",nil,parent)
     sF:SetSize(200,(#scan*30)+60)
     for i,opt in ipairs(scan) do
