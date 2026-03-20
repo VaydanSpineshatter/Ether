@@ -154,6 +154,42 @@ function Ether:DeactivateUnitButton(index)
     end
 end
 
+local function Drag(self)
+    if self:IsMovable() then
+        self:StartMoving()
+    end
+end
+
+local function StopDrag(self,dataNumber)
+    if self:IsMovable() then
+        self:StopMovingOrSizing()
+    end
+    local point,relTo,relPoint,x,y=self:GetPoint(1)
+    local relToName="UIParent"
+    if relTo then
+        if relTo.GetName and relTo:GetName() then
+            relToName=relTo:GetName()
+        elseif relTo==UIParent then
+            relToName="UIParent"
+        else
+            relToName="UIParent"
+        end
+    end
+    local pos=Ether.DB[1401][dataNumber]
+    pos[1]=point
+    pos[2]=relToName
+    pos[3]=relPoint
+    pos[4]=x
+    pos[5]=y
+    local anchorRelTo=relToName
+    self:ClearAllPoints()
+    self:SetPoint(pos[1],anchorRelTo,pos[3],x,y)
+    if customButtons[dataNumber] and customButtons[dataNumber]:IsVisible() then
+        customButtons[dataNumber]:ClearAllPoints()
+        customButtons[dataNumber]:SetPoint(pos[1],UIParent,pos[3],pos[4],pos[5])
+    end
+end
+
 local updateTicker
 updateTicker=nil
 local C_Ticker=C_Timer.NewTicker

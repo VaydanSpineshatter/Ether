@@ -201,45 +201,6 @@ function Ether:CreateBlizzardSection(panel)
     end
 end
 
-function Ether:CreateCreationSection(panel)
-    local parent=panel["CONTENT"]["CHILDREN"]["Create"]
-    if parent.Created then return end
-    parent.Created=true
-    local units={"|cffCC66FFPlayer|r","|cE600CCFFTarget|r","Target of Target","|cffCC66FFPet|r","|cffCC66FFPetTarget|r","|cff3399FFFocus|r"}
-    local uF=CreateFrame('Frame',nil,parent)
-    uF:SetSize(200,(#units*30)+60)
-    for i,opt in ipairs(units) do
-        local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
-        if i==1 then
-            btn:SetPoint("TOPLEFT",5,-5)
-        else
-            btn:SetPoint("TOP",panel.Buttons[3][i-1],"BOTTOM",0,0)
-        end
-        btn:SetSize(24,24)
-        btn.label=btn:CreateFontString(nil,"OVERLAY")
-        btn.label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
-        btn.label:SetText(opt)
-        btn.label:SetPoint("LEFT",btn,"RIGHT",8,1)
-        btn:SetChecked(Ether.DB[3][i]==1)
-        btn:SetScript("OnClick",function(self)
-            local checked=self:GetChecked()
-            Ether.DB[3][i]=checked and 1 or 0
-            if Ether.DB[3][i]==1 then
-                Ether:CreateUnitButtons(i)
-                if Ether.DB[6][2]==1 then
-                    Ether:EnableSoloUnitAura(i)
-                end
-            else
-                if Ether.DB[6][2]==1 then
-                    Ether:DisableSoloUnitAura(i)
-                end
-                Ether:DestroyUnitButtons(i)
-            end
-        end)
-        panel.Buttons[3][i]=btn
-    end
-end
-
 function Ether:CreateAboutSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["About"]
     if parent.Created then return end
@@ -274,47 +235,11 @@ function Ether:CreateAboutSection(panel)
     aurasInfo:SetPoint("TOP",auras,"BOTTOM",0,-10)
 end
 
-local function Drag(self)
-    if self:IsMovable() then
-        self:StartMoving()
-    end
-end
-
-local function StopDrag(self,dataNumber)
-    if self:IsMovable() then
-        self:StopMovingOrSizing()
-    end
-    local customButtons=Ether.customButton
-    local point,relTo,relPoint,x,y=self:GetPoint(1)
-    local relToName="UIParent"
-    if relTo then
-        if relTo.GetName and relTo:GetName() then
-            relToName=relTo:GetName()
-        elseif relTo==UIParent then
-            relToName="UIParent"
-        else
-            relToName="UIParent"
-        end
-    end
-    local pos=Ether.DB[1401][dataNumber]
-    pos[1]=point
-    pos[2]=relToName
-    pos[3]=relPoint
-    pos[4]=x
-    pos[5]=y
-    local anchorRelTo=relToName
-    self:ClearAllPoints()
-    self:SetPoint(pos[1],anchorRelTo,pos[3],x,y)
-    if customButtons[dataNumber] and customButtons[dataNumber]:IsVisible() then
-        customButtons[dataNumber]:ClearAllPoints()
-        customButtons[dataNumber]:SetPoint(pos[1],UIParent,pos[3],pos[4],pos[5])
-    end
-end
-
 function Ether:CreateCustomSection(panel)
     local parent=panel["CONTENT"]["CHILDREN"]["Custom"]
     if parent.Created then return end
     parent.Created=true
+    --[[
     local color={
         [1]={0.2,0.6,1.0,1},
         [2]={0.6,0.4,0.0,1},
@@ -407,7 +332,9 @@ function Ether:CreateCustomSection(panel)
         end
         Ether:CleanUpCustom(dataNumber)
     end)
+    ]]
 end
+
 local iNumber
 iNumber=nil
 local iIcon=""
@@ -619,12 +546,12 @@ function Ether:CreateHeaderSection(panel)
     local dropdown=Ether:CreateEtherDropdown(parent,130,"Select Method",Config,"NONE",OnHeaderSort)
     dropdown:SetPoint("CENTER")
     local label=parent:CreateFontString(nil,"OVERLAY")
-    parent.label = label
+    parent.label=label
     label:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
     label:SetText("Sort By: "..Sort[DB[100][9]])
     label:SetPoint("BOTTOMLEFT",dropdown,"TOPLEFT",0,10)
     local direction=parent:CreateFontString(nil,"OVERLAY")
-    parent.direction = direction
+    parent.direction=direction
     direction:SetFont(unpack(Ether.media.expressway),11,"OUTLINE")
     direction:SetText("Direction: "..Sort[DB[100][10]])
     direction:SetPoint("BOTTOMLEFT",label,"TOPLEFT",0,10)
@@ -664,7 +591,7 @@ function Ether:ProcessUserData(index)
     local DB=Ether.DB[21][index]
     local raidButtons=Ether.raidButtons
     local soloButton=Ether.soloButtons[index]
- --  local customButtons=Ether.customButtons
+    --  local customButtons=Ether.customButtons
     if index==15 then
         Ether:ApplyFramePosition(15)
     elseif index==14 then
@@ -675,10 +602,10 @@ function Ether:ProcessUserData(index)
         Ether:CastBarReset(1)
     elseif index==10 then
         unitButtons(raidButtons,DB[6],DB[7])
-    Ether.Fire("UPDATE_HEADER",5)
+        Ether.Fire("UPDATE_HEADER",5)
     elseif index==11 then
         unitButtons(raidButtons,DB[6],DB[7])
-       Ether.Fire("UPDATE_HEADER",6)
+        Ether.Fire("UPDATE_HEADER",6)
     elseif index>=7 then
 
     else
@@ -1098,11 +1025,10 @@ function Ether:CreateHelperSection(panel)
     example:SetPoint("TOPRIGHT",0,-5)
     example:SetText(exampleText)
 
-    local pvp=EtherPanelButton(parent,50,25,"Check PVP Status","BOTTOMLEFT",parent,"BOTTOMLEFT",60,40)
+    local pvp=EtherPanelButton(parent,50,25,"Check PVP Status","BOTTOMLEFT",parent,"BOTTOMLEFT",40,20)
     pvp:SetScript("OnClick",function()
         Ether:CheckPvpStatus()
     end)
-
     local ignore=CreateLineInput(parent,180,20)
     ignore:SetPoint("LEFT",parent,"LEFT",10,-80)
     ignore:SetAutoFocus(false)
@@ -1113,24 +1039,43 @@ function Ether:CreateHelperSection(panel)
         end
         self:ClearFocus()
     end)
-    local send=EtherPanelButton(parent,50,25,"Enter","LEFT",ignore,"RIGHT",10,0)
-    send:SetScript("OnClick",function()
+    local insert=EtherPanelButton(parent,50,25,"Insert","LEFT",ignore,"RIGHT")
+    insert:SetScript("OnClick",function()
         local name=ignore:GetText()
         if name then
-            Ether:IgnoringHandler(resultText,name)
+            Ether:IgnoringHandler(name)
         end
         ignore:ClearFocus()
     end)
-    local search=EtherPanelButton(parent,50,25,"Search","LEFT",send,"RIGHT",10,0)
-    search:SetScript("OnClick",function()
-        for entry in pairs(Ether.DB["USER"]) do
-            Ether:EtherInfo(string.format("%s",entry))
+    local find=EtherPanelButton(parent,50,25,"Find","LEFT",insert,"RIGHT")
+    find:SetScript("OnClick",function()
+        for i,v in ipairs(Ether.DB["USER"]) do
+            Ether:EtherInfo(string.format("%s %s",i,v))
         end
     end)
-    local clear=EtherPanelButton(parent,50,25,"Delete ignore list","LEFT",search,"RIGHT",50,0)
+    local target=EtherPanelButton(parent,50,25,"Target","LEFT",find,"RIGHT",5,0)
+    target:SetScript("OnClick",function()
+        Ether:IgnoringNameByTarget()
+    end)
+    local remove=EtherPanelButton(parent,50,25,"Remove","LEFT",target,"RIGHT",5,0)
+    remove:SetScript("OnClick",function()
+        local index=tonumber(ignore:GetText())
+        if type(index) ~= "number" then
+            Ether:EtherInfo("|cffcc66ffEther Ignore|r Enter the name you want to delete as a number")
+           return
+        end
+        for i,v in ipairs(Ether.DB["USER"]) do
+            if i and i == index then
+                Ether:EtherInfo(string.format("%s %s has been removed",i,v))
+                table.remove(Ether.DB["USER"],i)
+                break
+            end
+        end
+    end)
+    local clear=EtherPanelButton(parent,50,25,"Clear","LEFT",remove,"RIGHT",5,0)
     clear:SetScript("OnClick",function()
         if Ether:TableSize(Ether.DB["USER"])==0 then
-            Ether:EtherInfo("|cffcc66ffEther|r The ignore list is empty")
+            Ether:EtherInfo("|cffcc66ffEther Ignore|r The ignore list is empty")
             return
         end
         popupBox()
@@ -1145,6 +1090,29 @@ function Ether:CreateHelperSection(panel)
     label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
     label:SetPoint("BOTTOMLEFT",ignore,"TOPLEFT",0,10)
     label:SetText("Enter name to ignore")
+
+    local scan={"Target","Group","Raid"}
+    local sF=CreateFrame("Frame",nil,parent)
+    sF:SetSize(200,(#scan*30)+60)
+    for i,opt in ipairs(scan) do
+        local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
+        if i==1 then
+            btn:SetPoint("TOPLEFT",insert,"BOTTOMLEFT",0,-20)
+        else
+            btn:SetPoint("LEFT",panel.Buttons[7][i-1],"RIGHT",50,0)
+        end
+        btn:SetSize(24,24)
+        btn.label=btn:CreateFontString(nil,"OVERLAY")
+        btn.label:SetFont(unpack(Ether.media.expressway),12,"OUTLINE")
+        btn.label:SetText(opt)
+        btn.label:SetPoint("LEFT",btn,"RIGHT")
+        btn:SetChecked(Ether.DB[7][i]==1)
+        btn:SetScript("OnClick",function(self)
+            local checked=self:GetChecked()
+            Ether.DB[7][i]=checked and 1 or 0
+        end)
+        panel.Buttons[7][i]=btn
+    end
 end
 
 local function OnMediaSelect(self,data)

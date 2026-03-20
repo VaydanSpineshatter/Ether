@@ -10,7 +10,7 @@ Ether.raidButtons=raidButtons
 local guidData={}
 Ether.guidData=guidData
 local C_After=C_Timer.After
-local unpack = unpack
+local unpack=unpack
 local initialConfigFunction=[[
     local header = self:GetParent()
     self:SetWidth(header:GetAttribute("ButtonWidth"))

@@ -39,7 +39,7 @@ do
         SpellId=nil,
         Frames={},
         Borders={},
-        Buttons={["MENU"]={},["LIST"]={},[1]={},[2]={},[3]={},[4]={},[5]={},[6]={}},
+        Buttons={["MENU"]={},["LIST"]={},[1]={},[2]={},[3]={},[4]={},[5]={},[6]={},[7]={}},
         ["CONTENT"]={["CHILDREN"]={}},
         Menu={
             ["TOP"]={
@@ -64,13 +64,13 @@ do
             }
         }
     }
-    local function ShowCategory(self,category)
+    local function ShowCategory(self,c)
         if self.Created~=true then return end
         local last
         for layer=1,8 do
             if self.Menu["TOP"][layer] then
                 for _,tabName in ipairs(self.Menu["TOP"][layer]) do
-                    if tabName==category then
+                    if tabName==c then
                         last=layer
                         break
                     end
@@ -90,26 +90,26 @@ do
         for _,child in pairs(self["CONTENT"]["CHILDREN"]) do
             child:Hide()
         end
-        if category=="Module" then
+        if c==CK[1] then
             Ether:CreateModuleSection(self)
-        elseif category=="Blizzard" then
+        elseif c==CK[2] then
             Ether:CreateBlizzardSection(self)
-        elseif category=="About" then
+        elseif c==CK[3] then
             Ether:CreateAboutSection(self)
-        elseif category=="Custom" then
-            Ether:CreateCustomSection(self)
-        elseif category=="Helper" then
+        elseif c==CK[4] then
             Ether:CreateHelperSection(self)
-        elseif category=="Tooltip" then
+        elseif c==CK[5] then
+            Ether:CreateCustomSection(self)
+        elseif c==CK[8] then
             Ether:CreateTooltipSection(self)
-        elseif category=="Header" then
-            Ether:CreateHeaderSection(self)
-        elseif category=="Layout" then
+        elseif c==CK[9] then
             Ether:CreateLayoutSection(self)
-        elseif category=="Profile" then
+        elseif c==CK[10] then
+            Ether:CreateHeaderSection(self)
+        elseif c==CK[12] then
             Ether:CreateProfileSection(self)
         end
-        local target=self["CONTENT"]["CHILDREN"][category]
+        local target=self["CONTENT"]["CHILDREN"][c]
         if target then
             target:Show()
         end

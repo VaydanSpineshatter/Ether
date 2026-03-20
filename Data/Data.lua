@@ -21,6 +21,7 @@ local Default={
     [4]={1,1,1,1,1,1,1,1,1,1,1,1,1},--Tooltip
     [5]={1,1},--Header
     [6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},--Layout
+    [7]={0,0,0},--Ignore
     [20]={
         [1]={D[1],0,0,24},
         [2]={D[8],0,0,17},
@@ -53,7 +54,6 @@ local Default={
         [16]={D[5],D[12],D[5],-5,0,31,31,1,1},--Ether Icon
         [17]={D[1],D[10],D[1],50,-100,640,480,1,1},--SettingsFrame
     },
-
     [1003]={},
     ["USER"]={},
     [100]={D[11],1,false,unpack(Ether.media.venite),unpack(Ether.media.elvUIBar),unpack(Ether.media.etherBg),12,"OUTLINE",1,4}
@@ -66,7 +66,7 @@ function Ether:UnitNumber(input)
     return UnitMap[input]
 end
 function Ether:RefreshAllSettings()
-    for i=1,6 do
+    for i=1,7 do
         Ether:FrameChecked(i)
     end
 end

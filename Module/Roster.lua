@@ -109,6 +109,10 @@ local function Roster(_,event)
     if event=="PLAYER_UNGHOST" then
         initialButtons()
     elseif event=="GROUP_ROSTER_UPDATE" then
+        Ether:TimerCallBack(6,"Timer",function()
+            Ether:RaidScanner()
+            Ether:GroupScanner()
+        end,0)
         refreshButtons()
         if IsInGroup() then
             if not updatedChannel then
@@ -129,6 +133,8 @@ local function Roster(_,event)
         if Ether.DB[6][4]==1 then
             Ether:TargetAuraFullUpdate()
         end
+        if Ether.DB[1][7]~=1 then return end
+            Ether:IgnoreScanner()
     end
 end
 
