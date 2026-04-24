@@ -1,30 +1,14 @@
-local _,Ether=...
-local tinsert,tremove,tsort,tconcat=table.insert,table.remove,table.sort,table.concat
+local D,F,_,C,_=unpack(select(2,...))
+local tinsert,tsort,tconcat=table.insert,table.sort,table.concat
 local pairs,ipairs=pairs,ipairs
-local tostring,tonumber=tostring,tonumber
-local string_format=string.format
-local type,next=type,next
+local tostring=tostring
+local sformat=string.format
+local type=type
 local string_char=string.char
 local string_rep=string.rep
-local string_gsub=string.gsub
-local string_byte=string.byte
-local string_sub=string.sub
-local string_find=string.find
-local string_match=string.match
-local string_len=string.len
-local string_lower=string.lower
-local string_upper=string.upper
-local unpack,select=unpack,select
 local CompressString=C_EncodingUtil.CompressString
 local DecompressString=C_EncodingUtil.DecompressString
 local math_floor=math.floor
-local math_ceil=math.ceil
-local math_abs=math.abs
-local math_max=math.max
-local math_min=math.min
-local math_random=math.random
-local math_sqrt=math.sqrt
-
 local function StringToTbl(str)
     if not str or str=="" then
         return false,"Empty string"
@@ -32,61 +16,10 @@ local function StringToTbl(str)
     if not str:match("^%s*return") then
         str="return "..str
     end
-    local env={
-        string={
-            sub=string_sub,
-            find=string_find,
-            match=string_match,
-            gsub=string_gsub,
-            byte=string_byte,
-            char=string_char,
-            len=string_len,
-            lower=string_lower,
-            upper=string_upper,
-            rep=string_rep,
-            format=string_format,
-        },
-        table={
-            insert=tinsert,
-            remove=tremove,
-            concat=tconcat,
-            sort=tsort,
-        },
-        math={
-            floor=math_floor,
-            ceil=math_ceil,
-            abs=math_abs,
-            max=math_max,
-            min=math_min,
-            random=math_random,
-            sqrt=math_sqrt,
-        },
-        tonumber=tonumber,
-        tostring=tostring,
-        type=type,
-        pairs=pairs,
-        ipairs=ipairs,
-        next=next,
-        select=select,
-        unpack=unpack,
-        error=error,
-        pcall=pcall,
-        assert=assert,
-        _VERSION=_VERSION,
-    }
-    setmetatable(env,{
-        __index=function(t,k)
-            error("Access to forbidden global: "..tostring(k),2)
-        end,
-        __newindex=function(t,k,v)
-            error("Modification of environment forbidden",2)
-        end
-    })
     local func,err=loadstring(str)
     if not func then
         return false,"Compile error: "..err
     end
-    setfenv(func,env)
     local success,result=pcall(func)
     if not success then
         return false,"Execution error: "..result
@@ -155,7 +88,6 @@ do
         return tconcat(res)
     end
 end
-
 local Array,Tbl,Value,isArray
 do
     function isArray(tbl)
@@ -189,7 +121,7 @@ do
                     tinsert(items,Tbl(value,0))
                 end
             elseif type(value)=="string" then
-                tinsert(items,string_format("%q",value))
+                tinsert(items,sformat("%q",value))
             elseif type(value)=="number" then
                 tinsert(items,tostring(value))
             elseif type(value)=="boolean" then
@@ -197,7 +129,7 @@ do
             elseif value==nil then
                 tinsert(items,"nil")
             else
-                tinsert(items,string_format("%q",tostring(value)))
+                tinsert(items,sformat("%q",tostring(value)))
             end
         end
         return "{"..tconcat(items,",").."}"
@@ -237,10 +169,10 @@ do
             elseif type(key)=="string" and key:match("^[a-zA-Z_][a-zA-Z0-9_]*$") then
                 keyStr=key
             else
-                keyStr="["..string_format("%q",tostring(key)).."]"
+                keyStr="["..sformat("%q",tostring(key)).."]"
             end
             local valueStr=Value(value,indent+2)
-            if indent>0 and type(value)=="table" and not isArray(value) and Ether:TableSize(value)>2 then
+            if indent>0 and type(value)=="table" and not isArray(value) and D:TableSize(value)>2 then
                 tinsert(result,"\n"..string_rep("",indent)..keyStr.."="..valueStr..comma)
             else
                 tinsert(result,keyStr.."="..valueStr..comma.."")
@@ -257,7 +189,7 @@ do
                 return Tbl(value,indent)
             end
         elseif type(value)=="string" then
-            return string_format("%q",value)
+            return sformat("%q",value)
         elseif type(value)=="number" then
             return tostring(value)
         elseif type(value)=="boolean" then
@@ -265,33 +197,32 @@ do
         elseif value==nil then
             return "nil"
         else
-            return string_format("%q",tostring(value))
+            return sformat("%q",tostring(value))
         end
     end
 end
-
 local function TblToString(tbl)
     return "return "..Tbl(tbl)
 end
-
 local function ProfileRefresh()
-    Ether:UpdateAuraList()
-    Ether:UpdateEditor(Ether.UIPanel.Frames["EDITOR"])
-    if Ether.DB[1][7]==1 then
-        Ether:AuraReset()
+    F:UpdateAuraList()
+    F:UpdateEditor(C.EditorFrame)
+    F:AuraDisable()
+    for index=1,11 do
+        F:SavePosition(index)
     end
-    Ether:RefreshLayout(Ether.raidButtons)
-    Ether:RefreshLayout(Ether.soloButtons)
-    Ether.UIPanel.SpellId=nil
-    Ether:IndicatorsFullUpdate()
-    Ether:RefreshAllSettings()
-    Ether:RefreshFramePositions()
+    F:IndicatorsDisable()
+    F:MenuStringsAlpha(0)
+    D:RefreshAllSettings()
+    D:RefreshAllFrames()
+    F:IndicatorsEnable()
+    F:AuraEnable()
+    F:IndicatorsFullUpdateBtn()
 end
-
-function Ether:ExportProfileToClipboard()
-    local encoded,err=Ether:ExportCurrentProfile()
+function D:ExportProfileToClipboard()
+    local encoded,err=D:ExportCurrentProfile()
     if not encoded then
-        Ether:EtherInfo("|cffff0000Export failed:|r "..err)
+        C:EtherInfo("|cffff0000Export failed:|r "..err)
         return
     end
     local editBox=CreateFrame("EditBox",nil,UIParent)
@@ -305,165 +236,28 @@ function Ether:ExportProfileToClipboard()
     editBox:SetScript("OnEditFocusLost",function(self)
         self:Hide()
     end)
-    Ether:EtherInfo("|cff00ff00Profile copied to clipboard!|r")
-    Ether:EtherInfo("|cff888888You can now paste it anywhere|r")
+    C:EtherInfo("|cff00ff00Profile copied to clipboard!|r")
+    C:EtherInfo("|cff888888You can now paste it anywhere|r")
     return encoded
 end
-
-local function CreateExportPopup()
-    if Ether.ExportPopup then return end
-    local frame=CreateFrame("Frame",nil,UIParent,"BackdropTemplate")
-    Ether.ExportPopup=frame
-    frame:SetSize(400,300)
-    frame:SetPoint("CENTER")
-    frame:SetFrameStrata("DIALOG")
-    frame:Hide()
-    frame:SetBackdrop({
-        bgFile="Interface\\DialogFrame\\UI-DialogBox-Background",
-        edgeFile="Interface\\DialogFrame\\UI-DialogBox-Border",
-        tile=true,tileSize=32,edgeSize=32,
-        insets={left=11,right=12,top=12,bottom=11}
-    })
-    local title=frame:CreateFontString(nil,"OVERLAY","GameFontNormal")
-    title:SetPoint("TOP",frame,"TOP",0,-15)
-    title:SetText("Export Data (copied to clipboard)")
-    local scrollFrame=CreateFrame("ScrollFrame",nil,frame,"UIPanelScrollFrameTemplate")
-    scrollFrame:SetPoint("TOPLEFT",frame,"TOPLEFT",15,-40)
-    scrollFrame:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-30,40)
-    frame.EditBox=CreateFrame("EditBox",nil,scrollFrame)
-    frame.EditBox:SetSize(350,200)
-    frame.EditBox:SetMultiLine(true)
-    frame.EditBox:SetFont(unpack(Ether.media.expressway),9,"OUTLINE")
-    frame.EditBox:SetAutoFocus(false)
-    frame.EditBox:SetTextInsets(5,5,5,5)
-    scrollFrame:SetScrollChild(frame.EditBox)
-    local closeBtn=CreateFrame("Button",nil,frame,"GameMenuButtonTemplate")
-    closeBtn:SetSize(100,25)
-    closeBtn:SetPoint("BOTTOM",frame,"BOTTOM",0,15)
-    closeBtn:SetText("Close")
-    closeBtn:SetScript("OnClick",function()
-        frame:Hide()
-    end)
-    return frame
-end
-
-function Ether:ShowExportPopup(encoded)
-    if not Ether.ExportPopup then
-        CreateExportPopup()
-    end
-    Ether.ExportPopup.EditBox:SetText(encoded)
-    Ether.ExportPopup:Show()
-end
-
-function Ether:CreateImportBox(backdrop)
-    if Ether.importBox then return end
-    local importBox=CreateFrame("EditBox",nil,backdrop)
-    Ether.importBox=importBox
-    importBox:SetPoint("TOPLEFT",backdrop,"TOPLEFT",8,-8)
-    importBox:SetPoint("BOTTOMRIGHT",backdrop,"BOTTOMRIGHT",-8,8)
-    importBox:SetMultiLine(true)
-    importBox:SetAutoFocus(false)
-    importBox:SetClipsChildren(true)
-    importBox:SetFont(unpack(Ether.media.expressway),9,"OUTLINE")
-    importBox:SetText("Paste export data here...")
-    importBox:SetTextColor(0.7,0.7,0.7)
-    importBox:SetScript("OnMouseWheel",function(self,delta)
-        local current=self:GetText()
-        if delta>0 then
-            self:SetCursorPosition(0)
-        else
-            self:SetCursorPosition(#current)
-        end
-    end)
-    importBox:SetScript("OnEditFocusGained",function(self)
-        if self:GetText()=="Paste export data here..." then
-            self:SetText("")
-            self:SetTextColor(1,1,1)
-        end
-        self:HighlightText()
-    end)
-    importBox:SetScript("OnEditFocusLost",function(self)
-        if self:GetText()=="" then
-            self:SetText("Paste export data here...")
-            self:SetTextColor(0.7,0.7,0.7)
-        end
-    end)
-    importBox:SetScript("OnEscapePressed",function(self)
-        self:ClearFocus()
-    end)
-    return importBox
-end
-
-function Ether:UpdateButtonFont(data)
-    if not data then return end
-    for _,button in pairs(data) do
-        if not button then return end
-        if button.name then
-            button.name:SetFontHeight(Ether.DB[100][7] or 12)
-        end
-    end
-end
-
-function Ether:SetupFontFlags(update)
-    if update=="NONE" then
-        update=""
-    end
-    local size=Ether.DB[100][7] or 12
-    local font=Ether.DB[100][4] or unpack(Ether.media.venite)
-    local flag=update or "OUTLINE"
-    Ether.DB[100][8]=flag
-    for _,button in pairs(Ether.raidButtons) do
-        if button and button.name then
-            button.name:Hide()
-            button.name:SetFont(font,size,flag)
-            button.name:Show()
-        end
-    end
-    for _,button in pairs(Ether.soloButtons) do
-        if button and button.name then
-            button.name:Hide()
-            button.name:SetFont(font,size,flag)
-            button.name:Show()
-        end
-    end
-end
-
-function Ether:RefreshLayout(data)
-    if not data then return end
-    for _,button in pairs(data) do
-        if not button then return end
-        if button.name then
-            button.name:SetFont(Ether.DB[100][4] or unpack(Ether.media.expressway),Ether.DB[100][7] or 12,"OUTLINE")
-        end
-        if button.healthBar then
-            button.healthBar:SetStatusBarTexture((Ether.DB[100][5] or unpack(Ether.media.blankBar)))
-        end
-        if button.background then
-            button.background:SetTexture(Ether.DB[100][6])
-        end
-    end
-end
-
-function Ether:ExportCurrentProfile()
+function D:ExportCurrentProfile()
     ProfileRefresh()
-    local userData=Ether:GetProfile()
+    local userData=D:GetProfile()
     if not userData then
         return nil,"Current profile not found"
     end
     local exportData={
-        name=Ether:GetProfileName(),
-        version=Ether.metaData[3] or 0,
+        name=D:GetProfileName(),
         data=userData
     }
     local serialized=TblToString(exportData)
     local compressed=CompressString(serialized,1)
     local encoded=Base64Encode(compressed)
-    Ether:EtherInfo("|cff00ff00Export ready:|r "..Ether:GetProfileName())
-    Ether:EtherInfo("|cff888888Size (compressed):|r "..#encoded.." characters")
+    C:EtherInfo("|cff00ff00Export ready:|r "..D:GetProfileName())
+    C:EtherInfo("|cff888888Size (compressed):|r "..#encoded.." characters")
     return encoded
 end
-
-function Ether:ImportProfile(encodedString)
+function D:ImportProfile(encodedString)
     if not encodedString or encodedString=="" then
         return false,"Empty import string"
     end
@@ -485,145 +279,117 @@ function Ether:ImportProfile(encodedString)
     local name=import.name or "Imported"
     local baseName=name
     local counter=1
-    while ETHER_DATABASE_DX_AA["PROFILES"][name] do
+    while _G["ETHER_DATABASE"]["PROFILES"][name] do
         counter=counter+1
         name=baseName.."_"..counter
     end
-    ETHER_DATABASE_DX_AA["PROFILES"][name]=Ether:CopyTable(import.data)
-    Ether:MergeToLeft(ETHER_DATABASE_DX_AA["PROFILES"][name],Ether.DataDefault)
-    ETHER_DATABASE_DX_AA["CURRENT"]=name
-    Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][name])
+    _G["ETHER_DATABASE"]["PROFILES"][name]=D:CopyTable(import.data)
+    D:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][name],D.Default)
+    _G["ETHER_DATABASE"]["CURRENT"]=name
+    D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][name])
     ProfileRefresh()
-    Ether:MergeAnalyse()
+    D:MergeAnalyse()
     return true,"Successfully imported as: "..name
 end
-
-function Ether:CopyProfile(sourceName,targetName)
+function D:CopyProfile(sourceName,targetName)
     if not sourceName or not targetName then return end
-    if not ETHER_DATABASE_DX_AA["PROFILES"][sourceName] then
+    if not _G["ETHER_DATABASE"]["PROFILES"][sourceName] then
         return false,"Profile "..sourceName.." not found"
     end
-    if ETHER_DATABASE_DX_AA["PROFILES"][targetName] then
+    if _G["ETHER_DATABASE"]["PROFILES"][targetName] then
         return false,"Profile "..sourceName.." already exists"
     end
-    ETHER_DATABASE_DX_AA["PROFILES"][targetName]=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][sourceName])
+    _G["ETHER_DATABASE"]["PROFILES"][targetName]=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][sourceName])
     return true,"Profile "..sourceName.."  copied"
 end
-function Ether:SwitchProfile(name)
-    if not ETHER_DATABASE_DX_AA["PROFILES"][name] then
+function D:SwitchProfile(name)
+    if not _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile "..name.." not found"
     end
-    ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]=Ether:CopyTable(Ether.DB)
-    Ether.EtherToggle(false)
-    wipe(Ether.DB)
-    Ether.DB=Ether:CopyTable(ETHER_DATABASE_DX_AA["PROFILES"][name])
-    Ether.EtherToggle(true)
-    ETHER_DATABASE_DX_AA["CURRENT"]=name
+    _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]=D:CopyTable(D.DB)
+    C.MainFrame:Hide()
+    D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][name])
+    C.MainFrame:Show()
+    C.ChildFrames[8]:Show()
+    if C.PopupBox and C.PopupBox.font then
+        C.PopupBox.font:SetText(D:GetProfileName())
+    end
+    _G["ETHER_DATABASE"]["CURRENT"]=name
     ProfileRefresh()
     return true,"Switched to "..name
 end
-
-function Ether:DeleteProfile(name)
-    if not ETHER_DATABASE_DX_AA["PROFILES"][name] then
+function D:DeleteProfile(name)
+    if not _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile not found"
     end
     local profileCount=0
-    for _ in pairs(ETHER_DATABASE_DX_AA["PROFILES"]) do
+    for _ in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
         profileCount=profileCount+1
     end
     if profileCount<=1 then
         return false,"Cannot delete the only profile"
     end
-    if name==Ether:GetProfileName() then
+    if name==D:GetProfileName() then
         local otherProfile
-        for profileName in pairs(ETHER_DATABASE_DX_AA["PROFILES"]) do
+        for profileName in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
             if profileName~=name then
                 otherProfile=profileName
+                _G["ETHER_DATABASE"]["CURRENT"]=profileName
                 break
             end
         end
         if not otherProfile then
             return false,"No other profile available"
         end
-        local success,msg=Ether:SwitchProfile(otherProfile)
+        local success,msg=D:SwitchProfile(otherProfile)
         if not success then
             return false,"Failed to switch profile: "..msg
         end
     end
-    ETHER_DATABASE_DX_AA["PROFILES"][name]=nil
-    ProfileRefresh()
+    _G["ETHER_DATABASE"]["PROFILES"][name]=nil
     return true,"Profile "..name.."  deleted"
 end
-
-function Ether:GetProfile()
-    return ETHER_DATABASE_DX_AA["PROFILES"][Ether:GetProfileName()]
+function D:GetProfile()
+    return _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]
 end
-
-function Ether:ResetProfile()
-    local name=Ether:GetProfileName()
-    wipe(ETHER_DATABASE_DX_AA["PROFILES"][name])
-    ETHER_DATABASE_DX_AA["PROFILES"][name]=Ether:CopyTable(Ether.DataDefault)
-    Ether.DB=Ether:CopyTable(Ether.DataDefault)
+function D:ResetProfile()
+    local name=D:GetProfileName()
+    _G["ETHER_DATABASE"]["PROFILES"][name]=D:CopyTable(D.Default)
+    D.DB=D:CopyTable(D.Default)
+    _G["ETHER_DATABASE"]["CURRENT"]=name
     ProfileRefresh()
     return true,"Profile "..name.." reset to default"
 end
-
-function Ether:CreateProfile(name)
-    if ETHER_DATABASE_DX_AA["PROFILES"][name] then
+function D:CreateProfile(name)
+    if _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile "..name.." already exists"
     end
-    ETHER_DATABASE_DX_AA["PROFILES"][name]=Ether:CopyTable(Ether.DataDefault)
-    ETHER_DATABASE_DX_AA["CURRENT"]="DEFAULT"
+    _G["ETHER_DATABASE"]["PROFILES"][name]=D:CopyTable(D.Default)
+    _G["ETHER_DATABASE"]["CURRENT"]="DEFAULT"
     ProfileRefresh()
     return true,"Profile "..name.." created"
 end
-
-function Ether:RenameProfile(oldName,newName)
-    if not ETHER_DATABASE_DX_AA["PROFILES"][oldName] then
+function D:RenameProfile(oldName,newName)
+    if not _G["ETHER_DATABASE"]["PROFILES"][oldName] then
         return false,"Profile not found"
     end
-    if ETHER_DATABASE_DX_AA["PROFILES"][newName] then
+    if _G["ETHER_DATABASE"]["PROFILES"][newName] then
         return false,"Name already taken"
     end
-    ETHER_DATABASE_DX_AA["PROFILES"][newName]=oldName
-    ETHER_DATABASE_DX_AA["CURRENT"]=newName
-    ETHER_DATABASE_DX_AA["PROFILES"][oldName]=nil
+    _G["ETHER_DATABASE"]["PROFILES"][newName]=oldName
+    _G["ETHER_DATABASE"]["CURRENT"]=newName
+    _G["ETHER_DATABASE"]["PROFILES"][oldName]=nil
     return true,"Profile "..oldName.." renamed to "..newName
 end
-
-function Ether:VerifyDefaultData()
-    if not ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"] then
-        ETHER_DATABASE_DX_AA["PROFILES"]["DEFAULT"]=Ether:CopyTable(Ether.DataDefault)
-        ETHER_DATABASE_DX_AA["CURRENT"]=Ether:GetProfileName()
-    end
-end
-
-function Ether:LoadAddon(self)
-    for _,v in ipairs({"PLAYER_LOGOUT","PLAYER_LOGIN","PLAYER_ENTERING_WORLD"}) do
-        if not self:IsEventRegistered(v) then
-            self:RegisterEvent(v)
-        end
-    end
-end
-
-function Ether:GetProfileName()
-    local name=ETHER_DATABASE_DX_AA["CURRENT"]
+function D:GetProfileName()
+    local name=_G["ETHER_DATABASE"]["CURRENT"]
     if not name or name=="" then return "DEFAULT" end
     return name
 end
 
-local function GetProfiles(tbl)
-    local data={}
-    for name in pairs(tbl) do
-        if name~="VERSION" then
-            tinsert(data,name)
-        end
+function D:GetProfileList(data)
+    for name in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
+        data[#data+1]=name
     end
-    tsort(data)
     return data
 end
-
-function Ether:GetProfileList()
-    return GetProfiles(ETHER_DATABASE_DX_AA["PROFILES"])
-end
-

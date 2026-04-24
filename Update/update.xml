@@ -1,0 +1,10 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/">
+    <Script file="soloaura.lua"/>
+    <Script file="raidaura.lua"/>
+    <Script file="color.lua"/>
+    <Script file="health.lua"/>
+    <Script file="name.lua"/>
+    <Script file="power.lua"/>
+    <Script file="castbar.lua"/>
+    <Script file="buttons.lua"/>
+</Ui>

@@ -1,15 +1,10 @@
-local _,Ether=...
-
-local pairs=pairs
-local C_Ticker=C_Timer.NewTicker
-local UnitIsVisible=UnitIsVisible
---local UnitInAnyGroup = UnitInAnyGroup
-local UnitPhaseReason=UnitPhaseReason
+local D,F,_,C=unpack(select(2,...))
+local C_Ticker,pairs=C_Timer.NewTicker,pairs
+local UnitIsVisible,UnitPhaseReason=UnitIsVisible,UnitPhaseReason
 local UnitInRange=UnitInRange
 local IsSpellInRange=C_Spell.IsSpellInRange
-local UnitCanAssist=UnitCanAssist
-local UnitCanAttack=UnitCanAttack
-
+local UnitCanAssist,UnitCanAttack=UnitCanAssist,UnitCanAttack
+local petBtn,raidBtn,soloBtn=D.petBtn,D.raidBtn,D.soloBtn
 local classFriendly={
     PRIEST=2061,-- Flash Heal
     SHAMAN=403,-- Lightning Bolt
@@ -20,9 +15,8 @@ local classFriendly={
     HUNTER=75,-- Auto Shot
     ROGUE=36554,-- Shadowstep
 }
-
 local classHostile={
-    PRIEST=15407,-- Mind Flay
+    PRIEST=589,-- spell=589/shadow-word-pain
     SHAMAN=403,-- Lightning Bolt
     DRUID=8921,-- Moonfire
     PALADIN=21084,-- seal-of-righteousness
@@ -30,46 +24,34 @@ local classHostile={
     WARLOCK=17793,-- Shadow Bolt
     HUNTER=75,-- Auto Shot
     ROGUE=6770,-- Sap
-    WARRIOR=355 -- Taunt
+    WARRIOR=355    -- Taunt
 }
-
-local _,playerClass=UnitClass("player")
-local friendly=classFriendly[playerClass] or 355
-local hostile=classHostile[playerClass] or 772
-local raidButtons=Ether.raidButtons
-local soloButtons=Ether.soloButtons
-
+local friendly=classFriendly[C.ClassName] or 355
+local hostile=classHostile[C.ClassName] or 589
 local function IsInRange(unit)
     if not unit then return end
-
     local inRange
     if UnitCanAssist("player",unit) then
-        inRange=IsSpellInRange(friendly,unit)
+       inRange=IsSpellInRange(friendly,unit)
     elseif UnitCanAttack("player",unit) then
         inRange=IsSpellInRange(hostile,unit)
     else
         return
     end
-
     return inRange
 end
-
 local function IsUnitInRange(unit)
     if not unit then return end
-
     local inRange
     if UnitCanAssist("player",unit) then
         inRange=UnitInRange(unit)
     elseif UnitCanAttack("player",unit) then
         inRange=IsSpellInRange(hostile,unit)
-    else
-        return
     end
-
     return inRange
 end
 
-function Ether:UpdateAlpha(button)
+function F:UpdateAlpha(button)
     if not button then return end
     local unit=button.unit
     local inRange
@@ -86,42 +68,56 @@ function Ether:UpdateAlpha(button)
     button:SetAlpha(value)
 end
 
-local function UpdateTargetAlpha()
-    if soloButtons[2] and soloButtons[2]:IsVisible() then
-        Ether:UpdateAlpha(soloButtons[2])
+function F:UpdateTargetAlpha()
+    if soloBtn[2] and soloBtn[2]:IsVisible() then
+        F:UpdateAlpha(soloBtn[2])
+    end
+    if soloBtn[6] and soloBtn[6]:IsVisible() then
+        F:UpdateAlpha(soloBtn[6])
     end
 end
 
 local function UpdateRaidAlpha()
-    for _,button in pairs(raidButtons) do
+    for _,button in pairs(raidBtn) do
         if button and button:IsVisible() then
-            Ether:UpdateAlpha(button)
+            F:UpdateAlpha(button)
+        end
+    end
+    for _,button in pairs(petBtn) do
+        if button and button:IsVisible() then
+            F:UpdateAlpha(button)
         end
     end
 end
-
-local rangeTicker=nil
-
-function Ether:RangeEnable()
-    if not rangeTicker then
-        rangeTicker=C_Ticker(1,function()
-            UpdateTargetAlpha()
+local update
+update=nil
+function F:RangeEnable()
+    if not update then
+        update=C_Ticker(1,function()
+            F:UpdateTargetAlpha()
             UpdateRaidAlpha()
         end)
     end
 end
-
-function Ether:RangeDisable()
-    if rangeTicker then
-        rangeTicker:Cancel()
-        rangeTicker=nil
+function F:RangeDisable()
+    if update then
+        update:Cancel()
+        update=nil
     end
-    if soloButtons[2] and soloButtons[2]:IsVisible() then
-        soloButtons[2]:SetAlpha(1)
-    end
-    for _,button in pairs(raidButtons) do
-        if button and button:IsVisible() then
-            button:SetAlpha(1.0)
+    for _,button in pairs(raidBtn) do
+        if button then
+            button:SetAlpha(1)
         end
+    end
+   for _,button in pairs(petBtn) do
+        if button then
+            button:SetAlpha(1)
+        end
+    end
+    if soloBtn[2] and soloBtn[2]:IsVisible() then
+        soloBtn[2]:SetAlpha(1)
+    end
+    if soloBtn[6] and soloBtn[6]:IsVisible() then
+        soloBtn[6]:SetAlpha(1)
     end
 end

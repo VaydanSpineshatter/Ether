@@ -1,49 +1,39 @@
+## Title: Ether
+## Author: VaydanSpineshatter
 ## Interface: 20505
-## Title: |cffcc66ffEther|r
 ## Notes: Ether Unit Frames
-## Author: Vaydan-Spineshatter
-## Version: 48666
-## SavedVariables: ETHER_DATABASE_DX_AA
-## IconTexture: Interface\AddOns\Ether\Media\Texture\icon
-## OptionalDeps: LibSharedMedia-3.0
+## Category-enUS: Unit Frames
+## Category-deDE: Unit Frames
+## Category-esES: Unit Frames
+## Category-frFR: Unit Frames
+## Version: 0.8.0
+## SavedVariables: ETHER_DATABASE
+## IconTexture: Interface\AddOns\Ether\Media\icon
 ## X-Flavor: TBC
 ## X-Curse-Project-ID: 1376190
-## X-Curse-Project-Website: https://www.curseforge.com/wow/addons/ether
-
-Library/LibStub/LibStub.lua
-Library/CallbackHandler-1.0/CallbackHandler-1.0.lua
-Library/LibSharedMedia-3.0/LibSharedMedia-3.0.lua
-Locale/Locale.lua
-Locale/Locale.xml
+Core/init.lua
+global.lua
+Data/index.lua
+Core/core.lua
 EtherUnitTemplate.xml
-Callback/EtherCallback.lua
-Core.lua
-Module/Register/Indicators.lua
-Module/Register/Auras.lua
-Module/Helper/Ignore.lua
-Module/Setup.lua
-Combat/Combat.lua
-Module/Units/Solo/player.lua
-Module/Units/Solo/hunter.lua
-Module/Units/Header/frame.lua
-Icon/Icon.lua
-Data/Proto.lua
-Data/Profile.lua
-Data/Data.lua
-Com/Com.lua
-Module/Indicators.lua
-Module/Aura.lua
-Module/Tooltip.lua
-Module/Effects.lua
-Module/Range.lua
-Module/Update/Blizzard.lua
-Module/Update/AFK.lua
-Module/Update/health.lua
-Module/Update/name.lua
-Module/Update/power.lua
-Module/Debug.lua
-Module/Preview/frame.lua
-Settings/frame.lua
-Module/CastBar.lua
-Module/Roster.lua
-
+Data/pre.lua
+Data/profile.lua
+Locale/locale.xml
+Module/callback.lua
+Module/function.lua
+Module/icon.lua
+Module/msg.lua
+Module/indicators.lua
+Module/tooltip.lua
+Module/effects.lua
+Module/info.lua
+Module/range.lua
+Module/blizzard.lua
+Module/idle.lua
+Module/roster.lua
+Module/cons.lua
+Update/update.xml
+User/user.xml
+Units/player.lua
+Units/hunter.lua
+Units/header.lua

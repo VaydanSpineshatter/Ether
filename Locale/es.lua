@@ -1,8 +1,7 @@
-local Ether=select(2,...)
-if Ether.Locale~="esES" and Ether.Locale~="esMX" then
+local _,_,_,_,L=unpack(select(2,...))
+if L.Locale~="esES" and L.Locale~="esMX" then
     return
 end
-local L=Ether.L
 L.MINIMAP_TOOLTIP_LOCALE="[esES/esMX]"
 L.MINIMAP_TOOLTIP_RIGHT="Clic derecho: Configuración"
 --Tooltip

@@ -1,79 +1,129 @@
-local _,Ether=...
-local UnitIsAFK=UnitIsAFK
-local UnitIsDND=UnitIsDND
-local UnitIsConnected=UnitIsConnected
-local UnitIsDeadOrGhost=UnitIsDeadOrGhost
+local D,F,S=unpack(select(2,...))
+local UnitIsAFK,UnitIsDND=UnitIsAFK,UnitIsDND
+local UnitIsConnected,UnitIsDeadOrGhost=UnitIsConnected,UnitIsDeadOrGhost
 local UnitHasIncomingResurrection=UnitHasIncomingResurrection
 local GetReadyCheckStatus=GetReadyCheckStatus
 local GetPartyAssignment=GetPartyAssignment
 local GetRaidTargetIndex=GetRaidTargetIndex
-local UnitExists=UnitExists
-local UnitIsVisible=UnitIsVisible
-local Enum=Enum
-local GetLootMethod=C_PartyInfo.GetLootMethod
-local pairs,ipairs=pairs,ipairs
-local UnitIsGroupLeader=UnitIsGroupLeader
-local UnitIsCharmed=UnitIsCharmed
-local UnitIsUnit=UnitIsUnit
-local UnitGroupRolesAssigned=UnitGroupRolesAssigned
-local deadIcon="Interface\\Icons\\Spell_Holy_GuardianSpirit"
-local connectionIcon="Interface\\CharacterFrame\\Disconnect-Icon"
-local Rdy="Interface\\RaidFrame\\ReadyCheck-Ready"
-local NotRdy="Interface\\RaidFrame\\ReadyCheck-NotReady"
-local Waiting="Interface\\RaidFrame\\ReadyCheck-Waiting"
-local leaderIcon="Interface\\GroupFrame\\UI-Group-LeaderIcon"
-local targetIcon="Interface\\TargetingFrame\\UI-RaidTargetingIcons"
-local mainTankIcon="Interface\\GroupFrame\\UI-Group-MainTankIcon"
-local mainAssistIcon="Interface\\GroupFrame\\UI-Group-MainAssistIcon"
-local rezIcon="Interface\\RaidFrame\\Raid-Icon-Rez"
-local masterlootIcon="Interface\\GroupFrame\\UI-Group-MasterLooter"
-local charmedIcon="Interface\\Icons\\Spell_Shadow_Charm"
-local AFK="Interface\\FriendsFrame\\StatusIcon-Away"
-local DND="Interface\\FriendsFrame\\StatusIcon-DnD"
-local Roles="Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES"
-local classIcon='Interface\\GLUES\\CHARACTERCREATE\\UI-CHARACTERCREATE-CLASSES'
-local raidButtons=Ether.raidButtons
-local soloButtons=Ether.soloButtons
-local ClassCoords={
-    ['WARRIOR']={0,0.25,0,0.25},
-    ['MAGE']={0.25,0.49609375,0,0.25},
-    ['ROGUE']={0.49609375,0.7421875,0,0.25},
-    ['DRUID']={0.7421875,0.98828125,0,0.25},
-    ['HUNTER']={0,0.25,0.25,0.5},
-    ['SHAMAN']={0.25,0.49609375,0.25,0.5},
-    ['PRIEST']={0.49609375,0.7421875,0.25,0.5},
-    ['WARLOCK']={0.7421875,0.98828125,0.25,0.5},
-    ['PALADIN']={0,0.25,0.5,0.75},
-}
-
-local RoleCoords={
-    ["tank"]='|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:0:19:22:41|t',
-    ["heal"]='|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:20:39:1:20|t',
-    ["damager"]='|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:13:13:0:0:64:64:20:39:22:41|t'
-}
-
-local function GetClassCoords(info)
-    local coords=CLASS_ICON_TCOORDS[info] or ClassCoords[info]
-    if not coords then
-        return 0,1,0,1
+local Enum,IsInRaid,UnitExists=Enum,IsInRaid,UnitExists
+local GetLootMethod,pairs,ipairs=C_PartyInfo.GetLootMethod,pairs,ipairs
+local UnitIsGroupLeader,UnitInAnyGroup=UnitIsGroupLeader,UnitInAnyGroup
+local UnitIsUnit,UnitIsCharmed,IsInGroup=UnitIsUnit,UnitIsCharmed,IsInGroup
+local UnitGroupRolesAssigned,SetRaidTargetIconTexture=UnitGroupRolesAssigned,SetRaidTargetIconTexture
+local event,raidBtn,soloBtn=S.EventFrame,D.raidBtn,D.soloBtn
+local function GetRaidBtn(unit)
+    local b=raidBtn[unit]
+    if b and b.unit==unit then
+        return b
     end
-    local crop=0.015
-    return coords[1]+crop,coords[2]-crop,coords[3]+crop,coords[4]-crop
 end
-Ether.GetClassCoords=GetClassCoords
-
+local frame=CreateFrame("Frame")
+frame:SetFrameStrata("HIGH")
 local function IndictorsTexture(button,data)
-    if not button then return end
+    if not button or not button.Indicators then return end
+    local Config=D.DB[20][D:PosIndicator(data)]
     if not button.Indicators[data] then
-        button.Indicators[data]=button.healthBar:CreateTexture(nil,"OVERLAY")
+        button.Indicators[data]=frame:CreateTexture(nil,"OVERLAY",nil,7)
         button.Indicators[data]:Hide()
+        button.Indicators[data]:SetPoint(Config[1],button.healthBar,Config[1],Config[2],Config[3])
+        button.Indicators[data]:SetSize(Config[4],Config[4])
     end
 end
-
+function F:SavePosition(index)
+    local Config=D.DB[20][index]
+    local icon=D:PosIndicator(index)
+    for _,button in pairs(raidBtn) do
+        if button and button.Indicators[icon] then
+            button.Indicators[icon].Shown=button.Indicators[icon]:IsShown()
+            button.Indicators[icon]:Hide()
+            button.Indicators[icon]:ClearAllPoints()
+            button.Indicators[icon]:SetPoint(Config[1],button.healthBar,Config[1],Config[2],Config[3])
+            button.Indicators[icon]:SetSize(Config[4],Config[4])
+            if button.Indicators[icon].Shown then
+                button.Indicators[icon]:Show()
+                button.Indicators[icon].Shown=nil
+            end
+        end
+    end
+end
+local function UpdateHealthBar(button)
+    if not button or not button.healthBar then return end
+    button.healthBar:SetValue(0)
+    button.healthBar:SetMinMaxValues(0,0)
+end
+function F:UpdateDeadIcon(button)
+    if not button or not button.Indicators or not button.Indicators.UnitFlags then return end
+    button.Indicators.UnitFlags:Hide()
+end
+function F:IndicatorsFullUpdateBtn()
+    for _,b in pairs(raidBtn) do
+        local unit=b.unit
+        if unit and UnitExists(unit) then
+            F:UpdateIndicatorsString(unit)
+        end
+    end
+    F:UpdateIndicators()
+end
+function F:UpdateIndicatorsString(unit)
+    event:UNIT_CONNECTION(unit)
+    event:INCOMING_RESURRECT_CHANGED(unit)
+    event:PLAYER_FLAGS_CHANGED(unit)
+    event:UNIT_FLAGS(unit)
+    event:UNIT_FACTION(unit)
+end
+function F:UpdateIndicators()
+    event:RAID_TARGET_UPDATE()
+    event:PARTY_LEADER_CHANGED()
+    event:PARTY_LOOT_METHOD_CHANGED()
+    event:PLAYER_ROLES_ASSIGNED()
+    event:READY_CHECK()
+end
+function F:IndicatorsFullUpdate(unit)
+    if not unit or not UnitExists(unit) then return end
+    F:UpdateIndicatorsString(unit)
+    F:UpdateIndicators()
+end
+function event:READY_CHECK()
+    for _,b in pairs(raidBtn) do
+        local unit=b.unit
+        IndictorsTexture(b,"ReadyCheck")
+        if UnitExists(unit) then
+            local status=GetReadyCheckStatus(unit)
+            if (status) then
+                if (status=="ready") then
+                    b.Indicators.ReadyCheck:SetTexture(D.iIconPath[13])
+                    b.Indicators.ReadyCheck:Show()
+                elseif (status=="notready") then
+                    b.Indicators.ReadyCheck:SetTexture(D.iIconPath[14])
+                    b.Indicators.ReadyCheck:Show()
+                elseif (status=="waiting") then
+                    b.Indicators.ReadyCheck:SetTexture(D.iIconPath[15])
+                    b.Indicators.ReadyCheck:Show()
+                end
+            else
+                b.Indicators.ReadyCheck:Hide()
+            end
+        end
+    end
+end
+function event:READY_CHECK_CONFIRM()
+    for _,b in pairs(raidBtn) do
+        local unit=b.unit
+        IndictorsTexture(b,"ReadyCheck")
+        local status=GetReadyCheckStatus(unit)
+        if (status=="ready") then
+            b.Indicators.ReadyCheck:SetTexture(D.iIconPath[13])
+            b.Indicators.ReadyCheck:Show()
+        elseif (status=="notready") then
+            b.Indicators.ReadyCheck:SetTexture(D.iIconPath[14])
+            b.Indicators.ReadyCheck:Show()
+        end
+    end
+end
 local updater
 updater=nil
 local function HideReadyCheckIcons()
-    for _,button in pairs(raidButtons) do
+    for _,button in pairs(raidBtn) do
         if button and button.Indicators and button.Indicators.ReadyCheck then
             button.Indicators.ReadyCheck:Hide()
         end
@@ -83,141 +133,70 @@ local function HideReadyCheckIcons()
         updater=nil
     end
 end
-
-local function UpdateReady()
-    for _,button in pairs(raidButtons) do
-        if button then
-            local unit=button.unit
-            IndictorsTexture(button,"ReadyCheck")
-            if UnitExists(unit) then
-                local status=GetReadyCheckStatus(unit)
-                if (status) then
-                    if (status=="ready") then
-                        button.Indicators.ReadyCheck:SetTexture(Rdy)
-                        button.Indicators.ReadyCheck:Show()
-                    elseif (status=="notready") then
-                        button.Indicators.ReadyCheck:SetTexture(NotRdy)
-                        button.Indicators.ReadyCheck:Show()
-                    elseif (status=="waiting") then
-                        button.Indicators.ReadyCheck:SetTexture(Waiting)
-                        button.Indicators.ReadyCheck:Show()
-                    end
-                else
-                    button.Indicators.ReadyCheck:Hide()
-                end
-            end
-        end
-    end
-end
-
-local function UpdateConfirm()
-    for _,button in pairs(raidButtons) do
-        if button then
-            local unit=button.unit
-            IndictorsTexture(button,"ReadyCheck")
-            local status=GetReadyCheckStatus(unit)
-            if (status=="ready") then
-                button.Indicators.ReadyCheck:SetTexture(Rdy)
-                button.Indicators.ReadyCheck:Show()
-            elseif (status=="notready") then
-                button.Indicators.ReadyCheck:SetTexture(NotRdy)
-                button.Indicators.ReadyCheck:Show()
-            end
-        end
-    end
-end
-
-local function UpdateFinished()
+function event:READY_CHECK_FINISHED()
     if not updater then
         updater=C_Timer.After(5,HideReadyCheckIcons)
     end
 end
-
-local function GroupLeader()
-    for _,button in pairs(raidButtons) do
-        if button then
-            local unit=button.unit
-            IndictorsTexture(button,"GroupLeader")
-            if not UnitInAnyGroup("player") then
-                button.Indicators.GroupLeader:Hide()
-            end
-            local IsLeader=UnitIsGroupLeader(unit)
-            if (IsLeader) then
-                button.Indicators.GroupLeader:SetTexture(leaderIcon)
-                button.Indicators.GroupLeader:Show()
-            else
-                button.Indicators.GroupLeader:Hide()
-            end
-        end
-    end
-end
-
-local function UpdateClassIcon(self)
-    if self.Indicators.ClassIcon then
-        self.Indicators.ClassIcon:Hide()
-    end
-    if Ether.DB[3][11]==0 then return end
-    IndictorsTexture(self,"ClassIcon")
-    local unit=self.unit
-    local className=select(2,UnitClass(unit))
-    if className then
-        self.Indicators.ClassIcon:SetTexture(classIcon)
-        self.Indicators.ClassIcon:SetTexCoord(GetClassCoords(className))
-        self.Indicators.ClassIcon:Show()
-    end
-end
-
-local function UpdateGroupRole(self)
-    if Ether.DB[3][9]==0 then return end
-    local unit=self.unit
-    IndictorsTexture(self,"GroupRole")
+local function UpdateGroupRole(button,unit)
+    if D.DB[3][10]~=1 then return end
+    IndictorsTexture(button,"GroupRole")
     if not IsInGroup() then
-        self.Indicators.GroupRole:Hide()
+        button.Indicators.GroupRole:Hide()
+        return
     end
     local role=UnitGroupRolesAssigned(unit)
     if (role) then
-        self.Indicators.GroupRole:SetTexture(Roles)
+        button.Indicators.GroupRole:SetTexture(D.iIconPath[12])
         if (role=="TANK") then
-            self.Indicators.GroupRole:SetTexCoord(0,19/64,22/64,41/64)
-            self.Indicators.GroupRole:Show()
+            button.Indicators.GroupRole:SetTexCoord(0,19/64,22/64,41/64)
+            button.Indicators.GroupRole:Show()
         elseif (role=="HEALER") then
-            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,1/64,20/64)
-            self.Indicators.GroupRole:Show()
+            button.Indicators.GroupRole:SetTexCoord(20/64,39/64,1/64,20/64)
+            button.Indicators.GroupRole:Show()
         elseif (role=="DAMAGER") then
-            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,22/64,41/64)
-            self.Indicators.GroupRole:Show()
+            button.Indicators.GroupRole:SetTexCoord(20/64,39/64,22/64,41/64)
+            button.Indicators.GroupRole:Show()
         else
-            self.Indicators.GroupRole:Hide()
+            button.Indicators.GroupRole:Hide()
         end
     end
 end
-
-local function MainTank()
-    for _,button in pairs(raidButtons) do
-        if button then
-            local unit=button.unit
-            UpdateGroupRole(button)
-            UpdateClassIcon(button)
-            IndictorsTexture(button,"MainTank")
-            if not IsInRaid() then
-                button.Indicators.MainTank:Hide()
-            else
-                if (GetPartyAssignment("MAINTANK",unit)) then
-                    button.Indicators.MainTank:SetTexture(mainTankIcon)
-                    button.Indicators.MainTank:Show()
-                elseif (GetPartyAssignment("MAINASSIST",unit)) then
-                    button.Indicators.MainTank:SetTexture(mainAssistIcon)
-                    button.Indicators.MainTank:Show()
-                else
-                    button.Indicators.MainTank:Hide()
-                end
-            end
+local function UpdateMainTank(button,unit)
+    if D.DB[3][9]~=1 then return end
+    IndictorsTexture(button,"MainTank")
+    if not IsInRaid() then
+        button.Indicators.MainTank:Hide()
+        return
+    end
+    if GetPartyAssignment("MAINTANK",unit) then
+        button.Indicators.MainTank:SetTexture(D.iIconPath[10])
+        button.Indicators.MainTank:Show()
+    elseif GetPartyAssignment("MAINASSIST",unit) then
+        button.Indicators.MainTank:SetTexture(D.iIconPath[11])
+        button.Indicators.MainTank:Show()
+    else
+        button.Indicators.MainTank:Hide()
+    end
+end
+function event:PLAYER_ROLES_ASSIGNED()
+    if D.DB[3][9]==0 and D.DB[3][10]==0 then return end
+    for _,button in pairs(raidBtn) do
+        if not button then return end
+        local unit=button.unit
+        local role=UnitGroupRolesAssigned(unit)
+        local assignment=GetPartyAssignment("MAINTANK",unit) or GetPartyAssignment("MAINASSIST",unit)
+        if role then
+            UpdateGroupRole(button,unit)
+        end
+        if assignment then
+            UpdateMainTank(button,unit)
         end
     end
 end
-
-local function MasterLoot()
-    for _,button in pairs(raidButtons) do
+function event:PARTY_LOOT_METHOD_CHANGED()
+    if D.DB[3][8]~=1 then return end
+    for _,button in pairs(raidBtn) do
         if button then
             local unit=button.unit
             IndictorsTexture(button,"MasterLoot")
@@ -226,9 +205,10 @@ local function MasterLoot()
             end
             local lootType,partyID,raidID=GetLootMethod()
             if lootType==Enum.LootMethod.Masterlooter then
-                local masterLooterUnit=raidID and ((raidID==0) and "player" or "raid"..raidID) or partyID and ((partyID==0) and "player" or "party"..partyID)
+                local masterLooterUnit=raidID and ((raidID==0) and "player" or "raid"..raidID) or
+                        partyID and ((partyID==0) and "player" or "party"..partyID)
                 if masterLooterUnit and UnitIsUnit(unit,masterLooterUnit) then
-                    button.Indicators.MasterLoot:SetTexture(masterlootIcon)
+                    button.Indicators.MasterLoot:SetTexture(D.iIconPath[9])
                     button.Indicators.MasterLoot:Show()
                 else
                     button.Indicators.MasterLoot:Hide()
@@ -237,31 +217,35 @@ local function MasterLoot()
         end
     end
 end
-
-function Ether:UpdateSoloIndicator(number)
-    local button=soloButtons[number]
-    if not button or not button.RaidTarget then return end
-    if UnitExists(button.unit) then
-        local index=GetRaidTargetIndex(button.unit)
-        if index then
-            button.RaidTarget:SetTexture(targetIcon)
-            SetRaidTargetIconTexture(button.RaidTarget,index)
-            button.RaidTarget:Show()
-        else
-            button.RaidTarget:Hide()
+function event:PARTY_LEADER_CHANGED()
+    if D.DB[3][7]~=1 then return end
+    for _,button in pairs(raidBtn) do
+        if button then
+            local unit=button.unit
+            IndictorsTexture(button,"GroupLeader")
+            if not UnitInAnyGroup("player") then
+                button.Indicators.GroupLeader:Hide()
+            end
+            local IsLeader=UnitIsGroupLeader(unit)
+            if (IsLeader) then
+                button.Indicators.GroupLeader:SetTexture(D.iIconPath[8])
+                button.Indicators.GroupLeader:Show()
+            else
+                button.Indicators.GroupLeader:Hide()
+            end
         end
     end
 end
-
-local function RaidTarget()
-    for _,button in pairs(raidButtons) do
+function event:RAID_TARGET_UPDATE()
+    if D.DB[3][6]~=1 then return end
+    for _,button in pairs(raidBtn) do
         if button then
             local unit=button.unit
             IndictorsTexture(button,"RaidTarget")
             if UnitExists(unit) then
                 local index=GetRaidTargetIndex(unit)
                 if index then
-                    button.Indicators.RaidTarget:SetTexture(targetIcon)
+                    button.Indicators.RaidTarget:SetTexture(D.iIconPath[7])
                     SetRaidTargetIconTexture(button.Indicators.RaidTarget,index)
                     button.Indicators.RaidTarget:Show()
                 else
@@ -270,334 +254,153 @@ local function RaidTarget()
             end
         end
     end
-
-    if UnitIsVisible(soloButtons[1].unit) then
-        Ether:UpdateSoloIndicator(1)
-    end
-    if UnitIsVisible(soloButtons[2].unit) then
-        Ether:UpdateSoloIndicator(2)
-    end
-    if UnitIsVisible(soloButtons[3].unit) then
-        Ether:UpdateSoloIndicator(3)
-    end
-end
-
-local function UpdateHealthBar(button)
-    if not button or not button.healthBar then return end
-    button.healthBar:SetValue(0)
-    button.healthBar:SetMinMaxValues(0,0)
-end
-
-local iTbl={"Connection","Resurrection","PlayerFlags","UnitFlags","RaidTarget","GroupLeader","MasterLoot","MainTank","GroupRole","ReadyCheck","ClassIcon"}
-local IndiMap={}
-for i,v in ipairs(iTbl) do
-    IndiMap[v]=i -- "ICON" -> 1
-    IndiMap[i]=v -- 1 -> "ICON"
-end
-function Ether:ToggleIndicatorIcon(index)
-    local number=IndiMap[index]
-    for _,button in pairs(raidButtons) do
-        if button and button.Indicators and button.Indicators[number] then
-            if not button.Indicators[number]:IsShown() then
-                button.Indicators[number]:Show()
-            else
-                button.Indicators[number]:Hide()
-            end
+    for index=1,3 do
+        if UnitExists(D:PosUnit(index)) then
+            F:UpdateSoloIndicator(index)
         end
     end
-end
-
-local function Connection(self)
-    local unit=self.unit
-    IndictorsTexture(self,"Connection")
-    local isConnected=UnitIsConnected(unit)
-    if not isConnected then
-        self.healthBar:SetStatusBarColor(0.5,0.5,0.5)
-        self.Indicators.Connection:SetTexture(connectionIcon)
-        self.Indicators.Connection:Show()
-    else
-        self.Indicators.Connection:Hide()
+    if UnitExists(D:PosUnit(6)) then
+        F:UpdateSoloIndicator(6)
     end
 end
-
-local function UnitFlags(self)
-    local unit=self.unit
-    IndictorsTexture(self,"UnitFlags")
+function event:UNIT_FACTION(unit)
+    if D.DB[3][5]~=1 then return end
+    local button=GetRaidBtn(unit)
+    if not button then return end
+    IndictorsTexture(button,"UnitFaction")
     local charmed=UnitIsCharmed(unit)
-    local dead=UnitIsDeadOrGhost(unit)
     if charmed then
-        self.name:SetTextColor(1.00,0.00,0.00)
-        self.Indicators.UnitFlags:SetTexture(charmedIcon)
-        self.Indicators.UnitFlags:Show()
-    elseif dead then
-        UpdateHealthBar(self)
-        Ether:HideButtonDispel(self)
-        Ether:UpdatePrediction(self)
-        self.Indicators.UnitFlags:SetTexture(deadIcon)
-        self.Indicators.UnitFlags:Show()
+        button.name:SetTextColor(1,0,0)
+        button.Indicators.UnitFaction:SetTexture(D.iIconPath[6])
+        button.Indicators.UnitFaction:Show()
     else
-        self.Indicators.UnitFlags:Hide()
-        self.name:SetTextColor(1,1,1)
+        button.name:SetTextColor(1,1,1)
+        button.Indicators.UnitFaction:Hide()
     end
 end
-
-local function Resurrection(self)
-    local unit=self.unit
-    IndictorsTexture(self,"Resurrection")
-    local Resurrect=UnitHasIncomingResurrection(unit)
-    if (Resurrect) then
-        self.Indicators.Resurrection:SetTexture(rezIcon)
-        self.Indicators.Resurrection:Show()
+function event:UNIT_FLAGS(unit)
+    if D.DB[3][4]~=1 then return end
+    local button=GetRaidBtn(unit)
+    if not button then return end
+    IndictorsTexture(button,"UnitFlags")
+    local dead=UnitIsDeadOrGhost(unit)
+    if dead then
+        UpdateHealthBar(button)
+        F:HideButtonDispellable(button)
+        F:HidePrediction(button)
+        button.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
+        button.Indicators.UnitFlags:Show()
     else
-        self.Indicators.Resurrection:Hide()
+        button.Indicators.UnitFlags:Hide()
+        F:InitialHealth(button)
     end
 end
-
-local function PlayerFlags(self)
-    local unit=self.unit
-    IndictorsTexture(self,"PlayerFlags")
+function event:PLAYER_FLAGS_CHANGED(unit)
+    F:UserIdle(unit)
+    if D.DB[3][3]~=1 then return end
+    local button=GetRaidBtn(unit)
+    if not button then return end
+    IndictorsTexture(button,"PlayerFlags")
     local away=UnitIsAFK(unit)
     local dnd=UnitIsDND(unit)
     if away then
-        self.Indicators.PlayerFlags:SetTexture(AFK)
-        self.Indicators.PlayerFlags:Show()
+        button.Indicators.PlayerFlags:SetTexture(D.iIconPath[3])
+        button.Indicators.PlayerFlags:Show()
     elseif dnd then
-        self.Indicators.PlayerFlags:SetTexture(DND)
-        self.Indicators.PlayerFlags:Show()
+        button.Indicators.PlayerFlags:SetTexture(D.iIconPath[4])
+        button.Indicators.PlayerFlags:Show()
     else
-        self.Indicators.PlayerFlags:Hide()
-    end
-    Ether:isUserIdle()
-end
-
-local function RaidTargetToken(self)
-    local unit=self.unit
-    IndictorsTexture(self,"RaidTarget")
-    if UnitExists(unit) then
-        local index=GetRaidTargetIndex(unit)
-        if index then
-            self.Indicators.RaidTarget:SetTexture(targetIcon)
-            SetRaidTargetIconTexture(self.Indicators.RaidTarget,index)
-            self.Indicators.RaidTarget:Show()
-        else
-            self.Indicators.RaidTarget:Hide()
-        end
+        button.Indicators.PlayerFlags:Hide()
     end
 end
-
-local function GroupLeaderToken(self)
-    local unit=self.unit
-    IndictorsTexture(self,"GroupLeader")
-    if not UnitInAnyGroup("player") then
-        self.Indicators.GroupLeader:Hide()
-    end
-    local IsLeader=UnitIsGroupLeader(unit)
-    if (IsLeader) then
-        self.Indicators.GroupLeader:SetTexture(leaderIcon)
-        self.Indicators.GroupLeader:Show()
-    else
-        self.Indicators.GroupLeader:Hide()
-    end
-end
-
-local function MainTankToken(self)
-    local unit=self.unit
-    IndictorsTexture(self,"MainTank")
-    if not IsInRaid() then
-        self.Indicators.MainTank:Hide()
-    else
-        if (GetPartyAssignment("MAINTANK",unit)) then
-            self.Indicators.MainTank:SetTexture(mainTankIcon)
-            self.Indicators.MainTank:Show()
-        elseif (GetPartyAssignment("MAINASSIST",unit)) then
-            self.Indicators.MainTank:SetTexture(mainAssistIcon)
-            self.Indicators.MainTank:Show()
-        else
-            self.Indicators.MainTank:Hide()
-        end
-    end
-    UpdateGroupRole(self)
-end
-
-local function MasterLootToken(self)
-    local unit=self.unit
-    IndictorsTexture(self,"MasterLoot")
-    if not UnitInAnyGroup("player") then
-        self.Indicators.MasterLoot:Hide()
-    end
-    local lootType,partyID,raidID=GetLootMethod()
-    if lootType==Enum.LootMethod.Masterlooter then
-        local masterLooterUnit=raidID and ((raidID==0) and "player" or "raid"..raidID) or partyID and ((partyID==0) and "player" or "party"..partyID)
-        if masterLooterUnit and UnitIsUnit(unit,masterLooterUnit) then
-            self.Indicators.MasterLoot:SetTexture(masterlootIcon)
-            self.Indicators.MasterLoot:Show()
-        else
-            self.Indicators.MasterLoot:Hide()
-        end
-    end
-end
-
-local function UpdateReadyToken(self)
-    local unit=self.unit
-    IndictorsTexture(self,"ReadyCheck")
-    if UnitExists(unit) then
-        local status=GetReadyCheckStatus(unit)
-        if (status) then
-            if (status=="ready") then
-                self.Indicators.ReadyCheck:SetTexture(Rdy)
-                self.Indicators.ReadyCheck:Show()
-            elseif (status=="notready") then
-                self.Indicators.ReadyCheck:SetTexture(NotRdy)
-                self.Indicators.ReadyCheck:Show()
-            elseif (status=="waiting") then
-                self.Indicators.ReadyCheck:SetTexture(Waiting)
-                self.Indicators.ReadyCheck:Show()
-            end
-        else
-            self.Indicators.ReadyCheck:Hide()
-        end
-    end
-end
-
-local function IndicatorsFullUpdateByUnit(self)
-    Connection(self)
-    Resurrection(self)
-    PlayerFlags(self)
-    UnitFlags(self)
-    RaidTargetToken(self)
-    GroupLeaderToken(self)
-    MainTankToken(self)
-    MasterLootToken(self)
-    UpdateGroupRole(self)
-    UpdateClassIcon(self)
-    UpdateReadyToken(self)
-end
-
-function Ether:IndicatorsFullUpdate()
-    for _,button in pairs(raidButtons) do
-        if button then
-            Ether:UpdateIndicatorsPosition(button)
-        end
-    end
-end
-
-function Ether:UpdateIndicatorsPosition(button)
+function event:INCOMING_RESURRECT_CHANGED(unit)
+    if D.DB[3][2]~=1 then return end
+    local button=GetRaidBtn(unit)
     if not button then return end
-    for i,v in ipairs(iTbl) do
-        if button.Indicators[v] then
-            local C=Ether.DB[20][i]
-            button.Indicators[v]:Hide()
-            button.Indicators[v]:ClearAllPoints()
-            button.Indicators[v]:SetPoint(C[1],button.healthBar,C[1],C[2],C[3])
-            button.Indicators[v]:SetSize(C[4],C[4])
-        end
-    end
-    IndicatorsFullUpdateByUnit(button)
-end
-
-function Ether:UpdateIndicatorsByUnit(self)
-    IndicatorsFullUpdateByUnit(self)
-end
-
-function Ether:SavePosition(index)
-    local C=Ether.DB[20][index]
-    local data=iTbl[index]
-    for _,button in pairs(raidButtons) do
-        if button and button.Indicators[data] then
-            button.Indicators[data].Shown=button.Indicators[data]:IsShown()
-            button.Indicators[data]:Hide()
-            button.Indicators[data]:ClearAllPoints()
-            button.Indicators[data]:SetPoint(C[1],button.healthBar,C[1],C[2],C[3])
-            button.Indicators[data]:SetSize(C[4],C[4])
-            if button.Indicators[data].Shown then
-                button.Indicators[data]:Show()
-                button.Indicators[data].Shown=nil
-            end
-        end
+    IndictorsTexture(button,"Resurrection")
+    local Resurrect=UnitHasIncomingResurrection(unit)
+    if (Resurrect) then
+        button.Indicators.Resurrection:SetTexture(D.iIconPath[2])
+        button.Indicators.Resurrection:Show()
+    else
+        button.Indicators.Resurrection:Hide()
     end
 end
-
-function Ether:HideIndicators()
-    for _,button in pairs(raidButtons) do
-        if button and button.Indicators then
-            for _,info in pairs(button.Indicators) do
-                if info then
-                    info:Hide()
-                end
-            end
-        end
+function event:UNIT_CONNECTION(unit)
+    if D.DB[3][1]~=1 then return end
+    local button=GetRaidBtn(unit)
+    if not button then return end
+    IndictorsTexture(button,"Connection")
+    local isConnected=UnitIsConnected(unit)
+    if not isConnected then
+        button.healthBar:SetStatusBarColor(0.5,0.5,0.5)
+        button.Indicators.Connection:SetTexture(D.iIconPath[1])
+        button.Indicators.Connection:Show()
+    else
+        button.Indicators.Connection:Hide()
     end
 end
-
-local Toggle,Register,Unregister
-do
-    local uSTR={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS"}
-    local nSTR={"RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
-    local U,N={},{}
-    local UH={Connection,Resurrection,PlayerFlags,UnitFlags}
-    local NH={RaidTarget,GroupLeader,MasterLoot,MainTank,UpdateReady,UpdateConfirm,UpdateFinished}
-    local token,frame=CreateFrame("Frame"),CreateFrame("Frame")
-    if not token:GetScript("OnEvent") then
-        token:SetScript("OnEvent",function(_,event,unit)
-            local btn=raidButtons[unit]
-            if not btn then return end
-            if unit and btn.unit~=unit then return end
-            U[event](btn,event,unit)
-        end)
-    end
-    if not frame:GetScript("OnEvent") then
-        frame:SetScript("OnEvent",function(self,event)
-            N[event](self,event)
-        end)
-    end
-    function Register()
-        for index,info in ipairs(uSTR) do
-            if not U[info] and not token:IsEventRegistered(info) then
-                token:RegisterEvent(info)
-                U[info]=UH[index]
-            end
-        end
-        for index,info in ipairs(nSTR) do
-            if not N[info] and not frame:IsEventRegistered(info) then
-                frame:RegisterEvent(info)
-                N[info]=NH[index]
-            end
-        end
-    end
-    function Unregister()
-        token:UnregisterAllEvent()
-        frame:UnregisterAllEvent()
-        wipe(N)
-        wipe(U)
-    end
-    function Toggle(number)
-        if not number or type(number)~="number" then return end
-        local idx=number-4
-        local info=nSTR[idx]
-        local handler=NH[idx]
-        if not info then return end
-        if N[info] and frame:IsEventRegistered(info) then
-            frame:UnregisterEvent(info)
-            N[info]=nil
+function F:UpdateSoloIndicator(number)
+    local button=soloBtn[number]
+    if not button or not button.RaidTarget then return end
+    if UnitExists(button.unit) then
+        local index=GetRaidTargetIndex(button.unit)
+        if index then
+            button.RaidTarget:SetTexture(D.iIconPath[7])
+            SetRaidTargetIconTexture(button.RaidTarget,index)
+            button.RaidTarget:Show()
         else
-            frame:RegisterEvent(info)
-            N[info]=handler
+            button.RaidTarget:Hide()
         end
     end
-    Ether.IndicatorToggle=Toggle
 end
-
-function Ether:IndicatorsEnable()
-    Register()
-    HideReadyCheckIcons()
-    C_Timer.After(2,function()
-        Ether:IndicatorsFullUpdate()
-        if UnitExists(soloButtons[1].unit) then
-            Ether:UpdateSoloIndicator(1)
+function F:IndicatorToggleEvent(number)
+    if not number or type(number)~="number" then return end
+    if D.DB[3][number]==1 then
+        if not event:IsEventRegistered(D.iEvent[number]) then
+            event:RegisterEvent(D.iEvent[number])
         end
+    elseif D.DB[3][number]==0 then
+        if event:IsEventRegistered(D.iEvent[number]) then
+            event:UnregisterEvent(D.iEvent[number])
+        end
+    end
+end
+function F:IndicatorsToggleIcon(number)
+    local data=D:PosIndicator(number)
+    for _,button in pairs(raidBtn) do
+        if not button or not button.Indicators or not button.Indicators[data] then return end
+        if button.Indicators[data]:IsShown() then
+            button.Indicators[data]:Hide()
+        else
+            button.Indicators[data]:Show()
+        end
+    end
+    for index=1,6 do
+        local button=soloBtn[index]
+        if button and button.RaidTarget then
+            if button.RaidTarget:IsShown() then
+                button.RaidTarget:Hide()
+            else
+                button.RaidTarget:Show()
+            end
+        end
+    end
+end
+function F:IndicatorsEnable()
+    for _,v in ipairs(D.iEvent) do
+        if not event:IsEventRegistered(v) then
+            event:RegisterEvent(v)
+        end
+    end
+    C_Timer.After(2,function()
+        F:UpdateSoloIndicator(1)
     end)
 end
-
-function Ether:IndicatorsDisable()
-    Unregister()
+function F:IndicatorsDisable()
+    for _,v in ipairs(D.iEvent) do
+        if event:IsEventRegistered(v) then
+            event:UnregisterEvent(v)
+        end
+    end
 end

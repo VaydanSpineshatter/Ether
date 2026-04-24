@@ -1,8 +1,7 @@
-local Ether=select(2,...)
-if Ether.Locale~="frFR" then
+local _,_,_,_,L=unpack(select(2,...))
+if L.Locale~="frFR" then
     return
 end
-local L=Ether.L
 L.MINIMAP_TOOLTIP_LOCALE="[frFR]"
 L.MINIMAP_TOOLTIP_RIGHT="Clic droit : Paramètres"
 -- Tooltip

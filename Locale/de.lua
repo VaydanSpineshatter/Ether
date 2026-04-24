@@ -1,8 +1,7 @@
-local Ether=select(2,...)
-if Ether.Locale~="deDE" then
+local _,_,_,_,L=unpack(select(2,...))
+if L.Locale~="deDE" then
     return
 end
-local L=Ether.L
 L.MINIMAP_TOOLTIP_LOCALE="[deDE]"
 L.MINIMAP_TOOLTIP_RIGHT="Right Click: Settings"
 --Tooltip

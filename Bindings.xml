@@ -1,0 +1,11 @@
+<Bindings>
+    <Binding category='BINDING_HEADER_ETHER' name='Config'>
+        Ether_Config()
+    </Binding>
+    <Binding category='BINDING_HEADER_ETHER' name='Info'>
+        Ether_Info()
+    </Binding>
+    <Binding category='BINDING_HEADER_ETHER' name='Target'>
+        Ether_Target()
+    </Binding>
+</Bindings>
