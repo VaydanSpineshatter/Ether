@@ -1,12 +1,14 @@
-local D,F,S,_,_=unpack(select(2,...))
+local D,F,S=unpack(select(2,...))
 local UnitHealth,UnitHealthMax,UnitGetIncomingHeals=UnitHealth,UnitHealthMax,UnitGetIncomingHeals
 local sformat,mfloor,pairs,UnitExists,mmax,mmin=string.format,math.floor,pairs,UnitExists,math.max,math.min
-local event,raidBtn,petBtn,soloBtn,f2m=S.EventFrame,D.raidBtn,D.petBtn,D.soloBtn,"%s%d|r"
+local event,raidBtn,soloBtn,f2m=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r"
 local function ReturnHealth(self)
-    return UnitHealth(self)
+    if not self or not self.unit then return end
+    return UnitHealth(self.unit)
 end
 local function ReturnMaxHealth(self)
-    return UnitHealthMax(self)
+    if not self or not self.unit then return end
+    return UnitHealthMax(self.unit)
 end
 local function GetSoloBtn(unit)
     return soloBtn[D:PosUnit(unit)]
@@ -17,47 +19,45 @@ local function GetRaidBtn(unit)
         return b
     end
 end
-local function GetPetBtn(unit)
-    local b=petBtn[unit]
-    if b and b.unit==unit then
-        return b
+local function InitialHealth(b)
+    if not b or not b.healthBar then return end
+    if b.smooth then
+        b.healthBar:SetMinMaxSmoothedValue(0,ReturnMaxHealth(b))
+        b.healthBar:SetSmoothedValue(ReturnHealth(b))
+    else
+        b.healthBar:SetValue(ReturnHealth(b))
+        b.healthBar:SetMinMaxValues(0,ReturnMaxHealth(b))
     end
-end
-local function InitialHealth(button)
-    if not button or not button.healthBar then return end
-    local unit=button.unit
-    button.healthBar:SetValue(ReturnHealth(unit))
-    button.healthBar:SetMinMaxValues(0,ReturnMaxHealth(button.unit))
 end
 F.InitialHealth=InitialHealth
-local function UpdateClassColor(button)
-    if not button then return end
-    local unit=button.unit
-    local r,g,b=F:GetClassColor(unit)
-    button.healthBar:SetStatusBarColor(r,g,b)
-    button.healthDrop:SetColorTexture(r*0.3,g*0.3,b*0.4,.3)
+local function UpdateClassColor(b)
+    if not b then return end
+    local unit=b.unit
+    local r,g,be=F:GetClassColor(unit)
+    b.healthBar:SetStatusBarColor(r,g,be)
+    b.healthDrop:SetColorTexture(r*0.3,g*0.3,be*0.4,.3)
 end
 F.UpdateClassColor=UpdateClassColor
-local function Health(button)
-    if not button or not button.healthBar then return end
-    local unit=button.unit
+local function Health(b)
+    if not b or not b.healthBar then return end
+    local unit=b.unit
     local h=UnitHealth(unit)
     if not h then return end
-    if button.smooth then
-        button.healthBar:SetSmoothedValue(h)
+    if b.smooth then
+        b.healthBar:SetSmoothedValue(h)
     else
-        button.healthBar:SetValue(h)
+        b.healthBar:SetValue(h)
     end
 end
-local function MaxHealth(button)
-    if not button or not button.healthBar then return end
-    local unit=button.unit
+local function MaxHealth(b)
+    if not b or not b.healthBar then return end
+    local unit=b.unit
     local mh=UnitHealthMax(unit)
     if not mh then return end
-    if button.smooth then
-        button.healthBar:SetMinMaxSmoothedValue(0,mh)
+    if b.smooth then
+        b.healthBar:SetMinMaxSmoothedValue(0,mh)
     else
-        button.healthBar:SetMinMaxValues(0,mh)
+        b.healthBar:SetMinMaxValues(0,mh)
     end
 end
 function F:FullHealthUpdate(self)
@@ -67,34 +67,34 @@ function F:FullHealthUpdate(self)
     MaxHealth(self)
 end
 local lastHealth=F.GetTbl()
-function F:UpdateHealthPct(button)
-    if not button or not button.health then return end
-    local unit=button.unit
+function F:UpdateHealthPct(b)
+    if not b or not b.unit or not b.health then return end
+    local unit=b.unit
     local h,maxH=UnitHealth(unit),UnitHealthMax(unit)
     if not h then return end
     local pct=maxH>0 and h/maxH or 0
     if not pct then return end
-    local roundedPct=mfloor(pct*100+0.5)
-    if lastHealth[unit]==roundedPct then
+    local rPct=mfloor(pct*100+0.5)
+    if lastHealth[unit]==rPct then
         return
     end
-    lastHealth[unit]=roundedPct
-    button.health:SetText(sformat(f2m,D.HealGradient[roundedPct],roundedPct))
+    lastHealth[unit]=rPct
+    b.health:SetText(sformat(f2m,D.HealGradient[rPct],rPct))
 end
 local function ResetHealthPct(index)
     if index~=3 then return end
     if D.DB[5][index]==0 then
-        for _,button in pairs(raidBtn) do
-            if button and button.health then
-                button.health:Hide()
+        for _,b in pairs(raidBtn) do
+            if b and b.health then
+                b.health:Hide()
             end
         end
         F.RelTbl(lastHealth)
     elseif D.DB[5][index]==1 then
-        for _,button in pairs(raidBtn) do
-            if button and button.health then
-                button.health:Show()
-                F:UpdateHealthPct(button)
+        for _,b in pairs(raidBtn) do
+            if b and b.health then
+                b.health:Show()
+                F:UpdateHealthPct(b)
             end
         end
     end
@@ -106,13 +106,13 @@ function F:UpdateText(index)
         F:ResetPowerPct(index)
     end
 end
-function F:HidePrediction(button)
-    if not button then return end
-    if button.myPrediction then
-        button.myPrediction:Hide()
+function F:HidePrediction(b)
+    if not b then return end
+    if b.myPrediction then
+        b.myPrediction:Hide()
     end
-    if button.prediction then
-        button.prediction:Hide()
+    if b.prediction then
+        b.prediction:Hide()
     end
 end
 local function UpdatePrediction(button)
@@ -142,10 +142,6 @@ function event:UNIT_HEAL_PREDICTION(unit)
     if b then
         UpdatePrediction(b)
     end
-    local p=GetPetBtn(unit)
-    if p then
-        UpdatePrediction(p)
-    end
     local s=GetSoloBtn(unit)
     if s then
         UpdatePrediction(s)
@@ -164,10 +160,6 @@ function event:UNIT_HEALTH(unit)
             F:UpdateHealthPct(b)
         end
     end
-    local p=GetPetBtn(unit)
-    if p then
-        Health(p)
-    end
     local s=GetSoloBtn(unit)
     if s then
         Health(s)
@@ -185,10 +177,6 @@ function event:UNIT_MAXHEALTH(unit)
         if D.DB[5][3]==1 then
             F:UpdateHealthPct(b)
         end
-    end
-    local p=GetPetBtn(unit)
-    if p then
-        MaxHealth(p)
     end
     local s=GetSoloBtn(unit)
     if s then

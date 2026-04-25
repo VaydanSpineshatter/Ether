@@ -1,4 +1,4 @@
-local D,F,_,C,_=unpack(select(2,...))
+local D,F,_,C=unpack(select(2,...))
 local _G=_G
 local pairs,ipairs=pairs,ipairs
 local type,next,tostring,unpack=type,next,tostring,unpack
@@ -66,7 +66,7 @@ D.iIconPath={"Interface\\CharacterFrame\\Disconnect-Icon","Interface\\RaidFrame\
 D.iIconTable={"Connection","Resurrection","PlayerFlags","UnitFlags","UnitFaction","RaidTarget","GroupLeader",
               "MasterLoot","MainTank","GroupRole","ReadyCheck"}
 D.threadEvent={"UNIT_THREAT_SITUATION_UPDATE","UNIT_PORTRAIT_UPDATE","UNIT_MODEL_CHANGED"}
-D.rosterEvent={"PLAYER_TARGET_CHANGED","PLAYER_UNGHOST","GROUP_ROSTER_UPDATE","PLAYER_REGEN_DISABLED","PLAYER_REGEN_ENABLED","GROUP_JOINED"}
+D.rosterEvent={"PLAYER_TARGET_CHANGED","PLAYER_UNGHOST","GROUP_ROSTER_UPDATE","GROUP_JOINED"}
 local PosMap,UnitMap,IndiMap={},{},{}
 for i,v in ipairs(Point) do
     PosMap[v]=i -- "TOPLEFT" -> 1
@@ -285,7 +285,6 @@ function D:RefreshAllFrames()
         D:ApplyFramePosition(D.customBtn[index])
     end
 end
-
 function D:ApplyFramePosition(frame)
     if not frame or type(frame)=="nil" or not frame.index then return end
     local pos=D.DB[21][frame.index]
@@ -326,7 +325,6 @@ function D:MergeToLeft(ORIG,NEW)
         LEFT=next(mC)
     end
 end
-
 function D:MergeAnalyse()
     if not C.InfoFrame then return end
     if C.InfoTimer then return end

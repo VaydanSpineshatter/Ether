@@ -4,7 +4,7 @@ local UnitIsVisible,UnitPhaseReason=UnitIsVisible,UnitPhaseReason
 local UnitInRange=UnitInRange
 local IsSpellInRange=C_Spell.IsSpellInRange
 local UnitCanAssist,UnitCanAttack=UnitCanAssist,UnitCanAttack
-local petBtn,raidBtn,soloBtn=D.petBtn,D.raidBtn,D.soloBtn
+local raidBtn,soloBtn=D.raidBtn,D.soloBtn
 local classFriendly={
     PRIEST=2061,-- Flash Heal
     SHAMAN=403,-- Lightning Bolt
@@ -32,7 +32,7 @@ local function IsInRange(unit)
     if not unit then return end
     local inRange
     if UnitCanAssist("player",unit) then
-       inRange=IsSpellInRange(friendly,unit)
+        inRange=IsSpellInRange(friendly,unit)
     elseif UnitCanAttack("player",unit) then
         inRange=IsSpellInRange(hostile,unit)
     else
@@ -83,11 +83,6 @@ local function UpdateRaidAlpha()
             F:UpdateAlpha(button)
         end
     end
-    for _,button in pairs(petBtn) do
-        if button and button:IsVisible() then
-            F:UpdateAlpha(button)
-        end
-    end
 end
 local update
 update=nil
@@ -105,11 +100,6 @@ function F:RangeDisable()
         update=nil
     end
     for _,button in pairs(raidBtn) do
-        if button then
-            button:SetAlpha(1)
-        end
-    end
-   for _,button in pairs(petBtn) do
         if button then
             button:SetAlpha(1)
         end

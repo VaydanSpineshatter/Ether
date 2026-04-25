@@ -418,7 +418,6 @@ local validUnit={
 function event:UNIT_AURA(arg1,...)
     if not arg1 or not UnitExists(arg1) then return end
     local info=...
-    if not info then return end
     if validUnit[arg1] then
         UnitAuraUpdate(arg1,info)
     end

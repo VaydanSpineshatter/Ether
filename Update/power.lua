@@ -3,10 +3,12 @@ local UnitPower,UnitPowerMax,UnitExists=UnitPower,UnitPowerMax,UnitExists
 local sformat,mfloor,pairs=string.format,math.floor,pairs
 local event,raidBtn,soloBtn,f2m=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r"
 local function ReturnPower(self)
-    return UnitPower(self)
+    if not self or not self.unit then return end
+    return UnitPower(self.unit)
 end
 local function ReturnMaxPower(self)
-    return UnitPowerMax(self)
+    if not self or not self.unit then return end
+    return UnitPowerMax(self.unit)
 end
 local function GetSoloBtn(unit)
     return soloBtn[D:PosUnit(unit)]
@@ -17,46 +19,51 @@ local function GetRaidBtn(unit)
         return b
     end
 end
-local function InitialPower(button)
-    if not button or not button.powerBar then return end
-    local unit=button.unit
-    button.powerBar:SetValue(ReturnPower(unit))
-    button.powerBar:SetMinMaxValues(0,ReturnMaxPower(unit))
-end
-local function DisplayPower(button)
-    if not button or not button.powerBar then return end
-    local unit=button.unit
-    local r,g,b=F:GetPowerColor(unit)
-    button.powerBar:SetStatusBarColor(r,g,b,.6)
-    button.powerDrop:SetColorTexture(r*0.3,g*0.3,b*0.3)
-end
-F.DisplayPower=DisplayPower
-local function Power(button)
-    if not button or not button.powerBar then return end
-    local unit=button.unit
-    local p=UnitPower(unit)
-    if not p then return end
-    if button.smooth then
-        button.powerBar:SetSmoothedValue(p)
+local function InitialPower(b)
+    if not b or not b.powerBar then return end
+    if b.smooth then
+        b.powerBar:SetMinMaxSmoothedValue(0,ReturnMaxPower(b))
+        b.powerBar:SetSmoothedValue(ReturnPower(b))
     else
-        button.powerBar:SetValue(p)
+        b.powerBar:SetValue(ReturnPower(b))
+        b.powerBar:SetMinMaxValues(0,ReturnMaxPower(b))
     end
 end
-local function MaxPower(button)
-    if not button or not button.powerBar then return end
-    local unit=button.unit
+F.InitialPower=InitialPower
+local function DisplayPower(b)
+    if not b or not b.powerBar then return end
+    local unit=b.unit
+    local r,g,be=F:GetPowerColor(unit)
+    b.powerBar:SetStatusBarColor(r,g,be,.6)
+    b.powerDrop:SetColorTexture(r*0.3,g*0.3,be*0.3)
+end
+F.DisplayPower=DisplayPower
+local function Power(b)
+    if not b or not b.powerBar then return end
+    local unit=b.unit
+    local p=UnitPower(unit)
+    if not p then return end
+    if b.smooth then
+        b.powerBar:SetSmoothedValue(p)
+    else
+        b.powerBar:SetValue(p)
+    end
+end
+local function MaxPower(b)
+    if not b or not b.powerBar then return end
+    local unit=b.unit
     local mp=UnitPowerMax(unit)
     if not mp then return end
-    if button.smooth then
-        button.powerBar:SetMinMaxSmoothedValue(0,mp)
+    if b.smooth then
+        b.powerBar:SetMinMaxSmoothedValue(0,mp)
     else
-        button.powerBar:SetMinMaxValues(0,mp)
+        b.powerBar:SetMinMaxValues(0,mp)
     end
 end
 local lastPower=F.GetTbl()
-function F:UpdatePowerPct(button)
-    if not button or not button.power then return end
-    local unit=button.unit
+function F:UpdatePowerPct(b)
+    if not b or not b.unit or not b.power then return end
+    local unit=b.unit
     local pw,maxPw=UnitPower(unit),UnitPowerMax(unit)
     if not pw then return end
     local pct=maxPw>0 and pw/maxPw or 0
@@ -64,22 +71,22 @@ function F:UpdatePowerPct(button)
     local rPct=mfloor(pct*100+0.5)
     if lastPower[unit]==rPct then return end
     lastPower[unit]=rPct
-    button.power:SetText(sformat(f2m,D.PowerGradient[rPct],rPct))
+    b.power:SetText(sformat(f2m,D.PowerGradient[rPct],rPct))
 end
 function F:ResetPowerPct(index)
     if index~=4 then return end
     if D.DB[5][index]==0 then
-        for _,button in pairs(raidBtn) do
-            if button and button.health then
-                button.power:Hide()
+        for _,b in pairs(raidBtn) do
+            if b and b.power then
+                b.power:Hide()
             end
         end
         F.RelTbl(lastPower)
     elseif D.DB[5][index]==1 then
-        for _,button in pairs(raidBtn) do
-            if button and button.health then
-                button.power:Show()
-                F:UpdatePowerPct(button)
+        for _,b in pairs(raidBtn) do
+            if b and b.power then
+                b.power:Show()
+                F:UpdatePowerPct(b)
             end
         end
     end

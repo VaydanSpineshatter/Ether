@@ -1,13 +1,10 @@
-local D,F,_,C,_=unpack(select(2,...))
-local ipairs=ipairs
-local eColor="|cffcc66ffEther|r "
-
+local D,F,_,C=unpack(select(2,...))
+local ipairs,eColor=ipairs,"|cffcc66ffEther|r "
 local function OnProfileChange(self,data)
     if data.text==D:GetProfileName() then return end
     D:SwitchProfile(data.text)
     self.text:SetText(data.text)
 end
-
 local function GetUpdatedProfileList(parts)
     local data=F.GetTbl()
     for key,name in ipairs(D:GetProfileList(data)) do
@@ -16,7 +13,6 @@ local function GetUpdatedProfileList(parts)
     F.RelTbl(data)
     return parts
 end
-
 function F:Profile(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end

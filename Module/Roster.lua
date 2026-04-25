@@ -26,15 +26,17 @@ local function refreshAfter()
         after=true
         C_After(1,function()
             for _,b in pairs(raidBtn) do
-                if b then
-                    F.InitialHealth(b)
+                if b and UnitExists(b.unit) then
                     F:HideButtonDispellable(b)
                     F:UpdateDeadIcon(b)
+                    F:HidePrediction(b)
+                    F.InitialHealth(b)
                 end
             end
             for _,b in ipairs(soloBtn) do
                 if b and UnitExists(b.unit) then
                     F.InitialHealth(b)
+                    F.InitialPower(b)
                 end
             end
             after=false
@@ -44,33 +46,27 @@ end
 local function refreshButtons()
     if not refresh then
         refresh=true
-        if not UnitInAnyGroup("player") then
-            local button=raidBtn["player"]
-            if button then
-                F:HidePrediction(button)
-                F:IndicatorsFullUpdateBtn()
+        C_After(2,function()
+            F:ClearRaidIcons()
+            for _,b in pairs(raidBtn) do
+                if not UnitExists(b.unit) then return end
+                F:UpdateIndicatorsString(b)
+                F:RaidAurasFullUpdate(b.unit)
+                F.InitialHealth(b.unit)
+                F.UpdateClassColor(b)
             end
-            F:AuraDisable()
-            C_After(1.5,function()
-                F:AuraEnable()
-                refresh=false
-            end)
-        else
-            C_After(3,function()
-                for _,button in pairs(raidBtn) do
-                    if button and UnitExists(button.unit) then
-                        F:RaidAurasFullUpdate(button.unit)
-                        F.InitialHealth(button)
-                        F.UpdateClassColor(button)
-                        F:IndicatorsFullUpdate(button.unit)
-                    end
-                end
-                refresh=false
-            end)
-        end
+            refresh=false
+        end)
     end
 end
 function event:GROUP_ROSTER_UPDATE()
+    if not UnitInAnyGroup("player") then
+        F:AuraDisable()
+        C_After(1,function()
+            F:AuraEnable()
+            F:IndicatorsFullUpdateBtn()
+        end)
+    end
     refreshButtons()
     if IsInGroup() then
         if not updatedChannel then
@@ -84,7 +80,6 @@ function event:GROUP_ROSTER_UPDATE()
 end
 function event:GROUP_JOINED()
     refreshButtons()
-    C:EtherInfo("joined a")
 end
 function event:UNIT_THREAT_SITUATION_UPDATE(unit)
     if unit=="player" then

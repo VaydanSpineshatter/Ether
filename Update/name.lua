@@ -1,18 +1,11 @@
 local D,F,S=unpack(select(2,...))
-local UnitIsUnit,UnitFullName=UnitIsUnit,UnitFullName
-local sbyte,ME=string.byte,[[|cffffd700ME|r]]
-local event,raidBtn,petBtn,soloBtn=S.EventFrame,D.raidBtn,D.petBtn,D.soloBtn
+local sbyte,ME,UnitIsUnit,UnitFullName=string.byte,[[|cffffd700ME|r]],UnitIsUnit,UnitFullName
+local event,raidBtn,soloBtn=S.EventFrame,D.raidBtn,D.soloBtn
 local function GetSoloBtn(unit)
     return soloBtn[D:PosUnit(unit)]
 end
 local function GetRaidBtn(unit)
     local b=raidBtn[unit]
-    if b and b.unit==unit then
-        return b
-    end
-end
-local function GetPetBtn(unit)
-    local b=petBtn[unit]
     if b and b.unit==unit then
         return b
     end
@@ -54,9 +47,7 @@ local function UTF8SUB(name,start,numChars)
     return name:sub(start,endIndex)
 end
 function F:UpdateName(button,number)
-    if not button or not button.name then
-        return
-    end
+    if not button or not button.name then return end
     local unit=button.unit or "player"
     local name=UnitFullName(unit) or "UNKNOWN"
     local user=UnitIsUnit(unit,"player") and ME or UTF8SUB(name,1,number or 10)
@@ -77,10 +68,6 @@ function event:UNIT_NAME_UPDATE(unit)
     local b=GetRaidBtn(unit)
     if b then
         F:UpdateName(b,3)
-    end
-    local p=GetPetBtn(unit)
-    if p then
-        F:UpdateName(p,3)
     end
 end
 function F:NameEnable()

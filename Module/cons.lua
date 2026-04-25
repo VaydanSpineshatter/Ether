@@ -18,8 +18,8 @@ local function Durability()
         end
     end
     if tMax>0 then
-         dPct=(tCur/tMax)*100
-        return  dPct
+        dPct=(tCur/tMax)*100
+        return dPct
     end
 end
 function F:AddonUsage()
@@ -35,7 +35,7 @@ function F:AddonUsage()
     data[#data+1]=ConsumaCount("Guardian Elixir Count: |cffffff00%d|r",D.DB["CONFIG"][8] or "-",false,false)
     data[#data+1]=ConsumaCount("Food Count: |cffffff00%d|r",D.DB["CONFIG"][9] or "-",false,false)
     data[#data+1]=ConsumaCount("MainHand Charges: |cffffff00%d|r",D.DB["CONFIG"][10] or "-",false,true)
-    data[#data+1]=sformat("Durability: |cffffff00%d%%|r", dPct)
+    data[#data+1]=sformat("Durability: |cffffff00%d%%|r",dPct)
     data[#data+1]=sformat("Speed: |cffffff00%d%%|r",speed/7*100)
     data[#data+1]=sformat("|cffffff00FPS: |r%s   -   |cffCC66FFMEM: |r%s Kb",fps,mfloor(mem))
     C:EtherInfo(tconcat(data,'\n'))

@@ -1,5 +1,5 @@
 local _,F,_,C,_=unpack(select(2,...))
-local tinsert,tremove,twipe=table.insert,table.remove,table.wipe
+local tinsert,twipe=table.insert,table.wipe
 local type=type
 local cb={}
 function F:RegisterCallback(func)
@@ -10,10 +10,8 @@ function F:ClearCallbacks()
     twipe(cb)
 end
 function F:Fire(index,...)
-    if not index then return end
-    for i=1,#cb do
-        cb[i](...)
-    end
+    if not index or type(index)~="number" then return end
+    cb[index](...)
 end
 local Status,Updater=false,nil
 local function reset()

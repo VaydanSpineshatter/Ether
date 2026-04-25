@@ -201,6 +201,11 @@ function S.EventFrame:PLAYER_LOGIN()
     if D.DB[6][4]==1 then
         F:PetCondition()
     end
+    if UnitAffectingCombat("player") then
+        S.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+    else
+        S.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+    end
     F:RosterEnable()
     F:CreateGroupHeader()
     F:CreatePetHeader()

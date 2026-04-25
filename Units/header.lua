@@ -1,16 +1,11 @@
-local D,F,_,_,_=unpack(select(2,...))
+local D,F=unpack(select(2,...))
 local raid=CreateFrame("Frame","EtherRaidGroupAnchor",UIParent,"SecureFrameTemplate")
 local pet=CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplate")
-D.A.raid=raid
-D.A.pet=pet
-D.A.raid.index=10
-D.A.pet.index=11
-local smatch=string.match
-local raidBtn,petBtn=D.raidBtn,D.petBtn
-local UnitExists,UnitGUID=UnitExists,UnitGUID
-local GameTooltip=GameTooltip
-local C_After=C_Timer.After
-local unpack=unpack
+D.A.raid,D.A.pet=raid,pet
+D.A.raid.index,D.A.pet.index=10,11
+local raidBtn=D.raidBtn
+local UnitExists,UnitGUID,unpack=UnitExists,UnitGUID,unpack
+local C_After,GameTooltip=C_Timer.After,GameTooltip
 local initialConfigFunction=[[
     local header = self:GetParent()
     self:SetWidth(header:GetAttribute("ButtonWidth"))
@@ -34,46 +29,30 @@ local function CheckStatus(self)
     local guid=unit and UnitGUID(unit)
     if guid~=self.destGUID then
         self.destGUID=guid
-        if guid and UnitExists(self.unit) then
-            F:IndicatorsFullUpdate(self.unit)
-            F:UpdateRaidAura(self.unit)
+        if guid then
+            F:UpdateIndicatorsString(self)
+            F:RaidAurasFullUpdate(self.unit)
             UpdatePCT(self)
             F:FullHealthUpdate(self)
-            F:FullPowerUpdate(self)
             F:UpdateName(self,2)
+            F:UpdateDeadIcon(self)
         end
     end
 end
 local function OnAttributeChanged(self,name,unit)
     if name~="unit" then return end
-    local oldUnit=self.unit
-    local newUnit=unit
-    if oldUnit and oldUnit~=newUnit then
-        if smatch(oldUnit,"pet") then
-            petBtn[oldUnit]=nil
-        else
-            raidBtn[oldUnit]=nil
-        end
-    end
-    if newUnit then
-        if smatch(newUnit,"pet") then
-            petBtn[newUnit]=self
-        else
-            raidBtn[newUnit]=self
-        end
+    if unit then
+        self.unit=nil
+        raidBtn[unit]=self
     end
     CheckStatus(self)
 end
-
 local function OnShow(self)
-    F:SavePosition(self)
     self:RegisterEvent("GROUP_ROSTER_UPDATE")
     if self.TypePet then
         self:RegisterEvent("UNIT_PET")
     end
-    CheckStatus(self)
 end
-
 local function OnHide(self)
     self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     if self.TypePet then
@@ -279,7 +258,6 @@ local function CreateGroupHeader(group)
     header:SetAttribute("showSolo", true)
     header:Show()
 end
-
 function F:PositionSplitHeader()
     local lastHeader = nil
     for i, b in ipairs(groupHeaders) do
@@ -293,14 +271,11 @@ function F:PositionSplitHeader()
         lastHeader = groupHeaders[i]
     end
 end
-
 function F:CreateSplitHeader(number)
     for index = 1, number do
         CreateGroupHeader(index)
     end
 end
-]]
---[[
 order = 'DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR',
 by = 'CLASS'
 order = 'TANK,HEALER,DAMAGER,NONE',

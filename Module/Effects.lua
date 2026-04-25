@@ -72,7 +72,7 @@ local function StopFlash()
     S.FlashRight:Hide()
     if timer then
         timer:Cancel()
-       timer=nil
+        timer=nil
     end
 end
 function F:StartFlash()

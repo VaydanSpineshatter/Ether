@@ -1,14 +1,12 @@
-local D,_,_,_,_=unpack(select(2,...))
+local D=unpack(select(2,...))
 function D:AuraTemplate(newId)
     local obj={"New Aura "..newId,1,1,0,1,"TOP",0,0,8,false}
     return obj
 end
-
 function D:IndicatorTemplate(name)
     local obj={name,1,1,0,1,"TOP",0,0,8,false}
     return obj
 end
-
 D.PredefinedIndicator={
     ["Connection"]={"UNIT_CONNECTION",0.93,0.91,0.67,1,"BOTTOMLEFT",0,0,8,true},
     ["Faction"]={"INCOMING_RESURRECT_CHANGED",0.93,0.91,0.67,1,"BOTTOMLEFT",0,0,8,true},
@@ -21,7 +19,6 @@ D.PredefinedIndicator={
     ["Roles"]={"PLAYER_ROLES_ASSIGNED",0.93,0.91,0.67,1,"BOTTOMLEFT",0,0,8,true},
     ["ReadyCheck"]={"READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED",0.93,0.91,0.67,1,"BOTTOMLEFT",0,0,8,true},
 }
-
 D.PredefinedAuras={
     ["Priest-GroupBuffs"]={
         [25392]={"Prayer Fortitude 3",0.93,0.91,0.67,1,"BOTTOMLEFT",0,0,8,false},
@@ -49,7 +46,6 @@ D.PredefinedAuras={
     }
 }
 --[[
-
 local GetColor              = {
 	["Azure blue"]  = { str = "cff3399FF" },
 	["Rust brown"]  = { str = "cff996600" },
@@ -76,5 +72,4 @@ local GetColor              = {
 	["EtherPink"]   = { r = 0.80, g = 0.40, b = 1.00, str = "cffCC66FF" },
 	["EtherBlue"]   = { r = 0.00, g = 0.80, b = 1.00, str = "cE600CCFF" }
 }
-
 ]]

@@ -26,5 +26,3 @@ function C:EtherInfo(msg)
     C.InfoTimer=true
     callback()
 end
-
-

@@ -198,7 +198,21 @@ function F:Aura(index)
         end)
         btn:GetScript("OnLeave")(btn)
     end
-    editor.color=F:ColorSelect(editor,s)
+
+    local color=CreateFrame("Button",nil,editor)
+    editor.color=color
+    color:SetSize(60,15)
+    color:SetPoint("TOPLEFT",s,"BOTTOMLEFT",0,-20)
+    color.v=color:CreateFontString(nil,"OVERLAY")
+    color.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
+    color.v:SetPoint("TOPLEFT",s,"BOTTOMLEFT",0,-40)
+    color.v:SetText("Color")
+    color.bg=color:CreateTexture(nil,"BACKGROUND")
+    color.bg:SetAllPoints()
+    color.bg:SetColorTexture(1,1,0,1)
+    color:SetScript("OnClick",function()
+        F:ColorSelect(editor)
+    end)
     F:UpdateAuraList()
     F:UpdateEditor(editor)
 end
@@ -223,7 +237,6 @@ function F:UpdateAuraList()
         btn:Hide()
         btn:SetParent(nil)
     end
-    wipe(C.AuraList)
     local yOffset=0
     local index=1
     for spellId,data in pairs(DB["CUSTOM"]) do
@@ -259,7 +272,6 @@ function F:UpdateAuraList()
         btn.spell:SetPoint("TOPLEFT",btn.name,"BOTTOMLEFT",0,-2)
         btn.spell:SetText("Spell ID: "..spellId)
         btn.spell:SetTextColor(0,0.8,1)
-
         btn.colorBox=btn:CreateTexture(nil,"OVERLAY")
         btn.colorBox:SetSize(10,10)
         btn.colorBox:SetPoint("RIGHT",-10,0)
@@ -286,7 +298,7 @@ function F:UpdateAuraList()
             self:GetParent():GetScript("OnLeave")(self:GetParent())
         end)
         btn.spell=spellId
-        tinsert(C.AuraList,btn)
+        C.AuraList[#C.AuraList+1]=btn
         if C.Spell==spellId then
             btn.bg:SetColorTexture(0,0.8,1,0.8)
         end

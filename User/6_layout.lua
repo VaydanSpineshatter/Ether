@@ -1,5 +1,5 @@
 local D,F,_,C,_=unpack(select(2,...))
-local raidBtn,petBtn,soloBtn=D.raidBtn,D.petBtn,D.soloBtn
+local raidBtn,soloBtn=D.raidBtn,D.soloBtn
 local sformat,pairs,ipairs,indexKey=string.format,pairs,ipairs
 local function SetDefaultValue(index,wl,hl,w,h,s,a)
     if not index then return end
@@ -64,17 +64,10 @@ function F:ProcessUserData(index)
         D:ApplyFramePosition(D.castBar[2])
     elseif index==12 then
         D:ApplyFramePosition(D.castBar[1])
-    elseif index==10 then
+    elseif index==10 or index==11 then
         D.A.raid:SetScale(D.DB[21][indexKey][8])
         D.A.raid:SetAlpha(D.DB[21][indexKey][9])
         for _,btn in pairs(raidBtn) do
-            btn:SetWidth(D.DB[21][indexKey][6])
-            btn:SetHeight(D.DB[21][indexKey][7])
-        end
-    elseif index==11 then
-        D.A.pet:SetScale(D.DB[21][indexKey][8])
-        D.A.pet:SetAlpha(D.DB[21][indexKey][9])
-        for _,btn in pairs(petBtn) do
             btn:SetWidth(D.DB[21][indexKey][6])
             btn:SetHeight(D.DB[21][indexKey][7])
         end

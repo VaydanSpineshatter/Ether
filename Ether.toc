@@ -6,11 +6,12 @@
 ## Category-deDE: Unit Frames
 ## Category-esES: Unit Frames
 ## Category-frFR: Unit Frames
-## Version: 0.8.0
+## Version: 0.8.1
 ## SavedVariables: ETHER_DATABASE
 ## IconTexture: Interface\AddOns\Ether\Media\icon
 ## X-Flavor: TBC
 ## X-Curse-Project-ID: 1376190
+
 Core/init.lua
 global.lua
 Data/index.lua

@@ -63,8 +63,23 @@ local function CleanupAuras(unit)
         end
     end
 end
-function F:CleanUpRaidGUID(unit)
-    CleanupAuras(unit)
+local function HideAuras(unit)
+    if dataHelpful[unit] then
+        for _,texture in pairs(dataHelpful[unit]) do
+            if type(texture)~="table" then return end
+            texture:Hide()
+            texture:ClearAllPoints()
+            texture:SetParent(nil)
+        end
+    end
+    if dataHarmful[unit] then
+        for _,texture in pairs(dataHarmful[unit]) do
+            if type(texture)~="table" then return end
+            texture:Hide()
+            texture:ClearAllPoints()
+            texture:SetParent(nil)
+        end
+    end
 end
 local function CleanupRaidIcons()
     for unit in pairs(dataHelpful) do
@@ -199,17 +214,31 @@ local function SetAuraRaidTimer(self,duration,expirationTime)
         self.cooldown:Clear()
     end
 end
-function F:UpdateRaidAura(unit)
-    local DB=D.DB
-    local config=DB["CUSTOM"]
-    local b=GetRaidBtn(unit)
-    if not b then return end
+local function UnitTable(unit)
     if not dataHelpful[unit] then
         dataHelpful[unit]={}
     end
     if not dataHarmful[unit] then
         dataHarmful[unit]={}
     end
+end
+function F:UnitUpdateTable(b)
+    if not b or not b.unit then return end
+    if b.dispel then
+        F:StopBlink(b.dispel)
+    end
+    if b.dispellable then
+        F:HideButtonDispellable(b)
+    end
+    HideAuras(b.unit)
+end
+function F:UpdateRaidAura(unit)
+    if not unit or not UnitExists(unit) then return end
+    local DB=D.DB
+    local config=DB["CUSTOM"]
+    local b=GetRaidBtn(unit)
+    if not b then return end
+    UnitTable(unit)
     for i in pairs(config) do
         local aura=C_UnitAuras.GetUnitAuraBySpellID(unit,i)
         if not aura then return end
@@ -301,21 +330,23 @@ local function CleanupCache()
     end
 end
 function F:RaidAurasFullUpdate(unit)
+    if not unit or not UnitExists(unit) then return end
     local b=GetRaidBtn(unit)
     if not b then return end
     CleanupCache()
-    if not dataHelpful[unit] then
-        dataHelpful[unit]={}
-    end
-    if not dataHarmful[unit] then
-        dataHarmful[unit]={}
-    end
+    UnitTable(unit)
     local config=D.DB["CUSTOM"]
     local index=1
     while true do
         local aura=GetBuffDataByIndex(unit,index)
         if not aura then break end
         if aura.spellId and config[aura.spellId] and not config[aura.spellId][10] then
+            if dataHelpful[unit] and dataHelpful[unit][aura.spellId] then
+                dataHelpful[unit][aura.spellId]:Hide()
+                dataHelpful[unit][aura.spellId]:ClearAllPoints()
+                dataHelpful[unit][aura.spellId]:SetParent(nil)
+                dataHelpful[unit][aura.spellId]=nil
+            end
             if not dataHelpful[unit][aura.spellId] then
                 dataHelpful[unit][aura.spellId]=GetTexture(b,config[aura.spellId])
                 if aura.duration then
@@ -336,6 +367,12 @@ function F:RaidAurasFullUpdate(unit)
         local aura=GetDebuffDataByIndex(unit,index)
         if not aura then break end
         if aura.spellId and config[aura.spellId] and config[aura.spellId][10] then
+            if dataHarmful[unit] and dataHarmful[unit][aura.spellId] then
+                dataHarmful[unit][aura.spellId]:Hide()
+                dataHarmful[unit][aura.spellId]:ClearAllPoints()
+                dataHarmful[unit][aura.spellId]:SetParent(nil)
+                dataHarmful[unit][aura.spellId]=nil
+            end
             if not dataHarmful[unit][aura.spellId] then
                 dataHarmful[unit][aura.spellId]=GetTexture(b,config[aura.spellId])
                 if aura.duration and aura.duration>0 then
@@ -367,12 +404,7 @@ function F:raidAuraUpdate(unit,updateInfo)
     if not update then return end
     local b=GetRaidBtn(unit)
     if not b then return end
-    if not dataHelpful[unit] then
-        dataHelpful[unit]={}
-    end
-    if not dataHarmful[unit] then
-        dataHarmful[unit]={}
-    end
+    UnitTable(unit)
     local DB=D.DB
     local config=DB["CUSTOM"]
     if updateInfo.isFullUpdate then
@@ -383,6 +415,12 @@ function F:raidAuraUpdate(unit,updateInfo)
         for _,aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful then
                 if aura.spellId and config[aura.spellId] and not config[aura.spellId][10] then
+                    if dataHelpful[unit] and dataHelpful[unit][aura.spellId] then
+                        dataHelpful[unit][aura.spellId]:Hide()
+                        dataHelpful[unit][aura.spellId]:ClearAllPoints()
+                        dataHelpful[unit][aura.spellId]:SetParent(nil)
+                        dataHelpful[unit][aura.spellId]=nil
+                    end
                     if not dataHelpful[unit][aura.spellId] then
                         dataHelpful[unit][aura.spellId]=GetTexture(b,config[aura.spellId])
                         if aura.duration and aura.duration>0 then
@@ -399,6 +437,12 @@ function F:raidAuraUpdate(unit,updateInfo)
             end
             if aura.isHarmful then
                 if aura.spellId and config[aura.spellId] and config[aura.spellId][10] then
+                          if dataHarmful[unit] and dataHarmful[unit][aura.spellId] then
+                                dataHarmful[unit][aura.spellId]:Hide()
+                                dataHarmful[unit][aura.spellId]:ClearAllPoints()
+                                dataHarmful[unit][aura.spellId]:SetParent(nil)
+                                dataHarmful[unit][aura.spellId]=nil
+                            end
                     if not dataHarmful[unit][aura.spellId] then
                         dataHarmful[unit][aura.spellId]=GetTexture(b,config[aura.spellId])
                         if aura.duration and aura.duration>0 then
@@ -485,6 +529,7 @@ function F:raidAuraUpdate(unit,updateInfo)
         end
     end
 end
+
 function F:AuraWipe()
     twipe(helpfulAuras)
     twipe(harmfulAuras)
@@ -492,13 +537,15 @@ function F:AuraWipe()
     twipe(dataHarmful)
     twipe(dispelCache)
 end
+function F:ClearRaidIcons()
+    F:StopAllBlinks()
+    CleanupRaidIcons()
+end
 function F:EnableRaidAura()
     update=true
-    for _,button in pairs(raidBtn) do
-        if button then
-            if UnitExists(button.unit) then
-                F:RaidAurasFullUpdate(button.unit)
-            end
+    for _,b in pairs(raidBtn) do
+        if b and UnitExists(b.unit) then
+            F:RaidAurasFullUpdate(b.unit)
         end
     end
 end

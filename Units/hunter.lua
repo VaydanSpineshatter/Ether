@@ -2,7 +2,7 @@ local D,F,S,C=unpack(select(2,...))
 local UnitCreatureFamily,UnitExists=UnitCreatureFamily,UnitExists
 local GetPetHappiness,GameTooltip=GetPetHappiness,GameTooltip
 local event=S.EventFrame
-local petBtn = D.soloBtn
+local petBtn=D.soloBtn
 local petInfo={
     [1]={0.375,0.5625,0,0.359375},
     [2]={0.1875,0.375,0,0.359375},
@@ -51,7 +51,7 @@ end
 function F:PetCondition()
     if C.ClassName~="HUNTER" then return end
     local condition=CreateFrame("Frame",nil,petBtn[4])
-    C.condition = condition
+    C.condition=condition
     condition:SetFrameLevel(petBtn[4].healthBar:GetFrameLevel()+1)
     condition:SetSize(16,16)
     condition:SetPoint("BOTTOMRIGHT",petBtn[4].healthBar,"BOTTOMRIGHT",0,0)

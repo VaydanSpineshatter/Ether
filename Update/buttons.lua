@@ -1,4 +1,4 @@
-local D,F,_,C,_=unpack(select(2,...))
+local D,F,_,C=unpack(select(2,...))
 function F:CleanUpButtons(status)
     local index=F:BinaryCondition(status)
     --[[

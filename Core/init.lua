@@ -39,8 +39,12 @@ Ether[4].EtherFont=CreateFont("EtherFont")
 Ether[4].EtherFont:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",8,"OUTLINE")
 Ether[4].EtherIcon=CreateFrame("Frame",nil,UIParent)
 Ether[4].ToolFrame=CreateFrame("Frame",nil,UIParent)
-Ether[4].ToolFrame.index=17
 Ether[4].ToolFrame:SetFrameStrata("TOOLTIP")
+Ether[4].ToolFrame:Hide()
+Ether[4].ToolFrame.index=17
+local bg=Ether[4].ToolFrame:CreateTexture(nil,"BACKGROUND")
+bg:SetColorTexture(0,0,0,.5)
+bg:SetAllPoints()
 for i=1,6 do
     Ether[1].soloBtn[i].index=i
 end
@@ -69,7 +73,7 @@ local tbl,count={},0
 while true do
     count=count+1
     tbl[#tbl+1]={}
-    if count>=91 then
+    if count>=64 then
         break
     end
 end

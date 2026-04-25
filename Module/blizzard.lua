@@ -1,10 +1,9 @@
-local D,F,_,C,_=unpack(select(2,...))
+local D,F,_,C=unpack(select(2,...))
 local Hidden=CreateFrame("Frame",nil,UIParent)
 Hidden:SetAllPoints()
 Hidden:Hide()
-local B={PlayerFrame,PetFrame,TargetFrame,FocusFrame,PlayerCastingBarFrame,PartyFrame,CompactRaidFrameContainer,
-         CompactRaidFrameManager,MicroMenu,MainStatusTrackingBarContainer,BagsBar}
-local data={}
+local data,B={},{PlayerFrame,PetFrame,TargetFrame,FocusFrame,PlayerCastingBarFrame,PartyFrame,CompactRaidFrameContainer,
+                 CompactRaidFrameManager,MicroMenu,MainStatusTrackingBarContainer,BagsBar}
 C.CombatState=false
 function F:StatusBlizzard(index)
     if InCombatLockdown() and C.CombatState then return end
@@ -18,7 +17,6 @@ function F:StatusBlizzard(index)
         B[index]:SetParent(data[index])
     end
 end
-
 function F:HideBlizzard()
     if InCombatLockdown() then
         C.CombatState=true

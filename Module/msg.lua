@@ -1,14 +1,6 @@
-local D,F,S,C,_=unpack(select(2,...))
-local event=S.EventFrame
-local GetPlayerInfoByGUID=GetPlayerInfoByGUID
-local sformat=string.format
-local UnitGUID,ipairs=UnitGUID,ipairs
-local UnitExists=UnitExists
-local GUIDIsPlayer=C_PlayerInfo.GUIDIsPlayer
-local CombatLogGetCurrentEventInfo=CombatLogGetCurrentEventInfo
-local status=0
-local snapshot=nil
-local Received={}
+local D,F,S,C=unpack(select(2,...))
+local event,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,snapshot,status=S.EventFrame,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,nil,0
+local UnitGUID,ipairs,sformat,UnitExists,GUIDIsPlayer,Received=UnitGUID,ipairs,string.format,UnitExists,C_PlayerInfo.GUIDIsPlayer,{}
 local eFaction={
     ["Human"]=true,
     ["Dwarf"]=true,
@@ -16,8 +8,10 @@ local eFaction={
     ["Gnome"]=true,
     ["Draenei"]=true
 }
-local E=[[|cffff0000is Enemy|r]]
-local NE=[[|cff00ff00is not Enemy|r]]
+local A,H="Enemy","not Enemy"
+A=H and eFaction[UnitRace("player")] or A
+local E="|cffff0000is "..A.."|r"
+local NE="|cff00ff00is "..H.."|r"
 local P=[[Found: |cff%02x%02x%02x%s %s|r %s %s]]
 local function ValidGUID(guid)
     for index,v in ipairs(D.DB["USER"]) do
@@ -27,14 +21,12 @@ local function ValidGUID(guid)
     end
     return false
 end
-
 local function GuidClassColor(guid)
     local _,class,_,race,_,name=GetPlayerInfoByGUID(guid)
-    local color=RAID_CLASS_COLORS[class or "PRIEST"]
+    local color=RAID_CLASS_COLORS[class] or RAID_CLASS_COLORS["PRIEST"]
     local enemy=eFaction[race] and E or NE
-    return color,class,race,name,enemy
+    return color,class or "UNKNOWN",race or "UNKNOWN",name or "UNKNOWN",enemy or "UNKNOWN"
 end
-
 local function OnVersion(message)
     local theirVersion=tonumber(message)
     local myVersion=tonumber(C.EtherVersion)
@@ -45,7 +37,6 @@ local function OnVersion(message)
         C:EtherInfo(msg)
     end
 end
-
 function F:ScanTargetGUID()
     if not UnitExists("target") then return end
     local guid=UnitGUID("target")
@@ -57,7 +48,6 @@ function F:ScanTargetGUID()
         C:EtherInfo(sformat(P,c.r*255,c.g*255,c.b*255,name,class,race,enemy))
     end
 end
-
 function F:ScanGUID()
     if not UnitExists("target") then return end
     local guid=UnitGUID("target")
