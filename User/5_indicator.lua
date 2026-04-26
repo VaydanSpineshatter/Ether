@@ -1,20 +1,26 @@
-local D,F,_,C,_=unpack(select(2,...))
-local pairs,ipairs,tinsert,sformat=pairs,ipairs,table.insert,string.format
-local iK={D.iIconPath[1],D.iIconPath[2],D.iIconPath[3],D.iIconPath[5],D.iIconPath[6],D.iIconPath[7],D.iIconPath[8],D.iIconPath[9],D.iIconPath[10],D.iIconPath[12],D.iIconPath[13]}
-local function OnIndicatorSelect(self,data)
-    if data.index and data.value then
-        for _,btn in pairs(C.IndicatorFrame.cube) do
-            btn:Enable()
-        end
-        C.Indi=data.index
-        self.text:SetText(data.value)
-        F:UpdateIndicatorsPos(C.Indi,iK[C.Indi])
+local D,F,_,C=unpack(select(2,...))
+local pairs,ipairs,sformat,iK=pairs,ipairs,string.format,{}
+local function OnIndicatorSelect(self,index,data)
+    for _,btn in pairs(C.IndicatorFrame.cube) do
+        btn:Enable()
     end
+    C.Indi=index
+    self.text:SetText(data)
+    F:UpdateIndicatorsPos(C.Indi)
 end
 function F:Indicators(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end
     parent.Created=true
+    for i=1,13 do
+        if i>11 then
+            iK[#iK+1]=D.iIconPath[i]
+        elseif i<=10 and i>=5 then
+            iK[#iK+1]=D.iIconPath[i]
+        elseif i<4 then
+            iK[#iK+1]=D.iIconPath[i]
+        end
+    end
     for i,opt in ipairs(D.iIconTable) do
         local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
         if i==1 then
@@ -48,8 +54,8 @@ function F:Indicators(index)
         C.MainButtons[3][i]=btn
     end
     local indicatorList={}
-    for i,v in ipairs(D.iIconTable) do
-        tinsert(indicatorList,{text=v,value=v,index=i})
+    for _,v in ipairs(D.iIconTable) do
+        indicatorList[#indicatorList+1]=v
     end
     local dropdown=F:CreateEtherDropdown(parent,160,"Select Indicator",indicatorList,OnIndicatorSelect)
     C.IndicatorFrame.dropdown=dropdown
