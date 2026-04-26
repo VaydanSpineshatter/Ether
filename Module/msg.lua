@@ -8,11 +8,11 @@ local eFaction={
     ["Gnome"]=true,
     ["Draenei"]=true
 }
-local A,H="Enemy","not Enemy"
-A=H and eFaction[UnitRace("player")] or A
-local E="|cffff0000is "..A.."|r"
-local NE="|cff00ff00is "..H.."|r"
-local P=[[Found: |cff%02x%02x%02x%s %s|r %s %s]]
+local NE,E="|cff00ff00is not Enemy|r","|cffff0000is Enemy|r"
+if eFaction[UnitRace("player")] then
+    NE,E="|cffff0000is Enemy|r","|cff00ff00is not Enemy|r"
+end
+local P="Found: |cff%02x%02x%02x%s |r %s"
 local function ValidGUID(guid)
     for index,v in ipairs(D.DB["USER"]) do
         if v==guid then
@@ -23,9 +23,9 @@ local function ValidGUID(guid)
 end
 local function GuidClassColor(guid)
     local _,class,_,race,_,name=GetPlayerInfoByGUID(guid)
-    local color=RAID_CLASS_COLORS[class] or RAID_CLASS_COLORS["PRIEST"]
+    local c=RAID_CLASS_COLORS[class] or RAID_CLASS_COLORS["PRIEST"]
     local enemy=eFaction[race] and E or NE
-    return color,class or "UNKNOWN",race or "UNKNOWN",name or "UNKNOWN",enemy or "UNKNOWN"
+    return c,name or "UNKNOWN",enemy
 end
 local function OnVersion(message)
     local theirVersion=tonumber(message)
@@ -42,10 +42,10 @@ function F:ScanTargetGUID()
     local guid=UnitGUID("target")
     if not guid then return end
     if guid==C.PlayerGUID then return end
-    local c,class,race,name,enemy=GuidClassColor(guid)
+    local c,name,enemy=GuidClassColor(guid)
     if ValidGUID(guid) then
         F:StartFlash()
-        C:EtherInfo(sformat(P,c.r*255,c.g*255,c.b*255,name,class,race,enemy))
+        C:EtherInfo(sformat(P,c.r*255,c.g*255,c.b*255,name,enemy))
     end
 end
 function F:ScanGUID()
@@ -55,16 +55,25 @@ function F:ScanGUID()
     if guid==C.PlayerGUID then return end
     local human=GUIDIsPlayer(guid)
     if not human then return end
-    local c,class,race,name,enemy=GuidClassColor(guid)
+    local c,name,enemy=GuidClassColor(guid)
     if not ValidGUID(guid) then
         D.DB["USER"][#D.DB["USER"]+1]=guid
         F:StartFlash()
-        C:EtherInfo(sformat([[|cff00ff00Added:|r |cff%02x%02x%02x%s %s|r %s %s]],c.r*255,c.g*255,c.b*255,name,class,race,enemy))
+        C:EtherInfo(sformat("|cff00ff00Added:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
     else
         local _,index=ValidGUID(guid)
         table.remove(D.DB["USER"],index)
         F:StartFlash()
-        C:EtherInfo(sformat([[|cffff0000Removed:|r |cff%02x%02x%02x%s %s|r %s %s]],c.r*255,c.g*255,c.b*255,name,class,race,enemy))
+        C:EtherInfo(sformat("|cffff0000Removed:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
+    end
+end
+function F:RemoveByIndex(index)
+    if not index or type(index)~="number" then return end
+    for i in ipairs(D.DB["USER"]) do
+        if i==index then
+            table.remove(D.DB["USER"],index)
+            break
+        end
     end
 end
 function F:PrintGUID()
@@ -73,9 +82,9 @@ function F:PrintGUID()
         return
     end
     local data=F.GetTbl()
-    for _,guid in ipairs(D.DB["USER"]) do
-        local c,class,race,name,enemy=GuidClassColor(guid)
-        data[#data+1]=sformat(P,c.r*255,c.g*255,c.b*255,name,class,race,enemy)
+    for index,guid in ipairs(D.DB["USER"]) do
+        local c,name,enemy=GuidClassColor(guid)
+        data[#data+1]=sformat("%s: |cff%02x%02x%02x%s |r %s",index,c.r*255,c.g*255,c.b*255,name,enemy)
     end
     C:EtherInfo(table.concat(data,'\n'))
     F.RelTbl(data)
@@ -83,9 +92,9 @@ end
 local function ScanCLEUGUID(destGUID)
     for _,guid in ipairs(D.DB["USER"]) do
         if guid==destGUID then
-            local c,class,race,name,enemy=GuidClassColor(guid)
+            local c,name,enemy=GuidClassColor(guid)
             F:StartFlash()
-            C:EtherInfo(sformat(P,c.r*255,c.g*255,c.b*255,name,class,race,enemy))
+            C:EtherInfo(sformat(P,c.r*255,c.g*255,c.b*255,name,enemy))
             break
         end
     end
@@ -94,7 +103,6 @@ function F:CreateSnapshot()
     local guid=UnitGUID("target")
     if not guid or type(guid)=="nil" then return end
     snapshot=guid
-    C:EtherInfo(snapshot)
     F:CreateCustomUnit(snapshot,7)
 end
 function event:PLAYER_REGEN_DISABLED()
@@ -108,7 +116,6 @@ function event:PLAYER_REGEN_DISABLED()
     end
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
 end
-
 function event:PLAYER_REGEN_ENABLED()
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
     if C.CombatStatus and not C.MainFrame:IsShown() then
@@ -148,7 +155,7 @@ function event:COMBAT_LOG_EVENT_UNFILTERED()
     if subevent=="SPELL_AURA_APPLIED" then
         if not destGUID or not GUIDIsPlayer(destGUID) then return end
         if destGUID==C.PlayerGUID then return end
-        if (timestamp-status)<40 then
+        if (timestamp-status)<34 then
             return
         end
         status=timestamp
