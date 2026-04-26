@@ -1,5 +1,5 @@
 local D,F,S,C=unpack(select(2,...))
-local event,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,snapshot,status=S.EventFrame,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,nil,0
+local event,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,snapshot,status,tconcat=S.EventFrame,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,nil,0,table.concat
 local UnitGUID,ipairs,sformat,UnitExists,GUIDIsPlayer,Received=UnitGUID,ipairs,string.format,UnitExists,C_PlayerInfo.GUIDIsPlayer,{}
 local eFaction={
     ["Human"]=true,
@@ -58,12 +58,10 @@ function F:ScanGUID()
     local c,name,enemy=GuidClassColor(guid)
     if not ValidGUID(guid) then
         D.DB["USER"][#D.DB["USER"]+1]=guid
-        F:StartFlash()
         C:EtherInfo(sformat("|cff00ff00Added:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
     else
         local _,index=ValidGUID(guid)
         table.remove(D.DB["USER"],index)
-        F:StartFlash()
         C:EtherInfo(sformat("|cffff0000Removed:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
     end
 end
@@ -84,9 +82,9 @@ function F:PrintGUID()
     local data=F.GetTbl()
     for index,guid in ipairs(D.DB["USER"]) do
         local c,name,enemy=GuidClassColor(guid)
-        data[#data+1]=sformat("%s: |cff%02x%02x%02x%s |r %s",index,c.r*255,c.g*255,c.b*255,name,enemy)
+        data[#data+1]=sformat("%s. |cff%02x%02x%02x%s|r %s",index,c.r*255,c.g*255,c.b*255,name,enemy)
     end
-    C:EtherInfo(table.concat(data,'\n'))
+    C:EtherInfo(tconcat(data,'\n'))
     F.RelTbl(data)
 end
 local function ScanCLEUGUID(destGUID)
@@ -149,13 +147,12 @@ function event:CHAT_MSG_WHISPER_INFORM(...)
     local c=GuidClassColor(guid)
     C:EtherInfo(sformat("To [|cff%02x%02x%02x%s|r]: %s",c.r*255,c.g*255,c.b*255,playerName2,text))
 end
--- local timestamp,subevent,_,_,_,_,_,destGUID,sourceName,_,_,arg12,arg13,arg14,arg15=CombatLogGetCurrentEventInfo()
 function event:COMBAT_LOG_EVENT_UNFILTERED()
     local timestamp,subevent,_,_,_,_,_,destGUID=CombatLogGetCurrentEventInfo()
     if subevent=="SPELL_AURA_APPLIED" then
         if not destGUID or not GUIDIsPlayer(destGUID) then return end
         if destGUID==C.PlayerGUID then return end
-        if (timestamp-status)<34 then
+        if (timestamp-status)<32 then
             return
         end
         status=timestamp
