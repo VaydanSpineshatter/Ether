@@ -1,6 +1,5 @@
-local D,F,_,C,_=unpack(select(2,...))
-local raidBtn,soloBtn=D.raidBtn,D.soloBtn
-local sformat,pairs,ipairs,indexKey=string.format,pairs,ipairs
+local D,F,_,C=unpack(select(2,...))
+local raidBtn,soloBtn,sformat,pairs,ipairs,indexKey=D.raidBtn,D.soloBtn,string.format,pairs,ipairs
 local function SetDefaultValue(index,wl,hl,w,h,s,a)
     if not index then return end
     local pos=D.Default[21][indexKey]
@@ -15,38 +14,39 @@ local function SetDefaultValue(index,wl,hl,w,h,s,a)
     a.v:SetText(sformat("%.1f px",pos[9]))
     a:SetValue(pos[9])
 end
-
-local function OnBarSelect(self,data)
+local function OnBarSelect(self,index,data)
     for _,v in ipairs(C.MainButtons[6]) do
         if v then v:Hide() end
     end
-    indexKey=data.index
+    indexKey=index
     local panel=C.ChildFrames[6]
     panel.default:Show()
-    self.text:SetText(data.value)
-    C.MainButtons[6][data.index].label:SetText(data.text)
-    C.MainButtons[6][data.index]:Show()
-    panel.wl:SetText(D.DB[21][data.index][6])
-    panel.hl:SetText(D.DB[21][data.index][7])
-    panel.w.v:SetText(sformat("%.1f px",D.DB[21][data.index][6]))
-    panel.w:SetValue(D.DB[21][data.index][6])
-    panel.h.v:SetText(sformat("%.1f px",D.DB[21][data.index][7]))
-    panel.h:SetValue(D.DB[21][data.index][7])
-    panel.s.v:SetText(sformat("%.1f px",D.DB[21][data.index][8]))
-    panel.s:SetValue(D.DB[21][data.index][8])
-    panel.a.v:SetText(sformat("%.1f px",D.DB[21][data.index][9]))
-    panel.a:SetValue(D.DB[21][data.index][9])
+    self.text:SetText(data)
+    C.MainButtons[6][index].label:SetText(data)
+    C.MainButtons[6][index]:Show()
+    panel.wl:SetText(D.DB[21][index][6])
+    panel.hl:SetText(D.DB[21][index][7])
+    panel.w.v:SetText(sformat("%.1f px",D.DB[21][index][6]))
+    panel.w:SetValue(D.DB[21][index][6])
+    panel.h.v:SetText(sformat("%.1f px",D.DB[21][index][7]))
+    panel.h:SetValue(D.DB[21][index][7])
+    panel.s.v:SetText(sformat("%.1f px",D.DB[21][index][8]))
+    panel.s:SetValue(D.DB[21][index][8])
+    panel.a.v:SetText(sformat("%.1f px",D.DB[21][index][9]))
+    panel.a:SetValue(D.DB[21][index][9])
 end
-
-local function OnBarConsum(self,data)
-    indexKey=data.index+6
+local function OnBarConsum(self,index,data)
     local panel=C.ChildFrames[6]
-    panel.default:Show()
-    self.text:SetText(data.value)
+    indexKey=index+6
+    self.text:SetText(data)
     panel.consuma:SetText(D.DB["CONFIG"][indexKey])
-    panel.consuma.v:SetText(data.text)
+    panel.consuma.v:SetText(data)
     panel.consuma:Show()
     panel.consuma.v:Show()
+end
+local function OnGroupJoined(self,index,data)
+    D.DB["CONFIG"][13]=data
+    self.text:SetText(D.DB["CONFIG"][13])
 end
 function F:ProcessUserData(index)
     if not index or type(index)~="number" then return end
@@ -84,24 +84,29 @@ function F:Layout(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end
     parent.Created=true
-    local l={"player","target","targettarget","pet","pettarget","focus",
-             "custom1","custom2","custom3","raidButtons","petButtons","CastBar1","CastBar2","playerModel",
-             "targetModel","InfoFrame","Tooltip","EtherIcon"}
-    local consum={"Battle Elixir","Guardian Elixir","Food","MainHand"}
-    local object,data={},{}
-    for key,name in ipairs(l) do
-        object[#object+1]={text=name,index=key}
+    local layout={"player","target","targettarget","pet","pettarget","focus",
+                  "custom1","custom2","custom3","raidButtons","petButtons","CastBar1","CastBar2","playerModel",
+                  "targetModel","InfoFrame","Tooltip","EtherIcon","Battle Elixir","Guardian Elixir","Food","MainHand","TANK","HEALER","DAMAGER","NONE"}
+    local object,data,role={},{},{}
+    for i,v in ipairs(layout) do
+        if i>22 then
+            role[#role+1]=v
+        elseif i>18 then
+            data[#data+1]=v
+        else
+            object[#object+1]=v
+        end
     end
-    for key,name in ipairs(consum) do
-        data[#data+1]={text=name,index=key}
-    end
-    local objectDropdown=F:CreateEtherDropdown(parent,140,"Frame",object,OnBarSelect)
-    local dataDropdown=F:CreateEtherDropdown(parent,140,"Consum",data,OnBarConsum)
+    local objectDropdown=F:CreateEtherDropdown(parent,120,"Frame",object,OnBarSelect)
+    local dataDropdown=F:CreateEtherDropdown(parent,120,"Consum",data,OnBarConsum)
+    local roleDropdown=F:CreateEtherDropdown(parent,120,D.DB["CONFIG"][13] or "Role",role,OnGroupJoined)
     objectDropdown:SetPoint("TOPLEFT",5,-5)
     dataDropdown:SetPoint("TOPRIGHT",-5,-5)
+    roleDropdown:SetPoint("BOTTOMLEFT",15,35)
+    parent.roleDropdown=roleDropdown
     local wl,hl=F:LineInput(parent,100,20),F:LineInput(parent,100,20)
     parent.wl,parent.hl=wl,hl
-    wl:SetPoint("TOPLEFT",parent,"TOPLEFT",120,-50)
+    wl:SetPoint("TOP",parent,"TOP",0,-55)
     wl:SetScript("OnEnterPressed",function(self)
         local width=tonumber(self:GetText())
         D.DB[21][indexKey][6]=width
@@ -122,12 +127,12 @@ function F:Layout(index)
     wl.v=parent:CreateFontString(nil,"OVERLAY")
     wl.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
     wl.v:SetText("Width")
-    wl.v:SetPoint("BOTTOMLEFT",wl,"TOPLEFT",0,2)
+    wl.v:SetPoint("BOTTOMLEFT",wl,"TOPLEFT",0,5)
     hl.v=parent:CreateFontString(nil,"OVERLAY")
     hl.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
     hl.v:SetText("Height")
-    hl.v:SetPoint("BOTTOMLEFT",hl,"TOPLEFT",0,2)
-    local s=F:CreateSlider(wl,"Scale","%.0f px","0.1","2",0.1,"TOPLEFT","BOTTOMLEFT",0,-30,
+    hl.v:SetPoint("BOTTOMLEFT",hl,"TOPLEFT",0,5)
+    local s=F:CreateSlider(wl,"Scale","%.0f px","0.1","2",0.1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(self,value)
                 wl:ClearFocus()
                 hl:ClearFocus()
@@ -137,7 +142,7 @@ function F:Layout(index)
                 self.v:SetText(sformat("%.1f px",value))
             end)
     parent.s=s
-    local a=F:CreateSlider(hl,"Alpha","%.0f px","0.1","1",0.1,"TOPLEFT","BOTTOMLEFT",0,-30,
+    local a=F:CreateSlider(hl,"Alpha","%.0f px","0.1","1",0.1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(self,value)
                 wl:ClearFocus()
                 hl:ClearFocus()
@@ -147,7 +152,7 @@ function F:Layout(index)
                 self.v:SetText(sformat("%.1f px",value))
             end)
     parent.a=a
-    local w=F:CreateSlider(s,"Width","%.1f px","15","800",1,"TOPLEFT","BOTTOMLEFT",0,-30,
+    local w=F:CreateSlider(s,"Width","%.1f px","15","800",1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(self,value)
                 wl:ClearFocus()
                 hl:ClearFocus()
@@ -158,7 +163,7 @@ function F:Layout(index)
                 self.v:SetText(sformat("%.0f px",value))
             end)
     parent.w=w
-    local h=F:CreateSlider(a,"Height","%.1f px","15","800",1,"TOPLEFT","BOTTOMLEFT",0,-30,
+    local h=F:CreateSlider(a,"Height","%.1f px","15","800",1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(self,value)
                 wl:ClearFocus()
                 hl:ClearFocus()
@@ -175,7 +180,7 @@ function F:Layout(index)
     end)
     default:Hide()
     parent.default=default
-    for i,opt in ipairs(l) do
+    for i,opt in ipairs(layout) do
         local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
         btn:Hide()
         btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-40)
@@ -212,7 +217,6 @@ function F:Layout(index)
         end)
         C.MainButtons[6][i]=btn
     end
-
     local print=F:EtherPanelButton(parent,50,25,"Print","TOPLEFT",parent,"BOTTOMLEFT",20,30)
     print:SetScript("OnClick",function()
         F:PrintGUID()
@@ -232,7 +236,7 @@ function F:Layout(index)
             C.MainFrame:SetShown(true)
         end)
     end)
-    local consuma=F:LineInput(parent,100,20)
+    local consuma=F:LineInput(parent,160,20)
     consuma:Hide()
     parent.consuma=consuma
     consuma:SetPoint("LEFT",clear,"RIGHT",40,0)
