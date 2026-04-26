@@ -58,9 +58,9 @@ end
 function event:GROUP_ROSTER_UPDATE()
     if not UnitInAnyGroup("player") then
         F:AuraDisable()
+        F:IndicatorsFullUpdateBtn()
         C_After(1,function()
             F:AuraEnable()
-            F:IndicatorsFullUpdateBtn()
         end)
     end
     refreshButtons()
@@ -75,7 +75,9 @@ function event:GROUP_ROSTER_UPDATE()
     end
 end
 function event:GROUP_JOINED()
-    refreshButtons()
+    if D.DB["CONFIG"] and D.DB["CONFIG"][13]~="NONE" then
+        UnitSetRole("player",D.DB["CONFIG"][13] or "NONE")
+    end
 end
 function event:UNIT_THREAT_SITUATION_UPDATE(unit)
     if unit=="player" then
@@ -129,14 +131,9 @@ function event:PLAYER_TARGET_CHANGED()
             self:UNIT_SPELLCAST_START("target")
         end
     end
-    F:UpdateTargetAlpha()
-    F:ScanTargetGUID()
-    for _,b in ipairs(soloBtn) do
-        if b.unit then
-            F:FullHealthUpdate(b)
-            F:FullPowerUpdate(b)
-            F:UpdateName(b,6)
-        end
+    if UnitExists("target") then
+        F:UpdateTargetAlpha()
+        F:ScanTargetGUID()
     end
 end
 function F:RosterDisable()
