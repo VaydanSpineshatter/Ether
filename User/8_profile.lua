@@ -1,28 +1,19 @@
 local D,F,_,C=unpack(select(2,...))
-local ipairs,eColor=ipairs,"|cffcc66ffEther|r "
-local function OnProfileChange(self,data)
-    if data.text==D:GetProfileName() then return end
-    D:SwitchProfile(data.text)
-    self.text:SetText(data.text)
+local pairs,eColor=pairs,"|cffcc66ffEther|r "
+local function OnProfileChange(self,index,data)
+    if data==D:GetProfileName() then return end
+    D:SwitchProfile(data)
+    self.text:SetText(data)
 end
-local function GetUpdatedProfileList(parts)
-    local data=F.GetTbl()
-    for key,name in ipairs(D:GetProfileList(data)) do
-        parts[#parts+1]={text=name,index=key}
-    end
-    F.RelTbl(data)
-    return parts
-end
+local data={}
 function F:Profile(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end
     parent.Created=true
     local profile={}
-    local data=F.GetTbl()
-    for key,name in ipairs(D:GetProfileList(data)) do
-        profile[#profile+1]={text=name,index=key}
+    for _,v in pairs(D:GetProfileList(data)) do
+        profile[#profile+1]=v
     end
-    F.RelTbl(data)
     local dropdown=F:CreateEtherDropdown(parent,130,"Select Profile",profile,OnProfileChange)
     dropdown:SetPoint("TOPLEFT",5,-5)
     dropdown.text:SetText(D:GetProfileName())
@@ -48,15 +39,13 @@ function F:Profile(index)
         if newName and newName~="" and newName~="Enter name and press enter" then
             local success,msg=D:RenameProfile(D:GetProfileName(),newName)
             if success then
-                local parts=F:GetTbl()
-                local freshData=GetUpdatedProfileList(parts)
+                local freshData=D:GetProfileList()
                 dropdown:SetOptions(freshData)
                 dropdown.text:SetText(D:GetProfileName())
                 C:EtherInfo(eColor,msg)
                 self:Hide()
                 self:ClearFocus()
                 self:SetText("")
-                F.RelTbl(parts)
             else
                 C:EtherInfo(eColor,msg)
             end
@@ -81,8 +70,7 @@ function F:Profile(index)
             if name and name~="" and name~="Enter name and press enter" then
                 local success,msg=D:CreateProfile(name)
                 if success then
-                    local parts=F:GetTbl()
-                    local freshData=GetUpdatedProfileList(parts)
+                    local freshData=D:GetProfileList()
                     dropdown:SetOptions(freshData)
                     dropdown.text:SetText(name)
                     C:EtherInfo(eColor,msg)
@@ -90,8 +78,6 @@ function F:Profile(index)
                     self:ClearFocus()
                     self:SetText("")
                     self:SetScript("OnEnterPressed",nil)
-                    D:SwitchProfile(name)
-                    F.RelTbl(parts)
                 else
                     C:EtherInfo(eColor,msg)
                 end
@@ -104,13 +90,10 @@ function F:Profile(index)
         if name and name~="" then
             local success,msg=D:CopyProfile(D:GetProfileName(),name)
             if success then
-                local parts=F:GetTbl()
-                local freshData=GetUpdatedProfileList(parts)
+                local freshData=D:GetProfileList()
                 dropdown:SetOptions(freshData)
                 dropdown.text:SetText(name)
                 C:EtherInfo(eColor,msg)
-                D:SwitchProfile(name)
-                F.RelTbl(parts)
             else
                 C:EtherInfo(eColor,msg)
             end
@@ -127,8 +110,7 @@ function F:Profile(index)
             if newName and newName~="" and newName~="Enter name and press enter" then
                 local success,msg=D:RenameProfile(D:GetProfileName(),newName)
                 if success then
-                    local parts=F:GetTbl()
-                    local freshData=GetUpdatedProfileList(parts)
+                    local freshData=D:GetProfileList()
                     dropdown:SetOptions(freshData)
                     dropdown.text:SetText(D:GetProfileName())
                     C:EtherInfo(eColor,msg)
@@ -136,8 +118,6 @@ function F:Profile(index)
                     self:ClearFocus()
                     self:SetText("")
                     self:SetScript("OnEnterPressed",nil)
-                    D:SwitchProfile(newName)
-                    F.RelTbl(parts)
                 else
                     C:EtherInfo(eColor,msg)
                 end
@@ -147,10 +127,6 @@ function F:Profile(index)
     end)
     delete:SetScript("OnClick",function()
         local profileToDelete=D:GetProfileName()
-        if D:TableSize(_G["ETHER_DATABASE"]["PROFILES"])<=1 then
-            C:EtherInfo("|cffcc66ffEther|r Cannot delete the last profile")
-            return
-        end
         if D:GetProfileName()=="DEFAULT" then
             C:EtherInfo("|cffcc66ffEther|r Cannot delete Default profile")
             return
@@ -160,15 +136,13 @@ function F:Profile(index)
         C.PopupCallback:SetScript("OnClick",function()
             local success,msg=D:DeleteProfile(profileToDelete)
             if success then
-                local parts=F:GetTbl()
-                local freshData=GetUpdatedProfileList(parts)
+                local freshData=D:GetProfileList()
                 dropdown:SetOptions(freshData)
                 dropdown.text:SetText(D:GetProfileName())
                 C:EtherInfo(eColor..msg)
                 C.PopupBox:SetShown(false)
                 C.MainFrame:SetShown(true)
                 C.PopupBox.font:SetText()
-                F.RelTbl(parts)
             else
                 C:EtherInfo(eColor..msg)
                 C.PopupBox:SetShown(false)
@@ -184,13 +158,11 @@ function F:Profile(index)
             local success,msg=D:ResetProfile()
             if success then
                 C:EtherInfo("|cffcc66ffEther|r "..msg)
-                local parts=F:GetTbl()
-                local freshData=GetUpdatedProfileList(parts)
+                local freshData=D:GetProfileList()
                 dropdown:SetOptions(freshData)
                 dropdown.text:SetText(D:GetProfileName())
                 C.PopupBox:SetShown(false)
                 C.MainFrame:SetShown(true)
-                F.RelTbl(parts)
             else
                 C:EtherInfo(eColor..msg)
                 C.PopupBox:SetShown(false)
@@ -211,14 +183,11 @@ function F:Profile(index)
         if not info or info=="" or info=="Paste import data here..." then return end
         local success,msg=D:ImportProfile(info)
         if success then
-            local parts=F:GetTbl()
-            local freshData=GetUpdatedProfileList(parts)
+            local freshData=D:GetProfileList()
             dropdown:SetOptions(freshData)
             dropdown.text:SetText(D:GetProfileName())
             C:EtherInfo(eColor,msg)
-            D:SwitchProfile(D:GetProfileName())
             C.ImportBox:SetText("Paste import data here...")
-            F.RelTbl(parts)
         else
             C:EtherInfo("|cffff0000No data to import|r")
         end
