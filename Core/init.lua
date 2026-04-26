@@ -86,12 +86,6 @@ end
 if type(_G["ETHER_DATABASE"]["CURRENT"])~="string" then
     _G["ETHER_DATABASE"]["CURRENT"]="DEFAULT"
 end
-if type(_G["ETHER_DATABASE"]["PROFILES"])~="table" then
-    _G["ETHER_DATABASE"]["PROFILES"]={}
-end
-if type(_G["ETHER_DATABASE"]["CONFIG"])~="table" then
-    _G["ETHER_DATABASE"]["CONFIG"]={}
-end
 if type(_G["ETHER_DATABASE"]["LAST"])~="number" then
     _G["ETHER_DATABASE"]["LAST"]=0
 end
@@ -115,15 +109,15 @@ Ether[2].RelTbl=function(obj)
 end
 Ether[3].EventFrame.ADDON_LOADED=function(self)
     self:UnregisterEvent("ADDON_LOADED")
-    if not _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"] then
-        _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
-        _G["ETHER_DATABASE"]["CURRENT"]=Ether[1]:GetProfileName()
-    end
     local success,msg=pcall(function()
+        if not _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"] then
+            _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
+            _G["ETHER_DATABASE"]["CURRENT"]=Ether[1]:GetProfileName()
+        end
         Ether[1]:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()],Ether[1].Default)
     end)
     if not success then
-        table.wipe(_G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"])
+        table.wipe(_G["ETHER_DATABASE"]["PROFILES"])
         _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
         _G["ETHER_DATABASE"]["CURRENT"]=Ether[1]:GetProfileName()
         print(msg)
