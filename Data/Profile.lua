@@ -1,14 +1,7 @@
-local D,F,_,C,_=unpack(select(2,...))
-local tinsert,tsort,tconcat=table.insert,table.sort,table.concat
-local pairs,ipairs=pairs,ipairs
-local tostring=tostring
-local sformat=string.format
-local type=type
-local string_char=string.char
-local string_rep=string.rep
-local CompressString=C_EncodingUtil.CompressString
-local DecompressString=C_EncodingUtil.DecompressString
-local math_floor=math.floor
+local D,F,_,C=unpack(select(2,...))
+local tsort,tconcat,tostring,loadstring=table.sort,table.concat,tostring,loadstring
+local srep,schar,type,sformat,pairs,ipairs=string.rep,string.char,type,string.format,pairs,ipairs
+local CompressString,DecompressString,mfloor=C_EncodingUtil.CompressString,C_EncodingUtil.DecompressString,math.floor
 local function StringToTbl(str)
     if not str or str=="" then
         return false,"Empty string"
@@ -26,78 +19,74 @@ local function StringToTbl(str)
     end
     return true,result
 end
-
-local Base64Encode,Base64Decode
-do
-    local P_,_B='=','ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-    function Base64Encode(data)
-        local res={}
-        for i=1,#data,3 do
-            local a,b,c=data:byte(i,i+2)
-            local index1=math_floor(a/4)+1
-            tinsert(res,_B:sub(index1,index1))
-            if b then
-                local index2=((a%4)*16)+math_floor(b/16)+1
-                tinsert(res,_B:sub(index2,index2))
-                if c then
-                    local index3=((b%16)*4)+math_floor(c/64)+1
-                    tinsert(res,_B:sub(index3,index3))
-                    local index4=(c%64)+1
-                    tinsert(res,_B:sub(index4,index4))
-                else
-                    local index3=((b%16)*4)+1
-                    tinsert(res,_B:sub(index3,index3))
-                    tinsert(res,'=')
-                end
+local P_,_B='=','ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+local function Base64Encode(data)
+    local res={}
+    for i=1,#data,3 do
+        local a,b,c=data:byte(i,i+2)
+        local index1=mfloor(a/4)+1
+        res[#res+1]=_B:sub(index1,index1)
+        if b then
+            local index2=((a%4)*16)+mfloor(b/16)+1
+            res[#res+1]=_B:sub(index2,index2)
+            if c then
+                local index3=((b%16)*4)+mfloor(c/64)+1
+                res[#res+1]=_B:sub(index3,index3)
+                local index4=(c%64)+1
+                res[#res+1]=_B:sub(index4,index4)
             else
-                local index2=((a%4)*16)+1
-                tinsert(res,_B:sub(index2,index2))
-                tinsert(res,'==')
+                local index3=((b%16)*4)+1
+                res[#res+1]=_B:sub(index3,index3)
+                res[#res+1]='='
             end
+        else
+            local index2=((a%4)*16)+1
+            res[#res+1]=_B:sub(index2,index2)
+            res[#res+1]='=='
         end
-        return tconcat(res)
     end
-    function Base64Decode(data)
-        data=data:gsub('[^'.._B..P_..']','')
-        local res={}
-        for i=1,#data,4 do
-            local chunk=data:sub(i,i+3)
-            if #chunk<4 then
-                break
-            end
-            local values={}
-            for j=1,4 do
-                local char=chunk:sub(j,j)
-                if char=='=' then
-                    values[j]=0
-                else
-                    values[j]=_B:find(char,1,true)-1
-                end
-            end
-            local byte1=(values[1]*4)+math_floor(values[2]/16)
-            tinsert(res,string_char(byte1))
-            if values[3]~=0 or chunk:sub(3,3)~='=' then
-                local byte2=((values[2]%16)*16)+math_floor(values[3]/4)
-                tinsert(res,string_char(byte2))
-            end
-            if values[4]~=0 or chunk:sub(4,4)~='=' then
-                local byte3=((values[3]%4)*64)+values[4]
-                tinsert(res,string_char(byte3))
-            end
-        end
-        return tconcat(res)
-    end
+    return tconcat(res)
 end
-local Array,Tbl,Value,isArray
+local function Base64Decode(data)
+    data=data:gsub('[^'.._B..P_..']','')
+    local res={}
+    for i=1,#data,4 do
+        local chunk=data:sub(i,i+3)
+        if #chunk<4 then
+            break
+        end
+        local values={}
+        for j=1,4 do
+            local char=chunk:sub(j,j)
+            if char=='=' then
+                values[j]=0
+            else
+                values[j]=_B:find(char,1,true)-1
+            end
+        end
+        local byte1=(values[1]*4)+mfloor(values[2]/16)
+        res[#res+1]=schar(byte1)
+        if values[3]~=0 or chunk:sub(3,3)~='=' then
+            local byte2=((values[2]%16)*16)+mfloor(values[3]/4)
+            res[#res+1]=schar(byte2)
+        end
+        if values[4]~=0 or chunk:sub(4,4)~='=' then
+            local byte3=((values[3]%4)*64)+values[4]
+            res[#res+1]=schar(byte3)
+        end
+    end
+    return tconcat(res)
+end
+local Tbl
 do
-    function isArray(tbl)
+    local function isArray(tbl)
         if type(tbl)~="table" then
             return false
         end
         local count=0
         local maxIndex=0
-        for k,v in pairs(tbl) do
-            if type(k)~="number" or k<1 or k~=math_floor(k) then
+        for k in pairs(tbl) do
+            if type(k)~="number" or k<1 or k~=mfloor(k) then
                 return false
             end
             count=count+1
@@ -110,29 +99,48 @@ do
         end
         return true
     end
-    function Array(tbl)
+    local function Array(tbl)
         local items={}
         for i=1,#tbl do
             local value=tbl[i]
             if type(value)=="table" then
                 if isArray(value) then
-                    tinsert(items,Array(value))
+                    items[#items+1]=Array(value)
                 else
-                    tinsert(items,Tbl(value,0))
+                    items[#items+1]=Tbl(value,0)
                 end
             elseif type(value)=="string" then
-                tinsert(items,sformat("%q",value))
+                items[#items+1]=sformat("%q",value)
             elseif type(value)=="number" then
-                tinsert(items,tostring(value))
+                items[#items+1]=tostring(value)
             elseif type(value)=="boolean" then
-                tinsert(items,value and "true" or "false")
+                items[#items+1]=value and "true" or "false"
             elseif value==nil then
-                tinsert(items,"nil")
+                items[#items+1]="nil"
             else
-                tinsert(items,sformat("%q",tostring(value)))
+                items[#items+1]=sformat("%q",tostring(value))
             end
         end
         return "{"..tconcat(items,",").."}"
+    end
+    local function Value(value,indent)
+        if type(value)=="table" then
+            if isArray(value) then
+                return Array(value)
+            else
+                return Tbl(value,indent)
+            end
+        elseif type(value)=="string" then
+            return sformat("%q",value)
+        elseif type(value)=="number" then
+            return tostring(value)
+        elseif type(value)=="boolean" then
+            return value and "true" or "false"
+        elseif value==nil then
+            return "nil"
+        else
+            return sformat("%q",tostring(value))
+        end
     end
     function Tbl(tbl,indent)
         indent=indent or 0
@@ -148,10 +156,10 @@ do
             return Array(tbl)
         end
         local result={}
-        tinsert(result,"{")
+        result[#result+1]="{"
         local keys={}
         for k in pairs(tbl) do
-            tinsert(keys,k)
+            keys[#keys+1]=k
         end
         tsort(keys,function(a,b)
             if type(a)==type(b) then
@@ -173,32 +181,13 @@ do
             end
             local valueStr=Value(value,indent+2)
             if indent>0 and type(value)=="table" and not isArray(value) and D:TableSize(value)>2 then
-                tinsert(result,"\n"..string_rep("",indent)..keyStr.."="..valueStr..comma)
+                result[#result+1]="\n"..srep("",indent)..keyStr.."="..valueStr..comma
             else
-                tinsert(result,keyStr.."="..valueStr..comma.."")
+                result[#result+1]=keyStr.."="..valueStr..comma..""
             end
         end
-        tinsert(result,"}")
+        result[#result+1]="}"
         return tconcat(result)
-    end
-    function Value(value,indent)
-        if type(value)=="table" then
-            if isArray(value) then
-                return Array(value)
-            else
-                return Tbl(value,indent)
-            end
-        elseif type(value)=="string" then
-            return sformat("%q",value)
-        elseif type(value)=="number" then
-            return tostring(value)
-        elseif type(value)=="boolean" then
-            return value and "true" or "false"
-        elseif value==nil then
-            return "nil"
-        else
-            return sformat("%q",tostring(value))
-        end
     end
 end
 local function TblToString(tbl)
@@ -208,13 +197,16 @@ local function ProfileRefresh()
     F:UpdateAuraList()
     F:UpdateEditor(C.EditorFrame)
     F:AuraDisable()
+    F:IndicatorsDisable()
     for index=1,11 do
         F:SavePosition(index)
     end
-    F:IndicatorsDisable()
     F:MenuStringsAlpha(0)
     D:RefreshAllSettings()
     D:RefreshAllFrames()
+    if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
+        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
+    end
     F:IndicatorsEnable()
     F:AuraEnable()
     F:IndicatorsFullUpdateBtn()
@@ -241,7 +233,6 @@ function D:ExportProfileToClipboard()
     return encoded
 end
 function D:ExportCurrentProfile()
-    ProfileRefresh()
     local userData=D:GetProfile()
     if not userData then
         return nil,"Current profile not found"
@@ -283,8 +274,8 @@ function D:ImportProfile(encodedString)
         counter=counter+1
         name=baseName.."_"..counter
     end
+    D:MergeToLeft(import.data,D.Default)
     _G["ETHER_DATABASE"]["PROFILES"][name]=D:CopyTable(import.data)
-    D:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][name],D.Default)
     _G["ETHER_DATABASE"]["CURRENT"]=name
     D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][name])
     ProfileRefresh()
@@ -306,48 +297,32 @@ function D:SwitchProfile(name)
     if not _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile "..name.." not found"
     end
-    _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]=D:CopyTable(D.DB)
     C.MainFrame:Hide()
+    _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]=D:CopyTable(D.DB)
     D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][name])
+    if C.PopupBox and C.PopupBox.font then
+        C.PopupBox.font:SetText(name)
+    end
+    ProfileRefresh()
     C.MainFrame:Show()
     C.ChildFrames[8]:Show()
-    if C.PopupBox and C.PopupBox.font then
-        C.PopupBox.font:SetText(D:GetProfileName())
-    end
     _G["ETHER_DATABASE"]["CURRENT"]=name
-    ProfileRefresh()
     return true,"Switched to "..name
 end
 function D:DeleteProfile(name)
     if not _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile not found"
     end
-    local profileCount=0
-    for _ in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
-        profileCount=profileCount+1
+    if D:TableSize(_G["ETHER_DATABASE"]["PROFILES"])<=1 then
+        return false,"Cannot delete the last profile"
     end
-    if profileCount<=1 then
-        return false,"Cannot delete the only profile"
+    local success,msg=D:SwitchProfile("DEFAULT")
+    if not success then
+        return false,"Failed to switch profile: "..msg
+    else
+        _G["ETHER_DATABASE"]["PROFILES"][name]=nil
+        return true,"Profile "..name.."  deleted"
     end
-    if name==D:GetProfileName() then
-        local otherProfile
-        for profileName in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
-            if profileName~=name then
-                otherProfile=profileName
-                _G["ETHER_DATABASE"]["CURRENT"]=profileName
-                break
-            end
-        end
-        if not otherProfile then
-            return false,"No other profile available"
-        end
-        local success,msg=D:SwitchProfile(otherProfile)
-        if not success then
-            return false,"Failed to switch profile: "..msg
-        end
-    end
-    _G["ETHER_DATABASE"]["PROFILES"][name]=nil
-    return true,"Profile "..name.."  deleted"
 end
 function D:GetProfile()
     return _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]
@@ -365,8 +340,7 @@ function D:CreateProfile(name)
         return false,"Profile "..name.." already exists"
     end
     _G["ETHER_DATABASE"]["PROFILES"][name]=D:CopyTable(D.Default)
-    _G["ETHER_DATABASE"]["CURRENT"]="DEFAULT"
-    ProfileRefresh()
+    D:SwitchProfile(name)
     return true,"Profile "..name.." created"
 end
 function D:RenameProfile(oldName,newName)
@@ -386,10 +360,11 @@ function D:GetProfileName()
     if not name or name=="" then return "DEFAULT" end
     return name
 end
-
-function D:GetProfileList(data)
-    for name in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
-        data[#data+1]=name
+local data={}
+function D:GetProfileList()
+    table.wipe(data)
+    for n in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
+        data[#data+1]=n
     end
     return data
 end
