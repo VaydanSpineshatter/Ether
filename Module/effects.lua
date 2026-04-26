@@ -1,9 +1,6 @@
-local _,F,_,S=unpack(select(2,...))
-local data,status,flash={},true,true
-local updater,timer
-updater,timer=nil,nil
-local pairs,wipe,next=pairs,wipe,next
-local C_Timer,C_Ticker=C_Timer.After,C_Timer.NewTicker
+local _,F,_,C=unpack(select(2,...))
+local data,status,flash,C_Timer,C_Ticker={},true,true,C_Timer.After,C_Timer.NewTicker
+local updater,timer,pairs,twipe,next=nil,nil,pairs,table.wipe,next
 local function Blink()
     status=not status
     for tex in pairs(data) do
@@ -32,7 +29,6 @@ function F:StartBlink(tex,duration,interval)
         F:StopBlink(tex)
     end)
 end
-
 function F:StopBlink(tex)
     if data[tex] then
         data[tex]=nil
@@ -46,12 +42,11 @@ function F:StopBlink(tex)
         end
     end
 end
-
 function F:StopAllBlinks()
     for tex in pairs(data) do
         tex:Hide()
     end
-    wipe(data)
+    twipe(data)
     if updater then
         updater:Cancel()
         updater=nil
@@ -60,23 +55,23 @@ end
 local function ToggleFlash()
     flash=not flash
     if flash then
-        S.FlashLeft:Show()
-        S.FlashRight:Show()
+        C.FlashLeft:Show()
+        C.FlashRight:Show()
     else
-        S.FlashLeft:Hide()
-        S.FlashRight:Hide()
+        C.FlashLeft:Hide()
+        C.FlashRight:Hide()
     end
 end
 local function StopFlash()
-    S.FlashLeft:Hide()
-    S.FlashRight:Hide()
+    C.FlashLeft:Hide()
+    C.FlashRight:Hide()
     if timer then
         timer:Cancel()
         timer=nil
     end
 end
 function F:StartFlash()
-    if not S.FlashLeft or not S.FlashRight then return end
+    if not C.FlashLeft or not C.FlashRight then return end
     StopFlash()
     flash=true
     if not timer then
