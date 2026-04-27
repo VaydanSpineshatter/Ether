@@ -1,9 +1,6 @@
 local D,F,_,C=unpack(select(2,...))
-local _G=_G
-local pairs,ipairs=pairs,ipairs
 local type,next,tostring,unpack=type,next,tostring,unpack
-local UIParent=UIParent
-local tconcat=table.concat
+local tconcat,UIParent,pairs,ipairs=table.concat,UIParent,pairs,ipairs
 D.menuStrings={}
 local Point={
     "TOPLEFT",
@@ -114,6 +111,7 @@ end
 D.MenuKey={"Module","Blizzard","Tooltip","Aura","Indicators","Layout","Header","Profile"}
 D.Slash={"Slash","/ether user","/ether rl","/ether help","Commands","Config","Reload UI","Helper",}
 D.Default={
+    ["name"]="DEFAULT",
     [1]={1,1,1,0,1,1,1,1,1,1,1,1},--Module - Name/Health/Power
     [2]={1,1,1,1,1,1,1,1,1,1,1},--Blizzard
     [3]={1,1,1,1,1,1,1,1,1,1,1},--Indicators
@@ -121,7 +119,7 @@ D.Default={
     [5]={1,1,1,1},--Header
     [6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},--Layout
     [20]={
-        [1]={Point[1],0,0,9},
+        [1]={Point[1],0,0,18},
         [2]={Point[8],0,0,9},
         [3]={Point[3],0,0,9},
         [4]={Point[2],0,0,9},
@@ -156,7 +154,7 @@ D.Default={
     },
     ["CUSTOM"]={},
     ["USER"]={},
-    ["CONFIG"]={1,1,0,1,4,1,0,0,0,0,3,4}
+    ["CONFIG"]={1,1,0,1,4,1,0,0,0,0,3,4,"NONE"}
 }
 C.InfoFrame=CreateFrame("Frame",nil,UIParent)
 C.InfoFrame.index=16
@@ -260,8 +258,9 @@ function D:CopyTable(orig,seen)
     end
     return copy
 end
+local count=0
 function D:TableSize(t)
-    local count=0
+    count=0
     for _ in pairs(t) do
         count=count+1
     end
