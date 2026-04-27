@@ -1,10 +1,7 @@
 local D,F,S=unpack(select(2,...))
-local UnitIsAFK,UnitIsDND=UnitIsAFK,UnitIsDND
-local UnitIsConnected,UnitIsDeadOrGhost=UnitIsConnected,UnitIsDeadOrGhost
+local UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost=UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost
 local UnitHasIncomingResurrection=UnitHasIncomingResurrection
-local GetReadyCheckStatus=GetReadyCheckStatus
-local GetPartyAssignment=GetPartyAssignment
-local GetRaidTargetIndex=GetRaidTargetIndex
+local GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,updater=GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,nil
 local Enum,IsInRaid,UnitExists=Enum,IsInRaid,UnitExists
 local GetLootMethod,pairs,ipairs=C_PartyInfo.GetLootMethod,pairs,ipairs
 local UnitIsGroupLeader,UnitInAnyGroup=UnitIsGroupLeader,UnitInAnyGroup
@@ -47,9 +44,13 @@ function F:SavePosition(index)
         end
     end
 end
-function F:UpdateDeadIcon(b)
+function F:UpdateDeadUnit(b)
     if not b or not b.Indicators or not b.Indicators.UnitFlags then return end
-    b.Indicators.UnitFlags:Hide()
+    if not UnitIsDeadOrGhost(b.unit) then
+        if b.Indicators.UnitFlags:IsShown() then
+            b.Indicators.UnitFlags:Hide()
+        end
+    end
 end
 function F:IndicatorsFullUpdateBtn()
     for _,b in pairs(raidBtn) do
@@ -259,8 +260,6 @@ function event:READY_CHECK_CONFIRM()
         end
     end
 end
-local updater
-updater=nil
 local function HideReadyCheckIcons()
     for _,button in pairs(raidBtn) do
         if button and button.Indicators and button.Indicators.ReadyCheck then
@@ -317,18 +316,6 @@ function event:UNIT_FACTION(unit)
         b.name:SetTextColor(1,1,1)
         b.Indicators.UnitFaction:Hide()
     end
-    if D.DB[3][4]~=1 then return end
-    IndictorsTexture(b,"UnitFlags")
-    local dead=UnitIsDeadOrGhost(unit)
-    if dead then
-        F:HideButtonDispellable(b)
-        F:HidePrediction(b)
-        b.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
-        b.Indicators.UnitFlags:Show()
-    else
-        b.Indicators.UnitFlags:Hide()
-        F.InitialHealth(b)
-    end
 end
 function event:UNIT_FLAGS(unit)
     if D.DB[3][4]~=1 then return end
@@ -344,17 +331,6 @@ function event:UNIT_FLAGS(unit)
     else
         b.Indicators.UnitFlags:Hide()
         F.InitialHealth(b)
-    end
-    if D.DB[3][5]~=1 then return end
-    IndictorsTexture(b,"UnitFaction")
-    local charmed=UnitIsCharmed(unit)
-    if charmed then
-        b.name:SetTextColor(1,0,0)
-        b.Indicators.UnitFaction:SetTexture(D.iIconPath[6])
-        b.Indicators.UnitFaction:Show()
-    else
-        b.name:SetTextColor(1,1,1)
-        b.Indicators.UnitFaction:Hide()
     end
 end
 function event:PLAYER_FLAGS_CHANGED(unit)
@@ -397,24 +373,39 @@ function event:UNIT_CONNECTION(unit)
     IndictorsTexture(b,"Connection")
     local isConnected=UnitIsConnected(unit)
     if not isConnected then
-        b.healthBar:SetStatusBarColor(0.5,0.5,0.5)
+        F.UpdateClassColor(b)
         b.Indicators.Connection:SetTexture(D.iIconPath[1])
         b.Indicators.Connection:Show()
     else
+        F.UpdateClassColor(b)
         b.Indicators.Connection:Hide()
     end
+    for index=1,3 do
+        F:UpdateSoloIndicator(index)
+    end
+    F:UpdateSoloIndicator(6)
 end
 function F:UpdateSoloIndicator(number)
     local b=soloBtn[number]
     if not b or not b.RaidTarget then return end
-    if UnitExists(b.unit) then
-        local index=GetRaidTargetIndex(b.unit)
+    local unit=b.unit
+    if UnitExists(unit) then
+        local index=GetRaidTargetIndex(unit)
         if index then
             b.RaidTarget:SetTexture(D.iIconPath[7])
             SetRaidTargetIconTexture(b.RaidTarget,index)
             b.RaidTarget:Show()
         else
             b.RaidTarget:Hide()
+        end
+        local isConnected=UnitIsConnected(unit)
+        if not isConnected then
+            b.UnitConnection:SetTexture(D.iIconPath[1])
+            F.UpdateClassColor(b)
+            b.UnitConnection:Show()
+        else
+            F.UpdateClassColor(b)
+            b.UnitConnection:Hide()
         end
     end
 end
@@ -458,7 +449,7 @@ function F:IndicatorsEnable()
             event:RegisterEvent(v)
         end
     end
-    C_Timer.After(2,function()
+    C_Timer.After(1,function()
         F:UpdateSoloIndicator(1)
     end)
 end

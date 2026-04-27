@@ -1,7 +1,7 @@
 local D,F,S=unpack(select(2,...))
 local UnitHealth,UnitHealthMax,UnitGetIncomingHeals=UnitHealth,UnitHealthMax,UnitGetIncomingHeals
 local sformat,mfloor,pairs,UnitExists,mmax,mmin=string.format,math.floor,pairs,UnitExists,math.max,math.min
-local event,raidBtn,soloBtn,f2m=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r"
+local event,raidBtn,soloBtn,f2m,UnitIsConnected=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r",UnitIsConnected
 local function ReturnHealth(self)
     if not self or not self.unit then return end
     return UnitHealth(self.unit)
@@ -33,7 +33,13 @@ F.InitialHealth=InitialHealth
 local function UpdateClassColor(b)
     if not b then return end
     local unit=b.unit
-    local r,g,be=F:GetClassColor(unit)
+    local r,g,be=0.4,0.4,0.4
+    local Connected=UnitIsConnected(b.unit)
+    if Connected then
+        r,g,be=F:GetClassColor(unit)
+    else
+        r,g,be=0.4,0.4,0.4
+    end
     b.healthBar:SetStatusBarColor(r,g,be)
     b.healthDrop:SetColorTexture(r*0.3,g*0.3,be*0.4,.3)
 end
@@ -48,6 +54,7 @@ local function Health(b)
     else
         b.healthBar:SetValue(h)
     end
+    F:UpdateDeadUnit(b)
 end
 local function MaxHealth(b)
     if not b or not b.healthBar then return end
@@ -107,7 +114,7 @@ function F:UpdateText(index)
     end
 end
 function F:HidePrediction(b)
-    if not b then return end
+    if not b or UnitGetIncomingHeals("target") then return end
     if b.myPrediction then
         b.myPrediction:Hide()
     end

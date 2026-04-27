@@ -632,7 +632,7 @@ function F:PopupBoxSetup()
     C.PopupBox:SetShown(true)
     C.MainFrame:SetShown(false)
 end
-function F:CreateEtherDropdown(parent,width,txt,options,callback)
+function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
     local frame=CreateFrame("Button",nil,parent)
     frame:SetSize(width,20)
     local bg=frame:CreateTexture(nil,"BACKGROUND")
@@ -666,8 +666,8 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback)
         for _,btn in ipairs(menu.buttons) do
             btn:Hide()
         end
-        for i,data in ipairs(options) do
-            local btn=menu.buttons[i]
+        for index,data in ipairs(options) do
+            local btn=menu.buttons[index]
             if not btn then
                 btn=CreateFrame("Button",nil,menu)
                 btn:SetSize(width-8,20)
@@ -685,12 +685,14 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback)
                 menu.buttons[#menu.buttons+1]=btn
             end
             btn:SetPoint("TOPLEFT",4,-totalHeight)
-            btn.text:SetText(data.text)
+            btn.text:SetText(data)
             btn:SetScript("OnClick",function()
                 if callback then
-                    callback(frame,data)
+                    callback(frame,index,data)
                 end
-                text:SetText(data.text)
+                if not status then
+                    text:SetText(data)
+                end
                 text:SetAlpha(1)
                 menu:Hide()
             end)

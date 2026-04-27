@@ -1,16 +1,11 @@
-local D,F,_,C,_=unpack(select(2,...))
-local tinsert=table.insert
-local ipairs,pairs=ipairs,pairs
-local twipe=table.wipe
-local sformat=string.format
-
+local D,F,_,C=unpack(select(2,...))
+local ipairs,pairs,sformat,twipe=ipairs,pairs,string.format,table.wipe
 local function SelectAura(editor,spellId)
     if not spellId then return end
     C.Spell=spellId
     F:UpdateAuraList()
     F:UpdateEditor(editor)
 end
-
 local function AddAura(editor)
     local newId=1
     while D.DB["CUSTOM"][newId] do
@@ -19,16 +14,14 @@ local function AddAura(editor)
     D.DB["CUSTOM"][newId]=F:AuraTemplate(newId)
     SelectAura(editor,newId)
 end
-
-local function OnAuraSelect(self,data)
+local function OnAuraSelect(self,index,data)
     local editor=C.EditorFrame
     if not editor:IsShown() then
         editor:Show()
     end
-    F:AddTemplateAuras(data.value)
-    self.text:SetText(data.value)
+    F:AddTemplateAuras(data)
+    self.text:SetText(data)
 end
-
 function F:Aura(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end
@@ -36,8 +29,8 @@ function F:Aura(index)
     local editor=C.EditorFrame
     local auras=C.AuraFrame
     local auraList={}
-    for name in pairs(D.PredefinedAuras) do
-        tinsert(auraList,{text=name,value=name})
+    for v in pairs(D.PredefinedAuras) do
+        auraList[#auraList+1]=v
     end
     local dropdown=F:CreateEtherDropdown(parent,160,"Predefined Auras",auraList,OnAuraSelect)
     dropdown:SetPoint("TOPLEFT",5,-5)
@@ -198,7 +191,6 @@ function F:Aura(index)
         end)
         btn:GetScript("OnLeave")(btn)
     end
-
     local color=CreateFrame("Button",nil,editor)
     editor.color=color
     color:SetSize(60,15)

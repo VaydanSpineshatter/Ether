@@ -48,6 +48,10 @@ local function OnGroupJoined(self,index,data)
     D.DB["CONFIG"][13]=data
     self.text:SetText(D.DB["CONFIG"][13])
 end
+local function OnRemoved(self,index)
+    F:RemoveByIndex(index)
+    self:SetOptions(D.DB["USER"])
+end
 function F:ProcessUserData(index)
     if not index or type(index)~="number" then return end
     if index==18 then
@@ -100,9 +104,12 @@ function F:Layout(index)
     local objectDropdown=F:CreateEtherDropdown(parent,120,"Frame",object,OnBarSelect)
     local dataDropdown=F:CreateEtherDropdown(parent,120,"Consum",data,OnBarConsum)
     local roleDropdown=F:CreateEtherDropdown(parent,120,D.DB["CONFIG"][13] or "Role",role,OnGroupJoined)
+    local removeDropdown=F:CreateEtherDropdown(parent,120,"Remove", D.DB["USER"],OnRemoved,true)
     objectDropdown:SetPoint("TOPLEFT",5,-5)
     dataDropdown:SetPoint("TOPRIGHT",-5,-5)
     roleDropdown:SetPoint("BOTTOMLEFT",15,35)
+    removeDropdown:SetPoint("LEFT",roleDropdown,"RIGHT",10,0)
+    C.RemoveDropdown = removeDropdown
     parent.roleDropdown=roleDropdown
     local wl,hl=F:LineInput(parent,100,20),F:LineInput(parent,100,20)
     parent.wl,parent.hl=wl,hl

@@ -24,7 +24,6 @@ local function Durability()
 end
 function F:AddonUsage()
     if not C.EtherInfo then return end
-    if C.InfoTimer then return end
     local data=F.GetTbl()
     UpdateAddOnMemoryUsage()
     Durability()

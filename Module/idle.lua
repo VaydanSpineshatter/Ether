@@ -1,4 +1,4 @@
-local D,F,S,C,_=unpack(select(2,...))
+local D,F,S,C=unpack(select(2,...))
 C.IdleMode=UnitIsAFK("player")
 local function Away(afk)
     if not afk then return end

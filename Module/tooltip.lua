@@ -56,7 +56,6 @@ local function GetLevelColor(level)
     end
     return levelColorCache[level]
 end
-
 local roleStr={"TANK","HEALER","DAMAGER"}
 local roleIcon={"|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:18:18:0:0:64:64:0:19:22:41|t",
                 "|TInterface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES.blp:18:18:0:0:64:64:20:39:1:20|t",

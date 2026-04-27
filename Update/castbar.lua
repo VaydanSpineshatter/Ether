@@ -1,6 +1,6 @@
 local D,F,S=unpack(select(2,...))
 local UnitCastingInfo,UnitChannelInfo,GetNetStats=UnitCastingInfo,UnitChannelInfo,GetNetStats
-local timeStr,tStr,GetTime="%.1f|cffff0000-%.1f|r","%.1f",GetTime
+local timeStr,tStr,GetTime,UnitExists="%.1f|cffff0000-%.1f|r","%.1f",GetTime,UnitExists
 local castBar,event=D.castBar,S.EventFrame
 local function GetCastBar(unit)
     return castBar[D:PosUnit(unit)]
@@ -224,6 +224,19 @@ function event:UNIT_SPELLCAST_INTERRUPTIBLE(unitTarget)
     if bar then
         bar.shield:Hide()
         bar:SetStatusBarColor(0.2,0.6,1.0,0.8)
+    end
+end
+function F:UpdateTargetCastBar(unit)
+    local bar=castBar[2]
+    if bar then
+        if not UnitExists(unit) or (not UnitCastingInfo(unit) and not UnitChannelInfo(unit)) then
+            bar.casting=nil
+            bar.channeling=nil
+            bar.holdTime=nil
+            bar:Hide()
+        else
+            event:UNIT_SPELLCAST_START(unit)
+        end
     end
 end
 local count=0

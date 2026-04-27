@@ -2,7 +2,7 @@ local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,UnitExists,C_After=pairs,ipairs,UnitExists,C_Timer.After
 local UnitCastingInfo,UnitChannelInfo=UnitCastingInfo,UnitChannelInfo
 local event,raidBtn,soloBtn,modelBtn=S.EventFrame,D.raidBtn,D.soloBtn,D.modelBtn
-local castBar,refresh,after,updatedChannel=D.castBar,false,false,false
+local castBar,refresh,updatedChannel=D.castBar,false,false
 local function GetModelBtn(unit)
     return modelBtn[D:PosUnit(unit)]
 end
@@ -16,28 +16,6 @@ local function UpdateSendChannel()
         channel="PARTY"
     end
     return channel
-end
-local function refreshAfter()
-    if not after then
-        after=true
-        C_After(1,function()
-            for _,b in pairs(raidBtn) do
-                if b and UnitExists(b.unit) then
-                    F:HideButtonDispellable(b)
-                    F:UpdateDeadIcon(b)
-                    F:HidePrediction(b)
-                    F.InitialHealth(b)
-                end
-            end
-            for _,b in ipairs(soloBtn) do
-                if b and UnitExists(b.unit) then
-                    F.InitialHealth(b)
-                    F.InitialPower(b)
-                end
-            end
-            after=false
-        end)
-    end
 end
 local function refreshButtons()
     if not refresh then
@@ -101,9 +79,6 @@ function event:UNIT_MODEL_CHANGED(unit)
         b:SetPortraitZoom(1)
     end
 end
-function event:PLAYER_UNGHOST()
-    refreshAfter()
-end
 function event:PLAYER_TARGET_CHANGED()
     if D.DB[1][6]==1 then
         F:UpdateSoloIndicator(2)
@@ -114,27 +89,18 @@ function event:PLAYER_TARGET_CHANGED()
             F:UpdateSoloIndicator(6)
         end
     end
+
     if D.DB[6][2]==1 then
         F:TargetAuraFullUpdate()
     end
     F:UpdateThreatColor(35,38,"target")
     modelBtn[2]:SetUnit("target")
     modelBtn[2]:SetPortraitZoom(1)
-    local bar=castBar[2]
-    if bar then
-        if not UnitExists("target") or (not UnitCastingInfo("target") and not UnitChannelInfo("target")) then
-            bar.casting=nil
-            bar.channeling=nil
-            bar.holdTime=nil
-            bar:Hide()
-        else
-            self:UNIT_SPELLCAST_START("target")
-        end
-    end
-    if UnitExists("target") then
-        F:UpdateTargetAlpha()
-        F:ScanTargetGUID()
-    end
+    F:UpdateTargetCastBar("target")
+    F:UpdateTargetAlpha()
+    F:HidePrediction(soloBtn[2])
+    F:HidePrediction(soloBtn[3])
+    F:ScanTargetGUID()
 end
 function F:RosterDisable()
     F:AuraDisable()

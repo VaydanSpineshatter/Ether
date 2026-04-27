@@ -174,11 +174,11 @@ local function UpdateButtonDispel(button,guid)
         button.dispellable=nil
     end
 end
-function F:HideButtonDispellable(button)
-    if not button or not button.dispellable then return end
-    button.indicator:Hide()
-    button.indicatorborder:Hide()
-    button.dispellable=nil
+function F:HideButtonDispellable(b)
+    if not b or not b.dispellable then return end
+    b.indicator:Hide()
+    b.indicatorborder:Hide()
+    b.dispellable=nil
 end
 local function OnDispelAuraChanged(button,unit)
     if not button or not unit then return end
@@ -437,12 +437,12 @@ function F:raidAuraUpdate(unit,updateInfo)
             end
             if aura.isHarmful then
                 if aura.spellId and config[aura.spellId] and config[aura.spellId][10] then
-                          if dataHarmful[unit] and dataHarmful[unit][aura.spellId] then
-                                dataHarmful[unit][aura.spellId]:Hide()
-                                dataHarmful[unit][aura.spellId]:ClearAllPoints()
-                                dataHarmful[unit][aura.spellId]:SetParent(nil)
-                                dataHarmful[unit][aura.spellId]=nil
-                            end
+                    if dataHarmful[unit] and dataHarmful[unit][aura.spellId] then
+                        dataHarmful[unit][aura.spellId]:Hide()
+                        dataHarmful[unit][aura.spellId]:ClearAllPoints()
+                        dataHarmful[unit][aura.spellId]:SetParent(nil)
+                        dataHarmful[unit][aura.spellId]=nil
+                    end
                     if not dataHarmful[unit][aura.spellId] then
                         dataHarmful[unit][aura.spellId]=GetTexture(b,config[aura.spellId])
                         if aura.duration and aura.duration>0 then

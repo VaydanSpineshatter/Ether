@@ -1,4 +1,4 @@
-local D,F,_,C,_=unpack(select(2,...))
+local D,F,_,C=unpack(select(2,...))
 function F:Tooltip(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end
