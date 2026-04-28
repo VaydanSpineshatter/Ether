@@ -1,12 +1,27 @@
-local D,F,_,C=unpack(select(2,...))
-local pairs,ipairs,sformat,iK=pairs,ipairs,string.format,{}
+local D,F,S,C=unpack(select(2,...))
+local event,pairs,ipairs,sformat,iK=S.EventFrame,pairs,ipairs,string.format,{}
+local function callback(index)
+    if event:IsEventRegistered(D.iEvent[index]) then
+        C.MainButtons[3][index].v:SetTextColor(0,1,0)
+    else
+        if index == 3 and D.DB[1][4] == 1 then
+            F:StartFlash()
+        end
+        C.MainButtons[3][index].v:SetTextColor(1,0,0)
+    end
+end
 local function OnIndicatorSelect(self,index,data)
+    for _,v in ipairs(C.MainButtons[3]) do
+        if v then v:Hide() end
+    end
     for _,btn in pairs(C.IndicatorFrame.cube) do
         btn:Enable()
     end
     C.Indi=index
     self.text:SetText(data)
     F:UpdateIndicatorsPos(C.Indi)
+    C.MainButtons[3][index]:Show()
+    callback(index)
 end
 function F:Indicators(index)
     local parent=C.ChildFrames[index]
@@ -23,11 +38,7 @@ function F:Indicators(index)
     end
     for i,opt in ipairs(D.iIconTable) do
         local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
-        if i==1 then
-            btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-40)
-        else
-            btn:SetPoint("TOPLEFT",C.MainButtons[3][i-1],"BOTTOMLEFT",0,0)
-        end
+        btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-40)
         btn:SetSize(18,18)
         btn.tex=btn:CreateTexture(nil,"OVERLAY")
         btn.tex:SetTexture(iK[i])
@@ -38,6 +49,7 @@ function F:Indicators(index)
         else
             btn.tex:SetTexCoord(0,1,0,1)
         end
+        btn:Hide()
         btn.tex:SetSize(18,18)
         btn.tex:SetPoint("LEFT",btn,"RIGHT",15)
         btn.v=btn:CreateFontString(nil,"OVERLAY")
@@ -48,8 +60,10 @@ function F:Indicators(index)
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             D.DB[3][i]=checked and 1 or 0
-            F:IndicatorsToggleIcon(i)
             F:IndicatorToggleEvent(i)
+            F:IndicatorsToggleIcon(i)
+            callback(i)
+            F:IndicatorsFullUpdateBtn()
         end)
         C.MainButtons[3][i]=btn
     end

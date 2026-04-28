@@ -82,18 +82,19 @@ function F:RemoveByIndex(index)
         end
     end
 end
+local data={}
 function F:PrintGUID()
     if D:TableSize(D.DB["USER"])==0 then
         C:EtherInfo("No guid available to print")
         return
     end
-    local data=F.GetTbl()
+
     for index,guid in ipairs(D.DB["USER"]) do
         local c,name,enemy=GuidClassColor(guid)
         data[#data+1]=sformat("%s. |cff%02x%02x%02x%s|r %s %s",index,c.r*255,c.g*255,c.b*255,name,enemy,guid)
     end
     C:EtherInfo(tconcat(data,'\n'))
-    F.RelTbl(data)
+    table.wipe(data)
 end
 local function ScanCLEUGUID(destGUID)
     for _,guid in ipairs(D.DB["USER"]) do

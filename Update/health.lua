@@ -1,5 +1,5 @@
 local D,F,S=unpack(select(2,...))
-local UnitHealth,UnitHealthMax,UnitGetIncomingHeals=UnitHealth,UnitHealthMax,UnitGetIncomingHeals
+local UnitHealth,UnitHealthMax,UnitGetIncomingHeals,UnitIsDeadOrGhost=UnitHealth,UnitHealthMax,UnitGetIncomingHeals,UnitIsDeadOrGhost
 local sformat,mfloor,pairs,UnitExists,mmax,mmin=string.format,math.floor,pairs,UnitExists,math.max,math.min
 local event,raidBtn,soloBtn,f2m,UnitIsConnected=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r",UnitIsConnected
 local function ReturnHealth(self)
@@ -56,6 +56,14 @@ local function Health(b)
     end
     F:UpdateDeadUnit(b)
 end
+function F:UpdateDeadUnit(b)
+    if not b or not b.Indicators or not b.Indicators.UnitFlags then return end
+    if not UnitIsDeadOrGhost(b.unit) and b.Indicators.UnitFlags:IsShown() then
+        b.Indicators.UnitFlags:Hide()
+        b.healthBar:SetValue(ReturnHealth(b))
+        b.healthBar:SetMinMaxValues(0,ReturnMaxHealth(b))
+    end
+end
 local function MaxHealth(b)
     if not b or not b.healthBar then return end
     local unit=b.unit
@@ -73,7 +81,7 @@ function F:FullHealthUpdate(self)
     Health(self)
     MaxHealth(self)
 end
-local lastHealth=F.GetTbl()
+local lastHealth={}
 function F:UpdateHealthPct(b)
     if not b or not b.unit or not b.health then return end
     local unit=b.unit
@@ -96,7 +104,7 @@ local function ResetHealthPct(index)
                 b.health:Hide()
             end
         end
-        F.RelTbl(lastHealth)
+        table.wipe(lastHealth)
     elseif D.DB[5][index]==1 then
         for _,b in pairs(raidBtn) do
             if b and b.health then

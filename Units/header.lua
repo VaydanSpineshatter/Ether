@@ -182,29 +182,14 @@ function F:CreatePetHeader()
     RegisterAttributeDriver(header,"state-visibility",
             "[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
 end
-local function UpdateHeader(number)
-    if not number or type(number)~="number" then return end
+local function UpdateHeader()
+    local header=D.H.raid
     local by,order=OrderMethod(D.DB["CONFIG"][11])
     local column,point=AnchorMethod(D.DB["CONFIG"][12])
-    if number<=3 then
-        D.H.raid:SetAttribute("groupBy",by or "GROUP")
-        D.H.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
-    elseif number<=5 then
-        D.H.raid:SetAttribute("columnAnchorPoint",column or "LEFT")
-        D.H.raid:SetAttribute("point",point or "TOP")
-    elseif number==6 then
-        D.H.raid:SetAttribute("ButtonWidth",D.DB[21][10][6] or 50)
-        D.H.raid:SetAttribute("ButtonHeight",D.DB[21][10][7] or 50)
-    elseif number==7 then
-        D.H.pet:SetAttribute("ButtonWidth",D.DB[21][11][6] or 45)
-        D.H.pet:SetAttribute("ButtonHeight",D.DB[21][11][7] or 45)
-    end
-    local header
-    if number<7 then
-        header=D.H.raid
-    elseif number==7 then
-        header=D.H.pet
-    end
+    header:SetAttribute("groupBy",by or "GROUP")
+    header:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
+    header:SetAttribute("columnAnchorPoint",column or "LEFT")
+    header:SetAttribute("point",point or "TOP")
     local name=header:GetName().."UnitButton"
     local index=1
     local child=_G[name..index]
@@ -224,6 +209,53 @@ local function UpdateHeader(number)
 end
 F:RegisterCallback(UpdateHeader)
 --[[
+local function UpdateHeader(number)
+    if not number or type(number)~="number" then return end
+    local by,order=OrderMethod(D.DB["CONFIG"][11])
+    local column,point=AnchorMethod(D.DB["CONFIG"][12])
+    if number<=3 then
+        D.H.raid:SetAttribute("groupBy",by or "GROUP")
+        D.H.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
+    elseif number<=5 then
+        D.H.raid:SetAttribute("columnAnchorPoint",column or "LEFT")
+        D.H.raid:SetAttribute("point",point or "TOP")
+    elseif number==6 then
+        D.H.raid:SetAttribute("ButtonWidth",D.DB[21][10][6] or 50)
+        D.H.raid:SetAttribute("ButtonHeight",D.DB[21][10][7] or 50)
+    elseif number==7 then
+        D.H.pet:SetAttribute("ButtonWidth",D.DB[21][11][6] or 45)
+        D.H.pet:SetAttribute("ButtonHeight",D.DB[21][11][7] or 45)
+     elseif number==8 then
+        D.H.raid:SetAttribute("groupBy",by or "GROUP")
+        D.H.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
+        D.H.raid:SetAttribute("columnAnchorPoint",column or "LEFT")
+        D.H.raid:SetAttribute("point",point or "TOP")
+    end
+    local header
+    if number<7 then
+        header=D.H.raid
+    elseif number==7 then
+        header=D.H.pet
+    elseif number==8 then
+        header=D.H.raid
+    end
+    local name=header:GetName().."UnitButton"
+    local index=1
+    local child=_G[name..index]
+    while (child) do
+        child:ClearAllPoints()
+        index=index+1
+        child=_G[name..index]
+    end
+    if header:IsShown() then
+        header:Hide()
+        F:AuraDisable()
+    end
+    C_After(1.5,function()
+        header:Show()
+        F:AuraEnable()
+    end)
+end
     --F:CreateSplitHeader(8)
     -- F:PositionSplitHeader()
 local groupHeaders = {}

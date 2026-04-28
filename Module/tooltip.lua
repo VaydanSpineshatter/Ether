@@ -69,11 +69,11 @@ local function GetUnitRoleString(unit)
         end
     end
 end
+local data,parts={},{}
 local function UpdateTooltip(unit,DB,status)
     frame:SetShown(status)
     local isPlayer=UnitIsPlayer(unit)
     local _,classFileName=UnitClass(unit)
-    local data,parts=F.GetTbl(),F.GetTbl()
     local name=UnitName(unit)
     local tName=UnitName(unit.."target")
     if tName then
@@ -169,8 +169,8 @@ local function UpdateTooltip(unit,DB,status)
     end
     info:SetText(tconcat(data,'  '))
     second:SetText(tconcat(parts,' , '))
-    F.RelTbl(data)
-    F.RelTbl(parts)
+    table.wipe(data)
+    table.wipe(parts)
 end
 function F:ToolTipInitialize()
     if not frame then return end

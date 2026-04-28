@@ -207,7 +207,13 @@ local function ProfileRefresh()
     if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
         C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
     end
+    if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
+        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
+    end
     F:IndicatorsEnable()
+    F:Fire(1)
+    F:RefreshChildText("sort",7,D.HeaderData[D.DB["CONFIG"][11]])
+    F:RefreshChildText("direction",7,D.HeaderData[D.DB["CONFIG"][12]])
     F:AuraEnable()
     F:IndicatorsFullUpdateBtn()
 end
@@ -309,6 +315,7 @@ function D:SwitchProfile(name)
     _G["ETHER_DATABASE"]["CURRENT"]=name
     return true,"Switched to "..name
 end
+local data={}
 function D:DeleteProfile(name)
     if not _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile not found"
@@ -321,6 +328,12 @@ function D:DeleteProfile(name)
         return false,"Failed to switch profile: "..msg
     else
         _G["ETHER_DATABASE"]["PROFILES"][name]=nil
+        table.wipe(data)
+        for n in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
+            data[#data+1]=n
+        end
+        C.ProfileDropdown:SetOptions(data)
+        C.ProfileDropdown.text:SetText(D:GetProfileName())
         return true,"Profile "..name.."  deleted"
     end
 end
@@ -360,7 +373,6 @@ function D:GetProfileName()
     if not name or name=="" then return "DEFAULT" end
     return name
 end
-local data={}
 function D:GetProfileList()
     table.wipe(data)
     for n in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do

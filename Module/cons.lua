@@ -22,9 +22,10 @@ local function Durability()
         return dPct
     end
 end
+local data={}
 function F:AddonUsage()
     if not C.EtherInfo then return end
-    local data=F.GetTbl()
+
     UpdateAddOnMemoryUsage()
     Durability()
     local speed=GetUnitSpeed("player")
@@ -38,9 +39,8 @@ function F:AddonUsage()
     data[#data+1]=sformat("Speed: |cffffff00%d%%|r",speed/7*100)
     data[#data+1]=sformat("|cffffff00FPS: |r%s   -   |cffCC66FFMEM: |r%s Kb",fps,mfloor(mem))
     C:EtherInfo(tconcat(data,'\n'))
-    F.RelTbl(data)
+    table.wipe(data)
 end
-
 --22825
 --32067
 --27666

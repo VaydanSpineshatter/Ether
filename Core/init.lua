@@ -69,14 +69,6 @@ right:SetWidth(40)
 Ether[4].Spell,Ether[4].Indi,Ether[4].Created=nil,nil,false
 Ether[4].FlashLeft=left
 Ether[4].FlashRight=right
-local tbl,count={},0
-while true do
-    count=count+1
-    tbl[#tbl+1]={}
-    if count>=64 then
-        break
-    end
-end
 if type(_G["ETHER_DATABASE"])~="table" then
     _G["ETHER_DATABASE"]={}
 end
@@ -91,21 +83,6 @@ if type(_G["ETHER_DATABASE"]["LAST"])~="number" then
 end
 local function OnEvent(self,event,...)
     self[event](self,...)
-end
-Ether[2].GetTbl=function()
-    if count==0 then
-        count=count+1
-        tbl[#tbl+1]={}
-    end
-    local obj=table.remove(tbl,count)
-    count=count-1
-    return obj
-end
-Ether[2].RelTbl=function(obj)
-    if not obj or type(obj)~="table" then return end
-    table.wipe(obj)
-    tbl[#tbl+1]=obj
-    count=count+1
 end
 Ether[3].EventFrame.ADDON_LOADED=function(self)
     self:UnregisterEvent("ADDON_LOADED")

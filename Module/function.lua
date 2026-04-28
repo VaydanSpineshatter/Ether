@@ -1,6 +1,6 @@
 local D,F,_,C=unpack(select(2,...))
 local GameTooltip,mfloor=GameTooltip,math.floor
-local tostring,tonumber,UIParent,ipairs=tostring,tonumber,UIParent,ipairs
+local tostring,tonumber,UIParent=tostring,tonumber,UIParent
 local _,screenHeight=GetPhysicalScreenSize()
 local pixelScale=1/(768/screenHeight)
 local function SnapToGrid(x,y,g)
@@ -543,35 +543,6 @@ function F:CreatePreview(parent,point)
     end
     return data,preview
 end
-function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY)
-    local btn=CreateFrame("Button",nil,parent)
-    btn:SetSize(width,height)
-    btn:SetPoint(point,relTo,rel,offX,offY)
-    btn.v=btn:CreateFontString(nil,"OVERLAY")
-    btn.v:SetFontObject(C.EtherFont)
-    btn.v:SetPoint("LEFT")
-    btn.v:SetText(text)
-    btn.bg=btn:CreateTexture(nil,"BACKGROUND")
-    btn.bg:SetAllPoints()
-    btn.bg:SetColorTexture(0,0,0,0)
-    btn:SetScript("OnEnter",function(self)
-        if self.v:GetText()=="Reset" or self.v:GetText()=="Wipe" or self.v:GetText()=="Delete" then
-            self.v:SetTextColor(1,0,0)
-            C:ToggleBorder(1,0,0)
-        elseif self.v:GetText()=="New" then
-            self.v:SetTextColor(0,1,0)
-            C:ToggleBorder(0,1,0)
-        else
-            self.v:SetTextColor(1,0.84,0)
-            C:ToggleBorder(1,0.84,0)
-        end
-    end)
-    btn:SetScript("OnLeave",function(self)
-        self.v:SetTextColor(1,1,1)
-        C:ToggleBorder(0.67,0.67,0.67)
-    end)
-    return btn
-end
 local function CreatePopupBox()
     if C.PopupBox then return end
     local frame=CreateFrame("Frame",nil,UIParent)
@@ -632,87 +603,6 @@ function F:PopupBoxSetup()
     C.PopupBox:SetShown(true)
     C.MainFrame:SetShown(false)
 end
-function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
-    local frame=CreateFrame("Button",nil,parent)
-    frame:SetSize(width,20)
-    local bg=frame:CreateTexture(nil,"BACKGROUND")
-    frame.bg=bg
-    bg:SetAllPoints()
-    bg:SetColorTexture(1,1,1,0.1)
-    local text=frame:CreateFontString(nil,"OVERLAY")
-    frame.text=text
-    text:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
-    text:SetPoint("CENTER")
-    text:SetJustifyH("CENTER")
-    text:SetJustifyV("MIDDLE")
-    text:SetText(txt)
-    local menu=CreateFrame("Button",nil,frame)
-    frame.menu=menu
-    C.DropdownMenu=menu
-    C.DropdownText=text
-    menu:SetPoint("TOPLEFT",frame,"BOTTOMLEFT",0,-2)
-    menu:SetWidth(width)
-    menu:SetFrameLevel(parent:GetFrameLevel()+10)
-    menu:Hide()
-    menu.bg=menu:CreateTexture(nil,"BACKGROUND")
-    menu.bg:SetAllPoints()
-    menu.bg:SetColorTexture(0.2,0.2,0.2,1)
-    menu.buttons={}
-    function frame:SetOptions(newList)
-        if newList then
-            options=newList
-        end
-        local totalHeight=4
-        for _,btn in ipairs(menu.buttons) do
-            btn:Hide()
-        end
-        for index,data in ipairs(options) do
-            local btn=menu.buttons[index]
-            if not btn then
-                btn=CreateFrame("Button",nil,menu)
-                btn:SetSize(width-8,20)
-                btn.text=btn:CreateFontString(nil,"OVERLAY")
-                btn.text:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
-                btn.text:SetJustifyH("CENTER")
-                btn.text:SetJustifyV("MIDDLE")
-                btn.text:SetPoint("CENTER")
-                btn:SetScript("OnEnter",function(self)
-                    self.text:SetTextColor(1,0.84,0)
-                end)
-                btn:SetScript("OnLeave",function(self)
-                    self.text:SetTextColor(1,1,1)
-                end)
-                menu.buttons[#menu.buttons+1]=btn
-            end
-            btn:SetPoint("TOPLEFT",4,-totalHeight)
-            btn.text:SetText(data)
-            btn:SetScript("OnClick",function()
-                if callback then
-                    callback(frame,index,data)
-                end
-                if not status then
-                    text:SetText(data)
-                end
-                text:SetAlpha(1)
-                menu:Hide()
-            end)
-            btn:Show()
-            totalHeight=totalHeight+20
-        end
-        menu:SetHeight(totalHeight+4)
-    end
-    frame:SetScript("OnClick",function()
-        menu:SetShown(not menu:IsShown())
-        if text:GetAlpha()==1 then
-            text:SetAlpha(0)
-        else
-            text:SetAlpha(1)
-        end
-        C:ToggleBorder(0.67,0.67,0.67)
-    end)
-    if options then frame:SetOptions(options) end
-    return frame
-end
 function F:LineInput(parent,width,height)
     local input=CreateFrame("EditBox",nil,parent)
     C.InputText=input
@@ -749,22 +639,4 @@ function F:LineInput(parent,width,height)
     if input.Middle then input.Middle:Hide() end
     if input.Right then input.Right:Hide() end
     return input
-end
-function F:PanelButton(parent,width,height,txt,point,relTo,rel,offX,offY)
-    local btn=CreateFrame("Button",nil,parent)
-    btn:SetSize(width,height)
-    btn:SetPoint(point,relTo,rel,offX,offY)
-    btn.text=btn:CreateFontString(nil,"OVERLAY")
-    btn.text:SetFontObject(C.EtherFont)
-    btn.text:SetPoint("CENTER")
-    btn.text:SetText(txt)
-    btn:SetScript("OnEnter",function(self)
-        self.text:SetTextColor(1,0.84,0)
-        C:ToggleBorder(1,0.84,0)
-    end)
-    btn:SetScript("OnLeave",function(self)
-        self.text:SetTextColor(1,1,1)
-        C:ToggleBorder(0.67,0.67,0.67)
-    end)
-    return btn
 end

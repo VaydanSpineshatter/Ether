@@ -44,21 +44,6 @@ function F:SavePosition(index)
         end
     end
 end
-function F:UpdateDeadUnit(b)
-    if not b or not b.Indicators or not b.Indicators.UnitFlags then return end
-    if not UnitIsDeadOrGhost(b.unit) then
-        if b.Indicators.UnitFlags:IsShown() then
-            b.Indicators.UnitFlags:Hide()
-        end
-    end
-end
-function F:IndicatorsFullUpdateBtn()
-    for _,b in pairs(raidBtn) do
-        if b and UnitExists(b.unit) then
-            F:UpdateIndicatorsString(b)
-        end
-    end
-end
 local function UpdateGroupRole(b,unit)
     if D.DB[3][10]~=1 then return end
     IndictorsTexture(b,"GroupRole")
@@ -213,6 +198,13 @@ local function raidTarget(self)
         self.Indicators.RaidTarget:Hide()
     end
 end
+function F:IndicatorsFullUpdateBtn()
+    for _,b in pairs(raidBtn) do
+        if b and UnitExists(b.unit) then
+            F:UpdateIndicatorsString(b)
+        end
+    end
+end
 function F:UpdateIndicatorsString(self)
     event:UNIT_CONNECTION(self.unit)
     event:PLAYER_FLAGS_CHANGED(self.unit)
@@ -222,6 +214,14 @@ function F:UpdateIndicatorsString(self)
     raidGroupLeader(self)
     raidMasterLoot(self)
     raidPlayerRoles(self)
+    for index=1,3 do
+        if UnitExists(D:PosUnit(index)) then
+            F:UpdateSoloIndicator(index)
+        end
+    end
+    if UnitExists(D:PosUnit(6)) then
+        F:UpdateSoloIndicator(6)
+    end
 end
 function event:READY_CHECK()
     for _,b in pairs(raidBtn) do
@@ -427,18 +427,6 @@ function F:IndicatorsToggleIcon(number)
         if b and b.Indicators and b.Indicators[data] then
             if b.Indicators[data]:IsShown() then
                 b.Indicators[data]:Hide()
-            else
-                b.Indicators[data]:Show()
-            end
-        end
-    end
-    for index=1,6 do
-        local b=soloBtn[index]
-        if b and b.RaidTarget then
-            if b.RaidTarget:IsShown() then
-                b.RaidTarget:Hide()
-            else
-                b.RaidTarget:Show()
             end
         end
     end

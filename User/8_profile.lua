@@ -1,20 +1,17 @@
 local D,F,_,C=unpack(select(2,...))
 local pairs,eColor=pairs,"|cffcc66ffEther|r "
+local profile={}
 local function OnProfileChange(self,index,data)
     if data==D:GetProfileName() then return end
     D:SwitchProfile(data)
     self.text:SetText(data)
 end
-local data={}
 function F:Profile(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end
     parent.Created=true
-    local profile={}
-    for _,v in pairs(D:GetProfileList(data)) do
-        profile[#profile+1]=v
-    end
-    local dropdown=F:CreateEtherDropdown(parent,130,"Select Profile",profile,OnProfileChange)
+    local dropdown=F:CreateEtherDropdown(parent,130,"Select Profile",D:GetProfileList(),OnProfileChange)
+    C.ProfileDropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)
     dropdown.text:SetText(D:GetProfileName())
     local transfer=CreateFrame("Frame",nil,parent,"BackdropTemplate")
@@ -39,9 +36,6 @@ function F:Profile(index)
         if newName and newName~="" and newName~="Enter name and press enter" then
             local success,msg=D:RenameProfile(D:GetProfileName(),newName)
             if success then
-                local freshData=D:GetProfileList()
-                dropdown:SetOptions(freshData)
-                dropdown.text:SetText(D:GetProfileName())
                 C:EtherInfo(eColor,msg)
                 self:Hide()
                 self:ClearFocus()
@@ -52,11 +46,11 @@ function F:Profile(index)
         end
         self:ClearFocus()
     end)
-    local create=F:EtherPanelButton(parent,60,25,"New","TOPLEFT",dropdown,"BOTTOMLEFT",5,-13)
+    local create=F:EtherPanelButton(parent,60,25,"New","TOPLEFT",dropdown,"BOTTOMLEFT",5,-13,0,1,0)
     local copy=F:EtherPanelButton(parent,60,25,"Copy","LEFT",create,"RIGHT")
-    local reset=F:EtherPanelButton(parent,60,25,"Reset","LEFT",copy,"RIGHT")
+    local reset=F:EtherPanelButton(parent,60,25,"Reset","LEFT",copy,"RIGHT",0,0,1,0,0)
     local rename=F:EtherPanelButton(parent,60,25,"Rename","TOPLEFT",create,"BOTTOMLEFT",0,-13)
-    local delete=F:EtherPanelButton(parent,60,25,"Delete","LEFT",rename,"RIGHT")
+    local delete=F:EtherPanelButton(parent,60,25,"Delete","LEFT",rename,"RIGHT",0,0,1,0,0)
     local export=F:EtherPanelButton(parent,60,25,"Export","TOPLEFT",rename,"BOTTOMLEFT",0,-13)
     local import=F:EtherPanelButton(transfer,60,25,"Import","LEFT",export,"RIGHT")
     create:SetScript("OnClick",function()
@@ -70,10 +64,9 @@ function F:Profile(index)
             if name and name~="" and name~="Enter name and press enter" then
                 local success,msg=D:CreateProfile(name)
                 if success then
-                    local freshData=D:GetProfileList()
-                    dropdown:SetOptions(freshData)
-                    dropdown.text:SetText(name)
                     C:EtherInfo(eColor,msg)
+                    dropdown:SetOptions(D:GetProfileList())
+                    dropdown.text:SetText(D:GetProfileName())
                     self:Hide()
                     self:ClearFocus()
                     self:SetText("")
@@ -90,9 +83,8 @@ function F:Profile(index)
         if name and name~="" then
             local success,msg=D:CopyProfile(D:GetProfileName(),name)
             if success then
-                local freshData=D:GetProfileList()
-                dropdown:SetOptions(freshData)
-                dropdown.text:SetText(name)
+                dropdown:SetOptions(D:GetProfileList())
+                dropdown.text:SetText(D:GetProfileName())
                 C:EtherInfo(eColor,msg)
             else
                 C:EtherInfo(eColor,msg)
@@ -110,8 +102,7 @@ function F:Profile(index)
             if newName and newName~="" and newName~="Enter name and press enter" then
                 local success,msg=D:RenameProfile(D:GetProfileName(),newName)
                 if success then
-                    local freshData=D:GetProfileList()
-                    dropdown:SetOptions(freshData)
+                    dropdown:SetOptions(D:GetProfileList())
                     dropdown.text:SetText(D:GetProfileName())
                     C:EtherInfo(eColor,msg)
                     self:Hide()
@@ -136,9 +127,6 @@ function F:Profile(index)
         C.PopupCallback:SetScript("OnClick",function()
             local success,msg=D:DeleteProfile(profileToDelete)
             if success then
-                local freshData=D:GetProfileList()
-                dropdown:SetOptions(freshData)
-                dropdown.text:SetText(D:GetProfileName())
                 C:EtherInfo(eColor..msg)
                 C.PopupBox:SetShown(false)
                 C.MainFrame:SetShown(true)
@@ -158,9 +146,6 @@ function F:Profile(index)
             local success,msg=D:ResetProfile()
             if success then
                 C:EtherInfo("|cffcc66ffEther|r "..msg)
-                local freshData=D:GetProfileList()
-                dropdown:SetOptions(freshData)
-                dropdown.text:SetText(D:GetProfileName())
                 C.PopupBox:SetShown(false)
                 C.MainFrame:SetShown(true)
             else
@@ -183,8 +168,7 @@ function F:Profile(index)
         if not info or info=="" or info=="Paste import data here..." then return end
         local success,msg=D:ImportProfile(info)
         if success then
-            local freshData=D:GetProfileList()
-            dropdown:SetOptions(freshData)
+            dropdown:SetOptions(D:GetProfileList())
             dropdown.text:SetText(D:GetProfileName())
             C:EtherInfo(eColor,msg)
             C.ImportBox:SetText("Paste import data here...")

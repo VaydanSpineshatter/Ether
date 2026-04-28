@@ -60,7 +60,7 @@ local function MaxPower(b)
         b.powerBar:SetMinMaxValues(0,mp)
     end
 end
-local lastPower=F.GetTbl()
+local lastPower={}
 function F:UpdatePowerPct(b)
     if not b or not b.unit or not b.power then return end
     local unit=b.unit
@@ -81,7 +81,7 @@ function F:ResetPowerPct(index)
                 b.power:Hide()
             end
         end
-        F.RelTbl(lastPower)
+        table.wipe(lastPower)
     elseif D.DB[5][index]==1 then
         for _,b in pairs(raidBtn) do
             if b and b.power then

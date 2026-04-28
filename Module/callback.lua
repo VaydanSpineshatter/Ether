@@ -18,6 +18,7 @@ local function reset()
     if Updater and Status then
         Updater:Cancel()
         if Updater:IsCancelled() then
+            Status=false
             Updater=nil
         else
             C:EtherInfo("Updater is not cancelled. Reload UI")

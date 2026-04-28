@@ -25,39 +25,7 @@ local function Child()
     if C.Created then return end
     for index=1,8 do
         if not C.MenuButtons[index] then
-            C.MenuButtons[index]=CreateFrame("Button",nil,C.BaseFrame)
-            C.MenuButtons[index]:SetSize(90,20)
-            local frame=C.ChildFrames
-            frame[index]=CreateFrame("Frame",nil,C.ContentFrame)
-            frame[index]:SetAllPoints(C.ContentFrame)
-            C.MenuButtons[index]:SetScript("OnClick",function()
-                F:MenuStringsAlpha(0)
-                F:RefreshUserButtons()
-                if index==4 then
-                    C.ChildFrames[10]:Show()
-                    C.ChildFrames[11]:Show()
-                end
-                D.DB["CONFIG"][1]=index
-                MODULE_CHARGING(index)
-                frame[index]:Show()
-            end)
-            if index==1 then
-                C.MenuButtons[index]:SetPoint("TOP",0,-5)
-            else
-                C.MenuButtons[index]:SetPoint("TOP",C.MenuButtons[index-1],"BOTTOM")
-            end
-            C.MenuButtons[index].text=C.MenuButtons[index]:CreateFontString(nil,"OVERLAY")
-            C.MenuButtons[index].text:SetFontObject(C.EtherFont)
-            C.MenuButtons[index].text:SetPoint("CENTER")
-            C.MenuButtons[index].text:SetText(D.MenuKey[index])
-            C.MenuButtons[index]:SetScript("OnEnter",function(self)
-                self.text:SetTextColor(1,0.84,0)
-                C:ToggleBorder(1,0.84,0)
-            end)
-            C.MenuButtons[index]:SetScript("OnLeave",function(self)
-                self.text:SetTextColor(1,1,1)
-                C:ToggleBorder(0.67,0.67,0.67)
-            end)
+            F:MenuButton(index,MODULE_CHARGING)
         end
     end
     for index=9,11 do
@@ -77,10 +45,10 @@ local function Base()
     C.BaseFrame:SetWidth(100)
     C.ContentFrame:SetPoint("TOPLEFT",C.BaseFrame,"TOPRIGHT")
     C.ContentFrame:SetPoint("BOTTOMRIGHT")
-    for i=1,4 do
+    for i=1,5 do
         D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
         D.menuStrings[i]:SetFontObject(C.EtherFont)
-        D.menuStrings[i]:SetText(string.format("%s - %s",D.Slash[i],D.Slash[i+4]))
+        D.menuStrings[i]:SetText(string.format("%s - %s",D.Slash[i],D.Slash[i+5]))
         if i==1 then
             D.menuStrings[i]:SetPoint("TOP",0,-30)
         else
@@ -137,22 +105,6 @@ function C:Main()
     Base()
     Child()
     Border()
-    local unlock=F:PanelButton(frame,60,20,"Lock","BOTTOMLEFT",C.BaseFrame,"BOTTOMLEFT")
-    unlock:SetScript("OnClick",function()
-        if not C.GridFrame then
-            F:SetupGridFrame()
-        end
-        if not C.GridFrame:IsShown() then
-            C:ToggleUnlock(1)
-        else
-            C:ToggleUnlock(0)
-        end
-    end)
-    local close=F:PanelButton(frame,60,20,"Close","BOTTOMRIGHT",C.BaseFrame,"BOTTOMRIGHT")
-    close:SetScript("OnClick",function()
-        frame:Hide()
-        D.DB["CONFIG"][3]=0
-    end)
     D:ApplyFramePosition(frame)
     F:SetupDrag(frame)
 end
@@ -249,6 +201,22 @@ function S.EventFrame:PLAYER_LOGIN()
         D:ApplyFramePosition(C.ToolFrame)
         F:SetupDrag(C.ToolFrame)
     end
+    local unlock=F:EtherPanelButton(C.BaseFrame,40,20,"Lock","BOTTOMLEFT",C.BaseFrame,"BOTTOMLEFT",10,5)
+    unlock:SetScript("OnClick",function()
+        if not C.GridFrame then
+            F:SetupGridFrame()
+        end
+        if not C.GridFrame:IsShown() then
+            C:ToggleUnlock(1)
+        else
+            C:ToggleUnlock(0)
+        end
+    end)
+    local close=F:EtherPanelButton(C.BaseFrame,40,20,"Close","LEFT",unlock,"RIGHT",0,0)
+    close:SetScript("OnClick",function()
+        C.MainFrame:Hide()
+        D.DB["CONFIG"][3]=0
+    end)
     D:MergeAnalyse()
 end
 function S.EventFrame:PLAYER_LOGOUT()

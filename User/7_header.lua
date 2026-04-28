@@ -5,11 +5,11 @@ local function OnHeader(self,index,data)
     if index<=3 then
         D.DB["CONFIG"][11]=index
         parent.sort:SetText("Sort by: "..data)
-        F:Fire(1,index)
+        F:Fire(1)
     elseif index<=5 then
         D.DB["CONFIG"][12]=index
         parent.direction:SetText("Direction: "..data)
-        F:Fire(1,index)
+        F:Fire(1)
     end
 end
 function F:Header(index)
@@ -38,8 +38,8 @@ function F:Header(index)
         end)
         C.MainButtons[5][i]=btn
     end
-    local data,config={"GROUP","CLASS","ASSIGNEDROLE","BOTTOM","TOP"},{}
-    for _,v in ipairs(data) do
+    local config={}
+    for _,v in ipairs(D.HeaderData) do
         config[#config+1]=v
     end
     local dropdown=F:CreateEtherDropdown(parent,130,"Select Method",config,OnHeader)
@@ -47,12 +47,12 @@ function F:Header(index)
     local sort=parent:CreateFontString(nil,"OVERLAY")
     parent.sort=sort
     sort:SetFontObject(C.EtherFont)
-    sort:SetText("Sort By: "..data[DB["CONFIG"][11]])
+    sort:SetText("Sort By: "..D.HeaderData[DB["CONFIG"][11]])
     sort:SetPoint("BOTTOMLEFT",dropdown,"TOPLEFT",0,10)
     local direction=parent:CreateFontString(nil,"OVERLAY")
     parent.direction=direction
     direction:SetFontObject(C.EtherFont)
-    direction:SetText("Direction: "..data[DB["CONFIG"][12]])
+    direction:SetText("Direction: "..D.HeaderData[DB["CONFIG"][12]])
     direction:SetPoint("BOTTOMLEFT",sort,"TOPLEFT",0,10)
     C.MainButtons[5][1]:Disable()
     C.MainButtons[5][2]:Disable()

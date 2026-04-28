@@ -64,6 +64,7 @@ D.iIconTable={"Connection","Resurrection","PlayerFlags","UnitFlags","UnitFaction
               "MasterLoot","MainTank","GroupRole","ReadyCheck"}
 D.threadEvent={"UNIT_THREAT_SITUATION_UPDATE","UNIT_PORTRAIT_UPDATE","UNIT_MODEL_CHANGED"}
 D.rosterEvent={"PLAYER_TARGET_CHANGED","GROUP_ROSTER_UPDATE","GROUP_JOINED"}
+D.HeaderData={"GROUP","CLASS","ASSIGNEDROLE","LEFT TOP","TOP, LEFT"}
 local PosMap,UnitMap,IndiMap={},{},{}
 for i,v in ipairs(Point) do
     PosMap[v]=i -- "TOPLEFT" -> 1
@@ -109,7 +110,7 @@ function D:GetRelativePoint(p)
     end
 end
 D.MenuKey={"Module","Blizzard","Tooltip","Aura","Indicators","Layout","Header","Profile"}
-D.Slash={"Slash","/ether user","/ether rl","/ether help","Commands","Config","Reload UI","Helper",}
+D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding"}
 D.Default={
     ["name"]="DEFAULT",
     [1]={1,1,1,0,1,1,1,1,1,1,1,1},--Module - Name/Health/Power
@@ -295,10 +296,7 @@ function D:ApplyFramePosition(frame)
     frame:SetScale(scale)
     frame:SetAlpha(alpha)
 end
-local mC,pC,mR
-if F.GetTbl and type(F.GetTbl)=="function" then
-    mC,pC,mR=F.GetTbl(),F.GetTbl(),F.GetTbl()
-end
+local mC,pC,mR={},{},{}
 function D:MergeToLeft(ORIG,NEW)
     if type(mC)~="table" then return end
     if type(D.GetProfileName)~="function" then return end
@@ -328,7 +326,7 @@ function D:MergeAnalyse()
     if not C.InfoFrame then return end
     if C.InfoTimer then return end
     C:EtherInfo(tconcat(mR,'\n'))
-    F.RelTbl(mR)
-    F.RelTbl(pC)
-    F.RelTbl(mC)
+    table.wipe(mR)
+    table.wipe(pC)
+    table.wipe(mC)
 end

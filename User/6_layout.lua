@@ -104,12 +104,8 @@ function F:Layout(index)
     local objectDropdown=F:CreateEtherDropdown(parent,120,"Frame",object,OnBarSelect)
     local dataDropdown=F:CreateEtherDropdown(parent,120,"Consum",data,OnBarConsum)
     local roleDropdown=F:CreateEtherDropdown(parent,120,D.DB["CONFIG"][13] or "Role",role,OnGroupJoined)
-    local removeDropdown=F:CreateEtherDropdown(parent,120,"Remove", D.DB["USER"],OnRemoved,true)
-    objectDropdown:SetPoint("TOPLEFT",5,-5)
-    dataDropdown:SetPoint("TOPRIGHT",-5,-5)
-    roleDropdown:SetPoint("BOTTOMLEFT",15,35)
-    removeDropdown:SetPoint("LEFT",roleDropdown,"RIGHT",10,0)
-    C.RemoveDropdown = removeDropdown
+    local removeDropdown=F:CreateEtherDropdown(parent,120,"Remove",D.DB["USER"],OnRemoved,true)
+    C.RemoveDropdown=removeDropdown
     parent.roleDropdown=roleDropdown
     local wl,hl=F:LineInput(parent,100,20),F:LineInput(parent,100,20)
     parent.wl,parent.hl=wl,hl
@@ -181,7 +177,7 @@ function F:Layout(index)
                 self.v:SetText(sformat("%.0f px",value))
             end)
     parent.h=h
-    local default=F:PanelButton(parent,60,20,"Default","TOPRIGHT",parent,"BOTTOMRIGHT",-10,30)
+    local default=F:EtherPanelButton(parent,60,20,"Default","TOPRIGHT",parent,"TOPRIGHT",0,0)
     default:SetScript("OnClick",function()
         SetDefaultValue(indexKey,wl,hl,w,h,s,a)
     end)
@@ -224,11 +220,31 @@ function F:Layout(index)
         end)
         C.MainButtons[6][i]=btn
     end
-    local print=F:EtherPanelButton(parent,50,25,"Print","TOPLEFT",parent,"BOTTOMLEFT",20,30)
+    local consuma=F:LineInput(parent,160,20)
+    consuma:Hide()
+    parent.consuma=consuma
+    consuma:SetNumeric(true)
+    consuma:SetScript("OnEnterPressed",function(self)
+        local spellId=tonumber(self:GetText())
+        if spellId then
+            D.DB["CONFIG"][indexKey]=spellId
+        end
+        self:ClearFocus()
+    end)
+    consuma.v=parent:CreateFontString(nil,"OVERLAY")
+    consuma.v:SetFontObject(C.EtherFont)
+    consuma.v:Hide()
+    objectDropdown:SetPoint("TOPLEFT",5,-5)
+    roleDropdown:SetPoint("BOTTOMLEFT",5,5)
+    removeDropdown:SetPoint("LEFT",roleDropdown,"RIGHT",10,0)
+    dataDropdown:SetPoint("LEFT",removeDropdown,"RIGHT",10,0)
+    consuma:SetPoint("BOTTOMLEFT",roleDropdown,"TOPLEFT",0,5)
+    consuma.v:SetPoint("BOTTOMLEFT",consuma,"TOPLEFT",0,5)
+    local print=F:EtherPanelButton(parent,30,25,"Print","LEFT",consuma.v,"RIGHT",5,0)
     print:SetScript("OnClick",function()
         F:PrintGUID()
     end)
-    local clear=F:EtherPanelButton(parent,50,25,"Clear","LEFT",print,"RIGHT",5,0)
+    local clear=F:EtherPanelButton(parent,30,25,"Wipe","LEFT",print,"RIGHT",10,0,1,0,0)
     clear:SetScript("OnClick",function()
         if D:TableSize(D.DB["USER"])==0 then
             C:EtherInfo("No guid available to delete")
@@ -243,20 +259,6 @@ function F:Layout(index)
             C.MainFrame:SetShown(true)
         end)
     end)
-    local consuma=F:LineInput(parent,160,20)
-    consuma:Hide()
-    parent.consuma=consuma
-    consuma:SetPoint("LEFT",clear,"RIGHT",40,0)
-    consuma:SetNumeric(true)
-    consuma:SetScript("OnEnterPressed",function(self)
-        local spellId=tonumber(self:GetText())
-        if spellId then
-            D.DB["CONFIG"][indexKey]=spellId
-        end
-        self:ClearFocus()
-    end)
-    consuma.v=parent:CreateFontString(nil,"OVERLAY")
-    consuma.v:SetFontObject(C.EtherFont)
-    consuma.v:Hide()
-    consuma.v:SetPoint("BOTTOMLEFT",consuma,"TOPLEFT",0,5)
+    C.MainButtons[6][10]:Disable()
+    C.MainButtons[6][11]:Disable()
 end

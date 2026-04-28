@@ -48,7 +48,7 @@ function F:Aura(index)
     if scrollFrame.ScrollBar then
         scrollFrame.ScrollBar:Hide()
     end
-    local addBtn=F:EtherPanelButton(auras,50,25,"New","TOP",parent,"TOP")
+    local addBtn=F:EtherPanelButton(auras,50,25,"New","TOP",parent,"TOP",0,0,0,1,0)
     addBtn:SetScript("OnClick",function()
         if not editor:IsShown() then
             editor:Show()
@@ -73,7 +73,7 @@ function F:Aura(index)
             F:UpdateAuraStatus(C.Spell)
         end
     end)
-    local clear=F:EtherPanelButton(auras,50,25,"Wipe","TOPRIGHT",parent,"TOPRIGHT")
+    local clear=F:EtherPanelButton(auras,50,25,"Wipe","TOPRIGHT",parent,"TOPRIGHT",0,0,1,0,0)
     clear:SetScript("OnClick",function()
         F:PopupBoxSetup()
         F:UpdateAuraList()
@@ -95,7 +95,6 @@ function F:Aura(index)
         end)
     end)
     auras.scrollChild=scrollChild
-
     local name=F:LineInput(parent,100,-20)
     editor.name=name
     name:SetPoint("TOP",40,-70)
@@ -110,7 +109,6 @@ function F:Aura(index)
     name.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
     name.v:SetPoint("BOTTOMLEFT",name,"TOPLEFT",0,2)
     name.v:SetText("Name")
-
     local spell=F:LineInput(parent,100,20)
     editor.spell=spell
     spell:SetPoint("LEFT",name,"RIGHT",15,0)
