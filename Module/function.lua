@@ -108,7 +108,7 @@ function F:SetupButtonBackground(button)
     local bg=button:CreateTexture(nil,"BACKGROUND")
     button.bg=bg
     bg:SetTexture("Interface\\Buttons\\WHITE8x8")
-    bg:SetColorTexture(0,0,0,.7)
+    bg:SetColorTexture(0,0,0,.8)
     bg:SetAllPoints(button)
     return button
 end
@@ -216,7 +216,7 @@ function F:SetupPrediction(button)
     button.myPrediction=player
     player:SetAllPoints(button.healthBar)
     player:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
-    player:SetStatusBarColor(1,0.65,0)
+    player:SetStatusBarColor(0,1,0)
     player:SetMinMaxValues(0,1)
     player:SetValue(1)
     player:Hide()
@@ -443,47 +443,6 @@ local function GetShortName(pos)
         return pos:sub(1,1)
     end
 end
-function F:SetupInfoFrame()
-    if C.InfoFrame then return end
-    local frame=CreateFrame("Frame",nil,UIParent)
-    C.InfoFrame=frame
-    frame.index=16
-    frame.bg=frame:CreateTexture(nil,"BACKGROUND")
-    frame.bg:SetAllPoints()
-    frame.bg:SetColorTexture(0.1,0.1,0.1)
-    F:MainBorder(C.BorderFrames,12,13,14,15)
-    local right=frame:CreateFontString(nil,"OVERLAY")
-    right:SetFontObject(C.EtherFont)
-    right:SetPoint("TOPRIGHT",-10,-10)
-    C.InfoRight=right
-    frame:SetFrameStrata("DIALOG")
-    local scroll=CreateFrame("ScrollFrame",nil,frame,"ScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",10,-30)
-    scroll:SetPoint("BOTTOMRIGHT",-30,10)
-    local cF=CreateFrame("Frame",nil,scroll)
-    cF:SetSize(390,111)
-    scroll:SetScrollChild(cF)
-    local txt=cF:CreateFontString(nil,"OVERLAY")
-    C.InfoText=txt
-    txt:SetFontObject(C.EtherFont)
-    txt:SetPoint("TOPLEFT")
-    txt:SetWidth(290)
-    txt:SetJustifyH("LEFT")
-    frame:Hide()
-    scroll:EnableMouseWheel(true)
-    scroll:SetScript("OnMouseWheel",function(self,delta)
-        if delta>0 then
-            self:SetVerticalScroll(-50)
-        else
-            self:SetVerticalScroll(50)
-        end
-    end)
-    if scroll.ScrollBar then
-        scroll.ScrollBar:Hide()
-    end
-    D:ApplyFramePosition(frame)
-    F:SetupDrag(frame)
-end
 function F:DispelIconSetup(button)
     if not button then return end
     if not button.dispel then
@@ -494,13 +453,8 @@ function F:DispelIconSetup(button)
         local icon=frame:CreateTexture(nil,"OVERLAY",nil,7)
         icon:SetAllPoints()
         icon:SetTexCoord(0.07,0.93,0.07,0.93)
-        local border=frame:CreateTexture(nil,"BORDER")
-        border:SetColorTexture(1,1,1,0)
-        border:SetPoint("TOPLEFT",frame,"TOPLEFT",-1,1)
-        border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",1,-1)
         button.dispel=frame
         button.dispelicon=icon
-        button.dispelborder=border
         local indicator=frame:CreateTexture(nil,"OVERLAY",nil,7)
         indicator:Hide()
         indicator:SetSize(14,14)
