@@ -6,6 +6,7 @@
 ## Category-deDE: Unit Frames
 ## Category-esES: Unit Frames
 ## Category-frFR: Unit Frames
+## Category-ruRU: Unit Frames
 ## Version: 0.8.4
 ## SavedVariables: ETHER_DATABASE
 ## IconTexture: Interface\AddOns\Ether\Media\icon
