@@ -91,7 +91,6 @@ function C:Main()
             v:Hide()
         end
         F:MenuStringsAlpha(1)
-        F:CleanUpButtons(0)
         if C.ImportBox then
             C.ImportBox:ClearFocus()
             C.ImportBox:SetText("Paste import data here...")
