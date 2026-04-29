@@ -14,7 +14,15 @@ local function SetDefaultValue(index,wl,hl,w,h,s,a)
     a.v:SetText(sformat("%.1f px",pos[9]))
     a:SetValue(pos[9])
 end
+local function callback(index)
+    if D.DB[6][index]==1 then
+        C.MainButtons[6][index].v:SetTextColor(0,1,0)
+    elseif D.DB[6][index]==0 then
+        C.MainButtons[6][index].v:SetTextColor(1,0,0)
+    end
+end
 local function OnBarSelect(self,index,data)
+    callback(index)
     for _,v in ipairs(C.MainButtons[6]) do
         if v then v:Hide() end
     end
@@ -22,7 +30,7 @@ local function OnBarSelect(self,index,data)
     local panel=C.ChildFrames[6]
     panel.default:Show()
     self.text:SetText(data)
-    C.MainButtons[6][index].label:SetText(data)
+    C.MainButtons[6][index].v:SetText(data)
     C.MainButtons[6][index]:Show()
     panel.wl:SetText(D.DB[21][index][6])
     panel.hl:SetText(D.DB[21][index][7])
@@ -188,14 +196,15 @@ function F:Layout(index)
         btn:Hide()
         btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-40)
         btn:SetSize(18,18)
-        btn.label=btn:CreateFontString(nil,"OVERLAY")
-        btn.label:SetFontObject(C.EtherFont)
-        btn.label:SetText(opt)
-        btn.label:SetPoint("LEFT",btn,"RIGHT",8,1)
+        btn.v=btn:CreateFontString(nil,"OVERLAY")
+        btn.v:SetFontObject(C.EtherFont)
+        btn.v:SetText(opt)
+        btn.v:SetPoint("LEFT",btn,"RIGHT",8,1)
         btn:SetChecked(D.DB[6][i]==1)
         btn:SetScript("OnClick",function(self)
             local checked=self:GetChecked()
             D.DB[6][i]=checked and 1 or 0
+            callback(i)
             if i==12 then
                 if D.DB[6][12]==1 then
                     F:CastEnable(1)

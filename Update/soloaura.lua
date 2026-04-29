@@ -63,7 +63,7 @@ local function FormatTime(t)
         return sformat("%.1f",t)
     end
 end
-AuraTimerFrame:SetScript("OnUpdate",function(self,elapsed)
+AuraTimerFrame:SetScript("OnUpdate",function(_,elapsed)
     acc=acc+elapsed
     if acc<UPDATE_RATE then return end
     acc=0
@@ -89,6 +89,9 @@ local function ApplyAura(now,aura)
         now.durationText:Hide()
         ActiveAuras[now]=nil
     end
+    if aura.isHarmful and aura.dispelName then
+        UpdateDispel(now,aura.dispelName)
+    end
     CheckStacks(now,aura.charges or 0)
 end
 local ICON_SIZE=15
@@ -110,86 +113,46 @@ for i=1,16 do
     bX[i],bY[i]=AuraPosition(i,BUFF_Y)
     dX[i],dY[i]=AuraPosition(i,DEBUFF_Y)
 end
-local function SetAuraPos(frame,parent,x,y)
-    frame:ClearAllPoints()
-    frame:SetPoint("BOTTOMLEFT",parent,"TOPLEFT",x,y)
+local function SetAuraPos(b,i,x,y)
+    b:ClearAllPoints()
+    b:SetPoint("BOTTOMLEFT",i,"TOPLEFT",x,y)
 end
-local update=false
-local function GetAuras(unit)
-    if not update then return end
-    if not unit then return end
-    local button=GetSoloButton(unit)
-    if not button then return end
-    local buffs=button.aura.buffs
-    local debuffs=button.aura.debuffs
-    for i=1,16 do
-        if buffs[i] then
-            buffs[i]:Hide()
-            buffs[i].auraInstanceID=nil
-        end
-        if debuffs[i] then
-            debuffs[i]:Hide()
-            debuffs[i].auraInstanceID=nil
-        end
+local function AuraRefreshPos(tbl,button,unit,func)
+    if not tbl then return end
+    for _,v in ipairs(tbl) do
+        v:Hide()
+        v.instance=nil
     end
-    local index=1
-    while true do
-        local aura=GetBuffDataByIndex(unit,index)
+    for i,v in ipairs(tbl) do
+        local aura=func(unit,i)
         if not aura then break end
-        local now=button.aura.buffs[index]
-        if now then
-            button.aura.bmap[aura.auraInstanceID]=index
-            now.auraInstanceID=aura.auraInstanceID
-            ApplyAura(now,aura)
-            SetAuraPos(now,button,bX[index],bY[index])
-            now:Show()
-        end
-        index=index+1
-    end
-    index=1
-    while true do
-        local aura=GetDebuffDataByIndex(unit,index)
-        if not aura then break end
-        local now=button.aura.debuffs[index]
-        if now then
-            button.aura.dmap[aura.auraInstanceID]=index
-            now.auraInstanceID=aura.auraInstanceID
-            ApplyAura(now,aura)
-            if aura.dispelName then
-                UpdateDispel(now,aura.dispelName)
-            end
-            SetAuraPos(now,button,dX[index],dY[index])
-            now:Show()
-        end
-        index=index+1
+        button.aura.bmap[aura.auraInstanceID]=i
+        v.instance=aura.auraInstanceID
+        ApplyAura(v,aura)
+        v:Show()
     end
 end
 local function AddBuff(button,aura)
-    for index=1,16 do
-        local now=button.aura.buffs[index]
-        if now and not now:IsShown() then
-            button.aura.bmap[aura.auraInstanceID]=index
-            now.auraInstanceID=aura.auraInstanceID
-            ApplyAura(now,aura)
-            SetAuraPos(now,button,bX[index],bY[index])
-            now:Show()
-            return
+    if not button.aura.buffs then return end
+    for i,v in ipairs(button.aura.buffs) do
+        if not v:IsShown() then
+            button.aura.bmap[aura.auraInstanceID]=i
+            v.instance=aura.auraInstanceID
+            ApplyAura(v,aura)
+            v:Show()
+            break
         end
     end
 end
 local function AddDebuff(button,aura)
-    for index=1,16 do
-        local now=button.aura.debuffs[index]
-        if now and not now:IsShown() then
-            button.aura.dmap[aura.auraInstanceID]=index
-            now.auraInstanceID=aura.auraInstanceID
-            ApplyAura(now,aura)
-            if aura.dispelName then
-                UpdateDispel(now,aura.dispelName)
-            end
-            SetAuraPos(now,button,dX[index],dY[index])
-            now:Show()
-            return
+    if not button.aura.debuffs then return end
+    for i,v in ipairs(button.aura.debuffs) do
+        if not v:IsShown() then
+            button.aura.dmap[aura.auraInstanceID]=i
+            v.instance=aura.auraInstanceID
+            ApplyAura(v,aura)
+            v:Show()
+            break
         end
     end
 end
@@ -199,7 +162,6 @@ local function UpdateBuff(button,aura)
         ApplyAura(button.aura.buffs[slot],aura)
     end
 end
-
 local function UpdateDebuff(button,aura)
     local slot=button.aura.dmap[aura.auraInstanceID]
     if slot then
@@ -212,9 +174,8 @@ local function RemoveBuff(button,id)
         local now=button.aura.buffs[slot]
         if now then
             now:Hide()
-            now.auraInstanceID=nil
+            now.instance=nil
             ActiveAuras[now]=nil
-            button.aura.bmap[id]=nil
         end
     end
 end
@@ -224,55 +185,52 @@ local function RemoveDebuff(button,id)
         local now=button.aura.debuffs[slot]
         if now then
             now:Hide()
-            now.auraInstanceID=nil
+            now.instance=nil
             ActiveAuras[now]=nil
-            button.aura.dmap[id]=nil
         end
     end
 end
+local function GetAuras(update,button,unit)
+    if not update or not button then return end
+    AuraRefreshPos(button.aura.buffs,button,unit,GetBuffDataByIndex)
+    AuraRefreshPos(button.aura.debuffs,button,unit,GetDebuffDataByIndex)
+end
+local update=false
 local function UnitAuraUpdate(unit,updateInfo)
     if not update then return end
     local button=GetSoloButton(unit)
-    if not button then return end
-    if not button.aura.bmap then
-        button.aura.bmap={}
-    end
-    if not button.aura.dmap then
-        button.aura.dmap={}
-    end
+    if not button or not button.aura then return end
     local isFullUpdate=not updateInfo or updateInfo.isFullUpdate
     if isFullUpdate then
-        button.aura.bmap={}
-        button.aura.dmap={}
-        GetAuras(unit)
-    else
-        if updateInfo.addedAuras then
-            for _,aura in ipairs(updateInfo.addedAuras) do
+        GetAuras(update,button,unit)
+        return
+    end
+    if updateInfo.addedAuras then
+        for _,aura in ipairs(updateInfo.addedAuras) do
+            if aura.isHelpful then
+                AddBuff(button,aura)
+            end
+            if aura.isHarmful then
+                AddDebuff(button,aura)
+            end
+        end
+    end
+    if updateInfo.updatedAuraInstanceIDs then
+        for _,id in ipairs(updateInfo.updatedAuraInstanceIDs) do
+            local aura=GetAuraDataByAuraInstanceID(unit,id)
+            if aura then
                 if aura.isHelpful then
-                    AddBuff(button,aura)
-                end
-                if aura.isHarmful then
-                    AddDebuff(button,aura)
-                end
-            end
-        end
-        if updateInfo.updatedAuraInstanceIDs then
-            for _,id in ipairs(updateInfo.updatedAuraInstanceIDs) do
-                local aura=GetAuraDataByAuraInstanceID(unit,id)
-                if aura then
-                    if aura.isHelpful then
-                        UpdateBuff(button,aura)
-                    else
-                        UpdateDebuff(button,aura)
-                    end
+                    UpdateBuff(button,aura)
+                else
+                    UpdateDebuff(button,aura)
                 end
             end
         end
-        if updateInfo.removedAuraInstanceIDs then
-            for _,id in ipairs(updateInfo.removedAuraInstanceIDs) do
-                RemoveBuff(button,id)
-                RemoveDebuff(button,id)
-            end
+    end
+    if updateInfo.removedAuraInstanceIDs then
+        for _,id in ipairs(updateInfo.removedAuraInstanceIDs) do
+            RemoveBuff(button,id)
+            RemoveDebuff(button,id)
         end
     end
 end
@@ -291,9 +249,10 @@ local function auraTbl(button,status)
         twipe(button.aura.debuffs)
     end
 end
-function F:TargetAuraFullUpdate()
-    if UnitExists("target") then
-        GetAuras("target")
+function F:SoloAuraFullUpdate(button,unit)
+    if not button or not button.aura then return end
+    if UnitExists(unit) then
+        GetAuras(update,button,unit)
     end
 end
 local function SetupAuraIcon(button)
@@ -368,6 +327,7 @@ local function AuraSetup(button)
             aura:SetScript("OnLeave",Aura_OnLeave)
             button.aura.buffs[i]=aura
         end
+        SetAuraPos(button.aura.buffs[i],button,bX[i],bY[i])
     end
     for i=1,16 do
         if not button.aura.debuffs[i] then
@@ -385,6 +345,7 @@ local function AuraSetup(button)
             aura:SetScript("OnLeave",Aura_OnLeave)
             button.aura.debuffs[i]=aura
         end
+        SetAuraPos(button.aura.debuffs[i],button,bX[i],bY[i])
     end
 end
 function F:EnableSoloAura()
@@ -396,8 +357,8 @@ function F:EnableSoloAura()
     AuraSetup(soloBtn[4])
     auraTbl(soloBtn[4],true)
     C_Timer.After(0.4,function()
-        GetAuras("player")
-        F:TargetAuraFullUpdate()
+        F:SoloAuraFullUpdate(soloBtn[1],"player")
+        F:SoloAuraFullUpdate(soloBtn[2],"target")
     end)
 end
 function F:DisableSoloAura()

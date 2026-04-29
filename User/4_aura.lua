@@ -136,7 +136,7 @@ function F:Aura(index)
                     self:SetValue(D.DB["CUSTOM"][C.Spell][7])
                     D.DB["CUSTOM"][C.Spell][7]=value
                     editor.x.v:SetText(sformat("%.0f",value))
-                    F:UpdatePreview(editor)
+                    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
                 end
             end)
     editor.x=x
@@ -147,7 +147,7 @@ function F:Aura(index)
                     self:SetValue(D.DB["CUSTOM"][C.Spell][8])
                     D.DB["CUSTOM"][C.Spell][8]=value
                     editor.y.v:SetText(sformat("%.0f",value))
-                    F:UpdatePreview(editor)
+                    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
                 end
             end)
     editor.y=y
@@ -158,7 +158,7 @@ function F:Aura(index)
                     D.DB["CUSTOM"][C.Spell][9]=value
                     self:SetValue(D.DB["CUSTOM"][C.Spell][9])
                     editor.s.v:SetText(sformat("%.1f px",value))
-                    F:UpdatePreview(editor)
+                    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
                 end
             end)
     editor.s=s
@@ -170,7 +170,6 @@ function F:Aura(index)
             if C.Spell then
                 D.DB["CUSTOM"][C.Spell][6]=self.position
                 F:UpdateEditor(editor)
-                F:UpdatePreview(editor)
                 for _,otherBtn in pairs(cube) do
                     otherBtn:GetScript("OnLeave")(otherBtn)
                 end
@@ -330,69 +329,32 @@ function F:UpdateEditor(editor)
     editor.s:Enable()
     editor.s:Show()
     editor.s.v:SetText(sformat("%.1f px",data[9]))
-    for pos,btn in pairs(editor.cube) do
-        if pos==data[6] then
-            btn.bg:SetColorTexture(0.8,0.6,0,0.5)
-            btn:Enable()
-        else
-            btn.bg:SetColorTexture(0.2,0.2,0.2,0.5)
-            btn:Enable()
-        end
-    end
+    F:UpdateCube(editor.cube,data,6)
     editor.x:SetValue(data[7])
     editor.x.v:SetText(sformat("%.0f px",data[7]))
     editor.y:SetValue(data[8])
     editor.y.v:SetText(sformat("%.0f px",data[8]))
-    F:UpdatePreview(editor)
-end
-function F:UpdatePreview(editor)
-    if type(C.Spell)=="nil" then
-        return
-    end
-    local data=D.DB["CUSTOM"][C.Spell]
-    editor.preview.icon:SetSize(data[9],data[9])
-    editor.preview.icon:SetColorTexture(data[2],data[3],data[4],data[5])
-    editor.preview.icon:ClearAllPoints()
-    local posMap={
-        TOPLEFT={"TOPLEFT",data[7],data[8]},
-        TOP={"TOP",data[7],data[8]},
-        TOPRIGHT={"TOPRIGHT",data[7],data[8]},
-        LEFT={"LEFT",data[7],-data[8]},
-        CENTER={"CENTER",data[7],-data[8]},
-        RIGHT={"RIGHT",data[7],-data[8]},
-        BOTTOMLEFT={"BOTTOMLEFT",data[7],data[8]},
-        BOTTOM={"BOTTOM",data[7],data[8]},
-        BOTTOMRIGHT={"BOTTOMRIGHT",data[7],data[8]},
-    }
-    local pos=posMap[data[6]]
-    if pos then
-        editor.preview.icon:SetPoint(pos[1],editor.preview,pos[1],pos[2],pos[3])
-    end
+    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
 end
 function F:AddTemplateAuras(templateName)
-    local template=D.PredefinedAuras[templateName]
-    if not template then
-        return
-    end
-
-    local added=0
-    local skipped=0
+    if not D.PredefinedAuras[templateName] then return end
+    local a,s=0,0
     local DB=D.DB["CUSTOM"]
-    for spellID,auraData in pairs(template) do
-        if not DB[spellID] then
-            DB[spellID]=D:CopyTable(auraData)
-            added=added+1
+    for i,v in pairs(D.PredefinedAuras[templateName]) do
+        if not DB[i] then
+            DB[i]=D:CopyTable(v)
+            a=a+1
         else
-            skipped=skipped+1
+            s=s+1
         end
     end
     F:UpdateAuraList()
     local msg=sformat("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
-    if added>0 then
-        msg=msg..sformat("|cff00ff00+%d new auras|r",added)
+    if a>0 then
+        msg=msg..sformat("|cff00ff00+%d new auras|r",a)
     end
-    if skipped>0 then
-        msg=msg..sformat(" (%d already existed)",skipped)
+    if s>0 then
+        msg=msg..sformat(" (%d already existed)",s)
     end
     C:EtherInfo(msg)
     C.Spell=nil

@@ -46,7 +46,6 @@ function F:MainBorder(parent,_1,_2,_3,_4)
         C.BorderFrames[j]:SetPoint(D:GetRelativePoint(D:PosNumber(v)))
     end
 end
---  local r, g, b = GetThreatStatusColor(thread)
 function F:UpdateThreatColor(numb,numb2,unit)
     local thread=UnitThreatSituation(unit)
     local r,g,b
@@ -61,14 +60,27 @@ function F:UpdateThreatColor(numb,numb2,unit)
         end
     end
 end
--- F:UpdateCube(C.EditorFrame.cube, status)
---  F:UpdateCube(C.IndicatorFrame.cube, status)
-function F:UpdateCube(data,status)
-    if not data then return end
-    local index=F:BinaryCondition(status)
-    for _,btn in pairs(data) do
-        btn:SetShown(index)
+function F:UpdateCube(data,db,number)
+    for i,v in pairs(data) do
+        if i==db[number] then
+            v.bg:SetColorTexture(0.8,0.6,0,0.5)
+            v:Enable()
+        else
+            v.bg:SetColorTexture(0.2,0.2,0.2,0.5)
+            v:Enable()
+        end
     end
+end
+function F:UpdatePreview(data,editor,id)
+    if type(id)=="nil" then return end
+    local pos=data[id]
+    local icon=editor.preview.icon
+    icon:Hide()
+    icon:ClearAllPoints()
+    icon:SetColorTexture(pos[2],pos[3],pos[4],pos[5])
+    icon:SetSize(pos[9],pos[9])
+    icon:SetPoint(pos[6],editor.preview,pos[6],pos[7],pos[8])
+    icon:Show()
 end
 function F:RefreshUserButtons()
     for _,v in ipairs(C.ChildFrames) do

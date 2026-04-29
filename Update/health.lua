@@ -53,8 +53,8 @@ local function Health(b)
         b.healthBar:SetSmoothedValue(h)
     else
         b.healthBar:SetValue(h)
+        F:UpdateDeadUnit(b)
     end
-    F:UpdateDeadUnit(b)
 end
 function F:UpdateDeadUnit(b)
     if not b or not b.Indicators or not b.Indicators.UnitFlags then return end

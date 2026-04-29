@@ -4,7 +4,7 @@ local function callback(index)
     if event:IsEventRegistered(D.iEvent[index]) then
         C.MainButtons[3][index].v:SetTextColor(0,1,0)
     else
-        if index == 3 and D.DB[1][4] == 1 then
+        if index==3 and D.DB[1][4]==1 then
             F:StartFlash()
         end
         C.MainButtons[3][index].v:SetTextColor(1,0,0)
@@ -175,15 +175,7 @@ function F:UpdateIndicatorsPos(n)
     if indicator.s.v then
         indicator.s.v:SetText(sformat("%.1f px",data[4]))
     end
-    for pos,btn in pairs(indicator.cube) do
-        if pos==data[1] then
-            btn.bg:SetColorTexture(0.8,0.6,0,0.5)
-            btn:Enable()
-        else
-            btn.bg:SetColorTexture(0.2,0.2,0.2,0.5)
-            btn:Enable()
-        end
-    end
+    F:UpdateCube(indicator.cube,data,1)
     indicator.x:SetValue(data[2])
     if indicator.x.v then
         indicator.x.v:SetText(sformat("%.0f px",data[2]))

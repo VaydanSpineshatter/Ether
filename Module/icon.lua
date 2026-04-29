@@ -14,13 +14,6 @@ local function Leave()
 end
 local function Click(_,btn)
     if btn=="RightButton" then
-        if C.DropdownMenu then
-            C.DropdownMenu:Hide()
-        end
-        if C.DropdownText then
-            C.DropdownText:SetAlpha(1)
-        end
-        D.DB["CONFIG"][3]=F:ToggleBinary(D.DB["CONFIG"][3])
         C:ToggleUser()
     end
 end

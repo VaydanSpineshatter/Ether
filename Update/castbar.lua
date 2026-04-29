@@ -263,6 +263,9 @@ function F:CastEnable(index)
     F:SetupDrag(castBar[index])
     D:ApplyFramePosition(castBar[index])
     RegisterUpdate(castBar[index])
+    if castBar[index]:GetAlpha()==0 then
+        castBar[index]:SetAlpha(1)
+    end
 end
 function F:CastDisable(index)
     if not index or index>2 then return end
@@ -270,6 +273,7 @@ function F:CastDisable(index)
     castBar[index]:Hide()
     castBar[index]:SetScript("OnDragStart",nil)
     castBar[index]:SetScript("OnDragStop",nil)
+    castBar[index]:SetAlpha(0)
     if not UpdateInfo() then
         for _,v in ipairs(D.castEvent) do
             event:UnregisterEvent(v)

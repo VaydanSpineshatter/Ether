@@ -53,9 +53,8 @@ function event:GROUP_ROSTER_UPDATE()
     end
 end
 function event:GROUP_JOINED()
-    if D.DB["CONFIG"] and D.DB["CONFIG"][13]~="NONE" then
-        UnitSetRole("player",D.DB["CONFIG"][13] or "NONE")
-    end
+    if UnitAffectingCombat("player") then return end
+    UnitSetRole("player",D.DB["CONFIG"][13] or "NONE")
 end
 function event:UNIT_THREAT_SITUATION_UPDATE(unit)
     if unit=="player" then
@@ -89,9 +88,8 @@ function event:PLAYER_TARGET_CHANGED()
             F:UpdateSoloIndicator(6)
         end
     end
-
     if D.DB[6][2]==1 then
-        F:TargetAuraFullUpdate()
+        F:SoloAuraFullUpdate(soloBtn[2],"target")
     end
     F:UpdateThreatColor(35,38,"target")
     modelBtn[2]:SetUnit("target")
