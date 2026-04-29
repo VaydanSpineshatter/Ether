@@ -1,23 +1,5 @@
 local D,F,_,C=unpack(select(2,...))
 local ipairs=ipairs
-function F:CleanUpButtons(status)
-    local index=F:BinaryCondition(status)
-    --[[
-    if C.ChildFrames[6] and C.ChildFrames[6].consuma and C.ChildFrames[6].consuma.v then
-        C.ChildFrames[6].consuma:SetShown(index)
-        C.ChildFrames[6].consuma.v:SetShown(index)
-        C.ChildFrames[6].wl:SetShown(index)
-        C.ChildFrames[6].hl:SetShown(index)
-        C.ChildFrames[6].wl.v:SetShown(index)
-        C.ChildFrames[6].hl.v:SetShown(index)
-        C.ChildFrames[6].w:SetShown(index)
-        C.ChildFrames[6].h:SetShown(index)
-    end
-    ]]
-    if C.EditorFrame.spell and C.EditorFrame.spell.v then
-        --  C.AuraFrame:SetShown(index)
-    end
-end
 function C:ToggleBorder(r,g,b)
     if not C.BorderFrames then return end
     for _,v in ipairs(C.BorderFrames) do
@@ -109,10 +91,8 @@ function F:MenuStringsAlpha(number)
         D.menuStrings[index]:SetAlpha(number)
     end
 end
-
-local dropdownBtn={}
 function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
-    table.wipe(dropdownBtn)
+    local dropdownBtn={}
     local frame=CreateFrame("Button",nil,parent)
     frame:SetSize(width,20)
     local bg=frame:CreateTexture(nil,"BACKGROUND")
