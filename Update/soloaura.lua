@@ -345,7 +345,7 @@ local function AuraSetup(button)
             aura:SetScript("OnLeave",Aura_OnLeave)
             button.aura.debuffs[i]=aura
         end
-        SetAuraPos(button.aura.debuffs[i],button,bX[i],bY[i])
+       SetAuraPos(button.aura.debuffs[i],button,dX[i],dY[i])
     end
 end
 function F:EnableSoloAura()
