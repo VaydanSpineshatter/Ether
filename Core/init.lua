@@ -78,6 +78,9 @@ end
 if type(_G["ETHER_DATABASE"]["CURRENT"])~="string" then
     _G["ETHER_DATABASE"]["CURRENT"]="DEFAULT"
 end
+if type(_G["ETHER_DATABASE"]["VERSION"])~="string" then
+    _G["ETHER_DATABASE"]["VERSION"]=""
+end
 if type(_G["ETHER_DATABASE"]["LAST"])~="number" then
     _G["ETHER_DATABASE"]["LAST"]=0
 end
@@ -89,16 +92,21 @@ Ether[3].EventFrame.ADDON_LOADED=function(self)
     local success,msg=pcall(function()
         if not _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"] then
             _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
-            _G["ETHER_DATABASE"]["CURRENT"]=Ether[1]:GetProfileName()
+            Ether[1]:CurrentProfile(Ether[1]:GetProfileName())
         end
         Ether[1]:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()],Ether[1].Default)
     end)
     if not success then
         table.wipe(_G["ETHER_DATABASE"]["PROFILES"])
         _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
-        _G["ETHER_DATABASE"]["CURRENT"]=Ether[1]:GetProfileName()
+        Ether[1]:CurrentProfile("DEFAULT")
         print(msg)
     else
+        if Ether[4].EtherVersion~=_G["ETHER_DATABASE"]["VERSION"] then
+            Ether[1]:ProfileMigrate(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()],"CONFIG",16)
+            Ether[1]:ProfileMigrate(_G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"],"CONFIG",16)
+            _G["ETHER_DATABASE"]["VERSION"]=Ether[4].EtherVersion
+        end
         Ether[1].DB=Ether[1]:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()])
         C_ChatInfo.RegisterAddonMessagePrefix(Ether[4].EtherPrefix)
         Ether[3].EventFrame:RegisterEvent("PLAYER_LOGIN")

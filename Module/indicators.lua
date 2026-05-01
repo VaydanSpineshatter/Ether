@@ -56,7 +56,7 @@ function F:SaveBtnPosition(b)
             b.Indicators[v]:SetSize(c[4],c[4])
         end
         if not UnitInAnyGroup("player") then
-             b.Indicators[v]:Hide()
+            b.Indicators[v]:Hide()
         end
     end
 end
@@ -125,7 +125,7 @@ function event:PLAYER_ROLES_ASSIGNED()
             if tank then
                 UpdateMainTank(b,unit)
             end
-            local assist= GetPartyAssignment("MAINASSIST",unit)
+            local assist=GetPartyAssignment("MAINASSIST",unit)
             if assist then
                 UpdateMainAssist(b,unit)
             end

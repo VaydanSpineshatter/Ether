@@ -150,7 +150,7 @@ function F:SetupButtonBorder(button)
     right:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",p,-p)
     right:SetWidth(p)
     right:SetColorTexture(r,g,b,a)
-    button.topDispel = false
+    button.topDispel=false
     return button
 end
 function F:SetupHealthBar(button,orient)

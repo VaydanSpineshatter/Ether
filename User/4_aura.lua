@@ -33,14 +33,14 @@ local function UpdateStatus(self,index)
     local c=F:BinaryCondition(D.DB["CONFIG"][index])
     local r,g,b=0,1,0
     self.bg:SetColorTexture(c and r or 1,c and g or 0,c and b or 0,0.4)
-    if not c and index == 14 then
+    if not c and index==14 then
         F:StopAllBlinks()
     end
-    if not c and index == 15 then
-       F:HideClassDispel()
+    if not c and index==15 then
+        F:HideClassDispel()
     end
-    if not c and index == 16 then
-       F:HideBorderDispel()
+    if not c and index==16 then
+        F:HideBorderDispel()
     end
 end
 function F:Aura(index)

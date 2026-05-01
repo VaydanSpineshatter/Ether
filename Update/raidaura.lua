@@ -88,10 +88,10 @@ local function CheckDispelBorder(button,dispelName)
     if not button.topDispel and dispelName then
         local c=DebuffTypeColor[dispelName] or DebuffTypeColor["none"]
         UpdateBorder(button,c.r,c.g,c.b)
-        button.topDispel = true
+        button.topDispel=true
     else
         UpdateBorder(button,0,0,0)
-        button.topDispel = false
+        button.topDispel=false
     end
 end
 local function CheckClassDispel(b,icon,dispelName)
@@ -102,11 +102,11 @@ local function CheckClassDispel(b,icon,dispelName)
         local c=DebuffTypeColor[dispelName] or DebuffTypeColor["none"]
         b.dispelBorder:SetColorTexture(c.r,c.g,c.b)
         b.dispelBorder:Show()
-        b.classDispel = true
+        b.classDispel=true
     else
         b.dispel:Hide()
         b.dispelBorder:Hide()
-        b.classDispel = false
+        b.classDispel=false
     end
 end
 local function CheckBlink(b,icon,duration)
@@ -180,7 +180,7 @@ local function UpdateStatusIcons(b)
         CheckDispelBorder(b)
     end
 end
-F.UpdateStatusIcons = UpdateStatusIcons
+F.UpdateStatusIcons=UpdateStatusIcons
 function F:RaidAurasFullUpdate(unit)
     if not unit or not UnitExists(unit) then return end
     local b=GetRaidBtn(unit)
@@ -210,8 +210,7 @@ function F:raidAuraUpdate(unit,updateInfo)
     local b=GetRaidBtn(unit)
     if not b then return end
     local c=D.DB["CUSTOM"]
-    local isFullUpdate=not updateInfo or updateInfo.isFullUpdate
-    if isFullUpdate then
+    if updateInfo.isFullUpdate then
         F:RaidAurasFullUpdate(unit)
         return
     end
@@ -272,7 +271,7 @@ end
 function F:HideBorderDispel()
     for _,b in pairs(raidBtn) do
         if b.top and b.topDispel then
-           CheckDispelBorder(b)
+            CheckDispelBorder(b)
         end
     end
 end

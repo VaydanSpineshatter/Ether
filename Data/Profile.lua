@@ -336,9 +336,6 @@ function D:DeleteProfile(name)
         return true,"Profile "..name.."  deleted"
     end
 end
-function D:GetProfile()
-    return _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]
-end
 function D:ResetProfile()
     local name=D:GetProfileName()
     _G["ETHER_DATABASE"]["PROFILES"][name]=D:CopyTable(D.Default)
@@ -378,4 +375,10 @@ function D:GetProfileList()
         data[#data+1]=n
     end
     return data
+end
+function D:GetProfile()
+    return _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]
+end
+function D:CurrentProfile(name)
+    _G["ETHER_DATABASE"]["CURRENT"]=name
 end

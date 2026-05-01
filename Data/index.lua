@@ -131,6 +131,16 @@ function D:DataMigrate(old,newSize,default)
     end
     return t
 end
+function D:ProfileMigrate(tbl,key,number)
+    if tbl[key] and type(tbl[key])=="table" then
+        if #tbl[key] ~= number then
+            tbl[key]=D:DataMigrate(tbl[key],number,0)
+        end
+    end
+    if type(tbl[key][13])~="string" then
+         tbl[key][13] = "NONE"
+    end
+end
 function D:CopyTable(orig,seen)
     if type(orig)~="table" then
         return orig
