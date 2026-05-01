@@ -85,7 +85,6 @@ function F:RangeEnable()
             i=i+1
             if i>=5 then
                 i=0
-                F:CacheStatus()
                 CleanupCache()
             end
             UpdateAlpha()
