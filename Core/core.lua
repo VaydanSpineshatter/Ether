@@ -124,11 +124,7 @@ end
 function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_LOGOUT")
-    if C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) then
-        if IsInGuild() then
-            C_ChatInfo.SendAddonMessage(C.EtherPrefix,C.EtherVersion,"GUILD")
-        end
-    end
+    D.Slash[16]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) and "|cff00ff00Yes|r" or "|cffff0000No|r"
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()
