@@ -45,16 +45,7 @@ local function Base()
     C.BaseFrame:SetWidth(100)
     C.ContentFrame:SetPoint("TOPLEFT",C.BaseFrame,"TOPRIGHT")
     C.ContentFrame:SetPoint("BOTTOMRIGHT")
-    for i=1,5 do
-        D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
-        D.menuStrings[i]:SetFontObject(C.EtherFont)
-        D.menuStrings[i]:SetText(string.format("%s - %s",D.Slash[i],D.Slash[i+5]))
-        if i==1 then
-            D.menuStrings[i]:SetPoint("TOP",0,-30)
-        else
-            D.menuStrings[i]:SetPoint("TOP",D.menuStrings[i-1],"BOTTOM",0,-5)
-        end
-    end
+    F:InitializeSystemStatus()
 end
 local function Border()
     if C.Created then return end
