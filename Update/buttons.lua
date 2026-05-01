@@ -87,7 +87,7 @@ function F:RefreshUserButtons()
 end
 function F:MenuStringsAlpha(number)
     if D.menuStrings[1]:GetAlpha()==number then return end
-    for index=1,5 do
+    for index=1,9 do
         D.menuStrings[index]:SetAlpha(number)
     end
 end
@@ -212,6 +212,28 @@ function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY,r
     end)
     btn:SetSize(btn.v:GetStringWidth() or width,btn.v:GetStringHeight() or height)
     return btn
+end
+function F:InitializeSystemStatus()
+    for i=1,5 do
+        D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
+        D.menuStrings[i]:SetFontObject(C.EtherFont)
+        D.menuStrings[i]:SetText(string.format("%s - %s",D.Slash[i],D.Slash[i+5]))
+        if i==1 then
+            D.menuStrings[i]:SetPoint("TOP",0,-15)
+        else
+            D.menuStrings[i]:SetPoint("TOP",D.menuStrings[i-1],"BOTTOM",0,-5)
+        end
+    end
+    for i=6,9 do
+        D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
+        D.menuStrings[i]:SetFontObject(C.EtherFont)
+        D.menuStrings[i]:SetText(string.format("%s %s",D.Slash[i],D.Slash[i+9]))
+        if i==6 then
+            D.menuStrings[i]:SetPoint("BOTTOM",0,5)
+        else
+            D.menuStrings[i]:SetPoint("BOTTOMLEFT",D.menuStrings[i-1],"TOPLEFT",0,5)
+        end
+    end
 end
 function F:MenuButton(index,func)
     local btn=CreateFrame("Button",nil,C.BaseFrame)
