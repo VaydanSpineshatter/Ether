@@ -237,6 +237,17 @@ function D:ExportProfileToClipboard()
     C:EtherInfo("|cff888888You can now paste it anywhere|r")
     return encoded
 end
+function D:ExportAddonMsg()
+    local compressed=CompressString(C.Ether.Version,1)
+    local encoded=Base64Encode(compressed)
+    return encoded
+end
+function D:ImportAddonMsg(msg)
+    if not msg then return end
+    local decoded=Base64Decode(msg)
+    local import=DecompressString(decoded,1)
+    return import
+end
 function D:ExportCurrentProfile()
     local userData=D:GetProfile()
     if not userData then
