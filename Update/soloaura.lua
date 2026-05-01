@@ -1,10 +1,21 @@
 local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,mfloor,sformat=pairs,ipairs,math.floor,string.format
 local GetBuffDataByIndex,GetDebuffDataByIndex=C_UnitAuras.GetBuffDataByIndex,C_UnitAuras.GetDebuffDataByIndex
-local UnitExists,GetTime,twipe=UnitExists,GetTime,table.wipe
-local GetAuraDataByAuraInstanceID=C_UnitAuras.GetAuraDataByAuraInstanceID
-local event,raidBtn,soloBtn=S.EventFrame,D.raidBtn,D.soloBtn
-local ActiveAuras={}
+local UnitExists,GetTime,twipe,GetAuraDataByAuraInstanceID=UnitExists,GetTime,table.wipe,C_UnitAuras.GetAuraDataByAuraInstanceID
+local event,raidBtn,soloBtn,Active,bX,bY,dX,dY=S.EventFrame,D.raidBtn,D.soloBtn,{},{},{},{},{}
+local ICON_SIZE,SPACING,PER_ROW,BUFF_Y,DEBUFF_Y=15,1,8,3,35
+local function AuraPosition(i,offsetY)
+    local row=mfloor((i-1)/PER_ROW)
+    local col=(i-1)%PER_ROW
+    local step=ICON_SIZE+SPACING
+    local x=col*step
+    local y=row*step+offsetY
+    return x,y
+end
+for i=1,16 do
+    bX[i],bY[i]=AuraPosition(i,BUFF_Y)
+    dX[i],dY[i]=AuraPosition(i,DEBUFF_Y)
+end
 local function GetSoloButton(unit)
     return soloBtn[D:PosUnit(unit)]
 end
@@ -33,9 +44,9 @@ local function CheckIcon(button,icon)
     end
 end
 local function UpdateDispel(self,dispelName)
-    local color=DebuffTypeColor[dispelName]
-    if color then
-        self.border:SetColorTexture(color.r,color.g,color.b)
+    local c=DebuffTypeColor[dispelName]
+    if c then
+        self.border:SetColorTexture(c.r,c.g,c.b)
         self.border:Show()
     else
         self.border:Hide()
@@ -45,10 +56,10 @@ local function SetAuraTimer(icon,duration,expirationTime)
     if duration and expirationTime and duration>0 then
         icon.expirationTime=expirationTime
         icon.durationText:Show()
-        ActiveAuras[icon]=true
+        Active[icon]=true
     else
         icon.durationText:Hide()
-        ActiveAuras[icon]=nil
+        Active[icon]=nil
     end
 end
 local AuraTimerFrame=CreateFrame("Frame")
@@ -68,12 +79,12 @@ AuraTimerFrame:SetScript("OnUpdate",function(_,elapsed)
     if acc<UPDATE_RATE then return end
     acc=0
     local now=GetTime()
-    for icon in pairs(ActiveAuras) do
+    for icon in pairs(Active) do
         local remain=icon.expirationTime-now
         if remain<=0 then
             icon.durationText:Hide()
             icon.durationText:SetText("")
-            ActiveAuras[icon]=nil
+            Active[icon]=nil
         else
             icon.durationText:SetText(FormatTime(remain))
             icon.durationText:Show()
@@ -87,37 +98,18 @@ local function ApplyAura(now,aura)
         SetAuraTimer(now,aura.duration,aura.expirationTime)
     else
         now.durationText:Hide()
-        ActiveAuras[now]=nil
+        Active[now]=nil
     end
     if aura.isHarmful and aura.dispelName then
         UpdateDispel(now,aura.dispelName)
     end
     CheckStacks(now,aura.charges or 0)
 end
-local ICON_SIZE=15
-local SPACING=1
-local PER_ROW=8
-local BUFF_Y=3
-local DEBUFF_Y=35
-local function AuraPosition(i,offsetY)
-    local row=mfloor((i-1)/PER_ROW)
-    local col=(i-1)%PER_ROW
-    local step=ICON_SIZE+SPACING
-    local x=col*step
-    local y=row*step+offsetY
-    return x,y
-end
-local bX,bY={},{}
-local dX,dY={},{}
-for i=1,16 do
-    bX[i],bY[i]=AuraPosition(i,BUFF_Y)
-    dX[i],dY[i]=AuraPosition(i,DEBUFF_Y)
-end
 local function SetAuraPos(b,i,x,y)
     b:ClearAllPoints()
     b:SetPoint("BOTTOMLEFT",i,"TOPLEFT",x,y)
 end
-local function AuraRefreshPos(tbl,button,unit,func)
+local function AuraRefreshPos(tbl,map,unit,func)
     if not tbl then return end
     for _,v in ipairs(tbl) do
         v:Hide()
@@ -126,7 +118,7 @@ local function AuraRefreshPos(tbl,button,unit,func)
     for i,v in ipairs(tbl) do
         local aura=func(unit,i)
         if not aura then break end
-        button.aura.bmap[aura.auraInstanceID]=i
+        map[aura.auraInstanceID]=i
         v.instance=aura.auraInstanceID
         ApplyAura(v,aura)
         v:Show()
@@ -175,7 +167,7 @@ local function RemoveBuff(button,id)
         if now then
             now:Hide()
             now.instance=nil
-            ActiveAuras[now]=nil
+            Active[now]=nil
         end
     end
 end
@@ -186,14 +178,14 @@ local function RemoveDebuff(button,id)
         if now then
             now:Hide()
             now.instance=nil
-            ActiveAuras[now]=nil
+            Active[now]=nil
         end
     end
 end
 local function GetAuras(update,button,unit)
     if not update or not button then return end
-    AuraRefreshPos(button.aura.buffs,button,unit,GetBuffDataByIndex)
-    AuraRefreshPos(button.aura.debuffs,button,unit,GetDebuffDataByIndex)
+    AuraRefreshPos(button.aura.buffs,button.aura.bmap,unit,GetBuffDataByIndex)
+    AuraRefreshPos(button.aura.debuffs,button.aura.dmap,unit,GetDebuffDataByIndex)
 end
 local update=false
 local function UnitAuraUpdate(unit,updateInfo)
@@ -221,7 +213,8 @@ local function UnitAuraUpdate(unit,updateInfo)
             if aura then
                 if aura.isHelpful then
                     UpdateBuff(button,aura)
-                else
+                end
+                if aura.isHarmful then
                     UpdateDebuff(button,aura)
                 end
             end
@@ -299,18 +292,14 @@ end
 local function Aura_OnLeave()
     GameTooltip:Hide()
 end
-local function InitialAuraTbl(button)
-    if button.aura then return end
+local function AuraSetup(button)
+    if not button then return end
     button.aura={
         buffs={},
         debuffs={},
         bmap={},
         dmap={}
     }
-end
-local function AuraSetup(button)
-    if not button then return end
-    InitialAuraTbl(button)
     local unit=button.unit
     for i=1,16 do
         if not button.aura.buffs[i] then
@@ -345,7 +334,7 @@ local function AuraSetup(button)
             aura:SetScript("OnLeave",Aura_OnLeave)
             button.aura.debuffs[i]=aura
         end
-        SetAuraPos(button.aura.debuffs[i],button,bX[i],bY[i])
+        SetAuraPos(button.aura.debuffs[i],button,dX[i],dY[i])
     end
 end
 function F:EnableSoloAura()
@@ -397,7 +386,7 @@ function F:AuraDisable()
     if event:IsEventRegistered("UNIT_AURA") then
         event:UnregisterEvent("UNIT_AURA")
     end
-    table.wipe(ActiveAuras)
+    twipe(Active)
     F:DisableRaidAura()
     F:DisableSoloAura()
 end

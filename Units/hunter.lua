@@ -8,7 +8,6 @@ local petInfo={
     [2]={0.1875,0.375,0,0.359375},
     [3]={0,0.1875,0,0.359375}
 }
-
 local function PetStatus(self)
     local happiness=GetPetHappiness()
     if (happiness) then

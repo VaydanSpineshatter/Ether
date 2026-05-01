@@ -1,7 +1,6 @@
 local D,F,_,C=unpack(select(2,...))
-local pairs,eColor=pairs,"|cffcc66ffEther|r "
-local profile={}
-local function OnProfileChange(self,index,data)
+local eColor="|cffcc66ffEther|r "
+local function OnProfileChange(self,_,data)
     if data==D:GetProfileName() then return end
     D:SwitchProfile(data)
     self.text:SetText(data)
@@ -64,7 +63,7 @@ function F:Profile(index)
             if name and name~="" and name~="Enter name and press enter" then
                 local success,msg=D:CreateProfile(name)
                 if success then
-                    C:EtherInfo(eColor,msg)
+                    C:EtherInfo(eColor..msg)
                     dropdown:SetOptions(D:GetProfileList())
                     dropdown.text:SetText(D:GetProfileName())
                     self:Hide()
@@ -72,7 +71,7 @@ function F:Profile(index)
                     self:SetText("")
                     self:SetScript("OnEnterPressed",nil)
                 else
-                    C:EtherInfo(eColor,msg)
+                    C:EtherInfo(eColor..msg)
                 end
             end
             self:ClearFocus()
@@ -85,9 +84,9 @@ function F:Profile(index)
             if success then
                 dropdown:SetOptions(D:GetProfileList())
                 dropdown.text:SetText(D:GetProfileName())
-                C:EtherInfo(eColor,msg)
+                C:EtherInfo(eColor..msg)
             else
-                C:EtherInfo(eColor,msg)
+                C:EtherInfo(eColor..msg)
             end
         end
     end)
@@ -104,13 +103,13 @@ function F:Profile(index)
                 if success then
                     dropdown:SetOptions(D:GetProfileList())
                     dropdown.text:SetText(D:GetProfileName())
-                    C:EtherInfo(eColor,msg)
+                    C:EtherInfo(eColor.."name changed to "..D:GetProfileName())
                     self:Hide()
                     self:ClearFocus()
                     self:SetText("")
                     self:SetScript("OnEnterPressed",nil)
                 else
-                    C:EtherInfo(eColor,msg)
+                    C:EtherInfo(eColor..msg)
                 end
             end
             self:ClearFocus()
@@ -170,7 +169,7 @@ function F:Profile(index)
         if success then
             dropdown:SetOptions(D:GetProfileList())
             dropdown.text:SetText(D:GetProfileName())
-            C:EtherInfo(eColor,msg)
+            C:EtherInfo(eColor..msg)
             C.ImportBox:SetText("Paste import data here...")
         else
             C:EtherInfo("|cffff0000No data to import|r")

@@ -1,12 +1,7 @@
 _G["BINDING_HEADER_ETHER"]="Ether"
-local D,F,_,C=unpack(select(2,...))
+local _,F,_,C=unpack(select(2,...))
 function Ether_Config()
-    if C.DropdownMenu and C.DropdownText then
-        C.DropdownMenu:Hide()
-        C.DropdownText:SetAlpha(1)
-    end
-    if not D.DB or not D.DB["CONFIG"] or not D.DB["CONFIG"][3] then return end
-    D.DB["CONFIG"][3]=F:ToggleBinary(D.DB["CONFIG"][3])
+    if not C.ToggleUser then return end
     C:ToggleUser()
 end
 function Ether_Info()

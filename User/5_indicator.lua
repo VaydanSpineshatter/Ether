@@ -71,7 +71,7 @@ function F:Indicators(index)
     for _,v in ipairs(D.iIconTable) do
         indicatorList[#indicatorList+1]=v
     end
-    local dropdown=F:CreateEtherDropdown(parent,160,"Select Indicator",indicatorList,OnIndicatorSelect)
+    local dropdown=F:CreateEtherDropdown(parent,140,"Select Indicator",indicatorList,OnIndicatorSelect)
     C.IndicatorFrame.dropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)
     local cube,preview=F:CreatePreview(parent,"BOTTOMRIGHT")
@@ -101,7 +101,7 @@ function F:Indicators(index)
         end)
         btn:GetScript("OnLeave")(btn)
     end
-    local confirm=F:EtherPanelButton(preview,60,25,"Confirm","TOP",parent,"TOP",65,0)
+    local confirm=F:EtherPanelButton(preview,60,25,"Confirm","TOP",parent,"TOP",65,-5)
     confirm:SetScript("OnClick",function()
         if C.Indi then
             F:SavePosition(C.Indi)
@@ -153,36 +153,32 @@ local function UpdateIcon(n)
     indicator.preview.icon:SetPoint(data[1],indicator.preview,data[1],data[2],data[3])
     indicator.preview.icon:Show()
 end
-function F:UpdateIndicatorsPos(n)
-    if not n then
-        return
-    end
-    local icon=iK[n]
-    local data=D.DB[20][n]
-    if not data then
-        return
-    end
+function F:UpdateIndicatorsPos(spell)
+    if not spell then return end
+    local icon=iK[spell]
+    local c=D.DB[20][spell]
+    if not c then return end
     local indicator=C.IndicatorFrame
     indicator.preview.icon:SetTexture(icon)
-    if n==6 then
+    if spell==6 then
         indicator.preview.icon:SetTexCoord(0.75,1,0.25,0.5)
-    elseif n==10 then
+    elseif spell==10 then
         indicator.preview.icon:SetTexCoord(20/64,39/64,22/64,41/64)
     else
         indicator.preview.icon:SetTexCoord(0.08,0.92,0.08,0.92)
     end
-    indicator.s:SetValue(data[4])
+    indicator.s:SetValue(c[4])
     if indicator.s.v then
-        indicator.s.v:SetText(sformat("%.1f px",data[4]))
+        indicator.s.v:SetText(sformat("%.1f px",c[4]))
     end
-    F:UpdateCube(indicator.cube,data,1)
-    indicator.x:SetValue(data[2])
+    F:UpdateCube(indicator.cube,c,1)
+    indicator.x:SetValue(c[2])
     if indicator.x.v then
-        indicator.x.v:SetText(sformat("%.0f px",data[2]))
+        indicator.x.v:SetText(sformat("%.0f px",c[2]))
     end
-    indicator.y:SetValue(data[3])
+    indicator.y:SetValue(c[3])
     if indicator.y.v then
-        indicator.y.v:SetText(sformat("%.0f px",data[3]))
+        indicator.y.v:SetText(sformat("%.0f px",c[3]))
     end
-    UpdateIcon(n)
+    UpdateIcon(spell)
 end

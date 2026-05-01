@@ -28,23 +28,23 @@ local function UTF8SUB(name,start,numChars)
     if numChars<=0 then
         return ""
     end
-    local byteIndex=start
-    local charCount=0
-    while charCount<numChars and byteIndex<=#name do
-        local char=sbyte(name,byteIndex)
+    local index=start
+    local count=0
+    while count<numChars and index<=#name do
+        local char=sbyte(name,index)
         if char>=240 then
-            byteIndex=byteIndex+4
+            index=index+4
         elseif char>=224 then
-            byteIndex=byteIndex+3
+            index=index+3
         elseif char>=192 then
-            byteIndex=byteIndex+2
+            index=index+2
         else
-            byteIndex=byteIndex+1
+            index=index+1
         end
-        charCount=charCount+1
+        count=count+1
     end
-    local endIndex=byteIndex-1
-    return name:sub(start,endIndex)
+    local last=index-1
+    return name:sub(start,last)
 end
 function F:UpdateName(button,number)
     if not button or not button.name then return end

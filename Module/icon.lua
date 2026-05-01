@@ -29,7 +29,6 @@ C.EtherIcon.hl=C.EtherIcon:CreateTexture(nil,"HIGHLIGHT")
 C.EtherIcon.hl:SetColorTexture(1,0.84,0,.4)
 C.EtherIcon.hl:SetPoint("TOPLEFT",4,-4)
 C.EtherIcon.hl:SetPoint("BOTTOMRIGHT",-4,4)
-
 function F:IconEnable()
     if not C.EtherIcon then return end
     if not C.EtherIcon:IsShown() then

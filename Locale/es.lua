@@ -8,3 +8,9 @@ L.MINIMAP_TOOLTIP_RIGHT="Clic derecho: Configuración"
 L.TT_UNKNOWN="DESCONOCIDO"
 L.TT_AIMING_YOU="|cffff0000te está apuntando|r"
 L.TT_AIMING="apunta a"
+--Status
+L.HEALTH_PCT="Salud %"
+L.POWER_PCT="Potencia %"
+--Header
+L.SORT_BY_H="Ordenado por: "
+L.DIRECTION_BY_H="Orientación según: "

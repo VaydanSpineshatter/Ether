@@ -79,8 +79,7 @@ local function UpdateTooltip(unit,DB,status)
     if tName then
         local you=UnitIsUnit(unit.."target","player")
         local color=RAID_CLASS_COLORS[select(2,UnitClass(unit.."target"))] or RAID_CLASS_COLORS["UNKNOWN"]
-        target:SetText(you and L.TT_AIMING_YOU or
-                sformat(fStr,L.TT_AIMING,color.r*255,color.g*255,color.b*255,tName))
+        target:SetText(you and L.TT_AIMING_YOU or sformat(fStr,L.TT_AIMING,color.r*255,color.g*255,color.b*255,tName))
         target:Show()
     else
         target:Hide()

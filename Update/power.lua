@@ -1,4 +1,4 @@
-local D,F,S,_,_=unpack(select(2,...))
+local D,F,S=unpack(select(2,...))
 local UnitPower,UnitPowerMax,UnitExists=UnitPower,UnitPowerMax,UnitExists
 local sformat,mfloor,pairs=string.format,math.floor,pairs
 local event,raidBtn,soloBtn,f2m=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r"
@@ -69,6 +69,7 @@ function F:UpdatePowerPct(b)
     local pct=maxPw>0 and pw/maxPw or 0
     if not pct then return end
     local rPct=mfloor(pct*100+0.5)
+    if not rPct then return end
     if lastPower[unit]==rPct then return end
     lastPower[unit]=rPct
     b.power:SetText(sformat(f2m,D.PowerGradient[rPct],rPct))

@@ -4,7 +4,7 @@ local pet=CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplat
 D.A.raid,D.A.pet=raid,pet
 D.A.raid.index,D.A.pet.index=10,11
 local raidBtn=D.raidBtn
-local UnitExists,UnitGUID,unpack=UnitExists,UnitGUID,unpack
+local UnitGUID,unpack=UnitGUID,unpack
 local C_After,GameTooltip=C_Timer.After,GameTooltip
 local initialConfigFunction=[[
     local header = self:GetParent()
@@ -30,11 +30,14 @@ local function CheckStatus(self)
     if guid~=self.destGUID then
         self.destGUID=guid
         if guid then
+            F:SetupBlinkIcon(self)
+            F:SetupClassDispel(self)
             F:UpdateIndicatorsString(self)
             F:RaidAurasFullUpdate(self.unit)
             UpdatePCT(self)
             F:FullHealthUpdate(self)
             F:UpdateName(self,2)
+            F:SaveBtnPosition(self)
         end
     end
 end
@@ -97,7 +100,6 @@ local function CreateChildren(h,n)
     end
     F:SetupPrediction(b)
     F:SetupName(b,-5)
-    F:DispelIconSetup(b)
     b:HookScript("OnAttributeChanged",OnAttributeChanged)
     b:SetScript("OnShow",OnShow)
     b:SetScript("OnHide",OnHide)
@@ -111,11 +113,11 @@ end
 local function OrderMethod(index)
     if not index or type(index)~="number" then return end
     if index==1 then
-        return "GROUP",{"1,2,3,4,5,6,7,8"}
+        return "GROUP","1,2,3,4,5,6,7,8"
     elseif index==2 then
-        return "CLASS",{"DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR"}
+        return "CLASS","DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR"
     elseif index==3 then
-        return "ASSIGNEDROLE",{"TANK,HEALER,DAMAGER,NONE"}
+        return "ASSIGNEDROLE","TANK,HEALER,DAMAGER,NONE"
     end
 end
 local function AnchorMethod(index)
@@ -142,7 +144,7 @@ function F:CreateGroupHeader()
     header:SetAttribute("columnAnchorPoint",column or "LEFT")
     header:SetAttribute("point",point or "TOP")
     header:SetAttribute("groupBy",by or "GROUP")
-    header:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
+    header:SetAttribute("groupingOrder",order or "1,2,3,4,5,6,7,8")
     header:SetAttribute("xOffset",2)
     header:SetAttribute("yOffset",-2)
     header:SetAttribute("columnSpacing",1)
@@ -166,8 +168,8 @@ function F:CreatePetHeader()
     header:SetAttribute("TypePet",true)
     header:SetAttribute("ButtonHeight",data[6] or 50)
     header:SetAttribute("ButtonWidth",data[7] or 50)
-    header:SetAttribute("xOffset",0)
-    header:SetAttribute("yOffset",0)
+    header:SetAttribute("xOffset",-2)
+    header:SetAttribute("yOffset",2)
     header:SetAttribute("showRaid",true)
     header:SetAttribute("showParty",false)
     header:SetAttribute("showPlayer",true)
@@ -176,8 +178,8 @@ function F:CreatePetHeader()
     header:SetAttribute("point","RIGHT")
     header:SetAttribute("useOwnerUnit",false)
     header:SetAttribute("filterOnPet",true)
-    header:SetAttribute("unitsPerColumn",10)
-    header:SetAttribute("maxColumns",1)
+    header:SetAttribute("unitsPerColumn",6)
+    header:SetAttribute("maxColumns",2)
     header:Hide()
     RegisterAttributeDriver(header,"state-visibility",
             "[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
@@ -187,7 +189,7 @@ local function UpdateHeader()
     local by,order=OrderMethod(D.DB["CONFIG"][11])
     local column,point=AnchorMethod(D.DB["CONFIG"][12])
     header:SetAttribute("groupBy",by or "GROUP")
-    header:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
+    header:SetAttribute("groupingOrder",order or "1,2,3,4,5,6,7,8")
     header:SetAttribute("columnAnchorPoint",column or "LEFT")
     header:SetAttribute("point",point or "TOP")
     local name=header:GetName().."UnitButton"
@@ -209,110 +211,12 @@ local function UpdateHeader()
 end
 F:RegisterCallback(UpdateHeader)
 --[[
-local function UpdateHeader(number)
-    if not number or type(number)~="number" then return end
-    local by,order=OrderMethod(D.DB["CONFIG"][11])
-    local column,point=AnchorMethod(D.DB["CONFIG"][12])
-    if number<=3 then
-        D.H.raid:SetAttribute("groupBy",by or "GROUP")
-        D.H.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
-    elseif number<=5 then
-        D.H.raid:SetAttribute("columnAnchorPoint",column or "LEFT")
-        D.H.raid:SetAttribute("point",point or "TOP")
-    elseif number==6 then
-        D.H.raid:SetAttribute("ButtonWidth",D.DB[21][10][6] or 50)
-        D.H.raid:SetAttribute("ButtonHeight",D.DB[21][10][7] or 50)
-    elseif number==7 then
-        D.H.pet:SetAttribute("ButtonWidth",D.DB[21][11][6] or 45)
-        D.H.pet:SetAttribute("ButtonHeight",D.DB[21][11][7] or 45)
-     elseif number==8 then
-        D.H.raid:SetAttribute("groupBy",by or "GROUP")
-        D.H.raid:SetAttribute("groupingOrder",unpack(order) or "1,2,3,4,5,6,7,8")
-        D.H.raid:SetAttribute("columnAnchorPoint",column or "LEFT")
-        D.H.raid:SetAttribute("point",point or "TOP")
-    end
-    local header
-    if number<7 then
-        header=D.H.raid
-    elseif number==7 then
-        header=D.H.pet
-    elseif number==8 then
-        header=D.H.raid
-    end
-    local name=header:GetName().."UnitButton"
-    local index=1
-    local child=_G[name..index]
-    while (child) do
-        child:ClearAllPoints()
-        index=index+1
-        child=_G[name..index]
-    end
-    if header:IsShown() then
-        header:Hide()
-        F:AuraDisable()
-    end
-    C_After(1.5,function()
-        header:Show()
-        F:AuraEnable()
-    end)
-end
-    --F:CreateSplitHeader(8)
-    -- F:PositionSplitHeader()
-local groupHeaders = {}
-local function CreateGroupHeader(group)
-    local DB = D.DB
-    local data = DB[21][10]
-    local headerName = "EtherRaidGroupHeader" .. group
-    local header = CreateFrame("Frame", headerName, raid, "SecureGroupHeaderTemplate")
-    D.H.raid = header
-    groupHeaders[group] = header
-    header:SetAllPoints(raid)
-    header:SetAttribute("template", "EtherUnitTemplate")
-    header:SetAttribute("initial-unitWatch", true)
-    header:SetAttribute("groupFilter", group)
-    header:SetAttribute("initialConfigFunction", initialConfigFunction)
-    header.CreateChildren = CreateChildren
-    header:SetAttribute("ButtonWidth", data[6] or 50)
-    header:SetAttribute("ButtonHeight", data[7] or 50)
-    header:SetAttribute("columnAnchorPoint", "BOTTOM")
-    header:SetAttribute("point", "LEFT")
-    header:SetAttribute("groupBy", "GROUP")
-    header:SetAttribute("groupingOrder", "1,2,3,4,5,6,7,8")
-    header:SetAttribute("xOffset", 1)
-    header:SetAttribute("yOffset", 0)
-    header:SetAttribute("columnSpacing", 2)
-    header:SetAttribute("unitsPerColumn", 5)
-    header:SetAttribute("maxColumns", 1)
-    header:SetAttribute("showRaid", true)
-    header:SetAttribute("showParty", true)
-    header:SetAttribute("showPlayer", true)
-    header:SetAttribute("showSolo", true)
-    header:Show()
-end
-function F:PositionSplitHeader()
-    local lastHeader = nil
-    for i, b in ipairs(groupHeaders) do
-        if not lastHeader then
-            groupHeaders[i]:ClearAllPoints()
-            groupHeaders[i]:SetPoint("BOTTOMLEFT", D.A.raid, "BOTTOMLEFT", 50, 0)
-        else
-            groupHeaders[i]:ClearAllPoints()
-            groupHeaders[i]:SetPoint("TOPLEFT", lastHeader, D:GetRelativePoint("TOPRIGHT"))
-        end
-        lastHeader = groupHeaders[i]
-    end
-end
-function F:CreateSplitHeader(number)
-    for index = 1, number do
-        CreateGroupHeader(index)
-    end
-end
 order = 'DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR',
 by = 'CLASS'
 order = 'TANK,HEALER,DAMAGER,NONE',
 by = 'ASSIGNEDROLE'
 order = '1,2,3,4,5,6,7,8',
-by = "GROUP"
+by = 'GROUP'
 Header: SecureGroupHeaderTemplate, SecureGroupPetHeaderTemplate
 useOwnerUnit = [BOOLEAN]
 filterOnPet = [BOOLEAN]

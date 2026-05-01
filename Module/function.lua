@@ -108,7 +108,7 @@ function F:SetupButtonBackground(button)
     local bg=button:CreateTexture(nil,"BACKGROUND")
     button.bg=bg
     bg:SetTexture("Interface\\Buttons\\WHITE8x8")
-    bg:SetColorTexture(0,0,0,.7)
+    bg:SetColorTexture(0,0,0,.8)
     bg:SetAllPoints(button)
     return button
 end
@@ -150,6 +150,7 @@ function F:SetupButtonBorder(button)
     right:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",p,-p)
     right:SetWidth(p)
     right:SetColorTexture(r,g,b,a)
+    button.topDispel = false
     return button
 end
 function F:SetupHealthBar(button,orient)
@@ -194,7 +195,6 @@ function F:SetupSlash()
         input=string.lower(input or "")
         rest=string.lower(rest or "")
         if input=="user" then
-            D.DB["CONFIG"][3]=F:ToggleBinary(D.DB["CONFIG"][3])
             C:ToggleUser()
         elseif input=="rl" then
             if not InCombatLockdown() then
@@ -203,7 +203,6 @@ function F:SetupSlash()
         elseif input=="help" then
             F:AddonUsage()
         else
-            D.DB["CONFIG"][3]=F:ToggleBinary(D.DB["CONFIG"][3])
             C:ToggleUser()
         end
     end
@@ -216,7 +215,7 @@ function F:SetupPrediction(button)
     button.myPrediction=player
     player:SetAllPoints(button.healthBar)
     player:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
-    player:SetStatusBarColor(1,0.65,0)
+    player:SetStatusBarColor(0,1,0)
     player:SetMinMaxValues(0,1)
     player:SetValue(1)
     player:Hide()
@@ -443,78 +442,73 @@ local function GetShortName(pos)
         return pos:sub(1,1)
     end
 end
-function F:SetupInfoFrame()
-    if C.InfoFrame then return end
-    local frame=CreateFrame("Frame",nil,UIParent)
-    C.InfoFrame=frame
-    frame.index=16
-    frame.bg=frame:CreateTexture(nil,"BACKGROUND")
-    frame.bg:SetAllPoints()
-    frame.bg:SetColorTexture(0.1,0.1,0.1)
-    F:MainBorder(C.BorderFrames,12,13,14,15)
-    local right=frame:CreateFontString(nil,"OVERLAY")
-    right:SetFontObject(C.EtherFont)
-    right:SetPoint("TOPRIGHT",-10,-10)
-    C.InfoRight=right
-    frame:SetFrameStrata("DIALOG")
-    local scroll=CreateFrame("ScrollFrame",nil,frame,"ScrollFrameTemplate")
-    scroll:SetPoint("TOPLEFT",10,-30)
-    scroll:SetPoint("BOTTOMRIGHT",-30,10)
-    local cF=CreateFrame("Frame",nil,scroll)
-    cF:SetSize(390,111)
-    scroll:SetScrollChild(cF)
-    local txt=cF:CreateFontString(nil,"OVERLAY")
-    C.InfoText=txt
-    txt:SetFontObject(C.EtherFont)
-    txt:SetPoint("TOPLEFT")
-    txt:SetWidth(290)
-    txt:SetJustifyH("LEFT")
-    frame:Hide()
-    scroll:EnableMouseWheel(true)
-    scroll:SetScript("OnMouseWheel",function(self,delta)
-        if delta>0 then
-            self:SetVerticalScroll(-50)
-        else
-            self:SetVerticalScroll(50)
-        end
-    end)
-    if scroll.ScrollBar then
-        scroll.ScrollBar:Hide()
-    end
-    D:ApplyFramePosition(frame)
-    F:SetupDrag(frame)
-end
-function F:DispelIconSetup(button)
-    if not button then return end
-    if not button.dispel then
+function F:SetupClassDispel(b)
+    if not b then return end
+    if not b.dispel then
         local frame=CreateFrame("Frame",nil,UIParent)
         frame:SetFrameStrata("HIGH")
-        frame:SetPoint("CENTER",button,"CENTER",0,10)
+        frame:SetPoint("CENTER",b,"CENTER",0,10)
+        frame:SetSize(10,10)
+        local dispel=frame:CreateTexture(nil,"OVERLAY",nil,7)
+        dispel:Hide()
+        dispel:SetSize(14,14)
+        dispel:SetPoint("TOPRIGHT",b.healthBar,"TOPRIGHT",-2,-2)
+        local border=frame:CreateTexture(nil,"BORDER")
+        border:Hide()
+        border:SetColorTexture(1,0,0,1)
+        border:SetPoint("TOPLEFT",dispel,"TOPLEFT",-1,1)
+        border:SetPoint("BOTTOMRIGHT",dispel,"BOTTOMRIGHT",1,-1)
+        b.dispel=dispel
+        b.dispelBorder=border
+        b.classDispel=false
+        return b
+    end
+end
+function F:SetupBlinkIcon(b)
+    if not b then return end
+    if not b.blink then
+        local frame=CreateFrame("Frame",nil,UIParent)
+        frame:SetFrameStrata("HIGH")
+        frame:SetPoint("CENTER",b,"CENTER",0,10)
         frame:SetSize(10,10)
         local icon=frame:CreateTexture(nil,"OVERLAY",nil,7)
         icon:SetAllPoints()
         icon:SetTexCoord(0.07,0.93,0.07,0.93)
-        local border=frame:CreateTexture(nil,"BORDER")
-        border:SetColorTexture(1,1,1,0)
-        border:SetPoint("TOPLEFT",frame,"TOPLEFT",-1,1)
-        border:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",1,-1)
-        button.dispel=frame
-        button.dispelicon=icon
-        button.dispelborder=border
-        local indicator=frame:CreateTexture(nil,"OVERLAY",nil,7)
-        indicator:Hide()
-        indicator:SetSize(14,14)
-        indicator:SetPoint("TOPRIGHT",button.healthBar,"TOPRIGHT",-2,-2)
-        local iBorder=frame:CreateTexture(nil,"BORDER")
-        iBorder:Hide()
-        iBorder:SetColorTexture(1,0,0,1)
-        iBorder:SetPoint("TOPLEFT",indicator,"TOPLEFT",-1,1)
-        iBorder:SetPoint("BOTTOMRIGHT",indicator,"BOTTOMRIGHT",1,-1)
-        button.indicator=indicator
-        button.indicatorborder=iBorder
-        button.dispellable=nil
-        return button
+        b.blink=frame
+        b.blinkIcon=icon
+        return b
     end
+end
+function F:GetTexture(button,data)
+    local frame=CreateFrame("Frame",nil,button)
+    frame:SetFrameStrata("HIGH")
+    local tex=frame:CreateTexture(nil,"OVERLAY",nil,7)
+    tex:SetColorTexture(data[2],data[3],data[4],data[5])
+    tex:SetSize(data[9],data[9])
+    tex:SetPoint(data[6],button.healthBar,data[6],data[7],data[8])
+    local cooldown=CreateFrame("Cooldown",nil,frame,"CooldownFrameTemplate")
+    cooldown:SetBlingTexture("Interface\\Cooldown\\star4_edge",1,1,1,1)
+    cooldown:SetAllPoints(tex)
+    cooldown:SetReverse(true)
+    cooldown:SetHideCountdownNumbers(true)
+    local count=frame:CreateFontString(nil,"OVERLAY")
+    count:SetFontObject(C.EtherFont)
+    count:SetPoint("LEFT",tex)
+    count:Hide()
+    local stacks=frame:CreateFontString(nil,"OVERLAY")
+    stacks:SetFontObject(C.EtherFont)
+    stacks:SetPoint("LEFT",tex)
+    stacks:Hide()
+    local durationText=frame:CreateFontString(nil,"OVERLAY")
+    durationText:SetFontObject(C.EtherFont)
+    durationText:SetPoint("CENTER",frame)
+    durationText:Hide()
+    frame.icon=tex
+    frame.cooldown=cooldown
+    frame.count=count
+    frame.stacks=stacks
+    frame.durationText=durationText
+    return frame
 end
 function F:CreatePreview(parent,point)
     local preview=CreateFrame("StatusBar",nil,parent)
@@ -552,23 +546,23 @@ function F:CreatePreview(parent,point)
 end
 local function CreatePopupBox()
     if C.PopupBox then return end
-    local frame=CreateFrame("Frame",nil,UIParent)
-    C.PopupBox=frame
-    frame:Hide()
-    frame:SetSize(320,200)
-    frame:SetFrameLevel(600)
-    frame:SetPoint("CENTER")
-    local bg=frame:CreateTexture(nil,"BACKGROUND")
-    frame.bg=bg
+    local f=CreateFrame("Frame",nil,UIParent)
+    C.PopupBox=f
+    f:Hide()
+    f:SetSize(320,200)
+    f:SetFrameLevel(600)
+    f:SetPoint("CENTER")
+    local bg=f:CreateTexture(nil,"BACKGROUND")
+    f.bg=bg
     bg:SetAllPoints()
     bg:SetTexture("Interface\\AddOns\\Ether\\Media\\emblem.png")
     bg:SetAlpha(0.7)
-    local font=frame:CreateFontString(nil,"OVERLAY")
-    frame.font=font
+    local font=f:CreateFontString(nil,"OVERLAY")
+    f.font=font
     font:SetFontObject(C.EtherFont)
     font:SetPoint("TOP",0,-20)
     font:SetIndentedWordWrap(true)
-    local left=CreateFrame("Button",nil,frame)
+    local left=CreateFrame("Button",nil,f)
     left:SetPoint("BOTTOMLEFT",0,5)
     left:SetSize(50,20)
     left.font=left:CreateFontString(nil,"OVERLAY")
@@ -581,7 +575,7 @@ local function CreatePopupBox()
     left:SetScript("OnLeave",function()
         left.font:SetTextColor(1,1,1,1)
     end)
-    local right=CreateFrame("Button",nil,frame)
+    local right=CreateFrame("Button",nil,f)
     right:SetPoint("BOTTOMRIGHT",0,5)
     right:SetSize(50,20)
     right.font=right:CreateFontString(nil,"OVERLAY")

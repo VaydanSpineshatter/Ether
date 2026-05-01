@@ -193,10 +193,10 @@ end
 local function TblToString(tbl)
     return "return "..Tbl(tbl)
 end
+local btnTbl={"GROUP","CLASS","ASSIGNEDROLE","LEFT, TOP","TOP, LEFT"}
 local function ProfileRefresh()
     F:UpdateAuraList()
     F:UpdateEditor(C.EditorFrame)
-    F:AuraDisable()
     F:IndicatorsDisable()
     for index=1,11 do
         F:SavePosition(index)
@@ -204,6 +204,7 @@ local function ProfileRefresh()
     F:MenuStringsAlpha(0)
     D:RefreshAllSettings()
     D:RefreshAllFrames()
+    F:Fire(1)
     if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
         C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
     end
@@ -211,10 +212,8 @@ local function ProfileRefresh()
         C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
     end
     F:IndicatorsEnable()
-    F:Fire(1)
-    F:RefreshChildText("sort",7,D.HeaderData[D.DB["CONFIG"][11]])
-    F:RefreshChildText("direction",7,D.HeaderData[D.DB["CONFIG"][12]])
-    F:AuraEnable()
+    F:RefreshChildText("sort",7,btnTbl[D.DB["CONFIG"][11]])
+    F:RefreshChildText("direction",7,btnTbl[D.DB["CONFIG"][12]])
     F:IndicatorsFullUpdateBtn()
 end
 function D:ExportProfileToClipboard()

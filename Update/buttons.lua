@@ -1,30 +1,12 @@
 local D,F,_,C=unpack(select(2,...))
 local ipairs=ipairs
-function F:CleanUpButtons(status)
-    local index=F:BinaryCondition(status)
-    --[[
-    if C.ChildFrames[6] and C.ChildFrames[6].consuma and C.ChildFrames[6].consuma.v then
-        C.ChildFrames[6].consuma:SetShown(index)
-        C.ChildFrames[6].consuma.v:SetShown(index)
-        C.ChildFrames[6].wl:SetShown(index)
-        C.ChildFrames[6].hl:SetShown(index)
-        C.ChildFrames[6].wl.v:SetShown(index)
-        C.ChildFrames[6].hl.v:SetShown(index)
-        C.ChildFrames[6].w:SetShown(index)
-        C.ChildFrames[6].h:SetShown(index)
-    end
-    ]]
-    if C.EditorFrame.spell and C.EditorFrame.spell.v then
-        --  C.AuraFrame:SetShown(index)
-    end
-end
 function C:ToggleBorder(r,g,b)
     if not C.BorderFrames then return end
     for _,v in ipairs(C.BorderFrames) do
         v:SetColorTexture(r,g,b)
     end
 end
-function F:MainBorder(parent,_1,_2,_3,_4)
+function F:MainBorder(parent,_1,_2,_,_4)
     for index=_1,_4 do
         local tex=parent:CreateTexture(nil,"BORDER")
         C.BorderFrames[index]=tex
@@ -109,10 +91,8 @@ function F:MenuStringsAlpha(number)
         D.menuStrings[index]:SetAlpha(number)
     end
 end
-
-local dropdownBtn={}
 function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
-    table.wipe(dropdownBtn)
+    local dropdownBtn={}
     local frame=CreateFrame("Button",nil,parent)
     frame:SetSize(width,20)
     local bg=frame:CreateTexture(nil,"BACKGROUND")
@@ -212,14 +192,15 @@ function F:RefreshChildText(dropdown,number,text)
 end
 function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY,r,g,b)
     local btn=CreateFrame("Button",nil,parent)
-    btn:SetSize(width,height)
     btn:SetPoint(point,relTo,rel,offX,offY)
     btn.v=btn:CreateFontString(nil,"OVERLAY")
     btn.v:SetFontObject(C.EtherFont)
-    btn.v:SetPoint("LEFT")
+    btn.v:SetPoint("CENTER")
+    btn.v:SetJustifyV("MIDDLE")
     btn.v:SetText(text)
     btn.bg=btn:CreateTexture(nil,"BACKGROUND")
-    btn.bg:SetAllPoints()
+    btn.bg:SetPoint("TOPLEFT",-2,2)
+    btn.bg:SetPoint("BOTTOMRIGHT",2,-2)
     btn.bg:SetColorTexture(0,0,0,0)
     btn:SetScript("OnEnter",function(self)
         self.v:SetTextColor(r or 1,g or 0.84,b or 0)
@@ -229,15 +210,15 @@ function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY,r
         self.v:SetTextColor(1,1,1)
         C:ToggleBorder(0.67,0.67,0.67)
     end)
+    btn:SetSize(btn.v:GetStringWidth() or width,btn.v:GetStringHeight() or height)
     return btn
 end
 function F:MenuButton(index,func)
-    C.MenuButtons[index]=CreateFrame("Button",nil,C.BaseFrame)
-    C.MenuButtons[index]:SetSize(90,20)
+    local btn=CreateFrame("Button",nil,C.BaseFrame)
     local frame=C.ChildFrames
     frame[index]=CreateFrame("Frame",nil,C.ContentFrame)
     frame[index]:SetAllPoints(C.ContentFrame)
-    C.MenuButtons[index]:SetScript("OnClick",function()
+    btn:SetScript("OnClick",function()
         F:MenuStringsAlpha(0)
         F:RefreshUserButtons()
         if index==4 then
@@ -249,20 +230,22 @@ function F:MenuButton(index,func)
         frame[index]:Show()
     end)
     if index==1 then
-        C.MenuButtons[index]:SetPoint("TOP",0,-5)
+        btn:SetPoint("TOP",0,-5)
     else
-        C.MenuButtons[index]:SetPoint("TOP",C.MenuButtons[index-1],"BOTTOM")
+        btn:SetPoint("TOP",C.MenuButtons[index-1],"BOTTOM",0,-5)
     end
-    C.MenuButtons[index].text=C.MenuButtons[index]:CreateFontString(nil,"OVERLAY")
-    C.MenuButtons[index].text:SetFontObject(C.EtherFont)
-    C.MenuButtons[index].text:SetPoint("CENTER")
-    C.MenuButtons[index].text:SetText(D.MenuKey[index])
-    C.MenuButtons[index]:SetScript("OnEnter",function(self)
-        self.text:SetTextColor(1,0.84,0)
+    btn.v=btn:CreateFontString(nil,"OVERLAY")
+    btn.v:SetFontObject(C.EtherFont)
+    btn.v:SetPoint("CENTER")
+    btn.v:SetText(D.MenuKey[index])
+    btn:SetScript("OnEnter",function(self)
+        self.v:SetTextColor(1,0.84,0)
         C:ToggleBorder(1,0.84,0)
     end)
-    C.MenuButtons[index]:SetScript("OnLeave",function(self)
-        self.text:SetTextColor(1,1,1)
+    btn:SetScript("OnLeave",function(self)
+        self.v:SetTextColor(1,1,1)
         C:ToggleBorder(0.67,0.67,0.67)
     end)
+    btn:SetSize(btn.v:GetStringWidth() or 90,btn.v:GetStringHeight() or 20)
+    C.MenuButtons[index]=btn
 end

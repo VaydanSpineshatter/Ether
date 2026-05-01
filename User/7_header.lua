@@ -1,5 +1,6 @@
-local D,F,_,C=unpack(select(2,...))
-local function OnHeader(self,index,data)
+local D,F,_,C,L=unpack(select(2,...))
+local btnTbl={"GROUP","CLASS","ASSIGNEDROLE","LEFT, TOP","TOP, LEFT"}
+local function OnHeader(_,index,data)
     local parent=C.ChildFrames[7]
     if not parent then return end
     if index<=3 then
@@ -16,7 +17,7 @@ function F:Header(index)
     local parent=C.ChildFrames[index]
     if parent.Created then return end
     parent.Created=true
-    local headerData={"RaidHeader","PetHeader","Health-Pct","Power-Pct"}
+    local headerData={"RaidHeader","PetHeader",L.HEALTH_PCT,L.POWER_PCT}
     local DB=D.DB
     for i,opt in ipairs(headerData) do
         local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
@@ -39,7 +40,7 @@ function F:Header(index)
         C.MainButtons[5][i]=btn
     end
     local config={}
-    for _,v in ipairs(D.HeaderData) do
+    for _,v in ipairs(btnTbl) do
         config[#config+1]=v
     end
     local dropdown=F:CreateEtherDropdown(parent,130,"Select Method",config,OnHeader)
@@ -47,12 +48,12 @@ function F:Header(index)
     local sort=parent:CreateFontString(nil,"OVERLAY")
     parent.sort=sort
     sort:SetFontObject(C.EtherFont)
-    sort:SetText("Sort By: "..D.HeaderData[DB["CONFIG"][11]])
+    sort:SetText(L.SORT_BY_H..btnTbl[DB["CONFIG"][11]])
     sort:SetPoint("BOTTOMLEFT",dropdown,"TOPLEFT",0,10)
     local direction=parent:CreateFontString(nil,"OVERLAY")
     parent.direction=direction
     direction:SetFontObject(C.EtherFont)
-    direction:SetText("Direction: "..D.HeaderData[DB["CONFIG"][12]])
+    direction:SetText(L.DIRECTION_BY_H..btnTbl[DB["CONFIG"][12]])
     direction:SetPoint("BOTTOMLEFT",sort,"TOPLEFT",0,10)
     C.MainButtons[5][1]:Disable()
     C.MainButtons[5][2]:Disable()

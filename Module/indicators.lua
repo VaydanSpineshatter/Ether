@@ -1,8 +1,7 @@
 local D,F,S=unpack(select(2,...))
 local UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost=UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost
-local UnitHasIncomingResurrection=UnitHasIncomingResurrection
+local UnitHasIncomingResurrection,Enum,UnitExists=UnitHasIncomingResurrection,Enum,UnitExists
 local GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,updater=GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,nil
-local Enum,IsInRaid,UnitExists=Enum,IsInRaid,UnitExists
 local GetLootMethod,pairs,ipairs=C_PartyInfo.GetLootMethod,pairs,ipairs
 local UnitIsGroupLeader,UnitInAnyGroup=UnitIsGroupLeader,UnitInAnyGroup
 local UnitIsUnit,UnitIsCharmed,IsInGroup=UnitIsUnit,UnitIsCharmed,IsInGroup
@@ -21,9 +20,9 @@ local function IndictorsTexture(b,data)
     local Config=D.DB[20][D:PosIndicator(data)]
     if not b.Indicators[data] then
         b.Indicators[data]=frame:CreateTexture(nil,"OVERLAY",nil,7)
-        b.Indicators[data]:Hide()
         b.Indicators[data]:SetPoint(Config[1],b.healthBar,Config[1],Config[2],Config[3])
         b.Indicators[data]:SetSize(Config[4],Config[4])
+        b.Indicators[data]:Hide()
         return b
     end
 end
@@ -31,7 +30,7 @@ function F:SavePosition(index)
     local Config=D.DB[20][index]
     local icon=D:PosIndicator(index)
     for _,b in pairs(raidBtn) do
-        if b and b.Indicators and b.Indicators[icon] then
+        if b.Indicators and b.Indicators[icon] then
             b.Indicators[icon].Shown=b.Indicators[icon]:IsShown()
             b.Indicators[icon]:Hide()
             b.Indicators[icon]:ClearAllPoints()
@@ -41,6 +40,23 @@ function F:SavePosition(index)
                 b.Indicators[icon]:Show()
                 b.Indicators[icon].Shown=nil
             end
+        end
+    end
+end
+function F:SaveBtnPosition(b)
+    if not b or not b.Indicators or not b.healthBar then return end
+    for i,v in ipairs(D.iIconTable) do
+        local c=D.DB[20][i]
+        if not b.Indicators[v] then
+            b.Indicators[v]=frame:CreateTexture(nil,"OVERLAY",nil,7)
+            b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
+            b.Indicators[v]:SetSize(c[4],c[4])
+        else
+            b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
+            b.Indicators[v]:SetSize(c[4],c[4])
+        end
+        if not UnitInAnyGroup("player") then
+             b.Indicators[v]:Hide()
         end
     end
 end
@@ -71,14 +87,25 @@ end
 local function UpdateMainTank(b,unit)
     if D.DB[3][9]~=1 then return end
     IndictorsTexture(b,"MainTank")
-    if not IsInRaid() then
+    if not IsInGroup() and b.Indicators.MainTank then
         b.Indicators.MainTank:Hide()
         return
     end
     if GetPartyAssignment("MAINTANK",unit) then
         b.Indicators.MainTank:SetTexture(D.iIconPath[10])
         b.Indicators.MainTank:Show()
-    elseif GetPartyAssignment("MAINASSIST",unit) then
+    else
+        b.Indicators.MainTank:Hide()
+    end
+end
+local function UpdateMainAssist(b,unit)
+    if D.DB[3][9]~=1 then return end
+    IndictorsTexture(b,"MainTank")
+    if not IsInGroup() and b.Indicators.MainTank then
+        b.Indicators.MainTank:Hide()
+        return
+    end
+    if GetPartyAssignment("MAINASSIST",unit) then
         b.Indicators.MainTank:SetTexture(D.iIconPath[11])
         b.Indicators.MainTank:Show()
     else
@@ -91,12 +118,16 @@ function event:PLAYER_ROLES_ASSIGNED()
         if b and UnitExists(b.unit) then
             local unit=b.unit
             local role=UnitGroupRolesAssigned(unit)
-            local assignment=GetPartyAssignment("MAINTANK",unit) or GetPartyAssignment("MAINASSIST",unit)
             if role then
                 UpdateGroupRole(b,unit)
             end
-            if assignment then
+            local tank=GetPartyAssignment("MAINTANK",unit)
+            if tank then
                 UpdateMainTank(b,unit)
+            end
+            local assist= GetPartyAssignment("MAINASSIST",unit)
+            if assist then
+                UpdateMainAssist(b,unit)
             end
         end
     end
@@ -107,8 +138,9 @@ function event:PARTY_LOOT_METHOD_CHANGED()
         if b and UnitExists(b.unit) then
             local unit=b.unit
             IndictorsTexture(b,"MasterLoot")
-            if not UnitInAnyGroup("player") then
+            if not UnitInAnyGroup("player") and b.Indicators.MasterLoot then
                 b.Indicators.MasterLoot:Hide()
+                return
             end
             local lootType,partyID,raidID=GetLootMethod()
             if lootType==Enum.LootMethod.Masterlooter then
@@ -130,8 +162,9 @@ function event:PARTY_LEADER_CHANGED()
         if b and UnitExists(b.unit) then
             local unit=b.unit
             IndictorsTexture(b,"GroupLeader")
-            if not UnitInAnyGroup("player") then
+            if not UnitInAnyGroup("player") and b.Indicators.GroupLeader then
                 b.Indicators.GroupLeader:Hide()
+                return
             end
             local IsLeader=UnitIsGroupLeader(unit)
             if (IsLeader) then
@@ -324,8 +357,6 @@ function event:UNIT_FLAGS(unit)
     IndictorsTexture(b,"UnitFlags")
     local dead=UnitIsDeadOrGhost(unit)
     if dead then
-        F:HideButtonDispellable(b)
-        F:HidePrediction(b)
         b.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
         b.Indicators.UnitFlags:Show()
     else
@@ -387,26 +418,25 @@ function event:UNIT_CONNECTION(unit)
 end
 function F:UpdateSoloIndicator(number)
     local b=soloBtn[number]
-    if not b or not b.RaidTarget then return end
+    if not b then return end
     local unit=b.unit
-    if UnitExists(unit) then
-        local index=GetRaidTargetIndex(unit)
-        if index then
-            b.RaidTarget:SetTexture(D.iIconPath[7])
-            SetRaidTargetIconTexture(b.RaidTarget,index)
-            b.RaidTarget:Show()
-        else
-            b.RaidTarget:Hide()
-        end
-        local isConnected=UnitIsConnected(unit)
-        if not isConnected then
-            b.UnitConnection:SetTexture(D.iIconPath[1])
-            F.UpdateClassColor(b)
-            b.UnitConnection:Show()
-        else
-            F.UpdateClassColor(b)
-            b.UnitConnection:Hide()
-        end
+    local index=GetRaidTargetIndex(unit)
+    if index and b.RaidTarget then
+        b.RaidTarget:SetTexture(D.iIconPath[7])
+        SetRaidTargetIconTexture(b.RaidTarget,index)
+        b.RaidTarget:Show()
+    else
+        b.RaidTarget:Hide()
+    end
+    if not b.UnitConnection then return end
+    local isConnected=UnitIsConnected(unit)
+    if not isConnected then
+        b.UnitConnection:SetTexture(D.iIconPath[1])
+        F.UpdateClassColor(b)
+        b.UnitConnection:Show()
+    else
+        F.UpdateClassColor(b)
+        b.UnitConnection:Hide()
     end
 end
 function F:IndicatorToggleEvent(number)

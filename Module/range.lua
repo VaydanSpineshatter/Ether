@@ -3,10 +3,8 @@ local C_Ticker,pairs,GetTime=C_Timer.NewTicker,pairs,GetTime
 local UnitInRange,UnitIsConnected,IsInGroup=UnitInRange,UnitIsConnected,IsInGroup
 local UnitCanAssist,UnitCanAttack,IsSpellInRange,UnitIsVisible,UnitPhaseReason=UnitCanAssist,UnitCanAttack,C_Spell.IsSpellInRange,UnitIsVisible,UnitPhaseReason
 local raidBtn,soloBtn,UnitExists=D.raidBtn,D.soloBtn,UnitExists
-local fTbl={6673,19750,75,36554,2061,0,403,1459,2970,0,8936}
-local hTbl={355,21084,75,6770,589,0,403,133,17793,0,8921}
-local f=fTbl[select(3,UnitClass("player"))]
-local h=hTbl[select(3,UnitClass("player"))]
+local fTbl,hTbl={6673,19750,75,36554,2061,0,403,1459,2970,0,8936},{355,21084,75,6770,589,0,403,133,17793,0,8921}
+local f,h=fTbl[select(3,UnitClass("player"))],hTbl[select(3,UnitClass("player"))]
 local function IsInRange(unit)
     if not unit then return end
     local r
@@ -19,20 +17,14 @@ local function IsInRange(unit)
 end
 local function ScanUnits(b,unit)
     if not UnitIsConnected(unit) then
-        F:HideButtonDispellable(b)
-        F:HidePrediction(b)
         b:SetAlpha(1)
         return true
     end
     if UnitPhaseReason(unit) then
-        F:HideButtonDispellable(b)
-        F:HidePrediction(b)
         b:SetAlpha(.45)
         return true
     end
     if not UnitIsVisible(unit) then
-        F:HideButtonDispellable(b)
-        F:HidePrediction(b)
         b:SetAlpha(.45)
         return true
     end
@@ -50,7 +42,7 @@ end
 local function GetCachedStatus(b)
     local unit=b.unit
     local status=cache[unit]
-    if status and (GetTime()-status.timestamp)<=5 then
+    if status and (GetTime()-status.timestamp)<=4 then
         return status.callback
     end
     local callback=ScanUnits(b,unit)
@@ -91,7 +83,7 @@ function F:RangeEnable()
     if not update then
         update=C_Ticker(1,function()
             i=i+1
-            if i>=6 then
+            if i>=5 then
                 i=0
                 CleanupCache()
             end

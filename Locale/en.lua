@@ -8,3 +8,9 @@ L.MINIMAP_TOOLTIP_RIGHT="Right Click: Settings"
 L.TT_UNKNOWN="UNKNOWN"
 L.TT_AIMING_YOU="|cffff0000is aiming at you|r"
 L.TT_AIMING="aims at"
+--Status
+L.HEALTH_PCT="Health %"
+L.POWER_PCT="Power %"
+--Header
+L.SORT_BY_H="Sort by: "
+L.DIRECTION_BY_H="Sort direction: "

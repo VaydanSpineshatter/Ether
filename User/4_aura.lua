@@ -14,13 +14,34 @@ local function AddAura(editor)
     D.DB["CUSTOM"][newId]=F:AuraTemplate(newId)
     SelectAura(editor,newId)
 end
-local function OnAuraSelect(self,index,data)
+local function OnAuraSelect(self,_,data)
     local editor=C.EditorFrame
     if not editor:IsShown() then
         editor:Show()
     end
     F:AddTemplateAuras(data)
     self.text:SetText(data)
+end
+local function UpdateAuraStatus(self,spellId)
+    if not spellId then return end
+    local c=D.DB["CUSTOM"][spellId][10]
+    local r,g,b=0,1,0
+    self.isDebuff.bg:SetColorTexture(c and r or 1,c and g or 0,c and b or 0,0.4)
+end
+local function UpdateStatus(self,index)
+    if not index then return end
+    local c=F:BinaryCondition(D.DB["CONFIG"][index])
+    local r,g,b=0,1,0
+    self.bg:SetColorTexture(c and r or 1,c and g or 0,c and b or 0,0.4)
+    if not c and index == 14 then
+        F:StopAllBlinks()
+    end
+    if not c and index == 15 then
+       F:HideClassDispel()
+    end
+    if not c and index == 16 then
+       F:HideBorderDispel()
+    end
 end
 function F:Aura(index)
     local parent=C.ChildFrames[index]
@@ -32,7 +53,7 @@ function F:Aura(index)
     for v in pairs(D.PredefinedAuras) do
         auraList[#auraList+1]=v
     end
-    local dropdown=F:CreateEtherDropdown(parent,160,"Predefined Auras",auraList,OnAuraSelect)
+    local dropdown=F:CreateEtherDropdown(parent,140,"Predefined Auras",auraList,OnAuraSelect)
     dropdown:SetPoint("TOPLEFT",5,-5)
     auras:SetPoint("TOPLEFT",dropdown,"BOTTOMLEFT",0,0)
     auras:SetSize(230,400)
@@ -48,32 +69,32 @@ function F:Aura(index)
     if scrollFrame.ScrollBar then
         scrollFrame.ScrollBar:Hide()
     end
-    local addBtn=F:EtherPanelButton(auras,50,25,"New","TOP",parent,"TOP",0,0,0,1,0)
-    addBtn:SetScript("OnClick",function()
+    local new=F:EtherPanelButton(auras,50,25,"New","TOP",parent,"TOP",0,-5,0,1,0)
+    new:SetScript("OnClick",function()
         if not editor:IsShown() then
             editor:Show()
         end
         AddAura(editor)
     end)
-    addBtn.v:SetPoint("LEFT")
-
-    local confirm=F:EtherPanelButton(auras,50,25,"Confirm","LEFT",addBtn,"RIGHT",10,0)
-    confirm:SetScript("OnClick",function()
-        if type(C.Spell)==nil then return end
-        if D.DB["CUSTOM"] and D.DB["CUSTOM"][C.Spell] then
-            F:UpdateAuraPos()
-        end
+    local isBlink=F:EtherPanelButton(editor,50,25,"Blink","LEFT",new,"RIGHT",20,0)
+    editor.isBlink=isBlink
+    isBlink:SetScript("OnClick",function()
+        D.DB["CONFIG"][14]=F:ToggleBinary(D.DB["CONFIG"][14])
+        UpdateStatus(isBlink,14)
     end)
-    local isDebuff=F:EtherPanelButton(editor,50,25,"Debuff","LEFT",confirm,"RIGHT",30,0)
-    editor.isDebuff=isDebuff
-    isDebuff:SetScript("OnClick",function()
-        if type(C.Spell)==nil then return end
-        if D.DB["CUSTOM"] and D.DB["CUSTOM"][C.Spell] then
-            D.DB["CUSTOM"][C.Spell][10]=not D.DB["CUSTOM"][C.Spell][10]
-            F:UpdateAuraStatus(C.Spell)
-        end
+    local isClass=F:EtherPanelButton(editor,50,25,"Dispel","LEFT",isBlink,"RIGHT",5,0)
+    editor.isClass=isClass
+    isClass:SetScript("OnClick",function()
+        D.DB["CONFIG"][15]=F:ToggleBinary(D.DB["CONFIG"][15])
+        UpdateStatus(isClass,15)
     end)
-    local clear=F:EtherPanelButton(auras,50,25,"Wipe","TOPRIGHT",parent,"TOPRIGHT",0,0,1,0,0)
+    local isBorder=F:EtherPanelButton(editor,50,25,"Border","LEFT",isClass,"RIGHT",5,0)
+    editor.isBorder=isBorder
+    isBorder:SetScript("OnClick",function()
+        D.DB["CONFIG"][16]=F:ToggleBinary(D.DB["CONFIG"][16])
+        UpdateStatus(isBorder,16)
+    end)
+    local clear=F:EtherPanelButton(auras,50,25,"Wipe","TOPRIGHT",parent,"TOPRIGHT",0,-5,1,0,0)
     clear:SetScript("OnClick",function()
         F:PopupBoxSetup()
         F:UpdateAuraList()
@@ -202,18 +223,20 @@ function F:Aura(index)
     color:SetScript("OnClick",function()
         F:ColorSelect(editor)
     end)
+    local isDebuff=F:EtherPanelButton(editor,50,25,"Debuff","LEFT",color,"RIGHT",5,0)
+    editor.isDebuff=isDebuff
+    isDebuff:SetScript("OnClick",function()
+        if type(C.Spell)==nil then return end
+        if D.DB["CUSTOM"] and D.DB["CUSTOM"][C.Spell] then
+            D.DB["CUSTOM"][C.Spell][10]=not D.DB["CUSTOM"][C.Spell][10]
+            UpdateAuraStatus(editor,C.Spell)
+        end
+    end)
     F:UpdateAuraList()
     F:UpdateEditor(editor)
-end
-function F:UpdateAuraStatus(spellId)
-    if not spellId then return end
-    local debuff=D.DB["CUSTOM"][spellId][10]
-    local editor=C.EditorFrame
-    if debuff then
-        editor.isDebuff.bg:SetColorTexture(0.80,0.40,1.00,0.4)
-    else
-        editor.isDebuff.bg:SetColorTexture(0,0,0,0)
-    end
+    UpdateStatus(isBlink,14)
+    UpdateStatus(isClass,15)
+    UpdateStatus(isBorder,16)
 end
 function F:UpdateAuraList()
     local editor=C.EditorFrame
@@ -250,7 +273,7 @@ function F:UpdateAuraList()
                 editor:Show()
             end
             SelectAura(editor,spellId)
-            F:UpdateAuraStatus(spellId)
+            UpdateAuraStatus(editor,spellId)
         end)
         btn.name=btn:CreateFontString(nil,"OVERLAY")
         btn.name:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
