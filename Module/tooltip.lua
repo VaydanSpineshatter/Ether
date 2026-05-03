@@ -176,7 +176,7 @@ function F:ToolTipInitialize()
     GameTooltip:HookScript("OnTooltipSetUnit",function(self)
         local _,unit=self:GetUnit()
         if not unit then return end
-        UpdateTooltip(unit,D.DB[4],UnitExists(unit))
+        UpdateTooltip(unit,D.DB[3],UnitExists(unit))
     end)
     GameTooltip:HookScript("OnTooltipCleared",function()
         if D.DB[1][9]~=1 then return end

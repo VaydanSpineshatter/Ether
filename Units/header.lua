@@ -185,6 +185,7 @@ function F:CreatePetHeader()
             "[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
 end
 local function UpdateHeader()
+    if InCombatLockdown() then return end
     local header=D.H.raid
     local by,order=OrderMethod(D.DB["CONFIG"][11])
     local column,point=AnchorMethod(D.DB["CONFIG"][12])
@@ -209,7 +210,7 @@ local function UpdateHeader()
         F:AuraEnable()
     end)
 end
-F:RegisterCallback(UpdateHeader)
+F:RegisterCallbackByIndex(UpdateHeader,22)
 --[[
 order = 'DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR',
 by = 'CLASS'

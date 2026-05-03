@@ -2,16 +2,16 @@ local D,F,S,C=unpack(select(2,...))
 local event,pairs,ipairs,sformat,iK=S.EventFrame,pairs,ipairs,string.format,{}
 local function callback(index)
     if event:IsEventRegistered(D.iEvent[index]) then
-        C.MainButtons[3][index].v:SetTextColor(0,1,0)
+        C.MainButtons[4][index].v:SetTextColor(0,1,0)
     else
         if index==3 and D.DB[1][4]==1 then
             F:StartFlash()
         end
-        C.MainButtons[3][index].v:SetTextColor(1,0,0)
+        C.MainButtons[4][index].v:SetTextColor(1,0,0)
     end
 end
 local function OnIndicatorSelect(self,index,data)
-    for _,v in ipairs(C.MainButtons[3]) do
+    for _,v in ipairs(C.MainButtons[4]) do
         if v then v:Hide() end
     end
     for _,btn in pairs(C.IndicatorFrame.cube) do
@@ -20,13 +20,13 @@ local function OnIndicatorSelect(self,index,data)
     C.Indi=index
     self.text:SetText(data)
     F:UpdateIndicatorsPos(C.Indi)
-    C.MainButtons[3][index]:Show()
+    C.MainButtons[4][index]:Show()
     callback(index)
 end
-function F:Indicators(index)
-    local parent=C.ChildFrames[index]
-    if parent.Created then return end
-    parent.Created=true
+function F:Indicators(self,status)
+    if self.created or type(status)~="boolean" then return end
+    self.created=status
+    C.IndicatorFrame=C.ChildFrames[9]
     for i=1,13 do
         if i>11 then
             iK[#iK+1]=D.iIconPath[i]
@@ -37,8 +37,8 @@ function F:Indicators(index)
         end
     end
     for i,opt in ipairs(D.iIconTable) do
-        local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
-        btn:SetPoint("TOPLEFT",parent,"TOPLEFT",10,-40)
+        local btn=CreateFrame("CheckButton",nil,self,"InterfaceOptionsCheckButtonTemplate")
+        btn:SetPoint("TOPLEFT",self,"TOPLEFT",10,-40)
         btn:SetSize(18,18)
         btn.tex=btn:CreateTexture(nil,"OVERLAY")
         btn.tex:SetTexture(iK[i])
@@ -56,84 +56,84 @@ function F:Indicators(index)
         btn.v:SetFontObject(C.EtherFont)
         btn.v:SetText(opt)
         btn.v:SetPoint("LEFT",btn.tex,"RIGHT",15,0)
-        btn:SetChecked(D.DB[3][i]==1)
-        btn:SetScript("OnClick",function(self)
-            local checked=self:GetChecked()
-            D.DB[3][i]=checked and 1 or 0
+        btn:SetChecked(D.DB[4][i]==1)
+        btn:SetScript("OnClick",function()
+            local checked=btn:GetChecked()
+            D.DB[4][i]=checked and 1 or 0
             F:IndicatorToggleEvent(i)
             F:IndicatorsToggleIcon(i)
             callback(i)
             F:IndicatorsFullUpdateBtn()
         end)
-        C.MainButtons[3][i]=btn
+        C.MainButtons[4][i]=btn
     end
     local indicatorList={}
     for _,v in ipairs(D.iIconTable) do
         indicatorList[#indicatorList+1]=v
     end
-    local dropdown=F:CreateEtherDropdown(parent,140,"Select Indicator",indicatorList,OnIndicatorSelect)
+    local dropdown=F:CreateEtherDropdown(self,140,"Select Indicator",indicatorList,OnIndicatorSelect)
     C.IndicatorFrame.dropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)
-    local cube,preview=F:CreatePreview(parent,"BOTTOMRIGHT")
+    local cube,preview=F:CreatePreview(self,"BOTTOMRIGHT")
     C.IndicatorFrame.cube=cube
     C.IndicatorFrame.preview=preview
     C.IndicatorFrame.preview.icon:SetScale(1.5)
     for _,btn in pairs(cube) do
-        btn:SetScript("OnClick",function(self)
+        btn:SetScript("OnClick",function()
             if C.Indi then
-                D.DB[20][C.Indi][1]=self.position
+                D.DB[20][C.Indi][1]=btn.position
                 for _,b in pairs(cube) do
                     b:GetScript("OnLeave")(b)
                     F:UpdateIndicatorsPos(C.Indi)
                 end
             end
         end)
-        btn:SetScript("OnEnter",function(self)
-            self.bg:SetColorTexture(0.3,0.3,0.3,0.9)
+        btn:SetScript("OnEnter",function()
+            btn.bg:SetColorTexture(0.3,0.3,0.3,0.9)
         end)
-        btn:SetScript("OnLeave",function(self)
+        btn:SetScript("OnLeave",function()
             local data=C.Indi and D.DB[20][C.Indi]
-            if data and data[1]==self.position then
-                self.bg:SetColorTexture(0.8,0.6,0,0.4)
+            if data and data[1]==btn.position then
+                btn.bg:SetColorTexture(0.8,0.6,0,0.4)
             else
-                self.bg:SetColorTexture(0.2,0.2,0.2,0.8)
+                btn.bg:SetColorTexture(0.2,0.2,0.2,0.8)
             end
         end)
         btn:GetScript("OnLeave")(btn)
     end
-    local confirm=F:EtherPanelButton(preview,60,25,"Confirm","TOP",parent,"TOP",65,-5)
+    local confirm=F:EtherPanelButton(preview,60,25,"Confirm","TOP",self,"TOP",65,-5)
     confirm:SetScript("OnClick",function()
         if C.Indi then
             F:SavePosition(C.Indi)
         end
     end)
-    local x=F:CreateSlider(parent,"X-Off","%.0f px","-18","18",1,"TOP","TOP",6,-90,
-            function(self,value)
+    local x=F:CreateSlider(self,"X-Off","%.0f px","-18","18",1,"TOP","TOP",6,-90,
+            function(_,value)
                 if C.Indi then
                     D.DB[20][C.Indi][2]=value
-                    self:SetValue(D.DB[20][C.Indi][2])
+                    C.IndicatorFrame.x:SetValue(D.DB[20][C.Indi][2])
                     F:UpdateIndicatorsPos(C.Indi)
-                    self.v:SetText(sformat("%.0f px",value))
+                    C.IndicatorFrame.x.v:SetText(sformat("%.0f px",value))
                 end
             end)
     C.IndicatorFrame.x=x
-    local y=F:CreateSlider(parent,"Y-Off","%.0f px","-18","18",1,"TOP","TOP",120,-90,
-            function(self,value)
+    local y=F:CreateSlider(self,"Y-Off","%.0f px","-18","18",1,"TOP","TOP",120,-90,
+            function(_,value)
                 if C.Indi then
                     D.DB[20][C.Indi][3]=value
-                    self:SetValue(D.DB[20][C.Indi][3])
+                    C.IndicatorFrame.y:SetValue(D.DB[20][C.Indi][3])
                     F:UpdateIndicatorsPos(C.Indi)
-                    self.v:SetText(sformat("%.0f px",value))
+                    C.IndicatorFrame.y.v:SetText(sformat("%.0f px",value))
                 end
             end)
     C.IndicatorFrame.y=y
     local s=F:CreateSlider(x,"Scale","6 px","4","20",1,"TOPLEFT","BOTTOMLEFT",0,-25,
-            function(self,value)
+            function(_,value)
                 if C.Indi then
                     D.DB[20][C.Indi][4]=value
-                    self:SetValue(D.DB[20][C.Indi][4])
+                    C.IndicatorFrame.s:SetValue(D.DB[20][C.Indi][4])
                     F:UpdateIndicatorsPos(C.Indi)
-                    self.v:SetText(sformat("%.1f px",value))
+                    C.IndicatorFrame.s.v:SetText(sformat("%.1f px",value))
                 end
             end)
     C.IndicatorFrame.s=s

@@ -82,7 +82,7 @@ function F:SetupHealthText(button)
 end
 function C:ToggleUser()
     if InCombatLockdown() then return end
-    if not C.Created then
+    if not C.created then
         C:Main()
     end
     if not C.MainFrame then return end
@@ -590,7 +590,6 @@ local function CreatePopupBox()
     end)
     right:SetScript("OnClick",function()
         C.PopupBox:SetShown(false)
-        C.MainFrame:SetShown(true)
     end)
     C.PopupCallback=left
 end
@@ -602,7 +601,6 @@ function F:PopupBoxSetup()
         C.PopupCallback:SetScript("OnClick",nil)
     end
     C.PopupBox:SetShown(true)
-    C.MainFrame:SetShown(false)
 end
 function F:LineInput(parent,width,height)
     local input=CreateFrame("EditBox",nil,parent)

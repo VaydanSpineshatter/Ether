@@ -31,7 +31,7 @@ local function InitialPower(b)
 end
 F.InitialPower=InitialPower
 local function DisplayPower(b)
-    if not b or not b.powerBar then return end
+    if not b or not b.unit or not b.powerBar then return end
     local unit=b.unit
     local r,g,be=F:GetPowerColor(unit)
     b.powerBar:SetStatusBarColor(r,g,be,.6)
@@ -39,7 +39,7 @@ local function DisplayPower(b)
 end
 F.DisplayPower=DisplayPower
 local function Power(b)
-    if not b or not b.powerBar then return end
+    if not b or not b.unit or not b.powerBar then return end
     local unit=b.unit
     local p=UnitPower(unit)
     if not p then return end
@@ -50,7 +50,7 @@ local function Power(b)
     end
 end
 local function MaxPower(b)
-    if not b or not b.powerBar then return end
+    if not b or not b.unit or not b.powerBar then return end
     local unit=b.unit
     local mp=UnitPowerMax(unit)
     if not mp then return end
@@ -155,3 +155,5 @@ function F:PowerDisable()
         event:UnregisterEvent(v)
     end
 end
+F:RegisterCallbackByIndex(F.PowerEnable,11)
+F:RegisterCallbackByIndex(F.PowerDisable,11+30)

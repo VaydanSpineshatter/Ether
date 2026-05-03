@@ -4,54 +4,56 @@ local function Away(afk)
     if not afk then return end
     if C.IdleMode then return end
     C.IdleMode=true
-    if D.DB[1][1]==1 then
-        F:IconDisable()
+    for index=1,12 do
+        if D.DB[1][index]==1 then
+            if index>=10 and index<=12 then
+                F:Fire(index+30)
+            elseif index>=5 and index<=7 then
+                F:Fire(index+30)
+            elseif index<=3 then
+                F:Fire(index+30)
+            end
+        end
     end
-    if D.DB[1][6]==1 then
-        F:IndicatorsDisable()
-    end
-    for index=1,6 do
-        F:DeactivateUnitButton(index)
-    end
-    F:AuraDisable()
     for index=1,2 do
         F:CastDisable(index)
+    end
+    for index=1,6 do
+        if D.DB[6][index]==1 then
+            F:DeactivateUnitButton(index)
+        end
     end
     if D.DB[1][6]==1 then
         S.EventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
     end
-    F:HealthDisable()
-    F:PowerDisable()
-    F:RangeDisable()
-    F:NameDisable()
-    F:MsgDisable()
-    F:MsgCLEUDisable()
 end
 local function NotAway(afk)
     if afk then return end
     if not C.IdleMode then return end
     C.IdleMode=false
-    if D.DB[1][1]==1 then
-        F:IconEnable()
-    end
-    if D.DB[1][6]==1 then
-        F:IndicatorsEnable()
+    for index=1,12 do
+        if D.DB[1][index]==1 then
+            if index>=10 and index<=12 then
+                F:Fire(index)
+            elseif index==7 then
+                C_Timer.After(0.5,function()
+                    F:Fire(index)
+                end)
+            elseif index>=5 and index<=6 then
+                F:Fire(index)
+            elseif index<=3 then
+                F:Fire(index)
+            end
+        end
     end
     for index=1,6 do
-        F:ActivateUnitButton(index)
+        if D.DB[6][index]==1 then
+            F:ActivateUnitButton(index)
+        end
     end
-    F:HealthEnable()
-    F:PowerEnable()
-    F:MsgEnable()
-    F:MsgCLEUEnable()
-    F:NameEnable()
     for index=1,2 do
         F:CastEnable(index)
     end
-    F:RangeEnable()
-    C_Timer.After(0.5,function()
-        F:AuraEnable()
-    end)
 end
 function F:UserIdle(unit)
     if D.DB[1][4]~=1 then return end

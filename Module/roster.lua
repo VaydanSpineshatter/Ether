@@ -1,53 +1,37 @@
 local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,UnitExists,C_After=pairs,ipairs,UnitExists,C_Timer.After
 local event,raidBtn,soloBtn,modelBtn=S.EventFrame,D.raidBtn,D.soloBtn,D.modelBtn
-local refresh,updatedChannel=false,false
+local refresh,channel=false,false
 local function GetModelBtn(unit)
     return modelBtn[D:PosUnit(unit)]
 end
-local function UpdateSendChannel()
-    local channel
-    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
-        channel="INSTANCE_CHAT"
-    elseif IsInRaid() then
-        channel="RAID"
-    else
-        channel="PARTY"
-    end
-    return channel
-end
 local function refreshButtons()
-    if not refresh and UnitInAnyGroup("player") then
-        refresh=true
-        C_After(2,function()
-            for _,b in pairs(raidBtn) do
-                if not UnitExists(b.unit) then return end
-                F:UpdateIndicatorsString(b)
+    C_After(2,function()
+        for _,b in pairs(raidBtn) do
+            if UnitExists(b.unit) then
                 F:RaidAurasFullUpdate(b.unit)
-                F.UpdateClassColor(b)
             end
-            refresh=false
-        end)
-    end
+            F.UpdateClassColor(b)
+            F.InitialHealth(b)
+            F:UpdateIndicatorsString(b)
+        end
+        refresh=false
+    end)
 end
 function event:GROUP_ROSTER_UPDATE()
     if not UnitInAnyGroup("player") then
         F:AuraDisable()
-        F:IndicatorsFullUpdateBtn()
         C_After(1,function()
+            F:IndicatorsFullUpdateBtn()
             F:AuraEnable()
         end)
-        return
-    end
-    refreshButtons()
-    if IsInGroup() then
-        if not updatedChannel then
-            updatedChannel=true
-            local channel=UpdateSendChannel()
-            C_ChatInfo.SendAddonMessage(C.EtherPrefix,tostring(C.EtherVersion),channel)
-        end
     else
-        updatedChannel=false
+        if refresh then return end
+        refresh=true
+        refreshButtons()
+        if channel then return end
+        channel=true
+        C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or IsInRaid() and "RAID" or "PARTY")         --D:ExportAddonMsg()
     end
 end
 function event:GROUP_JOINED()

@@ -1,8 +1,9 @@
-local D,_,_,C=unpack(select(2,...))
+local D,_,S,C=unpack(select(2,...))
 local type,next,tostring,unpack=type,next,tostring,unpack
 local tconcat,UIParent,pairs,ipairs=table.concat,UIParent,pairs,ipairs
-D.MenuKey,D.Slash,D.menuStrings={"Module","Blizzard","Tooltip","Aura","Indicators","Layout","Header","Profile"},{"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding"},{}
-local P={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent",}
+D.MenuKey,D.menuStrings={"Module","Blizzard","Tooltip","Indicators","Header","Layout","Aura","Profile"},{}
+local P={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
+D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding","Addon Version ","Prefix ","Version Calls","Addon calls ",C_AddOns.GetAddOnMetadata("Ether","Version") or "0.8.1","-",tostring(_G["ETHER_DATABASE"]["LAST"] or 0),tostring(0)}
 local Units={"player","target","targettarget","pet","pettarget","focus"}
 D.iEvent={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS","UNIT_FACTION","RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
 D.msgEvent={"CHAT_MSG_ADDON","CHAT_MSG_WHISPER_INFORM","CHAT_MSG_WHISPER","CHAT_MSG_BN_WHISPER"}
@@ -59,9 +60,9 @@ function D:GetRelativePoint(p)
         return P[5],0,0
     end
 end
---Module,Blizzard,Indicators,Tooltip,Header,Layout
 --player,target,targettarget,pet,pettarget,focus,custom1,custom2,custom3,raid,raidpet,playerCastBar,targetCastBar,playerModel,targetModel,Info,Tooltip,Icon,Config
-D.Default={[1]={1,1,1,0,1,1,1,1,1,1,1,1},[2]={1,1,1,1,1,1,1,1,1,1,1},[3]={1,1,1,1,1,1,1,1,1,1,1},[4]={1,1,1,1,1,1,1,1,1,1,1,1,1},[5]={1,1,1,1},[6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+--Module,Blizzard,Tooltip,Indicators,Header,Layout
+D.Default={[1]={1,1,1,0,1,1,1,1,1,1,1,1},[2]={1,1,1,1,1,1,1,1,1,1,1},[3]={1,1,1,1,1,1,1,1,1,1,1,1,1},[4]={1,1,1,1,1,1,1,1,1,1,1},[5]={1,1,1,1},[6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
            [20]={[1]={P[1],0,0,18},[2]={P[8],0,0,9},[3]={P[3],0,0,9},[4]={P[2],0,0,9},[5]={P[8],0,0,9},[6]={P[9],0,0,9},[7]={P[7],0,0,9},[8]={P[1],0,-9,9},[9]={P[3],0,0,9},[10]={P[6],0,0,9},[11]={P[2],0,0,9}},
            [21]={[1]={P[8],P[10],P[8],-254,244,110,40,1,1},[2]={P[8],P[10],P[8],254,244,110,40,1,1},[3]={P[8],P[10],P[8],388,244,110,40,1,1},[4]={P[5],P[10],P[5],-350,-100,110,40,1,1},
                  [5]={P[5],P[10],P[5],-270,-20,110,40,1,1},[6]={P[5],P[10],P[5],500,100,110,40,1,1},[7]={P[5],P[10],P[5],0,90,110,40,1,1},[8]={P[5],P[10],P[5],0,0,110,40,1,1},
@@ -131,15 +132,22 @@ function D:DataMigrate(old,newSize,default)
     end
     return t
 end
-function D:ProfileMigrate(tbl,key,number)
-    if tbl[key] and type(tbl[key])=="table" then
-        if #tbl[key] ~= number then
-            tbl[key]=D:DataMigrate(tbl[key],number,0)
-        end
-    end
-    if type(tbl[key][13])~="string" then
-         tbl[key][13] = "NONE"
-    end
+function D:InitializeAddon(status,msg)
+    if type(status)~="boolean" then return end
+    assert(status==true,msg)
+    _G["ETHER_DATABASE"]["VERSION"]=C.EtherVersion
+    D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()])
+    C_ChatInfo.RegisterAddonMessagePrefix(C.EtherPrefix)
+    _G["ETHER_DATABASE"]["VERSION"]=C.EtherVersion
+    S.EventFrame:RegisterEvent("PLAYER_LOGIN")
+    S.EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+end
+function D:SetToDefault(status)
+    if type(status)~="boolean" then return end
+    table.wipe(_G["ETHER_DATABASE"]["PROFILES"])
+    _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=D:CopyTable(D.Default)
+    D:CurrentProfile("DEFAULT")
+    _G["ETHER_DATABASE"]["VERSION"]=C.EtherVersion
 end
 function D:CopyTable(orig,seen)
     if type(orig)~="table" then
@@ -219,9 +227,10 @@ function D:ApplyFramePosition(f)
     f:SetScale(scale)
     f:SetAlpha(alpha)
 end
-local mC,pC,mR={},{},{}
+local pC,mR={},{}
 function D:MergeToLeft(ORIG,NEW)
     if type(D.GetProfileName)~="function" then return end
+    local mC={}
     mC[ORIG]=NEW
     pC[ORIG]=" path"
     local LEFT=ORIG
@@ -233,7 +242,7 @@ function D:MergeToLeft(ORIG,NEW)
             local OLD_VAL=LEFT[NEW_KEY]
             if OLD_VAL==nil then
                 mR[#mR+1]="  Missing Key '"..tostring(NEW_KEY).."' in "..CURRENT_PATH
-                LEFT[NEW_KEY]=NEW_VAL
+                LEFT[NEW_KEY]=D:CopyTable(NEW_VAL)
             elseif type(OLD_VAL)=="table" and type(NEW_VAL)=="table" then
                 mC[OLD_VAL]=NEW_VAL
                 pC[OLD_VAL]=CURRENT_PATH.."."..tostring(NEW_KEY)
@@ -250,5 +259,4 @@ function D:MergeAnalyse()
     C:EtherInfo(tconcat(mR,'\n'))
     table.wipe(mR)
     table.wipe(pC)
-    table.wipe(mC)
 end

@@ -1,31 +1,39 @@
 local D,F,S,C=unpack(select(2,...))
-local ipairs,modelBtn=ipairs,D.modelBtn
-C.BorderFrames,C.ChildFrames,C.MenuButtons,C.AuraList={},{},{},{}
-C.MainButtons={[1]={},[2]={},[3]={},[4]={},[5]={},[6]={}}
-local function MODULE_CHARGING(i)
+local ipairs,modelBtn,j=ipairs,D.modelBtn,0
+C.BorderFrames,C.ChildFrames,C.MenuButtons,C.AuraList,C.MainButtons,C.created={},{},{},{},{},false
+while true do
+    j=j+1
+    C.MainButtons[#C.MainButtons+1]={}
+    if j>=7 then break end
+end
+local function MODULE_CHARGING(i,status)
     if i==1 then
-        F:Module(i)
+        F:Module(C.ChildFrames[i],status)
     elseif i==2 then
-        F:Blizzard(i)
+        F:Blizzard(C.ChildFrames[i],status)
     elseif i==3 then
-        F:Tooltip(i)
+        F:Tooltip(C.ChildFrames[i],status)
     elseif i==4 then
-        F:Aura(i)
+        F:Indicators(C.ChildFrames[i],status)
     elseif i==5 then
-        F:Indicators(i)
+        F:Header(C.ChildFrames[i],status)
     elseif i==6 then
-        F:Layout(i)
+        F:Layout(C.ChildFrames[i],status)
     elseif i==7 then
-        F:Header(i)
+        F:Aura(C.ChildFrames[i],status)
     elseif i==8 then
-        F:Profile(i)
+        F:Profile(C.ChildFrames[i],status)
     end
 end
 local function Child()
-    if C.Created then return end
+    if C.created then return end
     for index=1,8 do
         if not C.MenuButtons[index] then
-            F:MenuButton(index,MODULE_CHARGING)
+            F:MenuButton(index,function()
+                if not C.ChildFrames[index].created then
+                    MODULE_CHARGING(index,true)
+                end
+            end)
         end
     end
     for index=9,11 do
@@ -33,32 +41,20 @@ local function Child()
             C.ChildFrames[index]=CreateFrame("Frame",nil,C.ContentFrame)
             C.ChildFrames[index]:SetAllPoints(C.ContentFrame)
         end
-        C.IndicatorFrame=C.ChildFrames[9]
-        C.EditorFrame=C.ChildFrames[10]
-        C.AuraFrame=C.ChildFrames[11]
     end
 end
 local function Base()
-    if C.Created then return end
+    if C.created then return end
     C.BaseFrame:SetPoint("TOPLEFT")
     C.BaseFrame:SetPoint("BOTTOMLEFT")
     C.BaseFrame:SetWidth(100)
     C.ContentFrame:SetPoint("TOPLEFT",C.BaseFrame,"TOPRIGHT")
     C.ContentFrame:SetPoint("BOTTOMRIGHT")
-    for i=1,5 do
-        D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
-        D.menuStrings[i]:SetFontObject(C.EtherFont)
-        D.menuStrings[i]:SetText(string.format("%s - %s",D.Slash[i],D.Slash[i+5]))
-        if i==1 then
-            D.menuStrings[i]:SetPoint("TOP",0,-30)
-        else
-            D.menuStrings[i]:SetPoint("TOP",D.menuStrings[i-1],"BOTTOM",0,-5)
-        end
-    end
+    F:InitializeSystemStatus()
 end
 local function Border()
-    if C.Created then return end
-    C.Created=true
+    if C.created then return end
+    C.created=true
     F:MainBorder(C.MainFrame,1,2,3,4)
     C.BorderFrames[5]=C.ContentFrame:CreateTexture(nil,"BORDER")
     C.BorderFrames[5]:SetColorTexture(0.67,0.67,0.67)
@@ -67,7 +63,7 @@ local function Border()
     C.BorderFrames[5]:SetWidth(1)
 end
 function C:Main()
-    if C.Created then return end
+    if C.created then return end
     local frame=C.MainFrame
     frame:SetFrameStrata("TOOLTIP")
     C.MainFrame=frame
@@ -133,11 +129,7 @@ end
 function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_LOGOUT")
-    if C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) then
-        if IsInGuild() then
-            C_ChatInfo.SendAddonMessage(C.EtherPrefix,C.EtherVersion,"GUILD")
-        end
-    end
+    D.Slash[16]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) and "|cff00ff00true|r" or "|cffff0000false|r"
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()

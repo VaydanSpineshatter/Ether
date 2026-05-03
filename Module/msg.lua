@@ -30,14 +30,21 @@ local function GuidClassColor(guid)
     local enemy=eFaction[race] and E or NE
     return c,name or "UNKNOWN",enemy
 end
+local count=0
 local function OnVersion(message)
     local theirVersion=tonumber(message)
     local myVersion=tonumber(C.EtherVersion)
+    count=count+1
+    if D.menuStrings[8] and D.menuStrings[9] then
+        D.menuStrings[9]:SetText(string.format("%s %s",D.Slash[9],tostring(count)))
+    end
     local lastCheck=_G["ETHER_DATABASE"]["LAST"] or 0
     if (time()-lastCheck>=7000) and theirVersion and myVersion and myVersion<theirVersion then
         _G["ETHER_DATABASE"]["LAST"]=time()
-        local msg=sformat("New version found (%d). Get the latest version from %s",theirVersion,"|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r")
-        C:EtherInfo(msg)
+        if D.menuStrings[8] and D.menuStrings[9] then
+            D.menuStrings[8]:SetText(string.format("%s %s",D.Slash[8],_G["ETHER_DATABASE"]["LAST"]))
+        end
+        C:EtherInfo(sformat("New version found (%d). Get the latest version from %s",theirVersion,"|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r"))
     end
 end
 function F:ScanTargetGUID()
@@ -136,7 +143,7 @@ function event:CHAT_MSG_ADDON(...)
     if sender==C.PlayerName then return end
     if Received[message]==message then return end
     Received[message]=message
-    OnVersion(message)
+    OnVersion(D:ImportAddonMsg(message))
 end
 function event:CHAT_MSG_BN_WHISPER(...)
     local text,_,_,_,playerName2,_,_,_,_,_,_,guid=...
@@ -191,3 +198,7 @@ function F:MsgDisable()
         end
     end
 end
+F:RegisterCallbackByIndex(F.MsgEnable,2)
+F:RegisterCallbackByIndex(F.MsgCLEUEnable,3)
+F:RegisterCallbackByIndex(F.MsgDisable,2+30)
+F:RegisterCallbackByIndex(F.MsgCLEUDisable,3+30)

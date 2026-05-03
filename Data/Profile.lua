@@ -195,6 +195,9 @@ local function TblToString(tbl)
 end
 local btnTbl={"GROUP","CLASS","ASSIGNEDROLE","LEFT, TOP","TOP, LEFT"}
 local function ProfileRefresh()
+    if C.MainFrame:IsShown() then
+        C.MainFrame:Hide()
+    end
     F:UpdateAuraList()
     F:UpdateEditor(C.EditorFrame)
     F:IndicatorsDisable()
@@ -204,17 +207,20 @@ local function ProfileRefresh()
     F:MenuStringsAlpha(0)
     D:RefreshAllSettings()
     D:RefreshAllFrames()
-    F:Fire(1)
-    if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
-        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
+    F:Fire(22)
+    if C.ChildFrames[5] and C.ChildFrames[5].roleDropdown and C.ChildFrames[5].roleDropdown.text then
+        C.ChildFrames[5].roleDropdown.text:SetText(D.DB["CONFIG"][13])
     end
-    if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
-        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
+    if C.ChildFrames[5] and C.ChildFrames[5].roleDropdown and C.ChildFrames[5].roleDropdown.text then
+        C.ChildFrames[5].roleDropdown.text:SetText(D.DB["CONFIG"][13])
     end
     F:IndicatorsEnable()
     F:RefreshChildText("sort",7,btnTbl[D.DB["CONFIG"][11]])
     F:RefreshChildText("direction",7,btnTbl[D.DB["CONFIG"][12]])
     F:IndicatorsFullUpdateBtn()
+    if not C.MainFrame:IsShown() then
+        C.MainFrame:Show()
+    end
 end
 function D:ExportProfileToClipboard()
     local encoded,err=D:ExportCurrentProfile()
@@ -236,6 +242,17 @@ function D:ExportProfileToClipboard()
     C:EtherInfo("|cff00ff00Profile copied to clipboard!|r")
     C:EtherInfo("|cff888888You can now paste it anywhere|r")
     return encoded
+end
+function D:ExportAddonMsg()
+    local compressed=CompressString(C.EtherVersion,1)
+    local encoded=Base64Encode(compressed)
+    return encoded
+end
+function D:ImportAddonMsg(msg)
+    if not msg then return end
+    local decoded=Base64Decode(msg)
+    local import=DecompressString(decoded,1)
+    return import
 end
 function D:ExportCurrentProfile()
     local userData=D:GetProfile()
@@ -287,34 +304,37 @@ function D:ImportProfile(encodedString)
     D:MergeAnalyse()
     return true,"Successfully imported as: "..name
 end
-function D:CopyProfile(sourceName,targetName)
-    if not sourceName or not targetName then return end
+function D:CopyProfile(sourceName)
+    if not sourceName then return end
+    C.MainFrame:Hide()
+    local roll=math.random(1,1000)
+    local targetName=sformat("Copy_%s_%s",roll,sourceName)
     if not _G["ETHER_DATABASE"]["PROFILES"][sourceName] then
+        C.MainFrame:Show()
         return false,"Profile "..sourceName.." not found"
     end
     if _G["ETHER_DATABASE"]["PROFILES"][targetName] then
+        C.MainFrame:Show()
         return false,"Profile "..sourceName.." already exists"
     end
     _G["ETHER_DATABASE"]["PROFILES"][targetName]=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][sourceName])
-    return true,"Profile "..sourceName.."  copied"
+    C.MainFrame:Show()
+    return true,"Profile "..sourceName.." has been copied"
 end
 function D:SwitchProfile(name)
     if not _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile "..name.." not found"
     end
-    C.MainFrame:Hide()
     _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]=D:CopyTable(D.DB)
     D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][name])
     if C.PopupBox and C.PopupBox.font then
         C.PopupBox.font:SetText(name)
     end
     ProfileRefresh()
-    C.MainFrame:Show()
     C.ChildFrames[8]:Show()
     _G["ETHER_DATABASE"]["CURRENT"]=name
     return true,"Switched to "..name
 end
-local data={}
 function D:DeleteProfile(name)
     if not _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile not found"
@@ -326,8 +346,8 @@ function D:DeleteProfile(name)
     if not success then
         return false,"Failed to switch profile: "..msg
     else
+        local data={}
         _G["ETHER_DATABASE"]["PROFILES"][name]=nil
-        table.wipe(data)
         for n in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
             data[#data+1]=n
         end
@@ -345,6 +365,12 @@ function D:ResetProfile()
     return true,"Profile "..name.." reset to default"
 end
 function D:CreateProfile(name)
+    if not name then return end
+    local input=name:match("^(%S*)%s*(.-)$")
+    input=string.lower(input)
+    if input=="default" then
+        return false,"You cannot use “default” as a name"
+    end
     if _G["ETHER_DATABASE"]["PROFILES"][name] then
         return false,"Profile "..name.." already exists"
     end
@@ -353,6 +379,15 @@ function D:CreateProfile(name)
     return true,"Profile "..name.." created"
 end
 function D:RenameProfile(oldName,newName)
+    if not oldName or not newName then return end
+    if oldName=="DEFAULT" then
+        return false,"You cannot change “default"
+    end
+    local input=newName:match("^(%S*)%s*(.-)$")
+    input=string.lower(input)
+    if input=="default" then
+        return false,"You cannot use “default” as a name"
+    end
     if not _G["ETHER_DATABASE"]["PROFILES"][oldName] then
         return false,"Profile not found"
     end
@@ -370,7 +405,7 @@ function D:GetProfileName()
     return name
 end
 function D:GetProfileList()
-    table.wipe(data)
+    local data={}
     for n in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
         data[#data+1]=n
     end
@@ -380,5 +415,6 @@ function D:GetProfile()
     return _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]
 end
 function D:CurrentProfile(name)
+    if not name then return end
     _G["ETHER_DATABASE"]["CURRENT"]=name
 end

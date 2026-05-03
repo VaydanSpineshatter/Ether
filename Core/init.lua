@@ -29,7 +29,8 @@ Ether[4].ContentFrame=CreateFrame("Frame",nil,Ether[4].MainFrame)
 table.insert(UISpecialFrames,"EtherUnitFrames")
 Ether[3].EventFrame=CreateFrame("Frame")
 Ether[4].BaseFrame=CreateFrame("Frame",nil,Ether[4].MainFrame)
-Ether[4].EtherVersion=C_AddOns.GetAddOnMetadata("Ether","Version")
+local verStr=C_AddOns.GetAddOnMetadata("Ether","Version")
+Ether[4].EtherVersion=verStr:sub(3):gsub("%.","")
 Ether[4].LastVersion=0
 Ether[4].EtherPrefix="EtherAddonMsg"
 Ether[4].PlayerName=UnitName("player")
@@ -66,7 +67,7 @@ left:Hide()
 right:Hide()
 left:SetWidth(40)
 right:SetWidth(40)
-Ether[4].Spell,Ether[4].Indi,Ether[4].Created=nil,nil,false
+Ether[4].Spell,Ether[4].Indi=nil,nil
 Ether[4].FlashLeft=left
 Ether[4].FlashRight=right
 if type(_G["ETHER_DATABASE"])~="table" then
@@ -93,25 +94,23 @@ Ether[3].EventFrame.ADDON_LOADED=function(self)
         if not _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"] then
             _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
             Ether[1]:CurrentProfile(Ether[1]:GetProfileName())
+            _G["ETHER_DATABASE"]["VERSION"]=Ether[4].EtherVersion
+        end
+        if type(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()]["CONFIG"][13])~="string" then
+            for _,v in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
+                v[3]=nil
+                v[4]=nil
+                v["CONFIG"]=Ether[1]:DataMigrate(v["CONFIG"],16,0)
+                v["CONFIG"][13]="NONE"
+            end
         end
         Ether[1]:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()],Ether[1].Default)
     end)
     if not success then
-        table.wipe(_G["ETHER_DATABASE"]["PROFILES"])
-        _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
-        Ether[1]:CurrentProfile("DEFAULT")
+        Ether[1]:SetToDefault(success,msg)
         print(msg)
-    else
-        if Ether[4].EtherVersion~=_G["ETHER_DATABASE"]["VERSION"] then
-            Ether[1]:ProfileMigrate(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()],"CONFIG",16)
-            Ether[1]:ProfileMigrate(_G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"],"CONFIG",16)
-            _G["ETHER_DATABASE"]["VERSION"]=Ether[4].EtherVersion
-        end
-        Ether[1].DB=Ether[1]:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()])
-        C_ChatInfo.RegisterAddonMessagePrefix(Ether[4].EtherPrefix)
-        Ether[3].EventFrame:RegisterEvent("PLAYER_LOGIN")
-        Ether[3].EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
     end
+    Ether[1]:InitializeAddon(success)
 end
 Ether[3].EventFrame:SetScript("OnEvent",OnEvent)
 Ether[3].EventFrame:RegisterEvent("ADDON_LOADED")

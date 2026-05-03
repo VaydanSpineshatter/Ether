@@ -390,3 +390,5 @@ function F:AuraDisable()
     F:DisableRaidAura()
     F:DisableSoloAura()
 end
+F:RegisterCallbackByIndex(F.AuraEnable,7)
+F:RegisterCallbackByIndex(F.AuraDisable,7+30)

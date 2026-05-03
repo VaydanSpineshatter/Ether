@@ -2,7 +2,7 @@ local D,F=unpack(select(2,...))
 local C_Ticker,pairs,GetTime=C_Timer.NewTicker,pairs,GetTime
 local UnitInRange,UnitIsConnected,IsInGroup=UnitInRange,UnitIsConnected,IsInGroup
 local UnitCanAssist,UnitCanAttack,IsSpellInRange,UnitIsVisible,UnitPhaseReason=UnitCanAssist,UnitCanAttack,C_Spell.IsSpellInRange,UnitIsVisible,UnitPhaseReason
-local raidBtn,soloBtn,UnitExists=D.raidBtn,D.soloBtn,UnitExists
+local raidBtn,soloBtn,UnitExists,IsFlying=D.raidBtn,D.soloBtn,UnitExists,IsFlying
 local fTbl,hTbl={6673,19750,75,36554,2061,0,403,1459,2970,0,8936},{355,21084,75,6770,589,0,403,133,17793,0,8921}
 local f,h=fTbl[select(3,UnitClass("player"))],hTbl[select(3,UnitClass("player"))]
 local function IsInRange(unit)
@@ -15,29 +15,68 @@ local function IsInRange(unit)
     end
     return r and 1 or .45
 end
-local function ScanUnits(b,unit)
-    if not UnitIsConnected(unit) then
-        b:SetAlpha(1)
-        return true
-    end
-    if UnitPhaseReason(unit) then
-        b:SetAlpha(.45)
-        return true
-    end
-    if not UnitIsVisible(unit) then
-        b:SetAlpha(.45)
-        return true
-    end
-    return false
-end
+local is,none=5,4
 local cache={}
 local function CleanupCache()
     local currentTime=GetTime()
     for unit,data in pairs(cache) do
-        if (currentTime-data.timestamp)>=5 then
+        if (currentTime-data.timestamp)>=is then
             cache[unit]=nil
         end
     end
+end
+local function UpdateAlpha()
+    for _,button in pairs(raidBtn) do
+        if button and button:IsVisible() then
+            F:UpdateAlpha(button)
+        end
+    end
+    F:UpdateTargetAlpha()
+end
+local update,i=nil,0
+local function ticker()
+    if not update then
+        update=C_Ticker(1,function()
+            i=i+1
+            if i>=5 then
+                i=0
+                CleanupCache()
+            end
+            UpdateAlpha()
+        end)
+    end
+end
+local function clear()
+    if update then
+        update:Cancel()
+        update=nil
+    end
+end
+local function ScanUnits(b,unit)
+    if IsFlying("player") then
+        b:SetAlpha(.7)
+        is,none=8,7
+        return true
+    end
+    if not UnitIsConnected(unit) then
+        b:SetAlpha(1)
+        is,none=5,4
+        return true
+    end
+    if UnitPhaseReason(unit) then
+        b:SetAlpha(.45)
+        is,none=6,5
+        return true
+    end
+    if not UnitIsVisible(unit) then
+        b:SetAlpha(.45)
+        is,none=5,4
+        return true
+    end
+    if is~=5 then
+        is,none=5,4
+    end
+    return false
 end
 local function GetCachedStatus(b)
     local unit=b.unit
@@ -70,32 +109,11 @@ function F:UpdateTargetAlpha()
         F:UpdateAlpha(soloBtn[6])
     end
 end
-local function UpdateAlpha()
-    for _,button in pairs(raidBtn) do
-        if button and button:IsVisible() then
-            F:UpdateAlpha(button)
-        end
-    end
-    F:UpdateTargetAlpha()
-end
-local update,i=nil,0
 function F:RangeEnable()
-    if not update then
-        update=C_Ticker(1,function()
-            i=i+1
-            if i>=5 then
-                i=0
-                CleanupCache()
-            end
-            UpdateAlpha()
-        end)
-    end
+    ticker()
 end
 function F:RangeDisable()
-    if update then
-        update:Cancel()
-        update=nil
-    end
+    clear()
     for _,b in pairs(raidBtn) do
         b:SetAlpha(1)
     end
@@ -106,8 +124,10 @@ function F:RangeDisable()
         soloBtn[6]:SetAlpha(1)
     end
     table.wipe(cache)
-    i=0
+    is,none,i=5,4,0
 end
+F:RegisterCallbackByIndex(F.RangeEnable,5)
+F:RegisterCallbackByIndex(F.RangeDisable,5+30)
 --[[
 local fTbl={
     PRIEST=2061,-- Flash Heal

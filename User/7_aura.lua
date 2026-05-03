@@ -43,21 +43,22 @@ local function UpdateStatus(self,index)
         F:HideBorderDispel()
     end
 end
-function F:Aura(index)
-    local parent=C.ChildFrames[index]
-    if parent.Created then return end
-    parent.Created=true
+function F:Aura(self,status)
+    if self.created or type(status)~="boolean" then return end
+    self.created=status
+    C.EditorFrame=C.ChildFrames[10]
+    C.AuraFrame=C.ChildFrames[11]
     local editor=C.EditorFrame
     local auras=C.AuraFrame
     local auraList={}
     for v in pairs(D.PredefinedAuras) do
         auraList[#auraList+1]=v
     end
-    local dropdown=F:CreateEtherDropdown(parent,140,"Predefined Auras",auraList,OnAuraSelect)
+    local dropdown=F:CreateEtherDropdown(self,140,"Predefined Auras",auraList,OnAuraSelect)
     dropdown:SetPoint("TOPLEFT",5,-5)
     auras:SetPoint("TOPLEFT",dropdown,"BOTTOMLEFT",0,0)
     auras:SetSize(230,400)
-    editor:SetPoint("TOPRIGHT",parent,"TOPRIGHT",70,-50)
+    editor:SetPoint("TOPRIGHT",self,"TOPRIGHT",70,-50)
     editor:SetSize(320,300)
     local scrollFrame=CreateFrame("ScrollFrame",nil,auras,"ScrollFrameTemplate")
     editor.scrollFrame=scrollFrame
@@ -69,7 +70,7 @@ function F:Aura(index)
     if scrollFrame.ScrollBar then
         scrollFrame.ScrollBar:Hide()
     end
-    local new=F:EtherPanelButton(auras,50,25,"New","TOP",parent,"TOP",0,-5,0,1,0)
+    local new=F:EtherPanelButton(auras,50,25,"New","TOP",self,"TOP",0,-5,0,1,0)
     new:SetScript("OnClick",function()
         if not editor:IsShown() then
             editor:Show()
@@ -94,7 +95,7 @@ function F:Aura(index)
         D.DB["CONFIG"][16]=F:ToggleBinary(D.DB["CONFIG"][16])
         UpdateStatus(isBorder,16)
     end)
-    local clear=F:EtherPanelButton(auras,50,25,"Wipe","TOPRIGHT",parent,"TOPRIGHT",0,-5,1,0,0)
+    local clear=F:EtherPanelButton(auras,50,25,"Wipe","TOPRIGHT",self,"TOPRIGHT",0,-5,1,0,0)
     clear:SetScript("OnClick",function()
         F:PopupBoxSetup()
         F:UpdateAuraList()
@@ -116,7 +117,7 @@ function F:Aura(index)
         end)
     end)
     auras.scrollChild=scrollChild
-    local name=F:LineInput(parent,100,-20)
+    local name=F:LineInput(self,100,-20)
     editor.name=name
     name:SetPoint("TOP",40,-70)
     name:SetScript("OnEnterPressed",function()
@@ -126,16 +127,16 @@ function F:Aura(index)
         end
         name:ClearFocus()
     end)
-    name.v=parent:CreateFontString(nil,"OVERLAY")
+    name.v=self:CreateFontString(nil,"OVERLAY")
     name.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
     name.v:SetPoint("BOTTOMLEFT",name,"TOPLEFT",0,2)
     name.v:SetText("Name")
-    local spell=F:LineInput(parent,100,20)
+    local spell=F:LineInput(self,100,20)
     editor.spell=spell
     spell:SetPoint("LEFT",name,"RIGHT",15,0)
     spell:SetNumeric(true)
-    spell:SetScript("OnEnterPressed",function(self)
-        local newId=tonumber(self:GetText())
+    spell:SetScript("OnEnterPressed",function()
+        local newId=tonumber(spell:GetText())
         if F.SpellId and newId and newId>0 and newId~=C.Spell then
             local data=D.DB["CUSTOM"][C.Spell]
             D.DB["CUSTOM"][C.Spell]=nil
@@ -144,17 +145,17 @@ function F:Aura(index)
             F:UpdateAuraList()
             F:UpdateEditor(editor)
         end
-        self:ClearFocus()
+        spell:ClearFocus()
     end)
     spell.v=editor:CreateFontString(nil,"OVERLAY")
     spell.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
     spell.v:SetPoint("BOTTOMLEFT",spell,"TOPLEFT",0,2)
     spell.v:SetText("Spell ID")
     local x=F:CreateSlider(name,"X-Off","0 px","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,
-            function(self,value)
+            function(_,value)
                 if not C.Spell then return end
                 if type(C.Spell)~=nil then
-                    self:SetValue(D.DB["CUSTOM"][C.Spell][7])
+                    editor.x:SetValue(D.DB["CUSTOM"][C.Spell][7])
                     D.DB["CUSTOM"][C.Spell][7]=value
                     editor.x.v:SetText(sformat("%.0f",value))
                     F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
@@ -162,10 +163,10 @@ function F:Aura(index)
             end)
     editor.x=x
     local y=F:CreateSlider(spell,"Y-Off","0 px","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,
-            function(self,value)
+            function(_,value)
                 if not C.Spell then return end
                 if type(C.Spell)~=nil then
-                    self:SetValue(D.DB["CUSTOM"][C.Spell][8])
+                    editor.y:SetValue(D.DB["CUSTOM"][C.Spell][8])
                     D.DB["CUSTOM"][C.Spell][8]=value
                     editor.y.v:SetText(sformat("%.0f",value))
                     F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
@@ -173,38 +174,38 @@ function F:Aura(index)
             end)
     editor.y=y
     local s=F:CreateSlider(x,"Scale","6 px","4","20",1,"TOPLEFT","BOTTOMLEFT",0,-25,
-            function(self,value)
+            function(_,value)
                 if not C.Spell then return end
                 if type(C.Spell)~=nil then
                     D.DB["CUSTOM"][C.Spell][9]=value
-                    self:SetValue(D.DB["CUSTOM"][C.Spell][9])
+                    editor.s:SetValue(D.DB["CUSTOM"][C.Spell][9])
                     editor.s.v:SetText(sformat("%.1f px",value))
                     F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
                 end
             end)
     editor.s=s
-    local cube,preview=F:CreatePreview(parent,"BOTTOMRIGHT")
+    local cube,preview=F:CreatePreview(self,"BOTTOMRIGHT")
     editor.cube=cube
     editor.preview=preview
     for _,btn in pairs(cube) do
-        btn:SetScript("OnClick",function(self)
+        btn:SetScript("OnClick",function()
             if C.Spell then
-                D.DB["CUSTOM"][C.Spell][6]=self.position
+                D.DB["CUSTOM"][C.Spell][6]=btn.position
                 F:UpdateEditor(editor)
                 for _,otherBtn in pairs(cube) do
                     otherBtn:GetScript("OnLeave")(otherBtn)
                 end
             end
         end)
-        btn:SetScript("OnEnter",function(self)
-            self.bg:SetColorTexture(0.3,0.3,0.3,0.9)
+        btn:SetScript("OnEnter",function()
+            btn.bg:SetColorTexture(0.3,0.3,0.3,0.9)
         end)
-        btn:SetScript("OnLeave",function(self)
+        btn:SetScript("OnLeave",function()
             local data=C.Spell and D.DB["CUSTOM"][C.Spell]
-            if data and data[6]==self.position then
-                self.bg:SetColorTexture(0.8,0.6,0,0.4)
+            if data and data[6]==btn.position then
+                btn.bg:SetColorTexture(0.8,0.6,0,0.4)
             else
-                self.bg:SetColorTexture(0.2,0.2,0.2,0.8)
+                btn.bg:SetColorTexture(0.2,0.2,0.2,0.8)
             end
         end)
         btn:GetScript("OnLeave")(btn)
@@ -239,19 +240,18 @@ function F:Aura(index)
     UpdateStatus(isBorder,16)
 end
 function F:UpdateAuraList()
+    if not C.ChildFrames[7].created then
+        F:Aura(C.ChildFrames[7],true)
+    end
     local editor=C.EditorFrame
     local auras=C.AuraFrame
-    if not C.ChildFrames[4].Created then
-        F:Aura(4)
-    end
-    local DB=D.DB
     for _,btn in ipairs(C.AuraList) do
         btn:Hide()
         btn:SetParent(nil)
     end
     local yOffset=0
     local index=1
-    for spellId,data in pairs(DB["CUSTOM"]) do
+    for spellId,data in pairs(D.DB["CUSTOM"]) do
         local btn=CreateFrame("Button",nil,auras.scrollChild)
         btn:SetSize(180,25)
         btn:SetPoint("TOPLEFT",1,yOffset)
@@ -300,7 +300,7 @@ function F:UpdateAuraList()
             C.PopupCallback:SetScript("OnClick",function()
                 C.MainFrame:SetShown(true)
                 C.PopupBox:SetShown(false)
-                DB["CUSTOM"][spellId]=nil
+                D.DB["CUSTOM"][spellId]=nil
                 if C.Spell==spellId then
                     C.Spell=nil
                 end
@@ -317,13 +317,13 @@ function F:UpdateAuraList()
         yOffset=yOffset-30
         index=index+1
     end
+    UpdateStatus(editor.isBlink,14)
+    UpdateStatus(editor.isClass,15)
+    UpdateStatus(editor.isBorder,16)
 end
 function F:UpdateEditor(editor)
-    local DB=D.DB
-    if not editor.nameInput then
-        F:Aura(4)
-    end
-    if not DB["CUSTOM"][C.Spell] then
+    if not editor then return end
+    if not D.DB["CUSTOM"][C.Spell] then
         editor.name:SetText("")
         editor.name:Disable()
         editor.spell:SetText("")
@@ -337,7 +337,7 @@ function F:UpdateEditor(editor)
         end
         return
     end
-    local data=DB["CUSTOM"][C.Spell]
+    local data=D.DB["CUSTOM"][C.Spell]
     editor.name:SetText(data[1] or "")
     editor.name:Enable()
     editor.spell:SetText(tostring(C.Spell))
@@ -360,7 +360,7 @@ function F:UpdateEditor(editor)
     F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
 end
 function F:AddTemplateAuras(templateName)
-    if not D.PredefinedAuras[templateName] then return end
+    if not D.PredefinedAuras or not D.PredefinedAuras[templateName] then return end
     local a,s=0,0
     local DB=D.DB["CUSTOM"]
     for i,v in pairs(D.PredefinedAuras[templateName]) do

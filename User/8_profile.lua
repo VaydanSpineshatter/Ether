@@ -5,17 +5,16 @@ local function OnProfileChange(self,_,data)
     D:SwitchProfile(data)
     self.text:SetText(data)
 end
-function F:Profile(index)
-    local parent=C.ChildFrames[index]
-    if parent.Created then return end
-    parent.Created=true
-    local dropdown=F:CreateEtherDropdown(parent,130,"Select Profile",D:GetProfileList(),OnProfileChange)
+function F:Profile(self,status)
+    if self.created or type(status)~="boolean" then return end
+    self.created=status
+    local dropdown=F:CreateEtherDropdown(self,130,"Select Profile",D:GetProfileList(),OnProfileChange)
     C.ProfileDropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)
     dropdown.text:SetText(D:GetProfileName())
-    local transfer=CreateFrame("Frame",nil,parent,"BackdropTemplate")
+    local transfer=CreateFrame("Frame",nil,self,"BackdropTemplate")
     transfer:SetPoint("TOPRIGHT")
-    transfer:SetSize(220,parent:GetHeight())
+    transfer:SetSize(220,self:GetHeight())
     transfer:SetBackdrop({
         bgFile="Interface\\ChatFrame\\ChatFrameBackground",
         edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
@@ -26,31 +25,31 @@ function F:Profile(index)
     })
     transfer:SetBackdropColor(0.1,0.1,0.1,0.8)
     transfer:SetBackdropBorderColor(0.4,0.4,0.4)
-    local input=F:LineInput(parent,180,20)
+    local input=F:LineInput(self,180,20)
     C.InputLine=input
     input:SetPoint("BOTTOMLEFT",25,15)
     input:Hide()
-    input:SetScript("OnEnterPressed",function(self)
+    input:SetScript("OnEnterPressed",function()
         local newName=input:GetText()
         if newName and newName~="" and newName~="Enter name and press enter" then
             local success,msg=D:RenameProfile(D:GetProfileName(),newName)
             if success then
                 C:EtherInfo(eColor,msg)
-                self:Hide()
-                self:ClearFocus()
-                self:SetText("")
+                input:Hide()
+                input:ClearFocus()
+                input:SetText("")
             else
                 C:EtherInfo(eColor,msg)
             end
         end
-        self:ClearFocus()
+        input:ClearFocus()
     end)
-    local create=F:EtherPanelButton(parent,60,25,"New","TOPLEFT",dropdown,"BOTTOMLEFT",5,-13,0,1,0)
-    local copy=F:EtherPanelButton(parent,60,25,"Copy","LEFT",create,"RIGHT")
-    local reset=F:EtherPanelButton(parent,60,25,"Reset","LEFT",copy,"RIGHT",0,0,1,0,0)
-    local rename=F:EtherPanelButton(parent,60,25,"Rename","TOPLEFT",create,"BOTTOMLEFT",0,-13)
-    local delete=F:EtherPanelButton(parent,60,25,"Delete","LEFT",rename,"RIGHT",0,0,1,0,0)
-    local export=F:EtherPanelButton(parent,60,25,"Export","TOPLEFT",rename,"BOTTOMLEFT",0,-13)
+    local create=F:EtherPanelButton(self,60,25,"New","TOPLEFT",dropdown,"BOTTOMLEFT",5,-13,0,1,0)
+    local copy=F:EtherPanelButton(self,60,25,"Copy","LEFT",create,"RIGHT")
+    local reset=F:EtherPanelButton(self,60,25,"Reset","LEFT",copy,"RIGHT",0,0,1,0,0)
+    local rename=F:EtherPanelButton(self,60,25,"Rename","TOPLEFT",create,"BOTTOMLEFT",0,-13)
+    local delete=F:EtherPanelButton(self,60,25,"Delete","LEFT",rename,"RIGHT",0,0,1,0,0)
+    local export=F:EtherPanelButton(self,60,25,"Export","TOPLEFT",rename,"BOTTOMLEFT",0,-13)
     local import=F:EtherPanelButton(transfer,60,25,"Import","LEFT",export,"RIGHT")
     create:SetScript("OnClick",function()
         input:Show()
@@ -58,7 +57,7 @@ function F:Profile(index)
         if input:GetScript("OnEnterPressed") then
             input:SetScript("OnEnterPressed",nil)
         end
-        input:SetScript("OnEnterPressed",function(self)
+        input:SetScript("OnEnterPressed",function()
             local name=input:GetText()
             if name and name~="" and name~="Enter name and press enter" then
                 local success,msg=D:CreateProfile(name)
@@ -66,24 +65,24 @@ function F:Profile(index)
                     C:EtherInfo(eColor..msg)
                     dropdown:SetOptions(D:GetProfileList())
                     dropdown.text:SetText(D:GetProfileName())
-                    self:Hide()
-                    self:ClearFocus()
-                    self:SetText("")
-                    self:SetScript("OnEnterPressed",nil)
+                    input:Hide()
+                    input:ClearFocus()
+                    input:SetText("")
+                    input:SetScript("OnEnterPressed",nil)
                 else
                     C:EtherInfo(eColor..msg)
                 end
             end
-            self:ClearFocus()
+            input:ClearFocus()
         end)
     end)
     copy:SetScript("OnClick",function()
-        local name=D:GetProfileName().." - Copy"
+        local name=D:GetProfileName()
         if name and name~="" then
-            local success,msg=D:CopyProfile(D:GetProfileName(),name)
+            local success,msg=D:CopyProfile(name)
             if success then
                 dropdown:SetOptions(D:GetProfileList())
-                dropdown.text:SetText(D:GetProfileName())
+                dropdown.text:SetText(name)
                 C:EtherInfo(eColor..msg)
             else
                 C:EtherInfo(eColor..msg)
@@ -96,7 +95,7 @@ function F:Profile(index)
         if input:GetScript("OnEnterPressed") then
             input:SetScript("OnEnterPressed",nil)
         end
-        input:SetScript("OnEnterPressed",function(self)
+        input:SetScript("OnEnterPressed",function()
             local newName=input:GetText()
             if newName and newName~="" and newName~="Enter name and press enter" then
                 local success,msg=D:RenameProfile(D:GetProfileName(),newName)
@@ -104,15 +103,15 @@ function F:Profile(index)
                     dropdown:SetOptions(D:GetProfileList())
                     dropdown.text:SetText(D:GetProfileName())
                     C:EtherInfo(eColor.."name changed to "..D:GetProfileName())
-                    self:Hide()
-                    self:ClearFocus()
-                    self:SetText("")
-                    self:SetScript("OnEnterPressed",nil)
+                    input:Hide()
+                    input:ClearFocus()
+                    input:SetText("")
+                    input:SetScript("OnEnterPressed",nil)
                 else
                     C:EtherInfo(eColor..msg)
                 end
             end
-            self:ClearFocus()
+            input:ClearFocus()
         end)
     end)
     delete:SetScript("OnClick",function()

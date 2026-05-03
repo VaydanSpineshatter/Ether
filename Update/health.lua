@@ -31,10 +31,10 @@ local function InitialHealth(b)
 end
 F.InitialHealth=InitialHealth
 local function UpdateClassColor(b)
-    if not b then return end
+    if not b or not b.unit or not b.healthBar then return end
     local unit=b.unit
     local r,g,be=0.4,0.4,0.4
-    local Connected=UnitIsConnected(b.unit)
+    local Connected=UnitIsConnected(unit)
     if Connected then
         r,g,be=F:GetClassColor(unit)
     else
@@ -45,7 +45,7 @@ local function UpdateClassColor(b)
 end
 F.UpdateClassColor=UpdateClassColor
 local function Health(b)
-    if not b or not b.healthBar then return end
+    if not b or not b.unit or not b.healthBar then return end
     local unit=b.unit
     local h=UnitHealth(unit)
     if not h then return end
@@ -57,15 +57,13 @@ local function Health(b)
     end
 end
 function F:UpdateDeadUnit(b)
-    if not b or not b.Indicators or not b.Indicators.UnitFlags then return end
+    if not b or not b.unit or not b.Indicators or not b.Indicators.UnitFlags then return end
     if not UnitIsDeadOrGhost(b.unit) and b.Indicators.UnitFlags:IsShown() then
         b.Indicators.UnitFlags:Hide()
-        b.healthBar:SetValue(ReturnHealth(b))
-        b.healthBar:SetMinMaxValues(0,ReturnMaxHealth(b))
     end
 end
 local function MaxHealth(b)
-    if not b or not b.healthBar then return end
+    if not b or not b.unit or not b.healthBar then return end
     local unit=b.unit
     local mh=UnitHealthMax(unit)
     if not mh then return end
@@ -215,3 +213,5 @@ function F:HealthDisable()
         event:UnregisterEvent(v)
     end
 end
+F:RegisterCallbackByIndex(F.HealthEnable,10)
+F:RegisterCallbackByIndex(F.HealthDisable,10+30)

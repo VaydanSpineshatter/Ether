@@ -50,3 +50,5 @@ function F:IconDisable()
         C.EtherIcon:SetScript("OnMouseUp",nil)
     end
 end
+F:RegisterCallbackByIndex(F.IconEnable,1)
+F:RegisterCallbackByIndex(F.IconDisable,1+30)

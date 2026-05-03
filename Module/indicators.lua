@@ -55,13 +55,13 @@ function F:SaveBtnPosition(b)
             b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
             b.Indicators[v]:SetSize(c[4],c[4])
         end
-        if not UnitInAnyGroup("player") then
+        if not b.Indicators[v]:IsShown() then
             b.Indicators[v]:Hide()
         end
     end
 end
 local function UpdateGroupRole(b,unit)
-    if D.DB[3][10]~=1 then return end
+    if D.DB[4][10]~=1 then return end
     IndictorsTexture(b,"GroupRole")
     if not IsInGroup() then
         b.Indicators.GroupRole:Hide()
@@ -85,7 +85,7 @@ local function UpdateGroupRole(b,unit)
     end
 end
 local function UpdateMainTank(b,unit)
-    if D.DB[3][9]~=1 then return end
+    if D.DB[4][9]~=1 then return end
     IndictorsTexture(b,"MainTank")
     if not IsInGroup() and b.Indicators.MainTank then
         b.Indicators.MainTank:Hide()
@@ -99,7 +99,7 @@ local function UpdateMainTank(b,unit)
     end
 end
 local function UpdateMainAssist(b,unit)
-    if D.DB[3][9]~=1 then return end
+    if D.DB[4][9]~=1 then return end
     IndictorsTexture(b,"MainTank")
     if not IsInGroup() and b.Indicators.MainTank then
         b.Indicators.MainTank:Hide()
@@ -113,7 +113,7 @@ local function UpdateMainAssist(b,unit)
     end
 end
 function event:PLAYER_ROLES_ASSIGNED()
-    if D.DB[3][9]==0 and D.DB[3][10]==0 then return end
+    if D.DB[4][9]==0 and D.DB[4][10]==0 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
             local unit=b.unit
@@ -133,7 +133,7 @@ function event:PLAYER_ROLES_ASSIGNED()
     end
 end
 function event:PARTY_LOOT_METHOD_CHANGED()
-    if D.DB[3][8]~=1 then return end
+    if D.DB[4][8]~=1 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
             local unit=b.unit
@@ -157,7 +157,7 @@ function event:PARTY_LOOT_METHOD_CHANGED()
     end
 end
 function event:PARTY_LEADER_CHANGED()
-    if D.DB[3][7]~=1 then return end
+    if D.DB[4][7]~=1 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
             local unit=b.unit
@@ -177,7 +177,7 @@ function event:PARTY_LEADER_CHANGED()
     end
 end
 local function raidPlayerRoles(self)
-    if D.DB[3][9]==0 and D.DB[3][10]==0 then return end
+    if D.DB[4][9]==0 and D.DB[4][10]==0 then return end
     local role=UnitGroupRolesAssigned(self.unit)
     local assignment=GetPartyAssignment("MAINTANK",self.unit) or GetPartyAssignment("MAINASSIST",self.unit)
     if role then
@@ -188,7 +188,7 @@ local function raidPlayerRoles(self)
     end
 end
 local function raidMasterLoot(self)
-    if D.DB[3][8]~=1 then return end
+    if D.DB[4][8]~=1 then return end
     IndictorsTexture(self,"MasterLoot")
     if not UnitInAnyGroup("player") then
         self.Indicators.MasterLoot:Hide()
@@ -206,7 +206,7 @@ local function raidMasterLoot(self)
     end
 end
 local function raidGroupLeader(self)
-    if D.DB[3][7]~=1 then return end
+    if D.DB[4][7]~=1 then return end
     IndictorsTexture(self,"GroupLeader")
     if not UnitInAnyGroup("player") then
         self.Indicators.GroupLeader:Hide()
@@ -220,7 +220,7 @@ local function raidGroupLeader(self)
     end
 end
 local function raidTarget(self)
-    if D.DB[3][6]~=1 then return end
+    if D.DB[4][6]~=1 then return end
     IndictorsTexture(self,"RaidTarget")
     local index=GetRaidTargetIndex(self.unit)
     if index then
@@ -311,7 +311,7 @@ function event:READY_CHECK_FINISHED()
 end
 
 function event:RAID_TARGET_UPDATE()
-    if D.DB[3][6]~=1 then return end
+    if D.DB[4][6]~=1 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
             local unit=b.unit
@@ -336,7 +336,7 @@ function event:RAID_TARGET_UPDATE()
     end
 end
 function event:UNIT_FACTION(unit)
-    if D.DB[3][5]~=1 then return end
+    if D.DB[4][5]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
     IndictorsTexture(b,"UnitFaction")
@@ -351,7 +351,7 @@ function event:UNIT_FACTION(unit)
     end
 end
 function event:UNIT_FLAGS(unit)
-    if D.DB[3][4]~=1 then return end
+    if D.DB[4][4]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
     IndictorsTexture(b,"UnitFlags")
@@ -368,7 +368,7 @@ function event:PLAYER_FLAGS_CHANGED(unit)
     if unit=="player" then
         F:UserIdle(unit)
     end
-    if D.DB[3][3]~=1 then return end
+    if D.DB[4][3]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
     IndictorsTexture(b,"PlayerFlags")
@@ -385,7 +385,7 @@ function event:PLAYER_FLAGS_CHANGED(unit)
     end
 end
 function event:INCOMING_RESURRECT_CHANGED(unit)
-    if D.DB[3][2]~=1 then return end
+    if D.DB[4][2]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
     IndictorsTexture(b,"Resurrection")
@@ -398,7 +398,7 @@ function event:INCOMING_RESURRECT_CHANGED(unit)
     end
 end
 function event:UNIT_CONNECTION(unit)
-    if D.DB[3][1]~=1 then return end
+    if D.DB[4][1]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
     IndictorsTexture(b,"Connection")
@@ -441,11 +441,11 @@ function F:UpdateSoloIndicator(number)
 end
 function F:IndicatorToggleEvent(number)
     if not number or type(number)~="number" then return end
-    if D.DB[3][number]==1 then
+    if D.DB[4][number]==1 then
         if not event:IsEventRegistered(D.iEvent[number]) then
             event:RegisterEvent(D.iEvent[number])
         end
-    elseif D.DB[3][number]==0 then
+    elseif D.DB[4][number]==0 then
         if event:IsEventRegistered(D.iEvent[number]) then
             event:UnregisterEvent(D.iEvent[number])
         end
@@ -478,3 +478,5 @@ function F:IndicatorsDisable()
         end
     end
 end
+F:RegisterCallbackByIndex(F.IndicatorsEnable,6)
+F:RegisterCallbackByIndex(F.IndicatorsDisable,6+30)

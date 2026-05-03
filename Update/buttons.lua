@@ -87,7 +87,7 @@ function F:RefreshUserButtons()
 end
 function F:MenuStringsAlpha(number)
     if D.menuStrings[1]:GetAlpha()==number then return end
-    for index=1,5 do
+    for index=1,9 do
         D.menuStrings[index]:SetAlpha(number)
     end
 end
@@ -213,6 +213,28 @@ function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY,r
     btn:SetSize(btn.v:GetStringWidth() or width,btn.v:GetStringHeight() or height)
     return btn
 end
+function F:InitializeSystemStatus()
+    for i=1,5 do
+        D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
+        D.menuStrings[i]:SetFontObject(C.EtherFont)
+        D.menuStrings[i]:SetText(string.format("%s - %s",D.Slash[i],D.Slash[i+5]))
+        if i==1 then
+            D.menuStrings[i]:SetPoint("TOP",0,-15)
+        else
+            D.menuStrings[i]:SetPoint("TOP",D.menuStrings[i-1],"BOTTOM",0,-5)
+        end
+    end
+    for i=6,9 do
+        D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
+        D.menuStrings[i]:SetFontObject(C.EtherFont)
+        D.menuStrings[i]:SetText(string.format("%s %s",D.Slash[i+5],D.Slash[i+9]))
+        if i==6 then
+            D.menuStrings[i]:SetPoint("BOTTOM",0,5)
+        else
+            D.menuStrings[i]:SetPoint("BOTTOMLEFT",D.menuStrings[i-1],"TOPLEFT",0,5)
+        end
+    end
+end
 function F:MenuButton(index,func)
     local btn=CreateFrame("Button",nil,C.BaseFrame)
     local frame=C.ChildFrames
@@ -221,7 +243,7 @@ function F:MenuButton(index,func)
     btn:SetScript("OnClick",function()
         F:MenuStringsAlpha(0)
         F:RefreshUserButtons()
-        if index==4 then
+        if index==7 then
             C.ChildFrames[10]:Show()
             C.ChildFrames[11]:Show()
         end
@@ -248,4 +270,33 @@ function F:MenuButton(index,func)
     end)
     btn:SetSize(btn.v:GetStringWidth() or 90,btn.v:GetStringHeight() or 20)
     C.MenuButtons[index]=btn
+end
+function F:CreateCheckButton(parent,index,tbl,callback,status,point,relTo,rel,x,y)
+    for i,v in ipairs(tbl) do
+        local btn=CreateFrame("CheckButton",nil,parent,"InterfaceOptionsCheckButtonTemplate")
+        if status then
+            btn:Hide()
+            btn:SetPoint(point,relTo,rel,x,y)
+        else
+            if i==1 then
+                btn:SetPoint("TOPLEFT",5,-5)
+            else
+                btn:SetPoint("TOPLEFT",C.MainButtons[index][i-1],"BOTTOMLEFT",0,0)
+            end
+        end
+        btn:SetSize(18,18)
+        btn.v=btn:CreateFontString(nil,"OVERLAY")
+        btn.v:SetFontObject(C.EtherFont)
+        btn.v:SetText(v)
+        btn.v:SetPoint("LEFT",btn,"RIGHT",8,1)
+        btn:SetChecked(D.DB[index][i]==1)
+        btn:SetScript("OnClick",function(self)
+            local checked=self:GetChecked()
+            D.DB[index][i]=checked and 1 or 0
+            if callback then
+                callback(i,checked)
+            end
+        end)
+        C.MainButtons[index][i]=btn
+    end
 end

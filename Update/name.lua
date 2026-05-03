@@ -46,19 +46,19 @@ local function UTF8SUB(name,start,numChars)
     local last=index-1
     return name:sub(start,last)
 end
-function F:UpdateName(button,number)
-    if not button or not button.name then return end
-    local unit=button.unit or "player"
+function F:UpdateName(b,number)
+    if not b or not b.unit or not b.name then return end
+    local unit=b.unit or "player"
     local name=UnitFullName(unit) or "UNKNOWN"
     local user=UnitIsUnit(unit,"player") and ME or UTF8SUB(name,1,number or 10)
-    button.name:SetText(user)
+    b.name:SetText(user)
 end
-function F:UpdateNameByTarget(button)
-    if not button or not button.name then return end
+function F:UpdateNameByTarget(b)
+    if not b or not b.unit or not b.name then return end
     local unit="targettarget" or "target"
     local name=UnitFullName(unit) or "UNKNOWN"
     local user=UnitIsUnit(unit,"player") and ME or UTF8SUB(name,1,6)
-    button.name:SetText(user)
+    b.name:SetText(user)
 end
 function event:UNIT_NAME_UPDATE(unit)
     local s=GetSoloBtn(unit)
@@ -80,3 +80,5 @@ function F:NameDisable()
         event:UnregisterEvent("UNIT_NAME_UPDATE")
     end
 end
+F:RegisterCallbackByIndex(F.NameEnable,9)
+F:RegisterCallbackByIndex(F.NameDisable,9+30)
