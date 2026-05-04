@@ -265,7 +265,7 @@ function F:SetupCastBar()
     frame.channeling=nil
     frame.duration=0
     frame.delay=0
-    frame.timeToHold=0.1
+    frame.timeToHold=0.05
     frame:Hide()
     return frame
 end

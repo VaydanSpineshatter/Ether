@@ -193,13 +193,13 @@ end
 local function TblToString(tbl)
     return "return "..Tbl(tbl)
 end
-local btnTbl={"GROUP","CLASS","ASSIGNEDROLE","LEFT, TOP","TOP, LEFT"}
 local function ProfileRefresh()
+    if C.ProfileRefresh then return end
     if C.MainFrame:IsShown() then
         C.MainFrame:Hide()
     end
     F:UpdateAuraList()
-    F:UpdateEditor(C.EditorFrame)
+    F:UpdateEditor(C.ChildFrames[7])
     F:IndicatorsDisable()
     for index=1,11 do
         F:SavePosition(index)
@@ -208,15 +208,16 @@ local function ProfileRefresh()
     D:RefreshAllSettings()
     D:RefreshAllFrames()
     F:Fire(22)
-    if C.ChildFrames[5] and C.ChildFrames[5].roleDropdown and C.ChildFrames[5].roleDropdown.text then
-        C.ChildFrames[5].roleDropdown.text:SetText(D.DB["CONFIG"][13])
-    end
-    if C.ChildFrames[5] and C.ChildFrames[5].roleDropdown and C.ChildFrames[5].roleDropdown.text then
-        C.ChildFrames[5].roleDropdown.text:SetText(D.DB["CONFIG"][13])
+    if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
+        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
     end
     F:IndicatorsEnable()
-    F:RefreshChildText("sort",7,btnTbl[D.DB["CONFIG"][11]])
-    F:RefreshChildText("direction",7,btnTbl[D.DB["CONFIG"][12]])
+        if C.ChildFrames[5] and C.ChildFrames[5].direction then
+        C.ChildFrames[5].direction:SetText(D.header5[D.DB["CONFIG"][12]])
+    end
+        if C.ChildFrames[5] and C.ChildFrames[5].sort then
+        C.ChildFrames[5].sort:SetText(D.header5[D.DB["CONFIG"][11]])
+    end
     F:IndicatorsFullUpdateBtn()
     if not C.MainFrame:IsShown() then
         C.MainFrame:Show()

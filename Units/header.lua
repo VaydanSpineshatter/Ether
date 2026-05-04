@@ -1,12 +1,9 @@
-local D,F=unpack(select(2,...))
-local raid=CreateFrame("Frame","EtherRaidGroupAnchor",UIParent,"SecureFrameTemplate")
-local pet=CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplate")
+local D,F,_,C=unpack(select(2,...))
+local raid,pet=CreateFrame("Frame","EtherRaidGroupAnchor",UIParent,"SecureFrameTemplate"),CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplate")
 D.A.raid,D.A.pet=raid,pet
 D.A.raid.index,D.A.pet.index=10,11
-local raidBtn=D.raidBtn
-local UnitGUID,unpack=UnitGUID,unpack
-local C_After,GameTooltip=C_Timer.After,GameTooltip
-local initialConfigFunction=[[
+local raidBtn,UnitGUID,C_After,GameTooltip=D.raidBtn,UnitGUID,C_Timer.After,GameTooltip
+local initialConfig=[[
     local header = self:GetParent()
     self:SetWidth(header:GetAttribute("ButtonWidth"))
     self:SetHeight(header:GetAttribute("ButtonHeight"))
@@ -137,7 +134,7 @@ function F:CreateGroupHeader()
     header:SetPoint("BOTTOMLEFT",raid,"TOPLEFT")
     header:SetAttribute("template","EtherUnitTemplate")
     header:SetAttribute("initial-unitWatch",true)
-    header:SetAttribute("initialConfigFunction",initialConfigFunction)
+    header:SetAttribute("initialConfigFunction",initialConfig)
     header.CreateChildren=CreateChildren
     header:SetAttribute("ButtonWidth",data[6] or 55)
     header:SetAttribute("ButtonHeight",data[7] or 55)
@@ -163,7 +160,7 @@ function F:CreatePetHeader()
     D.H.pet=header
     header:SetPoint("BOTTOMLEFT",pet,"TOPLEFT")
     header:SetAttribute("template","EtherUnitTemplate")
-    header:SetAttribute("initialConfigFunction",initialConfigFunction)
+    header:SetAttribute("initialConfigFunction",initialConfig)
     header.CreateChildren=CreateChildren
     header:SetAttribute("TypePet",true)
     header:SetAttribute("ButtonHeight",data[6] or 50)
@@ -181,11 +178,11 @@ function F:CreatePetHeader()
     header:SetAttribute("unitsPerColumn",6)
     header:SetAttribute("maxColumns",2)
     header:Hide()
-    RegisterAttributeDriver(header,"state-visibility",
-            "[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
+    RegisterAttributeDriver(header,"state-visibility","[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
 end
 local function UpdateHeader()
     if InCombatLockdown() then return end
+    C.ProfileRefresh = true
     local header=D.H.raid
     local by,order=OrderMethod(D.DB["CONFIG"][11])
     local column,point=AnchorMethod(D.DB["CONFIG"][12])
@@ -208,6 +205,7 @@ local function UpdateHeader()
     C_After(1.5,function()
         header:Show()
         F:AuraEnable()
+        C.ProfileRefresh = false
     end)
 end
 F:RegisterCallbackByIndex(UpdateHeader,22)

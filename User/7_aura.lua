@@ -15,7 +15,7 @@ local function AddAura(editor)
     SelectAura(editor,newId)
 end
 local function OnAuraSelect(self,_,data)
-    local editor=C.EditorFrame
+    local editor=C.ChildFrames[7]
     if not editor:IsShown() then
         editor:Show()
     end
@@ -46,22 +46,14 @@ end
 function F:Aura(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
-    C.EditorFrame=C.ChildFrames[10]
-    C.AuraFrame=C.ChildFrames[11]
-    local editor=C.EditorFrame
-    local auras=C.AuraFrame
     local auraList={}
     for v in pairs(D.PredefinedAuras) do
         auraList[#auraList+1]=v
     end
     local dropdown=F:CreateEtherDropdown(self,140,"Predefined Auras",auraList,OnAuraSelect)
     dropdown:SetPoint("TOPLEFT",5,-5)
-    auras:SetPoint("TOPLEFT",dropdown,"BOTTOMLEFT",0,0)
-    auras:SetSize(230,400)
-    editor:SetPoint("TOPRIGHT",self,"TOPRIGHT",70,-50)
-    editor:SetSize(320,300)
-    local scrollFrame=CreateFrame("ScrollFrame",nil,auras,"ScrollFrameTemplate")
-    editor.scrollFrame=scrollFrame
+    local scrollFrame=CreateFrame("ScrollFrame",nil,self,"ScrollFrameTemplate")
+    self.scrollFrame=scrollFrame
     scrollFrame:SetPoint("TOPLEFT",0,-10)
     scrollFrame:SetPoint("BOTTOMRIGHT",-25,35)
     local scrollChild=CreateFrame("Frame",nil,scrollFrame)
@@ -70,36 +62,36 @@ function F:Aura(self,status)
     if scrollFrame.ScrollBar then
         scrollFrame.ScrollBar:Hide()
     end
-    local new=F:EtherPanelButton(auras,50,25,"New","TOP",self,"TOP",0,-5,0,1,0)
+    local new=F:EtherPanelButton(self,50,25,"New","TOP",self,"TOP",0,-5,0,1,0)
     new:SetScript("OnClick",function()
-        if not editor:IsShown() then
-            editor:Show()
+        if not self:IsShown() then
+            self:Show()
         end
-        AddAura(editor)
+        AddAura(self)
     end)
-    local isBlink=F:EtherPanelButton(editor,50,25,"Blink","LEFT",new,"RIGHT",20,0)
-    editor.isBlink=isBlink
+    local isBlink=F:EtherPanelButton(self,50,25,"Blink","LEFT",new,"RIGHT",20,0)
+    self.isBlink=isBlink
     isBlink:SetScript("OnClick",function()
         D.DB["CONFIG"][14]=F:ToggleBinary(D.DB["CONFIG"][14])
         UpdateStatus(isBlink,14)
     end)
-    local isClass=F:EtherPanelButton(editor,50,25,"Dispel","LEFT",isBlink,"RIGHT",5,0)
-    editor.isClass=isClass
+    local isClass=F:EtherPanelButton(self,50,25,"Dispel","LEFT",isBlink,"RIGHT",5,0)
+    self.isClass=isClass
     isClass:SetScript("OnClick",function()
         D.DB["CONFIG"][15]=F:ToggleBinary(D.DB["CONFIG"][15])
         UpdateStatus(isClass,15)
     end)
-    local isBorder=F:EtherPanelButton(editor,50,25,"Border","LEFT",isClass,"RIGHT",5,0)
-    editor.isBorder=isBorder
+    local isBorder=F:EtherPanelButton(self,50,25,"Border","LEFT",isClass,"RIGHT",5,0)
+    self.isBorder=isBorder
     isBorder:SetScript("OnClick",function()
         D.DB["CONFIG"][16]=F:ToggleBinary(D.DB["CONFIG"][16])
         UpdateStatus(isBorder,16)
     end)
-    local clear=F:EtherPanelButton(auras,50,25,"Wipe","TOPRIGHT",self,"TOPRIGHT",0,-5,1,0,0)
+    local clear=F:EtherPanelButton(self,50,25,"Wipe","TOPRIGHT",self,"TOPRIGHT",0,-5,1,0,0)
     clear:SetScript("OnClick",function()
         F:PopupBoxSetup()
         F:UpdateAuraList()
-        F:UpdateEditor(editor)
+        F:UpdateEditor(self)
         if D:TableSize(D.DB["CUSTOM"])==0 then
             F:EtherInfo("No auras available to delete")
             return
@@ -109,16 +101,16 @@ function F:Aura(self,status)
             twipe(D.DB["CUSTOM"])
             C.Spell=nil
             F:UpdateAuraList()
-            F:UpdateEditor(editor)
+            F:UpdateEditor(self)
             C:EtherInfo("|cff00ccffAuras|r: Custom auras cleared")
             dropdown.menu:Hide()
             C.PopupBox:SetShown(false)
             C.MainFrame:SetShown(true)
         end)
     end)
-    auras.scrollChild=scrollChild
+    self.scrollChild=scrollChild
     local name=F:LineInput(self,100,-20)
-    editor.name=name
+    self.name=name
     name:SetPoint("TOP",40,-70)
     name:SetScript("OnEnterPressed",function()
         if type(C.Spell)~=nil then
@@ -132,7 +124,7 @@ function F:Aura(self,status)
     name.v:SetPoint("BOTTOMLEFT",name,"TOPLEFT",0,2)
     name.v:SetText("Name")
     local spell=F:LineInput(self,100,20)
-    editor.spell=spell
+    self.spell=spell
     spell:SetPoint("LEFT",name,"RIGHT",15,0)
     spell:SetNumeric(true)
     spell:SetScript("OnEnterPressed",function()
@@ -143,11 +135,11 @@ function F:Aura(self,status)
             D.DB["CUSTOM"][newId]=data
             C.Spell=newId
             F:UpdateAuraList()
-            F:UpdateEditor(editor)
+            F:UpdateEditor(self)
         end
         spell:ClearFocus()
     end)
-    spell.v=editor:CreateFontString(nil,"OVERLAY")
+    spell.v=self:CreateFontString(nil,"OVERLAY")
     spell.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
     spell.v:SetPoint("BOTTOMLEFT",spell,"TOPLEFT",0,2)
     spell.v:SetText("Spell ID")
@@ -155,43 +147,43 @@ function F:Aura(self,status)
             function(_,value)
                 if not C.Spell then return end
                 if type(C.Spell)~=nil then
-                    editor.x:SetValue(D.DB["CUSTOM"][C.Spell][7])
+                    self.x:SetValue(D.DB["CUSTOM"][C.Spell][7])
                     D.DB["CUSTOM"][C.Spell][7]=value
-                    editor.x.v:SetText(sformat("%.0f",value))
-                    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
+                    self.x.v:SetText(sformat("%.0f",value))
+                    F:UpdatePreview(D.DB["CUSTOM"],self,C.Spell)
                 end
             end)
-    editor.x=x
+    self.x=x
     local y=F:CreateSlider(spell,"Y-Off","0 px","-20","20",1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(_,value)
                 if not C.Spell then return end
                 if type(C.Spell)~=nil then
-                    editor.y:SetValue(D.DB["CUSTOM"][C.Spell][8])
+                    self.y:SetValue(D.DB["CUSTOM"][C.Spell][8])
                     D.DB["CUSTOM"][C.Spell][8]=value
-                    editor.y.v:SetText(sformat("%.0f",value))
-                    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
+                    self.y.v:SetText(sformat("%.0f",value))
+                    F:UpdatePreview(D.DB["CUSTOM"],self,C.Spell)
                 end
             end)
-    editor.y=y
+    self.y=y
     local s=F:CreateSlider(x,"Scale","6 px","4","20",1,"TOPLEFT","BOTTOMLEFT",0,-25,
             function(_,value)
                 if not C.Spell then return end
                 if type(C.Spell)~=nil then
                     D.DB["CUSTOM"][C.Spell][9]=value
-                    editor.s:SetValue(D.DB["CUSTOM"][C.Spell][9])
-                    editor.s.v:SetText(sformat("%.1f px",value))
-                    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
+                    self.s:SetValue(D.DB["CUSTOM"][C.Spell][9])
+                    self.s.v:SetText(sformat("%.1f px",value))
+                    F:UpdatePreview(D.DB["CUSTOM"],self,C.Spell)
                 end
             end)
-    editor.s=s
+    self.s=s
     local cube,preview=F:CreatePreview(self,"BOTTOMRIGHT")
-    editor.cube=cube
-    editor.preview=preview
+    self.cube=cube
+    self.preview=preview
     for _,btn in pairs(cube) do
         btn:SetScript("OnClick",function()
             if C.Spell then
                 D.DB["CUSTOM"][C.Spell][6]=btn.position
-                F:UpdateEditor(editor)
+                F:UpdateEditor(self)
                 for _,otherBtn in pairs(cube) do
                     otherBtn:GetScript("OnLeave")(otherBtn)
                 end
@@ -210,31 +202,27 @@ function F:Aura(self,status)
         end)
         btn:GetScript("OnLeave")(btn)
     end
-    local color=CreateFrame("Button",nil,editor)
-    editor.color=color
+    local color=CreateFrame("Button",nil,self)
+    self.color=color
     color:SetSize(60,15)
     color:SetPoint("TOPLEFT",s,"BOTTOMLEFT",0,-20)
-    color.v=color:CreateFontString(nil,"OVERLAY")
-    color.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
-    color.v:SetPoint("TOPLEFT",s,"BOTTOMLEFT",0,-40)
-    color.v:SetText("Color")
     color.bg=color:CreateTexture(nil,"BACKGROUND")
     color.bg:SetAllPoints()
     color.bg:SetColorTexture(1,1,0,1)
     color:SetScript("OnClick",function()
-        F:ColorSelect(editor)
+        F:ColorSelect(self)
     end)
-    local isDebuff=F:EtherPanelButton(editor,50,25,"Debuff","LEFT",color,"RIGHT",5,0)
-    editor.isDebuff=isDebuff
+    local isDebuff=F:EtherPanelButton(self,50,25,"Debuff","LEFT",color,"RIGHT",5,0)
+    self.isDebuff=isDebuff
     isDebuff:SetScript("OnClick",function()
         if type(C.Spell)==nil then return end
         if D.DB["CUSTOM"] and D.DB["CUSTOM"][C.Spell] then
             D.DB["CUSTOM"][C.Spell][10]=not D.DB["CUSTOM"][C.Spell][10]
-            UpdateAuraStatus(editor,C.Spell)
+            UpdateAuraStatus(self,C.Spell)
         end
     end)
     F:UpdateAuraList()
-    F:UpdateEditor(editor)
+    F:UpdateEditor(self)
     UpdateStatus(isBlink,14)
     UpdateStatus(isClass,15)
     UpdateStatus(isBorder,16)
@@ -243,29 +231,33 @@ function F:UpdateAuraList()
     if not C.ChildFrames[7].created then
         F:Aura(C.ChildFrames[7],true)
     end
-    local editor=C.EditorFrame
-    local auras=C.AuraFrame
+    local editor=C.ChildFrames[7]
     for _,btn in ipairs(C.AuraList) do
         btn:Hide()
         btn:SetParent(nil)
     end
-    local yOffset=0
+    local yOffset=-20
     local index=1
     for spellId,data in pairs(D.DB["CUSTOM"]) do
-        local btn=CreateFrame("Button",nil,auras.scrollChild)
-        btn:SetSize(180,25)
-        btn:SetPoint("TOPLEFT",1,yOffset)
+        local btn=CreateFrame("Button",nil,editor.scrollChild)
+        btn:SetSize(190,18)
+        if index == 1 then
+            btn:SetPoint("TOPLEFT",5,-20)
+        else
+             yOffset=yOffset-20
+             btn:SetPoint("TOPLEFT",5, yOffset)
+        end
         btn.bg=btn:CreateTexture(nil,"BACKGROUND")
         btn.bg:SetAllPoints()
-        btn.bg:SetColorTexture(0.1,0.1,0.1,0.6)
+        btn.bg:SetColorTexture(0.3,0.3,0.3,0)
         btn:SetScript("OnEnter",function(self)
-            self.bg:SetColorTexture(0.2,0.2,0.2,0.7)
+            self.bg:SetColorTexture(0.3,0.3,0.3,0.8)
         end)
         btn:SetScript("OnLeave",function(self)
             if C.Spell==spellId then
-                self.bg:SetColorTexture(0.80,0.40,1.00,0.2)
+                self.bg:SetColorTexture(0.3,0.3,0.3,0.8)
             else
-                self.bg:SetColorTexture(0.1,0.1,0.1,0.8)
+                self.bg:SetColorTexture(0.3,0.3,0.3,0)
             end
         end)
         btn:SetScript("OnClick",function()
@@ -276,23 +268,20 @@ function F:UpdateAuraList()
             UpdateAuraStatus(editor,spellId)
         end)
         btn.name=btn:CreateFontString(nil,"OVERLAY")
-        btn.name:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
+        btn.name:SetFontObject(C.EtherFont)
         btn.name:SetPoint("TOPLEFT",2,-5)
         btn.name:SetText(data[1] or "Unknown")
         btn.spell=btn:CreateFontString(nil,"OVERLAY")
-        btn.spell:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
-        btn.spell:SetPoint("TOPLEFT",btn.name,"BOTTOMLEFT",0,-2)
-        btn.spell:SetText("Spell ID: "..spellId)
-        btn.spell:SetTextColor(0,0.8,1)
-        btn.colorBox=btn:CreateTexture(nil,"OVERLAY")
-        btn.colorBox:SetSize(10,10)
-        btn.colorBox:SetPoint("RIGHT",-10,0)
+        btn.spell:SetFontObject(C.EtherFont)
+        btn.spell:SetPoint("LEFT",btn.name,"RIGHT")
+        btn.spell:SetText(spellId)
         if data[2] then
-            btn.colorBox:SetColorTexture(data[2],data[3],data[4],data[5])
+            btn.name:SetTextColor(data[2],data[3],data[4],data[5])
+            btn.spell:SetTextColor(data[2],data[3],data[4],data[5])
         end
         btn.delete=CreateFrame("Button",nil,btn)
-        btn.delete:SetSize(15,15)
-        btn.delete:SetPoint("RIGHT",btn.colorBox,"LEFT",0,0)
+        btn.delete:SetSize(18,18)
+        btn.delete:SetPoint("RIGHT")
         btn.delete:SetNormalTexture("Interface\\Buttons\\UI-GroupLoot-Pass-Up")
         btn.delete:SetScript("OnClick",function(self)
             F:PopupBoxSetup()
@@ -311,10 +300,6 @@ function F:UpdateAuraList()
         end)
         btn.spell=spellId
         C.AuraList[#C.AuraList+1]=btn
-        if C.Spell==spellId then
-            btn.bg:SetColorTexture(0,0.8,1,0.8)
-        end
-        yOffset=yOffset-30
         index=index+1
     end
     UpdateStatus(editor.isBlink,14)
@@ -381,5 +366,5 @@ function F:AddTemplateAuras(templateName)
     end
     C:EtherInfo(msg)
     C.Spell=nil
-    F:UpdateEditor(C.EditorFrame)
+    F:UpdateEditor(C.ChildFrames[7])
 end

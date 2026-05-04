@@ -66,11 +66,11 @@ function F:ScanGUID()
     local human=GUIDIsPlayer(guid)
     if not human then return end
     local c,name,enemy=GuidClassColor(guid)
-    if not ValidGUID(guid) then
+    local valid,index=ValidGUID(guid)
+    if not valid then
         D.DB["USER"][#D.DB["USER"]+1]=guid
         C:EtherInfo(sformat("|cff00ff00Added:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
     else
-        local _,index=ValidGUID(guid)
         table.remove(D.DB["USER"],index)
         C:EtherInfo(sformat("|cffff0000Removed:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
     end

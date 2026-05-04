@@ -16,6 +16,7 @@ D.iIconPath={"Interface\\CharacterFrame\\Disconnect-Icon","Interface\\RaidFrame\
 D.iIconTable={"Connection","Resurrection","PlayerFlags","UnitFlags","UnitFaction","RaidTarget","GroupLeader","MasterLoot","MainTank","GroupRole","ReadyCheck"}
 D.threadEvent={"UNIT_THREAT_SITUATION_UPDATE","UNIT_PORTRAIT_UPDATE","UNIT_MODEL_CHANGED"}
 D.rosterEvent={"PLAYER_TARGET_CHANGED","GROUP_ROSTER_UPDATE","GROUP_JOINED"}
+D.header5={"GROUP","CLASS","ASSIGNEDROLE","LEFT, TOP","TOP, LEFT"}
 local PosMap,UnitMap,IndiMap={},{},{}
 for i,v in ipairs(P) do
     PosMap[v]=i -- "TOPLEFT" -> 1
@@ -142,8 +143,9 @@ function D:InitializeAddon(status,msg)
     S.EventFrame:RegisterEvent("PLAYER_LOGIN")
     S.EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 end
-function D:SetToDefault(status)
+function D:SetToDefault(status,msg)
     if type(status)~="boolean" then return end
+    assert(status==false,msg)
     table.wipe(_G["ETHER_DATABASE"]["PROFILES"])
     _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=D:CopyTable(D.Default)
     D:CurrentProfile("DEFAULT")
@@ -179,7 +181,7 @@ end
 function D:FrameChecked(index)
     local b=C.MainButtons
     if b[index] then
-        for i=1,#D.DB[index] do
+        for i=1,6 do
             local check=b[index][i]
             if check then
                 check:SetChecked(D.DB[index][i]==1)

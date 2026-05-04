@@ -20,7 +20,7 @@ local function GetRaidBtn(unit)
     end
 end
 local function InitialHealth(b)
-    if not b or not b.healthBar then return end
+    if not b or not b.unit or not b.healthBar then return end
     if b.smooth then
         b.healthBar:SetMinMaxSmoothedValue(0,ReturnMaxHealth(b))
         b.healthBar:SetSmoothedValue(ReturnHealth(b))

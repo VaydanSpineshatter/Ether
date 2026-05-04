@@ -14,7 +14,7 @@ local function OnIndicatorSelect(self,index,data)
     for _,v in ipairs(C.MainButtons[4]) do
         if v then v:Hide() end
     end
-    for _,btn in pairs(C.IndicatorFrame.cube) do
+    for _,btn in pairs(C.ChildFrames[4].cube) do
         btn:Enable()
     end
     C.Indi=index
@@ -26,7 +26,6 @@ end
 function F:Indicators(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
-    C.IndicatorFrame=C.ChildFrames[9]
     for i=1,13 do
         if i>11 then
             iK[#iK+1]=D.iIconPath[i]
@@ -36,7 +35,7 @@ function F:Indicators(self,status)
             iK[#iK+1]=D.iIconPath[i]
         end
     end
-    for i,opt in ipairs(D.iIconTable) do
+    for i,v in ipairs(D.iIconTable) do
         local btn=CreateFrame("CheckButton",nil,self,"InterfaceOptionsCheckButtonTemplate")
         btn:SetPoint("TOPLEFT",self,"TOPLEFT",10,-40)
         btn:SetSize(18,18)
@@ -54,7 +53,7 @@ function F:Indicators(self,status)
         btn.tex:SetPoint("LEFT",btn,"RIGHT",15)
         btn.v=btn:CreateFontString(nil,"OVERLAY")
         btn.v:SetFontObject(C.EtherFont)
-        btn.v:SetText(opt)
+        btn.v:SetText(v)
         btn.v:SetPoint("LEFT",btn.tex,"RIGHT",15,0)
         btn:SetChecked(D.DB[4][i]==1)
         btn:SetScript("OnClick",function()
@@ -72,12 +71,12 @@ function F:Indicators(self,status)
         indicatorList[#indicatorList+1]=v
     end
     local dropdown=F:CreateEtherDropdown(self,140,"Select Indicator",indicatorList,OnIndicatorSelect)
-    C.IndicatorFrame.dropdown=dropdown
+    self.dropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)
     local cube,preview=F:CreatePreview(self,"BOTTOMRIGHT")
-    C.IndicatorFrame.cube=cube
-    C.IndicatorFrame.preview=preview
-    C.IndicatorFrame.preview.icon:SetScale(1.5)
+    self.cube=cube
+    self.preview=preview
+    self.preview.icon:SetScale(1.5)
     for _,btn in pairs(cube) do
         btn:SetScript("OnClick",function()
             if C.Indi then
@@ -111,32 +110,32 @@ function F:Indicators(self,status)
             function(_,value)
                 if C.Indi then
                     D.DB[20][C.Indi][2]=value
-                    C.IndicatorFrame.x:SetValue(D.DB[20][C.Indi][2])
+                    self.x:SetValue(D.DB[20][C.Indi][2])
                     F:UpdateIndicatorsPos(C.Indi)
-                    C.IndicatorFrame.x.v:SetText(sformat("%.0f px",value))
+                    self.x.v:SetText(sformat("%.0f px",value))
                 end
             end)
-    C.IndicatorFrame.x=x
+    self.x=x
     local y=F:CreateSlider(self,"Y-Off","%.0f px","-18","18",1,"TOP","TOP",120,-90,
             function(_,value)
                 if C.Indi then
                     D.DB[20][C.Indi][3]=value
-                    C.IndicatorFrame.y:SetValue(D.DB[20][C.Indi][3])
+                    self.y:SetValue(D.DB[20][C.Indi][3])
                     F:UpdateIndicatorsPos(C.Indi)
-                    C.IndicatorFrame.y.v:SetText(sformat("%.0f px",value))
+                    self.y.v:SetText(sformat("%.0f px",value))
                 end
             end)
-    C.IndicatorFrame.y=y
+    self.y=y
     local s=F:CreateSlider(x,"Scale","6 px","4","20",1,"TOPLEFT","BOTTOMLEFT",0,-25,
             function(_,value)
                 if C.Indi then
                     D.DB[20][C.Indi][4]=value
-                    C.IndicatorFrame.s:SetValue(D.DB[20][C.Indi][4])
+                    self.s:SetValue(D.DB[20][C.Indi][4])
                     F:UpdateIndicatorsPos(C.Indi)
-                    C.IndicatorFrame.s.v:SetText(sformat("%.1f px",value))
+                    self.s.v:SetText(sformat("%.1f px",value))
                 end
             end)
-    C.IndicatorFrame.s=s
+    self.s=s
 end
 local function UpdateIcon(n)
     if not n then
@@ -146,7 +145,7 @@ local function UpdateIcon(n)
     if not data then
         return
     end
-    local indicator=C.IndicatorFrame
+    local indicator=C.ChildFrames[4]
     indicator.preview.icon:Hide()
     indicator.preview.icon:ClearAllPoints()
     indicator.preview.icon:SetSize(data[4],data[4])
@@ -158,7 +157,7 @@ function F:UpdateIndicatorsPos(spell)
     local icon=iK[spell]
     local c=D.DB[20][spell]
     if not c then return end
-    local indicator=C.IndicatorFrame
+    local indicator=C.ChildFrames[4]
     indicator.preview.icon:SetTexture(icon)
     if spell==6 then
         indicator.preview.icon:SetTexCoord(0.75,1,0.25,0.5)

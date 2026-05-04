@@ -222,13 +222,15 @@ end
 local function raidTarget(self)
     if D.DB[4][6]~=1 then return end
     IndictorsTexture(self,"RaidTarget")
-    local index=GetRaidTargetIndex(self.unit)
-    if index then
-        self.Indicators.RaidTarget:SetTexture(D.iIconPath[7])
-        SetRaidTargetIconTexture(self.Indicators.RaidTarget,index)
-        self.Indicators.RaidTarget:Show()
-    else
-        self.Indicators.RaidTarget:Hide()
+    if UnitExists(self.unit) then
+        local index=GetRaidTargetIndex(self.unit)
+        if index then
+            self.Indicators.RaidTarget:SetTexture(D.iIconPath[7])
+            SetRaidTargetIconTexture(self.Indicators.RaidTarget,index)
+            self.Indicators.RaidTarget:Show()
+        else
+            self.Indicators.RaidTarget:Hide()
+        end
     end
 end
 function F:IndicatorsFullUpdateBtn()
@@ -418,7 +420,7 @@ function event:UNIT_CONNECTION(unit)
 end
 function F:UpdateSoloIndicator(number)
     local b=soloBtn[number]
-    if not b then return end
+    if not b or not UnitExists(b.unit) then return end
     local unit=b.unit
     local index=GetRaidTargetIndex(unit)
     if index and b.RaidTarget then

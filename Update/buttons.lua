@@ -99,25 +99,24 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
     frame.bg=bg
     bg:SetAllPoints()
     bg:SetColorTexture(1,1,1,0.1)
-    local text=frame:CreateFontString(nil,"OVERLAY")
-    frame.text=text
-    text:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
-    text:SetPoint("CENTER")
-    text:SetJustifyH("CENTER")
-    text:SetJustifyV("MIDDLE")
-    text:SetText(txt)
-    frame:SetScript("OnEnter",function()
-        text:SetTextColor(0,0.8,1)
+    frame.text=frame:CreateFontString(nil,"OVERLAY")
+    frame.text:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
+    frame.text:SetPoint("CENTER")
+    frame.text:SetJustifyH("CENTER")
+    frame.text:SetJustifyV("MIDDLE")
+    frame.text:SetText(txt)
+    frame:SetScript("OnEnter",function(self)
+        self.text:SetTextColor(0,0.8,1)
         C:ToggleBorder(0,0.8,1)
     end)
-    frame:SetScript("OnLeave",function()
-        text:SetTextColor(1,1,1)
+    frame:SetScript("OnLeave",function(self)
+        self.text:SetTextColor(1,1,1)
         C:ToggleBorder(0.67,0.67,0.67)
     end)
     local menu=CreateFrame("Button",nil,frame)
     frame.menu=menu
     C.DropdownMenu=menu
-    C.DropdownText=text
+    C.DropdownText=frame.text
     menu:SetPoint("TOPLEFT",frame,"BOTTOMLEFT",0,-2)
     menu:SetWidth(width)
     menu:SetFrameLevel(parent:GetFrameLevel()+10)
@@ -158,9 +157,9 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
                     callback(frame,index,data)
                 end
                 if not status then
-                    text:SetText(data)
+                    frame.text:SetText(data)
                 end
-                text:SetAlpha(1)
+                frame.text:SetAlpha(1)
                 menu:Hide()
             end)
             btn:Show()
@@ -169,11 +168,12 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
         menu:SetHeight(totalHeight+4)
     end
     frame:SetScript("OnClick",function()
+        if C.ProfileRefresh then return end
         menu:SetShown(not menu:IsShown())
-        if text:GetAlpha()==1 then
-            text:SetAlpha(0)
+        if frame.text:GetAlpha()==1 then
+            frame.text:SetAlpha(0)
         else
-            text:SetAlpha(1)
+            frame.text:SetAlpha(1)
         end
         C:ToggleBorder(0.67,0.67,0.67)
     end)
@@ -183,12 +183,6 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
         frame.text:SetAlpha(1)
     end
     return frame
-end
-function F:RefreshChildText(dropdown,number,text)
-    if not text then return end
-    if C.ChildFrames[number] and C.ChildFrames[number][dropdown] then
-        C.ChildFrames[number][dropdown]:SetText(text)
-    end
 end
 function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY,r,g,b)
     local btn=CreateFrame("Button",nil,parent)
@@ -243,10 +237,6 @@ function F:MenuButton(index,func)
     btn:SetScript("OnClick",function()
         F:MenuStringsAlpha(0)
         F:RefreshUserButtons()
-        if index==7 then
-            C.ChildFrames[10]:Show()
-            C.ChildFrames[11]:Show()
-        end
         D.DB["CONFIG"][1]=index
         func(index)
         frame[index]:Show()

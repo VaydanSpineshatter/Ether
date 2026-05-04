@@ -36,12 +36,6 @@ local function Child()
             end)
         end
     end
-    for index=9,11 do
-        if not C.ChildFrames[index] then
-            C.ChildFrames[index]=CreateFrame("Frame",nil,C.ContentFrame)
-            C.ChildFrames[index]:SetAllPoints(C.ContentFrame)
-        end
-    end
 end
 local function Base()
     if C.created then return end

@@ -67,7 +67,7 @@ left:Hide()
 right:Hide()
 left:SetWidth(40)
 right:SetWidth(40)
-Ether[4].Spell,Ether[4].Indi=nil,nil
+Ether[4].Spell,Ether[4].Indi,Ether[4].ProfileRefresh=nil,nil,false
 Ether[4].FlashLeft=left
 Ether[4].FlashRight=right
 if type(_G["ETHER_DATABASE"])~="table" then

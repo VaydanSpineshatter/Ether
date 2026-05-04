@@ -8,6 +8,9 @@ end
 function F:Profile(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
+    if not C.ChildFrames[6].created then
+        F:Layout(C.ChildFrames[6],true)
+    end
     local dropdown=F:CreateEtherDropdown(self,130,"Select Profile",D:GetProfileList(),OnProfileChange)
     C.ProfileDropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)

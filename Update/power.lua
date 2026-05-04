@@ -20,7 +20,7 @@ local function GetRaidBtn(unit)
     end
 end
 local function InitialPower(b)
-    if not b or not b.powerBar then return end
+    if not b or not b.unit or not b.powerBar then return end
     if b.smooth then
         b.powerBar:SetMinMaxSmoothedValue(0,ReturnMaxPower(b))
         b.powerBar:SetSmoothedValue(ReturnPower(b))

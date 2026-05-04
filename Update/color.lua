@@ -103,7 +103,7 @@ local function UpdateAuraColor(r,g,b)
         ColorState.button.color.bg:SetColorTexture(r,g,b)
     end
     F:UpdateAuraList()
-    F:UpdatePreview(ColorState.button)
+    F:UpdatePreview(D.DB["CUSTOM"],C.ChildFrames[7],C.Spell)
 end
 local function UpdateAuraOpacity(a)
     if a==lastA then return end
@@ -115,7 +115,7 @@ local function UpdateAuraOpacity(a)
         ColorState.button.color.bg:SetAlpha(a)
     end
     F:UpdateAuraList()
-    F:UpdatePreview(ColorState.button)
+    F:UpdatePreview(D.DB["CUSTOM"],C.ChildFrames[7],C.Spell)
 end
 local function OnColor()
     local r,g,b=ColorPickerFrame:GetColorRGB()

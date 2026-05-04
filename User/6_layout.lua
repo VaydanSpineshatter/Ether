@@ -196,15 +196,15 @@ function F:Layout(self,status)
     end)
     default:Hide()
     self.default=default
-    F:CreateCheckButton(self,6,layout,function(i,s)
+    F:CreateCheckButton(self,6,layout,function(i,cb)
         callback(i)
         if i<=6 then
-            F:ActivateUnitButton(s and i)
-            F:DeactivateUnitButton(not s and i)
+            F:ActivateUnitButton(cb and i)
+            F:DeactivateUnitButton(not cb and i)
         end
         if i>=12 and i<=13 then
-            F:CastEnable(s and (i-11))
-            F:CastDisable(not s and (i-11))
+            F:CastEnable(cb and (i-11))
+            F:CastDisable(not cb and (i-11))
         end
     end,true,"TOPLEFT",self,"TOPLEFT",10,-40)
     local consuma=F:LineInput(self,160,20)
