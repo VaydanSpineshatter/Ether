@@ -6,32 +6,13 @@ while true do
     C.MainButtons[#C.MainButtons+1]={}
     if j>=7 then break end
 end
-local function MODULE_CHARGING(i,status)
-    if i==1 then
-        F:Module(C.ChildFrames[i],status)
-    elseif i==2 then
-        F:Blizzard(C.ChildFrames[i],status)
-    elseif i==3 then
-        F:Tooltip(C.ChildFrames[i],status)
-    elseif i==4 then
-        F:Indicators(C.ChildFrames[i],status)
-    elseif i==5 then
-        F:Header(C.ChildFrames[i],status)
-    elseif i==6 then
-        F:Layout(C.ChildFrames[i],status)
-    elseif i==7 then
-        F:Aura(C.ChildFrames[i],status)
-    elseif i==8 then
-        F:Profile(C.ChildFrames[i],status)
-    end
-end
 local function Child()
     if C.created then return end
     for index=1,8 do
         if not C.MenuButtons[index] then
             F:MenuButton(index,function()
                 if not C.ChildFrames[index].created then
-                    MODULE_CHARGING(index,true)
+                    F:Fire(index+50,C.ChildFrames[index],true)
                 end
             end)
         end

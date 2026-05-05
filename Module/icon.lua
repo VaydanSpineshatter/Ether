@@ -1,4 +1,5 @@
 local D,F,_,C,L=unpack(select(2,...))
+local GameTooltip=GameTooltip
 local function Enter(self)
     C:ToggleBorder(1,0.84,0)
     if self.moving then return end

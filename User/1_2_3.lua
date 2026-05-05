@@ -1,5 +1,5 @@
 local _,F=unpack(select(2,...))
-function F:Module(self,status)
+local function Module(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     local data={"Icon","Msg","Msg+CLEU","Idle","Range","Indicators","Aura","Info","Tooltip","Name","Health","Power"}
@@ -8,7 +8,7 @@ function F:Module(self,status)
         F:Fire(not s and i+30)
     end)
 end
-function F:Blizzard(self,status)
+local function Blizzard(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     local data={"Hide Player frame","Hide Pet frame","Hide Target frame","Hide Focus frame","Hide CastBar",
@@ -17,10 +17,13 @@ function F:Blizzard(self,status)
         F:StatusBlizzard(i)
     end)
 end
-function F:Tooltip(self,status)
+local function Tooltip(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     local data={"AFK","DND","PVP","Resting","Realm","Level","Class","Guild","Role","Creature","Race",
                 "RaidTarget","Reaction"}
     F:CreateCheckButton(self,3,data)
 end
+F:RegisterCallbackByIndex(Module,1+50)
+F:RegisterCallbackByIndex(Blizzard,2+50)
+F:RegisterCallbackByIndex(Tooltip,3+50)

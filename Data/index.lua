@@ -133,9 +133,9 @@ function D:DataMigrate(old,newSize,default)
     end
     return t
 end
-function D:InitializeAddon(status,msg)
+function D:InitializeAddon(status)
     if type(status)~="boolean" then return end
-    assert(status==true,msg)
+    assert(status==true)
     _G["ETHER_DATABASE"]["VERSION"]=C.EtherVersion
     D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()])
     C_ChatInfo.RegisterAddonMessagePrefix(C.EtherPrefix)

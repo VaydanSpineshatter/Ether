@@ -13,36 +13,21 @@
 -- limitations under the License.
 local _,Ether=...
 Ether[1],Ether[2],Ether[3],Ether[4],Ether[5]={},{},{},{},{} --local D,F,S,C,L=unpack(select(2,...))
-Ether[1].A,Ether[1].H,Ether[1].DB={},{},{}
-Ether[1].raidBtn={}
-Ether[1].petBtn={}
+Ether[1].A,Ether[1].H,Ether[1].DB,Ether[1].petBtn,Ether[1].raidBtn={},{},{},{},{}
 Ether[1].soloBtn={[1]={},[2]={},[3]={},[4]={},[5]={},[6]={}}
-Ether[1].GUIDToBtn={}
-Ether[1].BtnToGUID={}
-Ether[1].castBar={}
-Ether[1].customBtn={[1]={},[2]={},[3]={}}
-Ether[1].modelBtn={}
-table.insert(Ether[1].modelBtn,CreateFrame("PlayerModel",nil,UIParent))
-table.insert(Ether[1].modelBtn,CreateFrame("PlayerModel",nil,UIParent))
+Ether[1].customBtn,Ether[1].modelBtn,Ether[1].castBar={[1]={},[2]={},[3]={}},{},{}
 Ether[4].MainFrame=CreateFrame("Frame","EtherUnitFrames",UIParent)
 Ether[4].ContentFrame=CreateFrame("Frame",nil,Ether[4].MainFrame)
 table.insert(UISpecialFrames,"EtherUnitFrames")
-Ether[3].EventFrame=CreateFrame("Frame")
-Ether[4].BaseFrame=CreateFrame("Frame",nil,Ether[4].MainFrame)
+Ether[3].EventFrame,Ether[4].BaseFrame=CreateFrame("Frame"),CreateFrame("Frame",nil,Ether[4].MainFrame)
 local verStr=C_AddOns.GetAddOnMetadata("Ether","Version")
 Ether[4].EtherVersion=verStr:sub(3):gsub("%.","")
-Ether[4].LastVersion=0
-Ether[4].EtherPrefix="EtherAddonMsg"
-Ether[4].PlayerName=UnitName("player")
-Ether[4].PlayerGUID=UnitGUID("player")
-Ether[4].ClassName=select(2,UnitClass("player"))
+Ether[4].PlayerName,Ether[4].PlayerGUID,Ether[4].ClassName,Ether[4].EtherPrefix=UnitName("player"),UnitGUID("player"),select(2,UnitClass("player")),"EtherAddonMsg"
 Ether[4].EtherFont=CreateFont("EtherFont")
 Ether[4].EtherFont:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",8,"OUTLINE")
-Ether[4].EtherIcon=CreateFrame("Frame",nil,UIParent)
-Ether[4].ToolFrame=CreateFrame("Frame",nil,UIParent)
+Ether[4].EtherIcon,Ether[4].ToolFrame=CreateFrame("Frame",nil,UIParent),CreateFrame("Frame",nil,UIParent)
 Ether[4].ToolFrame:SetFrameStrata("TOOLTIP")
 Ether[4].ToolFrame:Hide()
-Ether[4].ToolFrame.index=17
 local bg=Ether[4].ToolFrame:CreateTexture(nil,"BACKGROUND")
 bg:SetColorTexture(0,0,0,.5)
 bg:SetAllPoints()
@@ -50,11 +35,10 @@ for i=1,6 do
     Ether[1].soloBtn[i].index=i
 end
 for i=1,2 do
+    Ether[1].modelBtn[#Ether[1].modelBtn+1]=CreateFrame("PlayerModel",nil,UIParent)
     Ether[1].modelBtn[i].index=i+13
 end
-Ether[4].EtherIcon.index=18
-Ether[4].MainFrame.index=19
-Ether[4].CombatStatus=false
+Ether[4].EtherIcon.index,Ether[4].MainFrame.index,Ether[4].CombatStatus,Ether[4].ToolFrame.index=18,19,false,17
 local left=Ether[3].EventFrame:CreateTexture(nil,"BACKGROUND")
 local right=Ether[3].EventFrame:CreateTexture(nil,"BACKGROUND")
 left:SetPoint("TOPLEFT",UIParent,"TOPLEFT")

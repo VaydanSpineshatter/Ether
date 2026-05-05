@@ -35,7 +35,7 @@ function F:WipeCallbacks()
     table.wipe(data)
 end
 function F:Fire(index,...)
-    if not index or type(index)~="number" then return end
+    if type(index)~="number" then return end
     if data[index] then
         data[index](...)
     end

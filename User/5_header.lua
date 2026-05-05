@@ -12,7 +12,7 @@ local function OnHeader(_,index,data)
         F:Fire(22)
     end
 end
-function F:Header(self,status)
+local function Header(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     local headerData={"RaidHeader","PetHeader",L.HEALTH_PCT,L.POWER_PCT}
@@ -38,3 +38,4 @@ function F:Header(self,status)
     C.MainButtons[5][1]:Disable()
     C.MainButtons[5][2]:Disable()
 end
+F:RegisterCallbackByIndex(Header,5+50)

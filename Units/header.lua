@@ -182,7 +182,7 @@ function F:CreatePetHeader()
 end
 local function UpdateHeader()
     if InCombatLockdown() then return end
-    C.ProfileRefresh = true
+    C.ProfileRefresh=true
     local header=D.H.raid
     local by,order=OrderMethod(D.DB["CONFIG"][11])
     local column,point=AnchorMethod(D.DB["CONFIG"][12])
@@ -205,7 +205,7 @@ local function UpdateHeader()
     C_After(1.5,function()
         header:Show()
         F:AuraEnable()
-        C.ProfileRefresh = false
+        C.ProfileRefresh=false
     end)
 end
 F:RegisterCallbackByIndex(UpdateHeader,22)

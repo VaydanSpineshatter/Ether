@@ -66,7 +66,7 @@ local function OnRemoved(self,index)
     F:RemoveByIndex(index)
     self:SetOptions(D.DB["USER"])
 end
-function F:ProcessUserData(index)
+local function ProcessUserData(index)
     if not index or type(index)~="number" then return end
     if index==18 then
         D:ApplyFramePosition(C.EtherIcon)
@@ -98,7 +98,7 @@ function F:ProcessUserData(index)
         end
     end
 end
-function F:Layout(self,status)
+local function Layout(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     local layout={"player","target","targettarget","pet","pettarget","focus",
@@ -126,7 +126,7 @@ function F:Layout(self,status)
     wl:SetScript("OnEnterPressed",function()
         local width=tonumber(wl:GetText())
         D.DB[21][indexKey][6]=width
-        F:ProcessUserData(indexKey)
+        ProcessUserData(indexKey)
         C.ChildFrames[6].w.v:SetText(tostring(wl:GetText()))
         C.ChildFrames[6].w:SetValue(tostring(wl:GetText()))
         wl:ClearFocus()
@@ -135,7 +135,7 @@ function F:Layout(self,status)
     hl:SetScript("OnEnterPressed",function()
         local height=tonumber(hl:GetText())
         D.DB[21][indexKey][7]=height
-        F:ProcessUserData(indexKey)
+        ProcessUserData(indexKey)
         C.ChildFrames[6].h.v:SetText(tostring(hl:GetText()))
         C.ChildFrames[6].h:SetValue(tostring(hl:GetText()))
         hl:ClearFocus()
@@ -154,7 +154,7 @@ function F:Layout(self,status)
                 hl:ClearFocus()
                 D.DB[21][indexKey][8]=value
                 C.ChildFrames[6].s:SetValue(D.DB[21][indexKey][8])
-                F:ProcessUserData(indexKey)
+                ProcessUserData(indexKey)
                 C.ChildFrames[6].s.v:SetText(sformat("%.1f px",value))
             end)
     self.s=s
@@ -164,7 +164,7 @@ function F:Layout(self,status)
                 hl:ClearFocus()
                 D.DB[21][indexKey][9]=value
                 C.ChildFrames[6].a:SetValue(D.DB[21][indexKey][9])
-                F:ProcessUserData(indexKey)
+                ProcessUserData(indexKey)
                 C.ChildFrames[6].a.v:SetText(sformat("%.1f px",value))
             end)
     self.a=a
@@ -175,7 +175,7 @@ function F:Layout(self,status)
                 D.DB[21][indexKey][6]=value
                 wl:SetText(D.DB[21][indexKey][6])
                 C.ChildFrames[6].w:SetValue(D.DB[21][indexKey][6])
-                F:ProcessUserData(indexKey)
+                ProcessUserData(indexKey)
                 C.ChildFrames[6].w.v:SetText(sformat("%.0f px",value))
             end)
     self.w=w
@@ -186,7 +186,7 @@ function F:Layout(self,status)
                 D.DB[21][indexKey][7]=value
                 hl:SetText(D.DB[21][indexKey][7])
                 C.ChildFrames[6].h:SetValue(D.DB[21][indexKey][7])
-                F:ProcessUserData(indexKey)
+                ProcessUserData(indexKey)
                 C.ChildFrames[6].h.v:SetText(sformat("%.0f px",value))
             end)
     self.h=h
@@ -249,3 +249,4 @@ function F:Layout(self,status)
     C.MainButtons[6][10]:Disable()
     C.MainButtons[6][11]:Disable()
 end
+F:RegisterCallbackByIndex(Layout,6+50)

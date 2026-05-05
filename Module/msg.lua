@@ -1,13 +1,7 @@
 local D,F,S,C=unpack(select(2,...))
 local event,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,snapshot,status,tconcat=S.EventFrame,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,nil,0,table.concat
 local UnitGUID,ipairs,sformat,UnitExists,GUIDIsPlayer,Received=UnitGUID,ipairs,string.format,UnitExists,C_PlayerInfo.GUIDIsPlayer,{}
-local eFaction={
-    ["Human"]=true,
-    ["Dwarf"]=true,
-    ["NightElf"]=true,
-    ["Gnome"]=true,
-    ["Draenei"]=true
-}
+local eFaction={["Human"]=true,["Dwarf"]=true,["NightElf"]=true,["Gnome"]=true,["Draenei"]=true}
 local NE,E="|cff00ff00not Enemy|r","|cffff0000Enemy|r"
 if eFaction[UnitRace("player")] then
     NE,E="|cffff0000Enemy|r","|cff00ff00not Enemy|r"
@@ -17,9 +11,9 @@ local function ValidGUID(guid)
     if guid==C.PlayerGUID then
         return true
     end
-    for index,v in ipairs(D.DB["USER"]) do
+    for i,v in ipairs(D.DB["USER"]) do
         if v==guid then
-            return true,index
+            return true,i
         end
     end
     return false
@@ -39,7 +33,7 @@ local function OnVersion(message)
         D.menuStrings[9]:SetText(string.format("%s %s",D.Slash[9],tostring(count)))
     end
     local lastCheck=_G["ETHER_DATABASE"]["LAST"] or 0
-    if (time()-lastCheck>=7000) and theirVersion and myVersion and myVersion<theirVersion then
+    if (time()-lastCheck>=5000) and theirVersion and myVersion and myVersion<theirVersion then
         _G["ETHER_DATABASE"]["LAST"]=time()
         if D.menuStrings[8] and D.menuStrings[9] then
             D.menuStrings[8]:SetText(string.format("%s %s",D.Slash[8],_G["ETHER_DATABASE"]["LAST"]))
@@ -167,7 +161,7 @@ function event:COMBAT_LOG_EVENT_UNFILTERED()
     if subevent=="SPELL_AURA_APPLIED" then
         if not destGUID or not GUIDIsPlayer(destGUID) then return end
         if destGUID==C.PlayerGUID then return end
-        if (timestamp-status)<32 then
+        if (timestamp-status)<21 then
             return
         end
         status=timestamp

@@ -1,7 +1,6 @@
 local D,F,_,C=unpack(select(2,...))
 local UnitClassBase,UnitPowerType,CStr,sformat,tonumber,mfloor=UnitClassBase,UnitPowerType,"|cff%02x%02x%02x",string.format,tonumber,math.floor
-local PColor={{0,'ff33a3'},{.2,'ff33da'},{.4,'c933ff'},{.6,'a333ff'},{.8,'7a33ff'},{.9,'4b33ff'},{1,'3370ff'}}
-local HColor={{0,'ff0000'},{.2,'ff2a00'},{.4,'ff6a00'},{.6,'ffd000'},{.8,'adff2f'},{.9,'95ff00'},{1,'00ff00'}}
+local PColor,HColor={{0,'ff33a3'},{.2,'ff33da'},{.4,'c933ff'},{.6,'a333ff'},{.8,'7a33ff'},{.9,'4b33ff'},{1,'3370ff'}},{{0,'ff0000'},{.2,'ff2a00'},{.4,'ff6a00'},{.6,'ffd000'},{.8,'adff2f'},{.9,'95ff00'},{1,'00ff00'}}
 function F:GetClassColor(unit)
     if not unit then return end
     local classFilename=UnitClassBase(unit)
@@ -33,8 +32,7 @@ local function RGBToHex(r,g,b,data)
     return sformat("|cff%02x%02x%02x%s|r",mfloor(r*255+0.5),mfloor(g*255+0.5),mfloor(b*255+0.5),data)
 end
 F.RGBToHex=RGBToHex
-C.GuildIcon=CreateSimpleTextureMarkup(135026,18,18,0,0)
-C.RestingIcon=CreateTextureMarkup("Interface\\CharacterFrame\\UI-StateIcon",24,24,24,24,0.0625,0.45,0.0625,0.45)
+C.GuildIcon,C.RestingIcon=CreateSimpleTextureMarkup(135026,18,18,0,0),CreateTextureMarkup("Interface\\CharacterFrame\\UI-StateIcon",24,24,24,24,0.0625,0.45,0.0625,0.45)
 local function HexToRGB(hex)
     hex=hex:gsub('#','')
     local r=tonumber(hex:sub(1,2),16)/255
@@ -84,14 +82,7 @@ local function ColorGradient(per,...)
     return r1+(r2-r1)*rel,g1+(g2-g1)*rel,b1+(b2-b1)*rel
 end
 F.ColorGradient=ColorGradient
-local ColorState={
-    spell=nil,
-    button=nil,
-    oldR=0,
-    oldG=0,
-    oldB=0,
-    oldA=1
-}
+local ColorState={spell=nil,button=nil,oldR=0,oldG=0,oldB=0,oldA=1}
 local lastR,lastG,lastB,lastA
 local function UpdateAuraColor(r,g,b)
     if r==lastR and g==lastG and b==lastB then return end

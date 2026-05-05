@@ -1,6 +1,5 @@
 local D,F=unpack(select(2,...))
-local UnitGUID=UnitGUID
-local soloBtn=D.soloBtn
+local UnitGUID,soloBtn=UnitGUID,D.soloBtn
 local function OnAttributeChanged(self)
     self.unit=self:GetAttribute("unit")
     local guid=self.unit and UnitGUID(self.unit)

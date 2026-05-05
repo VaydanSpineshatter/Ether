@@ -212,10 +212,10 @@ local function ProfileRefresh()
         C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
     end
     F:IndicatorsEnable()
-        if C.ChildFrames[5] and C.ChildFrames[5].direction then
+    if C.ChildFrames[5] and C.ChildFrames[5].direction then
         C.ChildFrames[5].direction:SetText(D.header5[D.DB["CONFIG"][12]])
     end
-        if C.ChildFrames[5] and C.ChildFrames[5].sort then
+    if C.ChildFrames[5] and C.ChildFrames[5].sort then
         C.ChildFrames[5].sort:SetText(D.header5[D.DB["CONFIG"][11]])
     end
     F:IndicatorsFullUpdateBtn()

@@ -14,12 +14,32 @@ local function AddAura(editor)
     D.DB["CUSTOM"][newId]=F:AuraTemplate(newId)
     SelectAura(editor,newId)
 end
-local function OnAuraSelect(self,_,data)
-    local editor=C.ChildFrames[7]
-    if not editor:IsShown() then
-        editor:Show()
+local function AddTemplateAuras(templateName)
+    if not D.PredefinedAuras or not D.PredefinedAuras[templateName] then return end
+    local a,s=0,0
+    local DB=D.DB["CUSTOM"]
+    for i,v in pairs(D.PredefinedAuras[templateName]) do
+        if not DB[i] then
+            DB[i]=D:CopyTable(v)
+            a=a+1
+        else
+            s=s+1
+        end
     end
-    F:AddTemplateAuras(data)
+    F:UpdateAuraList()
+    local msg=sformat("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
+    if a>0 then
+        msg=msg..sformat("|cff00ff00+%d new auras|r",a)
+    end
+    if s>0 then
+        msg=msg..sformat(" (%d already existed)",s)
+    end
+    C:EtherInfo(msg)
+    C.Spell=nil
+    F:UpdateEditor(C.ChildFrames[7])
+end
+local function OnAuraSelect(self,_,data)
+    AddTemplateAuras(data)
     self.text:SetText(data)
 end
 local function UpdateAuraStatus(self,spellId)
@@ -43,7 +63,7 @@ local function UpdateStatus(self,index)
         F:HideBorderDispel()
     end
 end
-function F:Aura(self,status)
+local function Aura(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     local auraList={}
@@ -229,7 +249,7 @@ function F:Aura(self,status)
 end
 function F:UpdateAuraList()
     if not C.ChildFrames[7].created then
-        F:Aura(C.ChildFrames[7],true)
+        F:Fire(7+50,C.ChildFrames[7],true)
     end
     local editor=C.ChildFrames[7]
     for _,btn in ipairs(C.AuraList) do
@@ -241,11 +261,11 @@ function F:UpdateAuraList()
     for spellId,data in pairs(D.DB["CUSTOM"]) do
         local btn=CreateFrame("Button",nil,editor.scrollChild)
         btn:SetSize(190,18)
-        if index == 1 then
+        if index==1 then
             btn:SetPoint("TOPLEFT",5,-20)
         else
-             yOffset=yOffset-20
-             btn:SetPoint("TOPLEFT",5, yOffset)
+            yOffset=yOffset-20
+            btn:SetPoint("TOPLEFT",5,yOffset)
         end
         btn.bg=btn:CreateTexture(nil,"BACKGROUND")
         btn.bg:SetAllPoints()
@@ -344,27 +364,4 @@ function F:UpdateEditor(editor)
     editor.y.v:SetText(sformat("%.0f px",data[8]))
     F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
 end
-function F:AddTemplateAuras(templateName)
-    if not D.PredefinedAuras or not D.PredefinedAuras[templateName] then return end
-    local a,s=0,0
-    local DB=D.DB["CUSTOM"]
-    for i,v in pairs(D.PredefinedAuras[templateName]) do
-        if not DB[i] then
-            DB[i]=D:CopyTable(v)
-            a=a+1
-        else
-            s=s+1
-        end
-    end
-    F:UpdateAuraList()
-    local msg=sformat("|cff00ccffAuras|r: Template '%s' loaded. ",templateName)
-    if a>0 then
-        msg=msg..sformat("|cff00ff00+%d new auras|r",a)
-    end
-    if s>0 then
-        msg=msg..sformat(" (%d already existed)",s)
-    end
-    C:EtherInfo(msg)
-    C.Spell=nil
-    F:UpdateEditor(C.ChildFrames[7])
-end
+F:RegisterCallbackByIndex(Aura,7+50)

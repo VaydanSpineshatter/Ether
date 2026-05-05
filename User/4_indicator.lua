@@ -10,6 +10,50 @@ local function callback(index)
         C.MainButtons[4][index].v:SetTextColor(1,0,0)
     end
 end
+local function UpdateIcon(n)
+    if not n then
+        return
+    end
+    local data=D.DB[20][n]
+    if not data then
+        return
+    end
+    local indicator=C.ChildFrames[4]
+    indicator.preview.icon:Hide()
+    indicator.preview.icon:ClearAllPoints()
+    indicator.preview.icon:SetSize(data[4],data[4])
+    indicator.preview.icon:SetPoint(data[1],indicator.preview,data[1],data[2],data[3])
+    indicator.preview.icon:Show()
+end
+local function UpdateIndicatorsPos(spell)
+    if not spell then return end
+    local icon=iK[spell]
+    local c=D.DB[20][spell]
+    if not c then return end
+    local indicator=C.ChildFrames[4]
+    indicator.preview.icon:SetTexture(icon)
+    if spell==6 then
+        indicator.preview.icon:SetTexCoord(0.75,1,0.25,0.5)
+    elseif spell==10 then
+        indicator.preview.icon:SetTexCoord(20/64,39/64,22/64,41/64)
+    else
+        indicator.preview.icon:SetTexCoord(0.08,0.92,0.08,0.92)
+    end
+    indicator.s:SetValue(c[4])
+    if indicator.s.v then
+        indicator.s.v:SetText(sformat("%.1f px",c[4]))
+    end
+    F:UpdateCube(indicator.cube,c,1)
+    indicator.x:SetValue(c[2])
+    if indicator.x.v then
+        indicator.x.v:SetText(sformat("%.0f px",c[2]))
+    end
+    indicator.y:SetValue(c[3])
+    if indicator.y.v then
+        indicator.y.v:SetText(sformat("%.0f px",c[3]))
+    end
+    UpdateIcon(spell)
+end
 local function OnIndicatorSelect(self,index,data)
     for _,v in ipairs(C.MainButtons[4]) do
         if v then v:Hide() end
@@ -19,11 +63,11 @@ local function OnIndicatorSelect(self,index,data)
     end
     C.Indi=index
     self.text:SetText(data)
-    F:UpdateIndicatorsPos(C.Indi)
+    UpdateIndicatorsPos(C.Indi)
     C.MainButtons[4][index]:Show()
     callback(index)
 end
-function F:Indicators(self,status)
+local function Indicators(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     for i=1,13 do
@@ -83,7 +127,7 @@ function F:Indicators(self,status)
                 D.DB[20][C.Indi][1]=btn.position
                 for _,b in pairs(cube) do
                     b:GetScript("OnLeave")(b)
-                    F:UpdateIndicatorsPos(C.Indi)
+                    UpdateIndicatorsPos(C.Indi)
                 end
             end
         end)
@@ -111,7 +155,7 @@ function F:Indicators(self,status)
                 if C.Indi then
                     D.DB[20][C.Indi][2]=value
                     self.x:SetValue(D.DB[20][C.Indi][2])
-                    F:UpdateIndicatorsPos(C.Indi)
+                    UpdateIndicatorsPos(C.Indi)
                     self.x.v:SetText(sformat("%.0f px",value))
                 end
             end)
@@ -121,7 +165,7 @@ function F:Indicators(self,status)
                 if C.Indi then
                     D.DB[20][C.Indi][3]=value
                     self.y:SetValue(D.DB[20][C.Indi][3])
-                    F:UpdateIndicatorsPos(C.Indi)
+                    UpdateIndicatorsPos(C.Indi)
                     self.y.v:SetText(sformat("%.0f px",value))
                 end
             end)
@@ -131,53 +175,10 @@ function F:Indicators(self,status)
                 if C.Indi then
                     D.DB[20][C.Indi][4]=value
                     self.s:SetValue(D.DB[20][C.Indi][4])
-                    F:UpdateIndicatorsPos(C.Indi)
+                    UpdateIndicatorsPos(C.Indi)
                     self.s.v:SetText(sformat("%.1f px",value))
                 end
             end)
     self.s=s
 end
-local function UpdateIcon(n)
-    if not n then
-        return
-    end
-    local data=D.DB[20][n]
-    if not data then
-        return
-    end
-    local indicator=C.ChildFrames[4]
-    indicator.preview.icon:Hide()
-    indicator.preview.icon:ClearAllPoints()
-    indicator.preview.icon:SetSize(data[4],data[4])
-    indicator.preview.icon:SetPoint(data[1],indicator.preview,data[1],data[2],data[3])
-    indicator.preview.icon:Show()
-end
-function F:UpdateIndicatorsPos(spell)
-    if not spell then return end
-    local icon=iK[spell]
-    local c=D.DB[20][spell]
-    if not c then return end
-    local indicator=C.ChildFrames[4]
-    indicator.preview.icon:SetTexture(icon)
-    if spell==6 then
-        indicator.preview.icon:SetTexCoord(0.75,1,0.25,0.5)
-    elseif spell==10 then
-        indicator.preview.icon:SetTexCoord(20/64,39/64,22/64,41/64)
-    else
-        indicator.preview.icon:SetTexCoord(0.08,0.92,0.08,0.92)
-    end
-    indicator.s:SetValue(c[4])
-    if indicator.s.v then
-        indicator.s.v:SetText(sformat("%.1f px",c[4]))
-    end
-    F:UpdateCube(indicator.cube,c,1)
-    indicator.x:SetValue(c[2])
-    if indicator.x.v then
-        indicator.x.v:SetText(sformat("%.0f px",c[2]))
-    end
-    indicator.y:SetValue(c[3])
-    if indicator.y.v then
-        indicator.y.v:SetText(sformat("%.0f px",c[3]))
-    end
-    UpdateIcon(spell)
-end
+F:RegisterCallbackByIndex(Indicators,4+50)

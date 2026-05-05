@@ -5,11 +5,49 @@ local function OnProfileChange(self,_,data)
     D:SwitchProfile(data)
     self.text:SetText(data)
 end
-function F:Profile(self,status)
+local function CreateImportBox(backdrop)
+    if C.ImportBox then return end
+    local importBox=CreateFrame("EditBox",nil,backdrop)
+    C.ImportBox=importBox
+    importBox:SetPoint("TOPLEFT",backdrop,"TOPLEFT",8,-8)
+    importBox:SetPoint("BOTTOMRIGHT",backdrop,"BOTTOMRIGHT",-8,8)
+    importBox:SetMultiLine(true)
+    importBox:SetAutoFocus(false)
+    importBox:SetClipsChildren(true)
+    importBox:SetFontObject(C.EtherFont)
+    importBox:SetText("Paste import data here...")
+    importBox:SetTextColor(0.7,0.7,0.7)
+    importBox:SetScript("OnMouseWheel",function(self,delta)
+        local current=self:GetText()
+        if delta>0 then
+            self:SetCursorPosition(0)
+        else
+            self:SetCursorPosition(#current)
+        end
+    end)
+    importBox:SetScript("OnEditFocusGained",function(self)
+        if self:GetText()=="Paste export data here..." then
+            self:SetText("")
+            self:SetTextColor(1,1,1)
+        end
+        self:HighlightText()
+    end)
+    importBox:SetScript("OnEditFocusLost",function(self)
+        if self:GetText()=="" then
+            self:SetText("Paste import data here...")
+            self:SetTextColor(0.7,0.7,0.7)
+        end
+    end)
+    importBox:SetScript("OnEscapePressed",function(self)
+        self:ClearFocus()
+    end)
+    return importBox
+end
+local function Profile(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status
     if not C.ChildFrames[6].created then
-        F:Layout(C.ChildFrames[6],true)
+        F:Fire(6+50,C.ChildFrames[6],true)
     end
     local dropdown=F:CreateEtherDropdown(self,130,"Select Profile",D:GetProfileList(),OnProfileChange)
     C.ProfileDropdown=dropdown
@@ -156,7 +194,7 @@ function F:Profile(self,status)
             end
         end)
     end)
-    local importBox=F:CreateImportBox(transfer)
+    local importBox=CreateImportBox(transfer)
     export:SetScript("OnClick",function()
         local encoded=D:ExportProfileToClipboard()
         if encoded then
@@ -178,41 +216,4 @@ function F:Profile(self,status)
         end
     end)
 end
-function F:CreateImportBox(backdrop)
-    if C.ImportBox then return end
-    local importBox=CreateFrame("EditBox",nil,backdrop)
-    C.ImportBox=importBox
-    importBox:SetPoint("TOPLEFT",backdrop,"TOPLEFT",8,-8)
-    importBox:SetPoint("BOTTOMRIGHT",backdrop,"BOTTOMRIGHT",-8,8)
-    importBox:SetMultiLine(true)
-    importBox:SetAutoFocus(false)
-    importBox:SetClipsChildren(true)
-    importBox:SetFontObject(C.EtherFont)
-    importBox:SetText("Paste import data here...")
-    importBox:SetTextColor(0.7,0.7,0.7)
-    importBox:SetScript("OnMouseWheel",function(self,delta)
-        local current=self:GetText()
-        if delta>0 then
-            self:SetCursorPosition(0)
-        else
-            self:SetCursorPosition(#current)
-        end
-    end)
-    importBox:SetScript("OnEditFocusGained",function(self)
-        if self:GetText()=="Paste export data here..." then
-            self:SetText("")
-            self:SetTextColor(1,1,1)
-        end
-        self:HighlightText()
-    end)
-    importBox:SetScript("OnEditFocusLost",function(self)
-        if self:GetText()=="" then
-            self:SetText("Paste import data here...")
-            self:SetTextColor(0.7,0.7,0.7)
-        end
-    end)
-    importBox:SetScript("OnEscapePressed",function(self)
-        self:ClearFocus()
-    end)
-    return importBox
-end
+F:RegisterCallbackByIndex(Profile,8+50)

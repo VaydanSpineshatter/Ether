@@ -1,47 +1,36 @@
 local D,F,_,C=unpack(select(2,...))
-local GetInventoryItemDurability=GetInventoryItemDurability
-local mfloor,sformat,tconcat=math.floor,string.format,table.concat
-local UpdateAddOnMemoryUsage=UpdateAddOnMemoryUsage
-local GetAddOnMemoryUsage,GetItemCount=GetAddOnMemoryUsage,GetItemCount
-local GetFramerate,GetUnitSpeed=GetFramerate,GetUnitSpeed
+local mfloor,sformat,tconcat,GetInventoryItemDurability,twipe,data=math.floor,string.format,table.concat,GetInventoryItemDurability,table.wipe,{}
+local UpdateAddOnMemoryUsage,GetFramerate,GetUnitSpeed,GetAddOnMemoryUsage,GetItemCount,dPct=UpdateAddOnMemoryUsage,GetFramerate,GetUnitSpeed,GetAddOnMemoryUsage,GetItemCount
 local function ConsumaCount(str,number,status,status2)
     return sformat(str,GetItemCount(number,status,status2))
 end
-local dPct
 local function Durability()
-    local tCur,tMax=0,0
+    local tC,tM=0,0
     for i=1,19 do
-        local cur,max=GetInventoryItemDurability(i)
-        if cur and max then
-            tCur=tCur+cur
-            tMax=tMax+max
+        local c,m=GetInventoryItemDurability(i)
+        if c and m then
+            tC=tC+c
+            tM=tM+m
         end
     end
-    if tMax>0 then
-        dPct=(tCur/tMax)*100
+    if tM>0 then
+        dPct=(tC/tM)*100
         return dPct
     end
 end
-local data={}
 function F:AddonUsage()
     if not C.EtherInfo then return end
-
     UpdateAddOnMemoryUsage()
     Durability()
-    local speed=GetUnitSpeed("player")
     local mem=GetAddOnMemoryUsage("Ether")
-    local fps=mfloor(GetFramerate())
     data[#data+1]=ConsumaCount("Battle Elixir Count: |cffffff00%d|r",D.DB["CONFIG"][7] or "-",false,false)
     data[#data+1]=ConsumaCount("Guardian Elixir Count: |cffffff00%d|r",D.DB["CONFIG"][8] or "-",false,false)
     data[#data+1]=ConsumaCount("Food Count: |cffffff00%d|r",D.DB["CONFIG"][9] or "-",false,false)
     data[#data+1]=ConsumaCount("MainHand Charges: |cffffff00%d|r",D.DB["CONFIG"][10] or "-",false,true)
     data[#data+1]=sformat("Durability: |cffffff00%d%%|r",dPct)
-    data[#data+1]=sformat("Speed: |cffffff00%d%%|r",speed/7*100)
-    data[#data+1]=sformat("|cffffff00FPS: |r%s   -   |cffCC66FFMEM: |r%s Kb",fps,mfloor(mem))
+    data[#data+1]=sformat("Speed: |cffffff00%d%%|r",GetUnitSpeed("player")/7*100)
+    data[#data+1]=sformat("|cffffff00FPS: |r%s   -   |cffCC66FFMEM: |r%s Kb",mfloor(GetFramerate()),mfloor(mem))
     C:EtherInfo(tconcat(data,'\n'))
-    table.wipe(data)
+    twipe(data)
 end
---22825
---32067
---27666
---22521
+--22825,32067,27666,22521

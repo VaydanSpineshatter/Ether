@@ -1,13 +1,6 @@
 local D,F,S,C=unpack(select(2,...))
-local UnitCreatureFamily,UnitExists=UnitCreatureFamily,UnitExists
-local GetPetHappiness,GameTooltip=GetPetHappiness,GameTooltip
-local event=S.EventFrame
-local petBtn=D.soloBtn
-local petInfo={
-    [1]={0.375,0.5625,0,0.359375},
-    [2]={0.1875,0.375,0,0.359375},
-    [3]={0,0.1875,0,0.359375}
-}
+local UnitCreatureFamily,UnitExists,GetPetHappiness,GameTooltip=UnitCreatureFamily,UnitExists,GetPetHappiness,GameTooltip
+local event,petBtn,petInfo=S.EventFrame,D.soloBtn,{[1]={0.375,0.5625,0,0.359375},[2]={0.1875,0.375,0,0.359375},[3]={0,0.1875,0,0.359375}}
 local function PetStatus(self)
     local happiness=GetPetHappiness()
     if (happiness) then
@@ -15,7 +8,7 @@ local function PetStatus(self)
     end
 end
 local function Enter(self)
-    if UnitExists("pet") then
+    if UnitExists("pet") and GameTooltip then
         local happiness,damagePercentage,loyaltyRate=GetPetHappiness()
         local petType=UnitCreatureFamily("pet")
         GameTooltip:SetOwner(self,'ANCHOR_RIGHT')
