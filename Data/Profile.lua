@@ -223,6 +223,7 @@ local function ProfileRefresh()
             F:UpdateIndicatorsUnit(b)
         end
     end
+    F.UpdateIcon(C.Indi)
     if not C.MainFrame:IsShown() then
         C.MainFrame:Show()
     end
@@ -338,7 +339,6 @@ function D:SwitchProfile(name)
     ProfileRefresh()
     C.ChildFrames[8]:Show()
     _G["ETHER_DATABASE"]["CURRENT"]=name
-    D.menuStrings[10]:SetText(string.format("%s %s","Profile",name))
     return true,"Switched to "..name
 end
 function D:DeleteProfile(name)
@@ -403,7 +403,7 @@ function D:RenameProfile(oldName,newName)
     _G["ETHER_DATABASE"]["PROFILES"][newName]=oldName
     _G["ETHER_DATABASE"]["CURRENT"]=newName
     _G["ETHER_DATABASE"]["PROFILES"][oldName]=nil
-    D.menuStrings[10]:SetText(string.format("%s %s","Profile",newName))
+    D.menuStrings[10]:SetText(string.format("%s %s","Profile ",newName))
     return true,"Profile "..oldName.." renamed to "..newName
 end
 function D:GetProfileName()

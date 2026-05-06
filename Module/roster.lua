@@ -57,8 +57,7 @@ function event:GROUP_ROSTER_UPDATE()
     C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or IsInRaid() and "RAID" or "PARTY")
 end
 function event:GROUP_JOINED()
-    if UnitAffectingCombat("player") then return end
-    UnitSetRole("player",D.DB["CONFIG"][13] or "DAMAGER")
+    F:UpdateRole(D.DB["CONFIG"][13])
 end
 function event:UNIT_THREAT_SITUATION_UPDATE(unit)
     if unit=="player" then

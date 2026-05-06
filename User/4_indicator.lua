@@ -25,6 +25,7 @@ local function UpdateIcon(n)
     indicator.preview.icon:SetPoint(data[1],indicator.preview,data[1],data[2],data[3])
     indicator.preview.icon:Show()
 end
+F.UpdateIcon=UpdateIcon
 local function UpdateIndicatorsPos(spell)
     if not spell then return end
     local icon=iK[spell]

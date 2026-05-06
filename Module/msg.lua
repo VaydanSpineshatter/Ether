@@ -29,14 +29,14 @@ local function OnVersion(message)
     local theirVersion=tonumber(message)
     local myVersion=tonumber(C.EtherVersion)
     count=count+1
-    if D.menuStrings[8] and D.menuStrings[9] then
-        D.menuStrings[9]:SetText(string.format("%s %s",D.Slash[9],tostring(count)))
+    if D.menuStrings[9] then
+        D.menuStrings[9]:SetText(string.format("%s %s","Addon calls ",tostring(count) or 0))
     end
     local lastCheck=_G["ETHER_DATABASE"]["LAST"] or 0
     if (time()-lastCheck>=5000) and theirVersion and myVersion and myVersion<theirVersion then
         _G["ETHER_DATABASE"]["LAST"]=time()
-        if D.menuStrings[8] and D.menuStrings[9] then
-            D.menuStrings[8]:SetText(string.format("%s %s",D.Slash[8],_G["ETHER_DATABASE"]["LAST"]))
+        if D.menuStrings[8] then
+            D.menuStrings[8]:SetText(string.format("%s %s","Version Calls",_G["ETHER_DATABASE"]["LAST"] or 0))
         end
         C:EtherInfo(sformat("New version found (%d). Get the latest version from %s",theirVersion,"|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r"))
     end

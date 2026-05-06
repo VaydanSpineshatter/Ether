@@ -4,6 +4,7 @@ local function OnProfileChange(self,_,data)
     if data==D:GetProfileName() then return end
     D:SwitchProfile(data)
     self.text:SetText(data)
+    D.menuStrings[10]:SetText(string.format("%s %s","Profile ",data))
 end
 local function CreateImportBox(backdrop)
     if C.ImportBox then return end

@@ -1,17 +1,19 @@
 local D,F,_,C=unpack(select(2,...))
 local raidBtn,petBtn,soloBtn,sformat,pairs,ipairs,indexKey=D.raidBtn,D.petBtn,D.soloBtn,string.format,pairs,ipairs
-local function SetDefaultValue(self,index,wl,hl,w,h,s,a)
+local function SetDefaultValue(self,index)
     if not index then return end
-    wl:SetText(D.Default[21][index][6])
-    hl:SetText(D.Default[21][index][7])
-    w.v:SetText(sformat("%.1f px",D.Default[21][index][6]))
-    w:SetValue(D.Default[21][index][6])
-    h.v:SetText(sformat("%.1f px",D.Default[21][index][7]))
-    h:SetValue(D.Default[21][index][7])
-    s.v:SetText(sformat("%.1f px",D.Default[21][index][8]))
-    s:SetValue(D.Default[21][index][8])
-    a.v:SetText(sformat("%.1f px",D.Default[21][index][9]))
-    a:SetValue(D.Default[21][index][9])
+    local default=D.Default[21][index]
+    if not default then return end
+    self.wl:SetText(default[6])
+    self.w.v:SetText(sformat("%.1f px",default[6]))
+    self.w:SetValue(default[6])
+    self.hl:SetText(default[7])
+    self.h.v:SetText(sformat("%.1f px",default[7]))
+    self.h:SetValue(default[7])
+    self.s.v:SetText(sformat("%.1f px",default[8]))
+    self.s:SetValue(default[8])
+    self.a.v:SetText(sformat("%.1f px",default[9]))
+    self.a:SetValue(default[9])
     self.wl:ClearFocus()
     self.hl:ClearFocus()
 end
@@ -58,12 +60,18 @@ local function OnBarConsum(self,index,data)
     panel.consuma:Show()
     panel.consuma.v:Show()
 end
+function F:UpdateRole(role)
+    if UnitAffectingCombat("player") then return end
+    C:EtherInfo("Role changed to "..role or "DAMAGER")
+    UnitSetRole("player",role or "DAMAGER")
+end
 local function OnGroupJoined(self,_,data)
     for _,v in ipairs(C.MainButtons[6]) do
         if v then v:Hide() end
     end
     D.DB["CONFIG"][13]=data
-    self.text:SetText(D.DB["CONFIG"][13])
+    self.text:SetText(data)
+    F:UpdateRole(data)
 end
 local function OnRemoved(self,index)
     F:RemoveByIndex(index)
