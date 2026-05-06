@@ -6,18 +6,21 @@ local function GetModelBtn(unit)
     return modelBtn[D:PosUnit(unit)]
 end
 local function refreshButtons()
+    if refresh then return end
+    refresh=true
     C_After(2,function()
+        F.CleanupAuras()
         for _,b in pairs(raidBtn) do
             if UnitExists(b.unit) then
-                F:RaidAurasFullUpdate(b.unit)
+                F:UpdateRaidAuras(b)
+                F.UpdateClassColor(b)
+                F.InitialHealth(b)
+                F:UpdateIndicatorsUnit(b)
             end
-            F.UpdateClassColor(b)
-            F.InitialHealth(b)
-            F:UpdateIndicatorsUnit(b)
         end
         for _,b in pairs(petBtn) do
-            if b and b:IsVisible() and UnitExists(b.unit) then
-                F:UpdateRaidAuras(b.unit)
+            if UnitExists(b.unit) then
+                F:UpdateIndicatorsPetUnit(b)
             end
         end
         refresh=false
@@ -26,26 +29,36 @@ end
 function event:GROUP_ROSTER_UPDATE()
     if not UnitInAnyGroup("player") then
         F:AuraDisable()
+        for i=1,11 do
+            F:IndicatorsToggleIcon(i)
+        end
         for _,b in pairs(D.raidBtn) do
-            if b and UnitExists(b.unit) then
-                F:UpdateIndicatorsUnit(b)
+            if UnitExists(b.unit) then
+                if b:IsVisible() then
+                    F:UpdateIndicatorsUnit(b)
+                end
+            end
+        end
+        for _,b in pairs(petBtn) do
+            if UnitExists(b.unit) then
+                if b:IsVisible() then
+                    F:UpdateIndicatorsPetUnit(b)
+                end
             end
         end
         C_After(1,function()
             F:AuraEnable()
         end)
-    else
-        if refresh then return end
-        refresh=true
-        refreshButtons()
-        if channel then return end
-        channel=true
-        C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or IsInRaid() and "RAID" or "PARTY")
     end
+    if refresh or not UnitInAnyGroup("player") then return end
+    refreshButtons()
+    if channel then return end
+    channel=true
+    C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or IsInRaid() and "RAID" or "PARTY")
 end
 function event:GROUP_JOINED()
     if UnitAffectingCombat("player") then return end
-    UnitSetRole("player",D.DB["CONFIG"][13] or "NONE")
+    UnitSetRole("player",D.DB["CONFIG"][13] or "DAMAGER")
 end
 function event:UNIT_THREAT_SITUATION_UPDATE(unit)
     if unit=="player" then

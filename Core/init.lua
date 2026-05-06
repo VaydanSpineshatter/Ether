@@ -85,7 +85,7 @@ Ether[3].EventFrame.ADDON_LOADED=function(self)
                 v[3]=nil
                 v[4]=nil
                 v["CONFIG"]=Ether[1]:DataMigrate(v["CONFIG"],16,0)
-                v["CONFIG"][13]="NONE"
+                v["CONFIG"][13]="DAMAGER"
             end
         end
         Ether[1]:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()],Ether[1].Default)

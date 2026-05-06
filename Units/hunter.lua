@@ -37,7 +37,7 @@ function event:UNIT_HAPPINESS(unit)
     end
 end
 function event:UNIT_PET(unit)
-   if unit~="player" then return end
+    if unit~="player" then return end
     if petBtn[4]:IsVisible() then
         PetStatus(C.condition)
     end

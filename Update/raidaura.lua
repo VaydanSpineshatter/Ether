@@ -5,8 +5,8 @@ local GetAuraDataByAuraInstanceID=C_UnitAuras.GetAuraDataByAuraInstanceID
 local UnitExists,raidBtn,twipe,type=UnitExists,D.raidBtn,table.wipe,type
 local helpfulAuras,harmfulAuras,dataHelpful,dataHarmful={},{},{},{}
 local dispelClass={MAGE={Curse=true},PRIEST={Magic=true,Disease=true},PALADIN={Magic=true,Disease=true,Poison=true},DRUID={Curse=true,Poison=true},SHAMAN={Disease=true,Poison=true}}
-local canDispel,petBtn=dispelClass[C.ClassName],D.petBtn
-function F:UpdateUnitTable(unit)
+local canDispel=dispelClass[C.ClassName]
+local function UpdateUnitTable(unit)
     if not dataHelpful[unit] then
         dataHelpful[unit]={}
     end
@@ -15,9 +15,9 @@ function F:UpdateUnitTable(unit)
     end
 end
 local function GetRaidBtn(arg1)
-    if not raidBtn[arg1] then return end
-    local b=petBtn[arg1] or raidBtn[arg1]
-    if arg1==b.unit and b:IsVisible() then
+    UpdateUnitTable(arg1)
+    local b=raidBtn[arg1]
+    if arg1==b.unit then
         return b
     end
 end
@@ -125,16 +125,23 @@ end
 local function UpdateAuras(aura,data,unit)
     if not data[unit] or not data[unit][aura.spellId] then return end
     if aura.duration and aura.duration>0 then
-        CheckTime(data[unit][aura.spellId],aura.duration,aura.expirationTime)
+        if data[unit] and data[unit][aura.spellId] then
+            CheckTime(data[unit][aura.spellId],aura.duration,aura.expirationTime)
+        end
     end
     if aura.applications and aura.applications>1 then
-        CheckCount(data[unit][aura.spellId],aura.applications or 0)
+        if data[unit] and data[unit][aura.spellId] then
+            CheckCount(data[unit][aura.spellId],aura.applications or 0)
+        end
     end
     if aura.charges and aura.charges>1 then
-        CheckStacks(data[unit][aura.spellId],aura.charges or 0)
+        if data[unit] and data[unit][aura.spellId] then
+            CheckStacks(data[unit][aura.spellId],aura.charges or 0)
+        end
     end
 end
 local function AddHelpfulAuras(aura,b,unit,config)
+    UpdateUnitTable(unit)
     if config[aura.spellId] and not config[aura.spellId][10] then
         if not dataHelpful[unit][aura.spellId] then
             dataHelpful[unit][aura.spellId]=F:GetTexture(b,config[aura.spellId])
@@ -145,6 +152,7 @@ local function AddHelpfulAuras(aura,b,unit,config)
     end
 end
 local function AddHarmfulAuras(aura,b,unit,config)
+    UpdateUnitTable(unit)
     if config[aura.spellId] and config[aura.spellId][10] then
         if not dataHarmful[unit][aura.spellId] then
             dataHarmful[unit][aura.spellId]=F:GetTexture(b,config[aura.spellId])
@@ -181,10 +189,9 @@ local function UpdateStatusIcons(b)
     end
 end
 F.UpdateStatusIcons=UpdateStatusIcons
-function F:UpdateRaidAuras(unit)
-    if not unit or not UnitExists(unit) then return end
-    local b=GetRaidBtn(unit)
+function F:UpdateRaidAuras(b)
     if not b then return end
+    local unit=b.unit
     local c=D.DB["CUSTOM"]
     local i=1
     while true do
@@ -210,7 +217,7 @@ function F:AuraUpdate(unit,updateInfo)
     if not b then return end
     local c=D.DB["CUSTOM"]
     if updateInfo.isFullUpdate then
-        F:UpdateRaidAuras(unit)
+        F:UpdateRaidAuras(b)
         return
     end
     if updateInfo.addedAuras then
@@ -283,13 +290,8 @@ end
 function F:EnableRaidAura()
     update=true
     for _,b in pairs(raidBtn) do
-        if b and b:IsVisible() and UnitExists(b.unit) then
-            F:UpdateRaidAuras(b.unit)
-        end
-    end
-    for _,b in pairs(petBtn) do
-        if b and b:IsVisible() and UnitExists(b.unit) then
-            F:UpdateRaidAuras(b.unit)
+        if UnitExists(b.unit) then
+            F:UpdateRaidAuras(b)
         end
     end
 end

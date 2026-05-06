@@ -106,7 +106,6 @@ local function Indicators(self,status)
             F:IndicatorToggleEvent(i)
             F:IndicatorsToggleIcon(i)
             callback(i)
-            F:IndicatorsFullUpdateBtn()
         end)
         C.MainButtons[4][i]=btn
     end

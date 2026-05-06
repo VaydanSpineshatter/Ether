@@ -209,7 +209,7 @@ local function ProfileRefresh()
     D:RefreshAllFrames()
     F:Fire(22)
     if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
-        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13])
+        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13] or "DAMAGER")
     end
     F:IndicatorsEnable()
     if C.ChildFrames[5] and C.ChildFrames[5].direction then
@@ -338,6 +338,7 @@ function D:SwitchProfile(name)
     ProfileRefresh()
     C.ChildFrames[8]:Show()
     _G["ETHER_DATABASE"]["CURRENT"]=name
+    D.menuStrings[10]:SetText(string.format("%s %s","Profile",name))
     return true,"Switched to "..name
 end
 function D:DeleteProfile(name)
@@ -402,6 +403,7 @@ function D:RenameProfile(oldName,newName)
     _G["ETHER_DATABASE"]["PROFILES"][newName]=oldName
     _G["ETHER_DATABASE"]["CURRENT"]=newName
     _G["ETHER_DATABASE"]["PROFILES"][oldName]=nil
+    D.menuStrings[10]:SetText(string.format("%s %s","Profile",newName))
     return true,"Profile "..oldName.." renamed to "..newName
 end
 function D:GetProfileName()

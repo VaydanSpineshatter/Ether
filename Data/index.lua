@@ -3,7 +3,7 @@ local type,next,tostring,unpack=type,next,tostring,unpack
 local tconcat,UIParent,pairs,ipairs=table.concat,UIParent,pairs,ipairs
 D.MenuKey,D.menuStrings={"Module","Blizzard","Tooltip","Indicators","Header","Layout","Aura","Profile"},{}
 local P={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
-D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding","Addon Version ","Prefix ","Version Calls","Addon calls ",C_AddOns.GetAddOnMetadata("Ether","Version") or "0.8.1","-",tostring(_G["ETHER_DATABASE"]["LAST"] or 0),tostring(0)}
+D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding","Addon Version ","Prefix ","Version Calls","Addon calls ","Profile ",C_AddOns.GetAddOnMetadata("Ether","Version") or "0.8.1","-",tostring(_G["ETHER_DATABASE"]["LAST"] or 0),tostring(0),"-"}
 local Units={"player","target","targettarget","pet","pettarget","focus"}
 D.iEvent={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS","UNIT_FACTION","RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
 D.msgEvent={"CHAT_MSG_ADDON","CHAT_MSG_WHISPER_INFORM","CHAT_MSG_WHISPER","CHAT_MSG_BN_WHISPER"}
@@ -69,7 +69,7 @@ D.Default={[1]={1,1,1,0,1,1,1,1,1,1,1,1},[2]={1,1,1,1,1,1,1,1,1,1,1},[3]={1,1,1,
                  [5]={P[5],P[10],P[5],-270,-20,110,40,1,1},[6]={P[5],P[10],P[5],500,100,110,40,1,1},[7]={P[5],P[10],P[5],0,90,110,40,1,1},[8]={P[5],P[10],P[5],0,0,110,40,1,1},
                  [9]={P[5],P[10],P[5],0,-90,110,40,1,1},[10]={P[8],P[10],P[8],0,400,55,55,1,1},[11]={P[7],P[10],P[7],520,40,45,45,1,1},[12]={P[8],P[10],P[8],-380,200,360,15,1,1},
                  [13]={P[8],P[10],P[8],380,200,360,15,1,1},[14]={P[8],P[10],P[8],-125,240,45,45,1,1},[15]={P[8],P[10],P[8],125,240,45,45,1,1},[16]={P[7],P[10],P[7],30,210,320,180,1,1},
-                 [17]={P[4],P[10],P[4],60,-50,280,80,1,1},[18]={P[6],P[10],P[6],-380,-70,28,28,1,1},[19]={P[1],P[10],P[1],50,-100,540,280,1,1}},["CUSTOM"]={},["USER"]={},["CONFIG"]={1,1,0,1,4,1,0,0,0,0,3,4,"NONE",0,0,0}}
+                 [17]={P[4],P[10],P[4],60,-50,280,80,1,1},[18]={P[6],P[10],P[6],-380,-70,28,28,1,1},[19]={P[1],P[10],P[1],50,-100,540,280,1,1}},["CUSTOM"]={},["USER"]={},["CONFIG"]={1,1,0,1,4,1,0,0,0,0,3,4,"DAMAGER",0,0,0}}
 local frame=CreateFrame("Frame",nil,UIParent)
 C.InfoFrame=frame
 frame:Hide()

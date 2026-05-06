@@ -102,7 +102,8 @@ end
 function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_LOGOUT")
-    D.Slash[16]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) and "|cff00ff00true|r" or "|cffff0000false|r"
+    D.Slash[17]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) and "|cff00ff00true|r" or "|cffff0000false|r"
+    D.Slash[20]=D:GetProfileName()
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()

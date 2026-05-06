@@ -7,7 +7,7 @@
 ## Category-esES: Unit Frames
 ## Category-frFR: Unit Frames
 ## Category-ruRU: Unit Frames
-## Version: 0.8.9
+## Version: 0.9.0
 ## SavedVariables: ETHER_DATABASE
 ## IconTexture: Interface\AddOns\Ether\Media\icon
 ## X-Flavor: TBC

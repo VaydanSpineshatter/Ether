@@ -23,7 +23,6 @@ local function UpdateButton(self)
     local guid=UnitGUID(self.unit)
     if not guid or guid==self.guid then return end
     self.guid=guid
-    F:UpdateUnitTable(self.unit)
     F:SetupClassDispel(self)
     F:FullHealthUpdate(self)
     F:SaveBtnPosition(self)
@@ -34,8 +33,8 @@ local function UpdateButton(self)
         F:SetupBlinkIcon(self)
         UpdatePCT(self)
         F:UpdateIndicatorsUnit(self)
+        F:UpdateRaidAuras(self)
     end
-    F:UpdateRaidAuras(self.unit)
 end
 local function OnEnter(self)
     if not UnitExists(self.unit) then return end
@@ -63,25 +62,13 @@ local function OnAttributeChanged(self,name,unit)
     UpdateButton(self)
 end
 local function OnShow(self)
-    if not self:IsEventRegistered("UNIT_PET") then
+    if self.TypePet then
         self:RegisterEvent("UNIT_PET")
-    end
-    if not self:GetScript("OnEnter") then
-        self:SetScript("OnEnter",OnEnter)
-    end
-    if not self:GetScript("OnLeave") then
-        self:SetScript("OnLeave",OnLeave)
     end
 end
 local function OnHide(self)
-    if self:IsEventRegistered("UNIT_PET") then
+    if self.TypePet then
         self:UnregisterEvent("UNIT_PET")
-    end
-    if self:GetScript("OnEnter") then
-        self:SetScript("OnEnter",nil)
-    end
-    if self:GetScript("OnLeave") then
-        self:SetScript("OnLeave",nil)
     end
 end
 local function CreateHealthStatusBar(self)
@@ -106,17 +93,17 @@ local function CreateChildren(h,n)
     local width=h:GetAttribute("ButtonWidth")
     local height=h:GetAttribute("ButtonHeight")
     if h:GetAttribute("TypePet") then
+        b.TypePet=true
         b:SetSize(tonumber(width) or 45,tonumber(height) or 45)
-        if not b:IsEventRegistered("UNIT_PET") then
-            b:RegisterEvent("UNIT_PET")
-        end
         CreateHealthStatusBar(b)
         F:SetupButtonBackground(b)
         F:SetupButtonBorder(b)
-        b.TypePet=true
         b:SetScript("OnEvent",OnEvent)
         b:SetScript("OnShow",OnShow)
         b:SetScript("OnHide",OnHide)
+        if not b:IsEventRegistered("UNIT_PET") then
+            b:RegisterEvent("UNIT_PET")
+        end
     else
         b:SetSize(tonumber(width) or 55,tonumber(height) or 55)
         CreateHealthStatusBar(b)
@@ -129,7 +116,7 @@ local function CreateChildren(h,n)
     F:SetupPrediction(b)
     F:SetupName(b,-5)
     b:SetScript("OnEnter",OnEnter)
-     b:SetScript("OnLeave",OnLeave)
+    b:SetScript("OnLeave",OnLeave)
     if not InCombatLockdown() then
         b:RegisterForClicks("AnyUp")
     end

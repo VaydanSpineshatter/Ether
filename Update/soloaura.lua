@@ -370,7 +370,7 @@ function event:UNIT_AURA(arg1,...)
     if validUnit[arg1] then
         UnitAuraUpdate(arg1,info)
     end
-    if raidBtn[arg1] or petBtn[arg1] then
+    if raidBtn[arg1] then
         F:AuraUpdate(arg1,info)
     end
 end

@@ -87,7 +87,7 @@ function F:RefreshUserButtons()
 end
 function F:MenuStringsAlpha(number)
     if D.menuStrings[1]:GetAlpha()==number then return end
-    for index=1,9 do
+    for index=1,10 do
         D.menuStrings[index]:SetAlpha(number)
     end
 end
@@ -218,10 +218,10 @@ function F:InitializeSystemStatus()
             D.menuStrings[i]:SetPoint("TOP",D.menuStrings[i-1],"BOTTOM",0,-5)
         end
     end
-    for i=6,9 do
+    for i=6,10 do
         D.menuStrings[i]=C.ContentFrame:CreateFontString(nil,"OVERLAY")
         D.menuStrings[i]:SetFontObject(C.EtherFont)
-        D.menuStrings[i]:SetText(string.format("%s %s",D.Slash[i+5],D.Slash[i+9]))
+        D.menuStrings[i]:SetText(string.format("%s %s",D.Slash[i+5],D.Slash[i+10]))
         if i==6 then
             D.menuStrings[i]:SetPoint("BOTTOM",0,5)
         else

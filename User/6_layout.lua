@@ -1,18 +1,19 @@
 local D,F,_,C=unpack(select(2,...))
 local raidBtn,petBtn,soloBtn,sformat,pairs,ipairs,indexKey=D.raidBtn,D.petBtn,D.soloBtn,string.format,pairs,ipairs
-local function SetDefaultValue(index,wl,hl,w,h,s,a)
+local function SetDefaultValue(self,index,wl,hl,w,h,s,a)
     if not index then return end
-    local pos=D.Default[21][indexKey]
-    wl:SetText(pos[6])
-    hl:SetText(pos[7])
-    w.v:SetText(sformat("%.1f px",pos[6]))
-    w:SetValue(pos[6])
-    h.v:SetText(sformat("%.1f px",pos[7]))
-    h:SetValue(pos[7])
-    s.v:SetText(sformat("%.1f px",pos[8]))
-    s:SetValue(pos[8])
-    a.v:SetText(sformat("%.1f px",pos[9]))
-    a:SetValue(pos[9])
+    wl:SetText(D.Default[21][index][6])
+    hl:SetText(D.Default[21][index][7])
+    w.v:SetText(sformat("%.1f px",D.Default[21][index][6]))
+    w:SetValue(D.Default[21][index][6])
+    h.v:SetText(sformat("%.1f px",D.Default[21][index][7]))
+    h:SetValue(D.Default[21][index][7])
+    s.v:SetText(sformat("%.1f px",D.Default[21][index][8]))
+    s:SetValue(D.Default[21][index][8])
+    a.v:SetText(sformat("%.1f px",D.Default[21][index][9]))
+    a:SetValue(D.Default[21][index][9])
+    self.wl:ClearFocus()
+    self.hl:ClearFocus()
 end
 local function callback(index)
     if D.DB[6][index]==1 then
@@ -42,6 +43,8 @@ local function OnBarSelect(self,index,data)
     panel.s:SetValue(D.DB[21][index][8])
     panel.a.v:SetText(sformat("%.1f px",D.DB[21][index][9]))
     panel.a:SetValue(D.DB[21][index][9])
+    panel.wl:ClearFocus()
+    panel.hl:ClearFocus()
 end
 local function OnBarConsum(self,index,data)
     for _,v in ipairs(C.MainButtons[6]) do
@@ -66,63 +69,100 @@ local function OnRemoved(self,index)
     F:RemoveByIndex(index)
     self:SetOptions(D.DB["USER"])
 end
-local function ProcessUserData(index)
-    if not index or type(index)~="number" then return end
+local function ProcessWidthBtn(index)
+    if type(index)~="number" then return end
     if index==18 then
-        D:ApplyFramePosition(C.EtherIcon)
+        C.EtherIcon:SetWidth(D.DB[21][index][6])
     elseif index==17 then
-        D:ApplyFramePosition(C.ToolFrame)
+        C.ToolFrame:SetWidth(D.DB[21][index][6])
     elseif index==16 then
-        D:ApplyFramePosition(C.InfoFrame)
-    elseif index==15 then
-        D:ApplyFramePosition(D.modelBtn[2])
-    elseif index==14 then
-        D:ApplyFramePosition(D.modelBtn[1])
-    elseif index==13 then
-        D:ApplyFramePosition(D.castBar[2])
-    elseif index==12 then
-        D:ApplyFramePosition(D.castBar[1])
+        C.InfoFrame:SetWidth(D.DB[21][index][6])
+    elseif index<=15 and index>=14 then
+        D.modelBtn[index-13]:SetWidth(D.DB[21][index][6])
+    elseif index<=13 and index>=12 then
+        D.castBar[index-11]:SetWidth(D.DB[21][index][6])
     elseif index==10 then
         for _,btn in pairs(raidBtn) do
             if btn then
-                btn:SetSize(D.DB[21][indexKey][6],D.DB[21][indexKey][7])
+                btn:SetWidth(D.DB[21][index][6])
             end
         end
     elseif index==11 then
         for _,btn in pairs(petBtn) do
             if btn then
-                btn:SetSize(D.DB[21][indexKey][6],D.DB[21][indexKey][7])
+                btn:SetWidth(D.DB[21][index][6])
             end
         end
-    elseif index<7 then
-        if soloBtn[index] then
-            soloBtn[index]:SetSize(D.DB[21][indexKey][6],D.DB[21][indexKey][7])
+    elseif index<=6 then
+        soloBtn[index]:SetWidth(D.DB[21][index][6])
+    end
+end
+local function ProcessHeightBtn(index)
+    if type(index)~="number" then return end
+    if index==18 then
+        C.EtherIcon:SetHeight(D.DB[21][index][7])
+    elseif index==17 then
+        C.ToolFrame:SetHeight(D.DB[21][index][7])
+    elseif index==16 then
+        C.InfoFrame:SetHeight(D.DB[21][index][7])
+    elseif index<=15 and index>=14 then
+        D.modelBtn[index-13]:SetHeight(D.DB[21][index][7])
+    elseif index<=13 and index>=12 then
+        D.castBar[index-11]:SetHeight(D.DB[21][index][7])
+    elseif index==10 then
+        for _,btn in pairs(raidBtn) do
+            if btn then
+                btn:SetHeight(D.DB[21][index][7])
+            end
         end
+    elseif index==11 then
+        for _,btn in pairs(petBtn) do
+            if btn then
+                btn:SetHeight(D.DB[21][index][7])
+            end
+        end
+    elseif index<=6 then
+        soloBtn[index]:SetHeight(D.DB[21][index][7])
     end
 end
 local function ProcessScaleBtn(index)
-    if not index or type(index)~="number" then return end
-    if index==10 then
-        D.H.raid:SetScale(D.DB[21][indexKey][8])
+    if type(index)~="number" then return end
+    if index==18 then
+        C.EtherIcon:SetScale(D.DB[21][index][8])
+    elseif index==17 then
+        C.ToolFrame:SetScale(D.DB[21][index][8])
+    elseif index==16 then
+        C.InfoFrame:SetScale(D.DB[21][index][8])
+    elseif index<=15 and index>=14 then
+        D.modelBtn[index-13]:SetScale(D.DB[21][index][8])
+    elseif index<=13 and index>=12 then
+        D.castBar[index-11]:SetScale(D.DB[21][index][8])
+    elseif index==10 then
+        D.A.raid:SetScale(D.DB[21][index][8])
     elseif index==11 then
-        D.H.pet:SetScale(D.DB[21][indexKey][8])
-    elseif index<7 then
-        if soloBtn[index] then
-            soloBtn[index]:SetScale(D.DB[21][indexKey][8])
-        end
+        D.A.pet:SetScale(D.DB[21][index][8])
+    elseif index<=6 then
+        soloBtn[index]:SetScale(D.DB[21][index][8])
     end
 end
 local function ProcessAlphaBtn(index)
-    if not index or type(index)~="number" then return end
-    if not index or type(index)~="number" then return end
-    if index==10 then
-        D.H.raid:SetAlpha(D.DB[21][indexKey][9])
+    if type(index)~="number" then return end
+    if index==18 then
+        C.EtherIcon:SetAlpha(D.DB[21][index][9])
+    elseif index==17 then
+        C.ToolFrame:SetAlpha(D.DB[21][index][9])
+    elseif index==16 then
+        C.InfoFrame:SetAlpha(D.DB[21][index][9])
+    elseif index<=15 and index>=14 then
+        D.modelBtn[index-13]:SetAlpha(D.DB[21][index][9])
+    elseif index<=13 and index>=12 then
+        D.castBar[index-11]:SetAlpha(D.DB[21][index][9])
+    elseif index==10 then
+        D.A.raid:SetAlpha(D.DB[21][index][9])
     elseif index==11 then
-        D.A.pet:SetAlpha(D.DB[21][indexKey][9])
-    elseif index<7 then
-        if soloBtn[index] then
-            soloBtn[index]:SetAlpha(D.DB[21][indexKey][9])
-        end
+        D.A.pet:SetAlpha(D.DB[21][index][9])
+    elseif index<=6 then
+        soloBtn[index]:SetAlpha(D.DB[21][index][9])
     end
 end
 local function Layout(self,status)
@@ -130,7 +170,7 @@ local function Layout(self,status)
     self.created=status
     local layout={"player","target","targettarget","pet","pettarget","focus",
                   "custom1","custom2","custom3","raidButtons","petButtons","CastBar1","CastBar2","playerModel",
-                  "targetModel","InfoFrame","Tooltip","EtherIcon","Battle Elixir","Guardian Elixir","Food","MainHand","TANK","HEALER","DAMAGER","NONE"}
+                  "targetModel","InfoFrame","Tooltip","EtherIcon","Battle Elixir","Guardian Elixir","Food","MainHand","TANK","HEALER","DAMAGER"}
     local object,data,role={},{},{}
     for i,v in ipairs(layout) do
         if i>22 then
@@ -143,7 +183,7 @@ local function Layout(self,status)
     end
     local objectDropdown=F:CreateEtherDropdown(self,120,"Frame",object,OnBarSelect)
     local dataDropdown=F:CreateEtherDropdown(self,120,"Consum",data,OnBarConsum)
-    local roleDropdown=F:CreateEtherDropdown(self,120,D.DB["CONFIG"][13] or "Role",role,OnGroupJoined)
+    local roleDropdown=F:CreateEtherDropdown(self,120,D.DB["CONFIG"][13] or "DAMAGER",role,OnGroupJoined)
     local removeDropdown=F:CreateEtherDropdown(self,120,"Remove",D.DB["USER"],OnRemoved,true)
     C.RemoveDropdown=removeDropdown
     self.roleDropdown=roleDropdown
@@ -151,20 +191,23 @@ local function Layout(self,status)
     self.wl,self.hl=wl,hl
     wl:SetPoint("TOP",self,"TOP",0,-55)
     wl:SetScript("OnEnterPressed",function()
+        local i=indexKey
         local width=tonumber(wl:GetText())
-        D.DB[21][indexKey][6]=width
-        ProcessUserData(indexKey)
+        D.DB[21][i][6]=width
         C.ChildFrames[6].w.v:SetText(tostring(wl:GetText()))
         C.ChildFrames[6].w:SetValue(tostring(wl:GetText()))
+        ProcessWidthBtn(i)
         wl:ClearFocus()
+
     end)
     hl:SetPoint("LEFT",wl,"RIGHT",20,0)
     hl:SetScript("OnEnterPressed",function()
+        local i=indexKey
         local height=tonumber(hl:GetText())
-        D.DB[21][indexKey][7]=height
-        ProcessUserData(indexKey)
+        D.DB[21][i][7]=height
         C.ChildFrames[6].h.v:SetText(tostring(hl:GetText()))
         C.ChildFrames[6].h:SetValue(tostring(hl:GetText()))
+        ProcessHeightBtn(i)
         hl:ClearFocus()
     end)
     wl.v=self:CreateFontString(nil,"OVERLAY")
@@ -177,49 +220,47 @@ local function Layout(self,status)
     hl.v:SetPoint("BOTTOMLEFT",hl,"TOPLEFT",0,5)
     local s=F:CreateSlider(wl,"Scale","%.0f px","0.1","2",0.1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(_,value)
-                wl:ClearFocus()
-                hl:ClearFocus()
-                D.DB[21][indexKey][8]=value
-                C.ChildFrames[6].s:SetValue(D.DB[21][indexKey][8])
-                ProcessScaleBtn(indexKey)
+                local i=indexKey
+                D.DB[21][i][8]=value
+                C.ChildFrames[6].s:SetValue(value)
                 C.ChildFrames[6].s.v:SetText(sformat("%.1f px",value))
+                ProcessScaleBtn(i)
             end)
     self.s=s
     local a=F:CreateSlider(hl,"Alpha","%.0f px","0.1","1",0.1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(_,value)
-                wl:ClearFocus()
-                hl:ClearFocus()
-                D.DB[21][indexKey][9]=value
-                C.ChildFrames[6].a:SetValue(D.DB[21][indexKey][9])
-                ProcessAlphaBtn(indexKey)
+                local i=indexKey
+                D.DB[21][i][9]=value
+                C.ChildFrames[6].a:SetValue(value)
                 C.ChildFrames[6].a.v:SetText(sformat("%.1f px",value))
+                ProcessAlphaBtn(i)
             end)
     self.a=a
     local w=F:CreateSlider(s,"Width","%.1f px","15","800",1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(_,value)
-                wl:ClearFocus()
-                hl:ClearFocus()
-                D.DB[21][indexKey][6]=value
-                wl:SetText(D.DB[21][indexKey][6])
-                C.ChildFrames[6].w:SetValue(D.DB[21][indexKey][6])
-                ProcessUserData(indexKey)
+                local i=indexKey
+                D.DB[21][i][6]=value
+                wl:SetText(value)
                 C.ChildFrames[6].w.v:SetText(sformat("%.0f px",value))
+                C.ChildFrames[6].w:SetValue(value)
+                ProcessWidthBtn(i)
             end)
     self.w=w
     local h=F:CreateSlider(a,"Height","%.1f px","15","800",1,"TOPLEFT","BOTTOMLEFT",0,-20,
             function(_,value)
-                wl:ClearFocus()
-                hl:ClearFocus()
-                D.DB[21][indexKey][7]=value
-                hl:SetText(D.DB[21][indexKey][7])
-                C.ChildFrames[6].h:SetValue(D.DB[21][indexKey][7])
-                ProcessUserData(indexKey)
+                local i=indexKey
+                D.DB[21][i][7]=value
+                hl:SetText(value)
                 C.ChildFrames[6].h.v:SetText(sformat("%.0f px",value))
+                C.ChildFrames[6].h:SetValue(value)
+                ProcessHeightBtn(i)
             end)
     self.h=h
     local default=F:EtherPanelButton(self,60,20,"Default","TOPRIGHT",self,"TOPRIGHT",0,-5)
     default:SetScript("OnClick",function()
-        SetDefaultValue(indexKey,wl,hl,w,h,s,a)
+        if indexKey then
+            SetDefaultValue(self,indexKey,wl,hl,w,h,s,a)
+        end
     end)
     default:Hide()
     self.default=default
