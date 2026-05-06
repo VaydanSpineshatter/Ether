@@ -1,8 +1,7 @@
 local D,F,_,C=unpack(select(2,...))
 local raid,pet=CreateFrame("Frame","EtherRaidGroupAnchor",UIParent,"SecureFrameTemplate"),CreateFrame("Frame","EtherPetGroupAnchor",UIParent,"SecureFrameTemplate")
 D.A.raid,D.A.pet=raid,pet
-D.A.raid.index,D.A.pet.index=10,11
-local raidBtn,UnitGUID,C_After,GameTooltip=D.raidBtn,UnitGUID,C_Timer.After,GameTooltip
+local raidBtn,petBtn,UnitGUID,C_After,GameTooltip,UnitExists=D.raidBtn,D.petBtn,UnitGUID,C_Timer.After,GameTooltip,UnitExists
 local initialConfig=[[
     local header = self:GetParent()
     self:SetWidth(header:GetAttribute("ButtonWidth"))
@@ -20,88 +19,117 @@ local function UpdatePCT(self)
         F:UpdatePowerPct(self)
     end
 end
-local function CheckStatus(self)
-    local unit=self:GetAttribute("unit")
-    self.unit=unit
-    local guid=unit and UnitGUID(unit)
-    if guid~=self.destGUID then
-        self.destGUID=guid
-        if guid then
-            F:SetupBlinkIcon(self)
-            F:SetupClassDispel(self)
-            F:UpdateIndicatorsString(self)
-            F:RaidAurasFullUpdate(self.unit)
-            UpdatePCT(self)
-            F:FullHealthUpdate(self)
-            F:UpdateName(self,2)
-            F:SaveBtnPosition(self)
-        end
+local function UpdateButton(self)
+    local guid=UnitGUID(self.unit)
+    if not guid or guid==self.guid then return end
+    self.guid=guid
+    F:UpdateUnitTable(self.unit)
+    F:SetupClassDispel(self)
+    F:FullHealthUpdate(self)
+    F:SaveBtnPosition(self)
+    if self.TypePet then
+        F:UpdateIndicatorsPetUnit(self)
+    else
+        F:UpdateName(self,2)
+        F:SetupBlinkIcon(self)
+        UpdatePCT(self)
+        F:UpdateIndicatorsUnit(self)
     end
+    F:UpdateRaidAuras(self.unit)
+end
+local function OnEnter(self)
+    if not UnitExists(self.unit) then return end
+    GameTooltip:SetOwner(self,"ANCHOR_RIGHT")
+    GameTooltip:SetUnit(self.unit)
+    GameTooltip:Show()
+end
+local function OnLeave()
+    GameTooltip:Hide()
+end
+local function OnEvent(self,event)
+    if event~="UNIT_PET" then return end
+    self.unit=self:GetAttribute("unit")
+    if not self.unit then return end
+    petBtn[self.unit]=self
+    F:UpdateName(self,2)
+    F:SoloAuraFullUpdate(D.soloBtn[4],"pet")
+    UpdateButton(self)
 end
 local function OnAttributeChanged(self,name,unit)
-    if name~="unit" then return end
-    if unit then
-        self.unit=nil
-        raidBtn[unit]=self
-    end
-    CheckStatus(self)
+    if not unit or name~="unit" then return end
+    self.unit=self:GetAttribute("unit")
+    if not self.unit then return end
+    raidBtn[self.unit]=self
+    UpdateButton(self)
 end
 local function OnShow(self)
-    self:RegisterEvent("GROUP_ROSTER_UPDATE")
-    if self.TypePet then
+    if not self:IsEventRegistered("UNIT_PET") then
         self:RegisterEvent("UNIT_PET")
+    end
+    if not self:GetScript("OnEnter") then
+        self:SetScript("OnEnter",OnEnter)
+    end
+    if not self:GetScript("OnLeave") then
+        self:SetScript("OnLeave",OnLeave)
     end
 end
 local function OnHide(self)
-    self:UnregisterEvent("GROUP_ROSTER_UPDATE")
-    if self.TypePet then
+    if self:IsEventRegistered("UNIT_PET") then
         self:UnregisterEvent("UNIT_PET")
     end
-end
-local function OnEnter(self)
-    if GameTooltip then
-        GameTooltip:SetOwner(self,"ANCHOR_RIGHT")
-        GameTooltip:SetUnit(self.unit)
-        GameTooltip:Show()
+    if self:GetScript("OnEnter") then
+        self:SetScript("OnEnter",nil)
+    end
+    if self:GetScript("OnLeave") then
+        self:SetScript("OnLeave",nil)
     end
 end
-local function OnLeave()
-    if GameTooltip then
-        GameTooltip:Hide()
-    end
-end
-local function CreateChildren(h,n)
-    local b=_G[n]
-    b.Indicators={}
-    local name=b:GetName()
-    local healthBar=CreateFrame("StatusBar",name.."_HealthBar",b)
-    b.healthBar=healthBar
+local function CreateHealthStatusBar(self)
+    local name=self:GetName()
+    local healthBar=CreateFrame("StatusBar",name.."_HealthBar",self)
+    self.healthBar=healthBar
     healthBar:SetOrientation("VERTICAL")
     healthBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
     healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK",-7)
     healthBar:SetMinMaxValues(0,100)
-    healthBar:SetFrameLevel(b:GetFrameLevel()+3)
-    healthBar:SetAllPoints(b)
-    local healthDrop=b:CreateTexture(name.."_HealthDrop","ARTWORK",nil,-7)
-    b.healthDrop=healthDrop
+    healthBar:SetFrameLevel(self:GetFrameLevel()+3)
+    healthBar:SetAllPoints(self)
+    local healthDrop=self:CreateTexture(name.."_HealthDrop","ARTWORK",nil,-7)
+    self.healthDrop=healthDrop
     healthDrop:SetAllPoints()
     healthDrop:SetTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
-    b.healthBar:SetAllPoints(b)
-    F:SetupButtonBackground(b)
-    F:SetupButtonBorder(b)
+    self.healthBar:SetAllPoints(self)
+end
+local function CreateChildren(h,n)
+    local b=_G[n]
+    b.Indicators={}
+    local width=h:GetAttribute("ButtonWidth")
+    local height=h:GetAttribute("ButtonHeight")
     if h:GetAttribute("TypePet") then
+        b:SetSize(tonumber(width) or 45,tonumber(height) or 45)
+        if not b:IsEventRegistered("UNIT_PET") then
+            b:RegisterEvent("UNIT_PET")
+        end
+        CreateHealthStatusBar(b)
+        F:SetupButtonBackground(b)
+        F:SetupButtonBorder(b)
         b.TypePet=true
+        b:SetScript("OnEvent",OnEvent)
+        b:SetScript("OnShow",OnShow)
+        b:SetScript("OnHide",OnHide)
     else
+        b:SetSize(tonumber(width) or 55,tonumber(height) or 55)
+        CreateHealthStatusBar(b)
+        F:SetupButtonBackground(b)
+        F:SetupButtonBorder(b)
         F:SetupPowerText(b)
         F:SetupHealthText(b)
+        b:HookScript("OnAttributeChanged",OnAttributeChanged)
     end
     F:SetupPrediction(b)
     F:SetupName(b,-5)
-    b:HookScript("OnAttributeChanged",OnAttributeChanged)
-    b:SetScript("OnShow",OnShow)
-    b:SetScript("OnHide",OnHide)
     b:SetScript("OnEnter",OnEnter)
-    b:SetScript("OnLeave",OnLeave)
+     b:SetScript("OnLeave",OnLeave)
     if not InCombatLockdown() then
         b:RegisterForClicks("AnyUp")
     end
@@ -154,8 +182,7 @@ function F:CreateGroupHeader()
     header:Show()
 end
 function F:CreatePetHeader()
-    local DB=D.DB
-    local data=DB[21][11]
+    local data=D.DB[21][11]
     local header=CreateFrame("Frame","EtherPetGroupHeader",pet,"SecureGroupPetHeaderTemplate")
     D.H.pet=header
     header:SetPoint("BOTTOMLEFT",pet,"TOPLEFT")
@@ -163,16 +190,17 @@ function F:CreatePetHeader()
     header:SetAttribute("initialConfigFunction",initialConfig)
     header.CreateChildren=CreateChildren
     header:SetAttribute("TypePet",true)
-    header:SetAttribute("ButtonHeight",data[6] or 50)
-    header:SetAttribute("ButtonWidth",data[7] or 50)
+    header:SetAttribute("ButtonHeight",data[6] or 45)
+    header:SetAttribute("ButtonWidth",data[7] or 45)
     header:SetAttribute("xOffset",-2)
     header:SetAttribute("yOffset",2)
     header:SetAttribute("showRaid",true)
     header:SetAttribute("showParty",false)
     header:SetAttribute("showPlayer",true)
     header:SetAttribute("showSolo",true)
-    header:SetAttribute("columnAnchorPoint","LEFT")
-    header:SetAttribute("point","RIGHT")
+    header:SetAttribute("columnAnchorPoint","TOP")
+    header:SetAttribute("point","LEFT")
+    header:SetAttribute("columnSpacing",1)
     header:SetAttribute("useOwnerUnit",false)
     header:SetAttribute("filterOnPet",true)
     header:SetAttribute("unitsPerColumn",6)

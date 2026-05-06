@@ -1,25 +1,25 @@
 local D,F,S,C=unpack(select(2,...))
-local ipairs,modelBtn,j=ipairs,D.modelBtn,0
-C.BorderFrames,C.ChildFrames,C.MenuButtons,C.AuraList,C.MainButtons,C.created={},{},{},{},{},false
+local ipairs,modelBtn,j,created=ipairs,D.modelBtn,0,false
+C.BorderFrames,C.ChildFrames,C.MenuButtons,C.AuraList,C.MainButtons={},{},{},{},{}
 while true do
     j=j+1
     C.MainButtons[#C.MainButtons+1]={}
     if j>=7 then break end
 end
 local function Child()
-    if C.created then return end
-    for index=1,8 do
-        if not C.MenuButtons[index] then
-            F:MenuButton(index,function()
-                if not C.ChildFrames[index].created then
-                    F:Fire(index+50,C.ChildFrames[index],true)
+    if created then return end
+    for i=1,8 do
+        if not C.MenuButtons[i] then
+            F:MenuButton(i,function()
+                if not C.ChildFrames[i].created then
+                    F:Fire(i+50,C.ChildFrames[i],true)
                 end
             end)
         end
     end
 end
 local function Base()
-    if C.created then return end
+    if created then return end
     C.BaseFrame:SetPoint("TOPLEFT")
     C.BaseFrame:SetPoint("BOTTOMLEFT")
     C.BaseFrame:SetWidth(100)
@@ -28,8 +28,8 @@ local function Base()
     F:InitializeSystemStatus()
 end
 local function Border()
-    if C.created then return end
-    C.created=true
+    if created then return end
+    created=true
     F:MainBorder(C.MainFrame,1,2,3,4)
     C.BorderFrames[5]=C.ContentFrame:CreateTexture(nil,"BORDER")
     C.BorderFrames[5]:SetColorTexture(0.67,0.67,0.67)
@@ -38,15 +38,13 @@ local function Border()
     C.BorderFrames[5]:SetWidth(1)
 end
 function C:Main()
-    if C.created then return end
-    local frame=C.MainFrame
-    frame:SetFrameStrata("TOOLTIP")
-    C.MainFrame=frame
-    frame.bg=frame:CreateTexture(nil,"BACKGROUND")
-    frame.bg:SetAllPoints()
-    frame.bg:SetColorTexture(0.1,0.1,0.1)
-    frame:Hide()
-    frame:SetScript("OnHide",function()
+    if created then return end
+    C.MainFrame:SetFrameStrata("TOOLTIP")
+    C.MainFrame.bg=C.MainFrame:CreateTexture(nil,"BACKGROUND")
+    C.MainFrame.bg:SetAllPoints()
+    C.MainFrame.bg:SetColorTexture(0.1,0.1,0.1)
+    C.MainFrame:Hide()
+    C.MainFrame:SetScript("OnHide",function()
         C:ToggleUnlock(0)
         if C.DropdownMenu then
             C.DropdownMenu:Hide()
@@ -75,31 +73,31 @@ function C:Main()
     Base()
     Child()
     Border()
-    D:ApplyFramePosition(frame)
-    F:SetupDrag(frame)
+    D:ApplyFramePosition(C.MainFrame)
+    F:SetupDrag(C.MainFrame)
 end
 function C:ToggleUnlock(number)
     if not C.GridFrame then
         F:SetupGridFrame()
     end
-    local index=F:BinaryCondition(number)
-    C.IsMovable=index
-    C.GridFrame:SetShown(index)
-    C.ToolFrame:SetShown(index)
-    C.InfoFrame:SetShown(index)
+    local i=F:BinaryCondition(number)
+    C.IsMovable=i
+    C.GridFrame:SetShown(i)
+    C.ToolFrame:SetShown(i)
+    C.InfoFrame:SetShown(i)
     if D.A.raid.tex then
-        D.A.raid.tex:SetShown(index)
+        D.A.raid.tex:SetShown(i)
     end
     if D.A.pet.tex then
-        D.A.pet.tex:SetShown(index)
+        D.A.pet.tex:SetShown(i)
     end
     if D.DB[6][12]==1 then
-        F:HideCastBar(1,index)
+        F:HideCastBar(1,i)
     end
     if D.DB[6][13]==1 then
-        F:HideCastBar(2,index)
+        F:HideCastBar(2,i)
     end
-    C.StatusTooltip=index
+    C.StatusTooltip=i
 end
 function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
@@ -108,8 +106,8 @@ function S.EventFrame:PLAYER_LOGIN()
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()
-    F:SetupHeaderBackground(D.A.raid)
-    F:SetupHeaderBackground(D.A.pet)
+    F:SetupHeaderBackground(D.A.raid,10)
+    F:SetupHeaderBackground(D.A.pet,11)
     for index=1,6 do
         F:CreateUnitButtons(index)
         if D.DB[6][index]==0 then

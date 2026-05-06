@@ -1,7 +1,7 @@
 local D,F,S=unpack(select(2,...))
 local UnitHealth,UnitHealthMax,UnitGetIncomingHeals,UnitIsDeadOrGhost=UnitHealth,UnitHealthMax,UnitGetIncomingHeals,UnitIsDeadOrGhost
 local sformat,mfloor,pairs,UnitExists,mmax,mmin=string.format,math.floor,pairs,UnitExists,math.max,math.min
-local event,raidBtn,soloBtn,f2m,UnitIsConnected=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r",UnitIsConnected
+local event,petBtn,raidBtn,soloBtn,f2m,UnitIsConnected=S.EventFrame,D.petBtn,D.raidBtn,D.soloBtn,"%s%d|r",UnitIsConnected
 local function ReturnHealth(self)
     if not self or not self.unit then return end
     return UnitHealth(self.unit)
@@ -13,9 +13,19 @@ end
 local function GetSoloBtn(unit)
     return soloBtn[D:PosUnit(unit)]
 end
-local function GetRaidBtn(unit)
-    local b=raidBtn[unit]
-    if b and b.unit==unit then
+local function GetRaidBtn(arg1)
+    if not raidBtn[arg1] then return end
+    local b=raidBtn[arg1]
+    local unit=b.unit
+    if b:IsVisible() and UnitExists(unit) then
+        return b
+    end
+end
+local function GetPetBtn(arg1)
+    if not petBtn[arg1] then return end
+    local b=petBtn[arg1]
+    local unit=b.unit
+    if b:IsVisible() and UnitExists(unit) then
         return b
     end
 end
@@ -155,6 +165,10 @@ function event:UNIT_HEAL_PREDICTION(unit)
     if b then
         UpdatePrediction(b)
     end
+    local p=GetPetBtn(unit)
+    if p then
+        UpdatePrediction(p)
+    end
     local s=GetSoloBtn(unit)
     if s then
         UpdatePrediction(s)
@@ -173,6 +187,10 @@ function event:UNIT_HEALTH(unit)
             F:UpdateHealthPct(b)
         end
     end
+    local p=GetPetBtn(unit)
+    if p then
+        Health(p)
+    end
     local s=GetSoloBtn(unit)
     if s then
         Health(s)
@@ -190,6 +208,10 @@ function event:UNIT_MAXHEALTH(unit)
         if D.DB[5][3]==1 then
             F:UpdateHealthPct(b)
         end
+    end
+    local p=GetPetBtn(unit)
+    if p then
+        MaxHealth(p)
     end
     local s=GetSoloBtn(unit)
     if s then

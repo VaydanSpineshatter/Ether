@@ -2,7 +2,7 @@ local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,mfloor,sformat=pairs,ipairs,math.floor,string.format
 local GetBuffDataByIndex,GetDebuffDataByIndex=C_UnitAuras.GetBuffDataByIndex,C_UnitAuras.GetDebuffDataByIndex
 local UnitExists,GetTime,twipe,GetAuraDataByAuraInstanceID=UnitExists,GetTime,table.wipe,C_UnitAuras.GetAuraDataByAuraInstanceID
-local event,raidBtn,soloBtn,Active,bX,bY,dX,dY=S.EventFrame,D.raidBtn,D.soloBtn,{},{},{},{},{}
+local event,raidBtn,petBtn,soloBtn,Active,bX,bY,dX,dY=S.EventFrame,D.raidBtn,D.petBtn,D.soloBtn,{},{},{},{},{}
 local ICON_SIZE,SPACING,PER_ROW,BUFF_Y,DEBUFF_Y=15,1,8,3,35
 local function AuraPosition(i,offsetY)
     local row=mfloor((i-1)/PER_ROW)
@@ -182,28 +182,27 @@ local function RemoveDebuff(button,id)
         end
     end
 end
-local function GetAuras(update,button,unit)
-    if not update or not button then return end
-    AuraRefreshPos(button.aura.buffs,button.aura.bmap,unit,GetBuffDataByIndex)
-    AuraRefreshPos(button.aura.debuffs,button.aura.dmap,unit,GetDebuffDataByIndex)
+local function GetAuras(b,unit)
+    if not b or not b.unit or not b.aura then return end
+    AuraRefreshPos(b.aura.buffs,b.aura.bmap,unit,GetBuffDataByIndex)
+    AuraRefreshPos(b.aura.debuffs,b.aura.dmap,unit,GetDebuffDataByIndex)
 end
 local update=false
 local function UnitAuraUpdate(unit,updateInfo)
     if not update then return end
-    local button=GetSoloButton(unit)
-    if not button or not button.aura then return end
-    local isFullUpdate=not updateInfo or updateInfo.isFullUpdate
-    if isFullUpdate then
-        GetAuras(update,button,unit)
+    local b=GetSoloButton(unit)
+    if not b or not b.aura then return end
+    if updateInfo.isFullUpdate then
+        GetAuras(b,unit)
         return
     end
     if updateInfo.addedAuras then
         for _,aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful then
-                AddBuff(button,aura)
+                AddBuff(b,aura)
             end
             if aura.isHarmful then
-                AddDebuff(button,aura)
+                AddDebuff(b,aura)
             end
         end
     end
@@ -212,18 +211,18 @@ local function UnitAuraUpdate(unit,updateInfo)
             local aura=GetAuraDataByAuraInstanceID(unit,id)
             if aura then
                 if aura.isHelpful then
-                    UpdateBuff(button,aura)
+                    UpdateBuff(b,aura)
                 end
                 if aura.isHarmful then
-                    UpdateDebuff(button,aura)
+                    UpdateDebuff(b,aura)
                 end
             end
         end
     end
     if updateInfo.removedAuraInstanceIDs then
         for _,id in ipairs(updateInfo.removedAuraInstanceIDs) do
-            RemoveBuff(button,id)
-            RemoveDebuff(button,id)
+            RemoveBuff(b,id)
+            RemoveDebuff(b,id)
         end
     end
 end
@@ -242,10 +241,9 @@ local function auraTbl(button,status)
         twipe(button.aura.debuffs)
     end
 end
-function F:SoloAuraFullUpdate(button,unit)
-    if not button or not button.aura then return end
+function F:SoloAuraFullUpdate(b,unit)
     if UnitExists(unit) then
-        GetAuras(update,button,unit)
+        GetAuras(b,unit)
     end
 end
 local function SetupAuraIcon(button)
@@ -348,6 +346,7 @@ function F:EnableSoloAura()
     C_Timer.After(0.4,function()
         F:SoloAuraFullUpdate(soloBtn[1],"player")
         F:SoloAuraFullUpdate(soloBtn[2],"target")
+        F:SoloAuraFullUpdate(soloBtn[4],"pet")
     end)
 end
 function F:DisableSoloAura()
@@ -371,8 +370,8 @@ function event:UNIT_AURA(arg1,...)
     if validUnit[arg1] then
         UnitAuraUpdate(arg1,info)
     end
-    if raidBtn[arg1] then
-        F:raidAuraUpdate(arg1,info)
+    if raidBtn[arg1] or petBtn[arg1] then
+        F:AuraUpdate(arg1,info)
     end
 end
 function F:AuraEnable()

@@ -112,10 +112,11 @@ function F:SetupButtonBackground(button)
     bg:SetAllPoints(button)
     return button
 end
-function F:SetupHeaderBackground(frame)
+function F:SetupHeaderBackground(frame,index)
     if not frame then return end
     local tex=frame:CreateTexture(nil,"BACKGROUND")
     frame.tex=tex
+    frame.index=index
     tex:SetSize(32,32)
     tex:SetAllPoints()
     tex:SetColorTexture(0,1,0,.7)

@@ -1,5 +1,5 @@
 local D,F,_,C=unpack(select(2,...))
-local raidBtn,soloBtn,sformat,pairs,ipairs,indexKey=D.raidBtn,D.soloBtn,string.format,pairs,ipairs
+local raidBtn,petBtn,soloBtn,sformat,pairs,ipairs,indexKey=D.raidBtn,D.petBtn,D.soloBtn,string.format,pairs,ipairs
 local function SetDefaultValue(index,wl,hl,w,h,s,a)
     if not index then return end
     local pos=D.Default[21][indexKey]
@@ -82,18 +82,45 @@ local function ProcessUserData(index)
         D:ApplyFramePosition(D.castBar[2])
     elseif index==12 then
         D:ApplyFramePosition(D.castBar[1])
-    elseif index==10 or index==11 then
-        D.A.raid:SetScale(D.DB[21][indexKey][8])
-        D.A.raid:SetAlpha(D.DB[21][indexKey][9])
+    elseif index==10 then
         for _,btn in pairs(raidBtn) do
-            btn:SetWidth(D.DB[21][indexKey][6])
-            btn:SetHeight(D.DB[21][indexKey][7])
+            if btn then
+                btn:SetSize(D.DB[21][indexKey][6],D.DB[21][indexKey][7])
+            end
+        end
+    elseif index==11 then
+        for _,btn in pairs(petBtn) do
+            if btn then
+                btn:SetSize(D.DB[21][indexKey][6],D.DB[21][indexKey][7])
+            end
         end
     elseif index<7 then
         if soloBtn[index] then
-            soloBtn[index]:SetWidth(D.DB[21][indexKey][6])
-            soloBtn[index]:SetHeight(D.DB[21][indexKey][7])
+            soloBtn[index]:SetSize(D.DB[21][indexKey][6],D.DB[21][indexKey][7])
+        end
+    end
+end
+local function ProcessScaleBtn(index)
+    if not index or type(index)~="number" then return end
+    if index==10 then
+        D.H.raid:SetScale(D.DB[21][indexKey][8])
+    elseif index==11 then
+        D.H.pet:SetScale(D.DB[21][indexKey][8])
+    elseif index<7 then
+        if soloBtn[index] then
             soloBtn[index]:SetScale(D.DB[21][indexKey][8])
+        end
+    end
+end
+local function ProcessAlphaBtn(index)
+    if not index or type(index)~="number" then return end
+    if not index or type(index)~="number" then return end
+    if index==10 then
+        D.H.raid:SetAlpha(D.DB[21][indexKey][9])
+    elseif index==11 then
+        D.A.pet:SetAlpha(D.DB[21][indexKey][9])
+    elseif index<7 then
+        if soloBtn[index] then
             soloBtn[index]:SetAlpha(D.DB[21][indexKey][9])
         end
     end
@@ -154,7 +181,7 @@ local function Layout(self,status)
                 hl:ClearFocus()
                 D.DB[21][indexKey][8]=value
                 C.ChildFrames[6].s:SetValue(D.DB[21][indexKey][8])
-                ProcessUserData(indexKey)
+                ProcessScaleBtn(indexKey)
                 C.ChildFrames[6].s.v:SetText(sformat("%.1f px",value))
             end)
     self.s=s
@@ -164,7 +191,7 @@ local function Layout(self,status)
                 hl:ClearFocus()
                 D.DB[21][indexKey][9]=value
                 C.ChildFrames[6].a:SetValue(D.DB[21][indexKey][9])
-                ProcessUserData(indexKey)
+                ProcessAlphaBtn(indexKey)
                 C.ChildFrames[6].a.v:SetText(sformat("%.1f px",value))
             end)
     self.a=a

@@ -3,34 +3,41 @@ local UnitCreatureFamily,UnitExists,GetPetHappiness,GameTooltip=UnitCreatureFami
 local event,petBtn,petInfo=S.EventFrame,D.soloBtn,{[1]={0.375,0.5625,0,0.359375},[2]={0.1875,0.375,0,0.359375},[3]={0,0.1875,0,0.359375}}
 local function PetStatus(self)
     local happiness=GetPetHappiness()
-    if (happiness) then
+    if happiness then
         self.happy:SetTexCoord(unpack(petInfo[happiness]))
     end
 end
 local function Enter(self)
-    if UnitExists("pet") and GameTooltip then
-        local happiness,damagePercentage,loyaltyRate=GetPetHappiness()
-        local petType=UnitCreatureFamily("pet")
-        GameTooltip:SetOwner(self,'ANCHOR_RIGHT')
-        GameTooltip:SetText('Condition:',0,0.8,1)
-        GameTooltip:AddLine('Family: '..petType)
+    if not UnitExists("pet") then return end
+    local happiness,damagePercentage,loyaltyRate=GetPetHappiness()
+    local petType=UnitCreatureFamily("pet")
+    GameTooltip:SetOwner(self,'ANCHOR_RIGHT')
+    GameTooltip:SetText('Condition:',0,0.8,1)
+    GameTooltip:AddLine('Family: '..petType)
+    if happiness then
         GameTooltip:AddLine('Happiness: '..({'Unhappy','Content','Happy'})[happiness])
-        GameTooltip:AddLine('Loyalty: '..(loyaltyRate or 'N/A'))
-        GameTooltip:AddLine('Pet is doing '..damagePercentage..'% damage')
-        GameTooltip:Show()
     end
+    if loyaltyRate then
+        GameTooltip:AddLine('Loyalty: '..(loyaltyRate or 'N/A'))
+    end
+    if damagePercentage then
+        GameTooltip:AddLine('Pet is doing '..damagePercentage..'% damage')
+    end
+    GameTooltip:Show()
 end
 local function Leave()
-    if UnitExists("pet") then
+    if GameTooltip then
         GameTooltip:Hide()
     end
 end
-function event:UNIT_HAPPINESS()
+function event:UNIT_HAPPINESS(unit)
+    if unit~="pet" then return end
     if petBtn[4]:IsVisible() then
         PetStatus(C.condition)
     end
 end
-function event:UNIT_PET()
+function event:UNIT_PET(unit)
+   if unit~="player" then return end
     if petBtn[4]:IsVisible() then
         PetStatus(C.condition)
     end

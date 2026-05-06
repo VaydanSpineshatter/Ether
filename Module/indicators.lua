@@ -2,14 +2,22 @@ local D,F,S=unpack(select(2,...))
 local UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost=UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost
 local UnitHasIncomingResurrection,Enum,UnitExists=UnitHasIncomingResurrection,Enum,UnitExists
 local GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,updater=GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,nil
-local GetLootMethod,pairs,ipairs=C_PartyInfo.GetLootMethod,pairs,ipairs
+local GetLootMethod,pairs,ipairs,petBtn=C_PartyInfo.GetLootMethod,pairs,ipairs,D.petBtn
 local UnitIsGroupLeader,UnitInAnyGroup=UnitIsGroupLeader,UnitInAnyGroup
-local UnitIsUnit,UnitIsCharmed,IsInGroup=UnitIsUnit,UnitIsCharmed,IsInGroup
+local UnitIsUnit,UnitIsCharmed,IsInGroup,UnitIsPlayer=UnitIsUnit,UnitIsCharmed,IsInGroup,UnitIsPlayer
 local UnitGroupRolesAssigned,SetRaidTargetIconTexture=UnitGroupRolesAssigned,SetRaidTargetIconTexture
 local event,raidBtn,soloBtn=S.EventFrame,D.raidBtn,D.soloBtn
-local function GetRaidBtn(unit)
-    local b=raidBtn[unit]
-    if b and b.unit==unit then
+local function GetRaidBtn(arg1)
+    if not raidBtn[arg1] then return end
+    local b=raidBtn[arg1]
+    if arg1==b.unit and b:IsVisible() then
+        return b
+    end
+end
+local function GetPetBtn(arg1)
+    if not petBtn[arg1] then return end
+    local b=petBtn[arg1]
+    if arg1==b.unit and b:IsVisible() then
         return b
     end
 end
@@ -60,80 +68,49 @@ function F:SaveBtnPosition(b)
         end
     end
 end
-local function UpdateGroupRole(b,unit)
-    if D.DB[4][10]~=1 then return end
-    IndictorsTexture(b,"GroupRole")
-    if not IsInGroup() then
-        b.Indicators.GroupRole:Hide()
-        return
-    end
-    local role=UnitGroupRolesAssigned(unit)
-    if (role) then
-        b.Indicators.GroupRole:SetTexture(D.iIconPath[12])
-        if (role=="TANK") then
-            b.Indicators.GroupRole:SetTexCoord(0,19/64,22/64,41/64)
-            b.Indicators.GroupRole:Show()
-        elseif (role=="HEALER") then
-            b.Indicators.GroupRole:SetTexCoord(20/64,39/64,1/64,20/64)
-            b.Indicators.GroupRole:Show()
-        elseif (role=="DAMAGER") then
-            b.Indicators.GroupRole:SetTexCoord(20/64,39/64,22/64,41/64)
-            b.Indicators.GroupRole:Show()
+local function groupAssignments(self)
+    local assignment=GetPartyAssignment("MAINTANK",self.unit) or GetPartyAssignment("MAINASSIST",self.unit)
+    IndictorsTexture(self,"MainTank")
+    if assignment then
+        if GetPartyAssignment("MAINTANK",self.unit) then
+            self.Indicators.MainTank:SetTexture(D.iIconPath[10])
+            self.Indicators.MainTank:Show()
+        elseif GetPartyAssignment("MAINASSIST",self.unit) then
+            self.Indicators.MainTank:SetTexture(D.iIconPath[11])
+            self.Indicators.MainTank:Show()
         else
-            b.Indicators.GroupRole:Hide()
+            self.Indicators.MainTank:Hide()
         end
     end
 end
-local function UpdateMainTank(b,unit)
-    if D.DB[4][9]~=1 then return end
-    IndictorsTexture(b,"MainTank")
-    if not IsInGroup() and b.Indicators.MainTank then
-        b.Indicators.MainTank:Hide()
-        return
-    end
-    if GetPartyAssignment("MAINTANK",unit) then
-        b.Indicators.MainTank:SetTexture(D.iIconPath[10])
-        b.Indicators.MainTank:Show()
-    else
-        b.Indicators.MainTank:Hide()
-    end
-end
-local function UpdateMainAssist(b,unit)
-    if D.DB[4][9]~=1 then return end
-    IndictorsTexture(b,"MainTank")
-    if not IsInGroup() and b.Indicators.MainTank then
-        b.Indicators.MainTank:Hide()
-        return
-    end
-    if GetPartyAssignment("MAINASSIST",unit) then
-        b.Indicators.MainTank:SetTexture(D.iIconPath[11])
-        b.Indicators.MainTank:Show()
-    else
-        b.Indicators.MainTank:Hide()
+local function groupRole(self)
+    local role=UnitGroupRolesAssigned(self.unit)
+    if role then
+        IndictorsTexture(self,"GroupRole")
+        self.Indicators.GroupRole:SetTexture(D.iIconPath[12])
+        if (role=="TANK") then
+            self.Indicators.GroupRole:SetTexCoord(0,19/64,22/64,41/64)
+            self.Indicators.GroupRole:Show()
+        elseif (role=="HEALER") then
+            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,1/64,20/64)
+            self.Indicators.GroupRole:Show()
+        elseif (role=="DAMAGER") then
+            self.Indicators.GroupRole:SetTexCoord(20/64,39/64,22/64,41/64)
+            self.Indicators.GroupRole:Show()
+        else
+            self.Indicators.GroupRole:Hide()
+        end
     end
 end
 function event:PLAYER_ROLES_ASSIGNED()
-    if D.DB[4][9]==0 and D.DB[4][10]==0 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
-            local unit=b.unit
-            local role=UnitGroupRolesAssigned(unit)
-            if role then
-                UpdateGroupRole(b,unit)
-            end
-            local tank=GetPartyAssignment("MAINTANK",unit)
-            if tank then
-                UpdateMainTank(b,unit)
-            end
-            local assist=GetPartyAssignment("MAINASSIST",unit)
-            if assist then
-                UpdateMainAssist(b,unit)
-            end
+            groupRole(b)
+            groupAssignments(b)
         end
     end
 end
 function event:PARTY_LOOT_METHOD_CHANGED()
-    if D.DB[4][8]~=1 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
             local unit=b.unit
@@ -157,7 +134,6 @@ function event:PARTY_LOOT_METHOD_CHANGED()
     end
 end
 function event:PARTY_LEADER_CHANGED()
-    if D.DB[4][7]~=1 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
             local unit=b.unit
@@ -176,19 +152,7 @@ function event:PARTY_LEADER_CHANGED()
         end
     end
 end
-local function raidPlayerRoles(self)
-    if D.DB[4][9]==0 and D.DB[4][10]==0 then return end
-    local role=UnitGroupRolesAssigned(self.unit)
-    local assignment=GetPartyAssignment("MAINTANK",self.unit) or GetPartyAssignment("MAINASSIST",self.unit)
-    if role then
-        UpdateGroupRole(self,self.unit)
-    end
-    if assignment then
-        UpdateMainTank(self,self.unit)
-    end
-end
 local function raidMasterLoot(self)
-    if D.DB[4][8]~=1 then return end
     IndictorsTexture(self,"MasterLoot")
     if not UnitInAnyGroup("player") then
         self.Indicators.MasterLoot:Hide()
@@ -206,7 +170,6 @@ local function raidMasterLoot(self)
     end
 end
 local function raidGroupLeader(self)
-    if D.DB[4][7]~=1 then return end
     IndictorsTexture(self,"GroupLeader")
     if not UnitInAnyGroup("player") then
         self.Indicators.GroupLeader:Hide()
@@ -220,7 +183,6 @@ local function raidGroupLeader(self)
     end
 end
 local function raidTarget(self)
-    if D.DB[4][6]~=1 then return end
     IndictorsTexture(self,"RaidTarget")
     if UnitExists(self.unit) then
         local index=GetRaidTargetIndex(self.unit)
@@ -233,30 +195,80 @@ local function raidTarget(self)
         end
     end
 end
-function F:IndicatorsFullUpdateBtn()
-    for _,b in pairs(raidBtn) do
-        if b and UnitExists(b.unit) then
-            F:UpdateIndicatorsString(b)
-        end
+local function unitConnection(self)
+    IndictorsTexture(self,"Connection")
+    local isConnected=UnitIsConnected(self.unit)
+    if not isConnected then
+        F.UpdateClassColor(self)
+        self.Indicators.Connection:SetTexture(D.iIconPath[1])
+        self.Indicators.Connection:Show()
+    else
+        F.UpdateClassColor(self)
+        self.Indicators.Connection:Hide()
     end
 end
-function F:UpdateIndicatorsString(self)
-    event:UNIT_CONNECTION(self.unit)
-    event:PLAYER_FLAGS_CHANGED(self.unit)
-    event:UNIT_FLAGS(self.unit)
-    event:UNIT_FACTION(self.unit)
+local function unitFaction(self)
+    IndictorsTexture(self,"UnitFaction")
+    local charmed=UnitIsCharmed(self.unit)
+    if charmed then
+        self.name:SetTextColor(1,0,0)
+        self.Indicators.UnitFaction:SetTexture(D.iIconPath[6])
+        self.Indicators.UnitFaction:Show()
+    else
+        self.name:SetTextColor(1,1,1)
+        self.Indicators.UnitFaction:Hide()
+    end
+end
+local function unitFlags(self)
+    IndictorsTexture(self,"UnitFlags")
+    local dead=UnitIsDeadOrGhost(self.unit)
+    if dead then
+        self.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
+        self.Indicators.UnitFlags:Show()
+    else
+        self.Indicators.UnitFlags:Hide()
+        F.InitialHealth(self)
+    end
+end
+local function flagsChanged(self)
+    IndictorsTexture(self,"PlayerFlags")
+    local away=UnitIsAFK(self.unit)
+    local dnd=UnitIsDND(self.unit)
+    if away then
+        self.Indicators.PlayerFlags:SetTexture(D.iIconPath[3])
+        self.Indicators.PlayerFlags:Show()
+    elseif dnd then
+        self.Indicators.PlayerFlags:SetTexture(D.iIconPath[4])
+        self.Indicators.PlayerFlags:Show()
+    else
+        self.Indicators.PlayerFlags:Hide()
+    end
+end
+local function unitResurrection(self)
+    IndictorsTexture(self,"Resurrection")
+    local Resurrect=UnitHasIncomingResurrection(self.unit)
+    if (Resurrect) then
+        self.Indicators.Resurrection:SetTexture(D.iIconPath[2])
+        self.Indicators.Resurrection:Show()
+    else
+        self.Indicators.Resurrection:Hide()
+    end
+end
+function F:UpdateIndicatorsUnit(self)
+    unitConnection(self)
+    flagsChanged(self)
+    unitFlags(self)
+    unitFaction(self)
     raidTarget(self)
     raidGroupLeader(self)
     raidMasterLoot(self)
-    raidPlayerRoles(self)
-    for index=1,3 do
-        if UnitExists(D:PosUnit(index)) then
-            F:UpdateSoloIndicator(index)
-        end
-    end
-    if UnitExists(D:PosUnit(6)) then
-        F:UpdateSoloIndicator(6)
-    end
+    groupRole(self)
+    groupAssignments(self)
+    unitResurrection(self)
+end
+function F:UpdateIndicatorsPetUnit(self)
+    raidTarget(self)
+    unitResurrection(self)
 end
 function event:READY_CHECK()
     for _,b in pairs(raidBtn) do
@@ -316,16 +328,12 @@ function event:RAID_TARGET_UPDATE()
     if D.DB[4][6]~=1 then return end
     for _,b in pairs(raidBtn) do
         if b and UnitExists(b.unit) then
-            local unit=b.unit
-            IndictorsTexture(b,"RaidTarget")
-            local index=GetRaidTargetIndex(unit)
-            if index then
-                b.Indicators.RaidTarget:SetTexture(D.iIconPath[7])
-                SetRaidTargetIconTexture(b.Indicators.RaidTarget,index)
-                b.Indicators.RaidTarget:Show()
-            else
-                b.Indicators.RaidTarget:Hide()
-            end
+            raidTarget(b)
+        end
+    end
+    for _,b in pairs(petBtn) do
+        if b and UnitExists(b.unit) then
+            raidTarget(b)
         end
     end
     for index=1,3 do
@@ -338,85 +346,32 @@ function event:RAID_TARGET_UPDATE()
     end
 end
 function event:UNIT_FACTION(unit)
-    if D.DB[4][5]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
-    IndictorsTexture(b,"UnitFaction")
-    local charmed=UnitIsCharmed(unit)
-    if charmed then
-        b.name:SetTextColor(1,0,0)
-        b.Indicators.UnitFaction:SetTexture(D.iIconPath[6])
-        b.Indicators.UnitFaction:Show()
-    else
-        b.name:SetTextColor(1,1,1)
-        b.Indicators.UnitFaction:Hide()
-    end
+    unitFaction(b)
 end
 function event:UNIT_FLAGS(unit)
-    if D.DB[4][4]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
-    IndictorsTexture(b,"UnitFlags")
-    local dead=UnitIsDeadOrGhost(unit)
-    if dead then
-        b.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
-        b.Indicators.UnitFlags:Show()
-    else
-        b.Indicators.UnitFlags:Hide()
-        F.InitialHealth(b)
-    end
+    unitFlags(b)
 end
 function event:PLAYER_FLAGS_CHANGED(unit)
     if unit=="player" then
         F:UserIdle(unit)
     end
-    if D.DB[4][3]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
-    IndictorsTexture(b,"PlayerFlags")
-    local away=UnitIsAFK(unit)
-    local dnd=UnitIsDND(unit)
-    if away then
-        b.Indicators.PlayerFlags:SetTexture(D.iIconPath[3])
-        b.Indicators.PlayerFlags:Show()
-    elseif dnd then
-        b.Indicators.PlayerFlags:SetTexture(D.iIconPath[4])
-        b.Indicators.PlayerFlags:Show()
-    else
-        b.Indicators.PlayerFlags:Hide()
-    end
+    flagsChanged(b)
 end
 function event:INCOMING_RESURRECT_CHANGED(unit)
-    if D.DB[4][2]~=1 then return end
-    local b=GetRaidBtn(unit)
+    local b=GetPetBtn(unit) or GetRaidBtn(unit)
     if not b then return end
-    IndictorsTexture(b,"Resurrection")
-    local Resurrect=UnitHasIncomingResurrection(unit)
-    if (Resurrect) then
-        b.Indicators.Resurrection:SetTexture(D.iIconPath[2])
-        b.Indicators.Resurrection:Show()
-    else
-        b.Indicators.Resurrection:Hide()
-    end
+    unitResurrection(b)
 end
 function event:UNIT_CONNECTION(unit)
-    if D.DB[4][1]~=1 then return end
     local b=GetRaidBtn(unit)
     if not b then return end
-    IndictorsTexture(b,"Connection")
-    local isConnected=UnitIsConnected(unit)
-    if not isConnected then
-        F.UpdateClassColor(b)
-        b.Indicators.Connection:SetTexture(D.iIconPath[1])
-        b.Indicators.Connection:Show()
-    else
-        F.UpdateClassColor(b)
-        b.Indicators.Connection:Hide()
-    end
-    for index=1,3 do
-        F:UpdateSoloIndicator(index)
-    end
-    F:UpdateSoloIndicator(6)
+    unitConnection(b)
 end
 function F:UpdateSoloIndicator(number)
     local b=soloBtn[number]

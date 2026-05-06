@@ -5,8 +5,8 @@ local GetAuraDataByAuraInstanceID=C_UnitAuras.GetAuraDataByAuraInstanceID
 local UnitExists,raidBtn,twipe,type=UnitExists,D.raidBtn,table.wipe,type
 local helpfulAuras,harmfulAuras,dataHelpful,dataHarmful={},{},{},{}
 local dispelClass={MAGE={Curse=true},PRIEST={Magic=true,Disease=true},PALADIN={Magic=true,Disease=true,Poison=true},DRUID={Curse=true,Poison=true},SHAMAN={Disease=true,Poison=true}}
-local canDispel=dispelClass[C.ClassName]
-local function UnitTable(unit)
+local canDispel,petBtn=dispelClass[C.ClassName],D.petBtn
+function F:UpdateUnitTable(unit)
     if not dataHelpful[unit] then
         dataHelpful[unit]={}
     end
@@ -14,10 +14,10 @@ local function UnitTable(unit)
         dataHarmful[unit]={}
     end
 end
-local function GetRaidBtn(unit)
-    UnitTable(unit)
-    local b=raidBtn[unit]
-    if b and b.unit==unit then
+local function GetRaidBtn(arg1)
+    if not raidBtn[arg1] then return end
+    local b=petBtn[arg1] or raidBtn[arg1]
+    if arg1==b.unit and b:IsVisible() then
         return b
     end
 end
@@ -181,11 +181,10 @@ local function UpdateStatusIcons(b)
     end
 end
 F.UpdateStatusIcons=UpdateStatusIcons
-function F:RaidAurasFullUpdate(unit)
+function F:UpdateRaidAuras(unit)
     if not unit or not UnitExists(unit) then return end
     local b=GetRaidBtn(unit)
     if not b then return end
-    UpdateStatusIcons(b)
     local c=D.DB["CUSTOM"]
     local i=1
     while true do
@@ -205,13 +204,13 @@ function F:RaidAurasFullUpdate(unit)
     end
 end
 local update=false
-function F:raidAuraUpdate(unit,updateInfo)
+function F:AuraUpdate(unit,updateInfo)
     if not update then return end
     local b=GetRaidBtn(unit)
     if not b then return end
     local c=D.DB["CUSTOM"]
     if updateInfo.isFullUpdate then
-        F:RaidAurasFullUpdate(unit)
+        F:UpdateRaidAuras(unit)
         return
     end
     if updateInfo.addedAuras then
@@ -284,8 +283,13 @@ end
 function F:EnableRaidAura()
     update=true
     for _,b in pairs(raidBtn) do
-        if b and UnitExists(b.unit) then
-            F:RaidAurasFullUpdate(b.unit)
+        if b and b:IsVisible() and UnitExists(b.unit) then
+            F:UpdateRaidAuras(b.unit)
+        end
+    end
+    for _,b in pairs(petBtn) do
+        if b and b:IsVisible() and UnitExists(b.unit) then
+            F:UpdateRaidAuras(b.unit)
         end
     end
 end

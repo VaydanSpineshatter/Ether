@@ -1,6 +1,6 @@
 local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,UnitExists,C_After=pairs,ipairs,UnitExists,C_Timer.After
-local event,raidBtn,soloBtn,modelBtn=S.EventFrame,D.raidBtn,D.soloBtn,D.modelBtn
+local event,petBtn,raidBtn,soloBtn,modelBtn=S.EventFrame,D.petBtn,D.raidBtn,D.soloBtn,D.modelBtn
 local refresh,channel=false,false
 local function GetModelBtn(unit)
     return modelBtn[D:PosUnit(unit)]
@@ -13,7 +13,12 @@ local function refreshButtons()
             end
             F.UpdateClassColor(b)
             F.InitialHealth(b)
-            F:UpdateIndicatorsString(b)
+            F:UpdateIndicatorsUnit(b)
+        end
+        for _,b in pairs(petBtn) do
+            if b and b:IsVisible() and UnitExists(b.unit) then
+                F:UpdateRaidAuras(b.unit)
+            end
         end
         refresh=false
     end)
@@ -21,8 +26,12 @@ end
 function event:GROUP_ROSTER_UPDATE()
     if not UnitInAnyGroup("player") then
         F:AuraDisable()
+        for _,b in pairs(D.raidBtn) do
+            if b and UnitExists(b.unit) then
+                F:UpdateIndicatorsUnit(b)
+            end
+        end
         C_After(1,function()
-            F:IndicatorsFullUpdateBtn()
             F:AuraEnable()
         end)
     else
@@ -31,7 +40,7 @@ function event:GROUP_ROSTER_UPDATE()
         refreshButtons()
         if channel then return end
         channel=true
-        C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or IsInRaid() and "RAID" or "PARTY")         --D:ExportAddonMsg()
+        C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),IsInGroup(LE_PARTY_CATEGORY_INSTANCE) and "INSTANCE_CHAT" or IsInRaid() and "RAID" or "PARTY")
     end
 end
 function event:GROUP_JOINED()

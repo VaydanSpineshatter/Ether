@@ -218,7 +218,11 @@ local function ProfileRefresh()
     if C.ChildFrames[5] and C.ChildFrames[5].sort then
         C.ChildFrames[5].sort:SetText(D.header5[D.DB["CONFIG"][11]])
     end
-    F:IndicatorsFullUpdateBtn()
+    for _,b in pairs(D.raidBtn) do
+        if b and UnitExists(b.unit) then
+            F:UpdateIndicatorsUnit(b)
+        end
+    end
     if not C.MainFrame:IsShown() then
         C.MainFrame:Show()
     end

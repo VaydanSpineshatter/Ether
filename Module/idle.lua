@@ -58,6 +58,7 @@ end
 function F:UserIdle(unit)
     if D.DB[1][4]~=1 then return end
     if unit~="player" then return end
+    if InCombatLockdown() then return end
     if not C.IdleMode then
         Away(UnitIsAFK(unit))
     end
@@ -65,3 +66,39 @@ function F:UserIdle(unit)
         NotAway(UnitIsAFK(unit))
     end
 end
+--[[
+       for _,v in ipairs(D.rosterEvent) do
+       if S.EventFrame:IsEventRegistered(v) then
+           S.EventFrame:UnregisterEvent(v)
+       end
+   end
+   for _,v in ipairs(D.threadEvent) do
+       if S.EventFrame:IsEventRegistered(v) then
+           S.EventFrame:UnregisterEvent(v)
+       end
+   end
+   for index=1,2 do
+       F:CastDisable(index)
+       D.modelBtn[index]:Hide()
+       if index==2 then
+           UnregisterUnitWatch(D.modelBtn[2])
+       end
+   end
+   for _,v in ipairs(D.rosterEvent) do
+       if not S.EventFrame:IsEventRegistered(v) then
+           S.EventFrame:RegisterEvent(v)
+       end
+   end
+   for _,v in ipairs(D.threadEvent) do
+       if not S.EventFrame:IsEventRegistered(v) then
+           S.EventFrame:RegisterUnitEvent(v,"player","target")
+       end
+   end
+   for index=1,2 do
+       F:CastEnable(index)
+       D.modelBtn[index]:Show()
+       if index==2 then
+           RegisterUnitWatch(D.modelBtn[index])
+       end
+   end
+   ]]

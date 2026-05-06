@@ -1,5 +1,5 @@
 local D,F,S=unpack(select(2,...))
-local sbyte,ME,UnitIsUnit,UnitFullName=string.byte,[[|cffffd700ME|r]],UnitIsUnit,UnitFullName
+local sbyte,ME,UnitIsUnit,UnitName=string.byte,[[|cffffd700ME|r]],UnitIsUnit,UnitName
 local event,raidBtn,soloBtn=S.EventFrame,D.raidBtn,D.soloBtn
 local function GetSoloBtn(unit)
     return soloBtn[D:PosUnit(unit)]
@@ -48,16 +48,15 @@ local function UTF8SUB(name,start,numChars)
 end
 function F:UpdateName(b,number)
     if not b or not b.unit or not b.name then return end
-    local unit=b.unit or "player"
-    local name=UnitFullName(unit) or "UNKNOWN"
+    local unit=b.unit
+    local name=UnitName(unit) or "UNKNOWN"
     local user=UnitIsUnit(unit,"player") and ME or UTF8SUB(name,1,number or 10)
     b.name:SetText(user)
 end
 function F:UpdateNameByTarget(b)
     if not b or not b.unit or not b.name then return end
-    local unit="targettarget" or "target"
-    local name=UnitFullName(unit) or "UNKNOWN"
-    local user=UnitIsUnit(unit,"player") and ME or UTF8SUB(name,1,6)
+    local name=UnitName(b.unit) or "UNKNOWN"
+    local user=UnitIsUnit(b.unit,"player") and ME or UTF8SUB(name,1,6)
     b.name:SetText(user)
 end
 function event:UNIT_NAME_UPDATE(unit)
