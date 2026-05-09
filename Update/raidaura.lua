@@ -76,11 +76,13 @@ local function CheckAuras(b,aura)
         if aura.icon and aura.duration<=70 then
             CheckBlink(b,aura.icon,aura.duration)
         end
-    elseif status[15]==1 then
+    end
+    if status[15]==1 then
         if canDispel[aura.dispelName] then
             CheckClassDispel(b,aura.icon,aura.dispelName)
         end
-    elseif status[16]==1 then
+    end
+    if status[16]==1 then
         if aura.dispelName then
             CheckDispelBorder(b,aura.dispelName)
         end
@@ -92,11 +94,13 @@ local function UpdateStatusIcons(b)
         if b.blink then
             F:StopBlink(b.blink)
         end
-    elseif status[15]==1 then
+    end
+    if status[15]==1 then
         if b.dispel then
             CheckClassDispel(b)
         end
-    elseif status[16]==1 then
+    end
+    if status[16]==1 then
         if b.top then
             CheckDispelBorder(b)
         end

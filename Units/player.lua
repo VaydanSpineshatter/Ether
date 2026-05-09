@@ -3,9 +3,9 @@ local UnitGUID,soloBtn=UnitGUID,D.soloBtn
 local function OnAttributeChanged(self)
     self.unit=self:GetAttribute("unit")
     local guid=self.unit and UnitGUID(self.unit)
-    if (guid~=self.unitGUID) then
-        self.unitGUID=guid
-        if (guid) then
+    if guid~=self.guid then
+        self.guid=guid
+        if guid then
             F:FullHealthUpdate(self)
             F:FullPowerUpdate(self)
             F:UpdateName(self,6)

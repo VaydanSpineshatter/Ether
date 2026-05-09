@@ -17,7 +17,10 @@ for i=1,16 do
     dX[i],dY[i]=AuraPosition(i,DEBUFF_Y)
 end
 local function GetSoloButton(unit)
-    return soloBtn[D:PosUnit(unit)]
+    local b=soloBtn[D:PosUnit(unit)]
+    if b:IsVisible() then
+        return soloBtn[D:PosUnit(unit)]
+    end
 end
 local function CheckStacks(button,charges)
     if charges and charges>1 then

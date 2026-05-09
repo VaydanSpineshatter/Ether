@@ -598,8 +598,6 @@ do
             self:Hide()
             self.count:Hide()
             self.cooldown:Hide()
-            self.count:ClearAllPoints()
-            self.cooldown:ClearAllPoints()
             self:ClearAllPoints()
         end
         return method

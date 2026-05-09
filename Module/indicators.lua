@@ -4,7 +4,7 @@ local UnitHasIncomingResurrection,Enum,UnitExists=UnitHasIncomingResurrection,En
 local GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,updater=GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,nil
 local GetLootMethod,pairs,ipairs,petBtn=C_PartyInfo.GetLootMethod,pairs,ipairs,D.petBtn
 local UnitIsGroupLeader,UnitInAnyGroup=UnitIsGroupLeader,UnitInAnyGroup
-local UnitIsUnit,UnitIsCharmed,IsInGroup,UnitIsPlayer=UnitIsUnit,UnitIsCharmed,IsInGroup,UnitIsPlayer
+local UnitIsUnit,UnitIsCharmed=UnitIsUnit,UnitIsCharmed
 local UnitGroupRolesAssigned,SetRaidTargetIconTexture=UnitGroupRolesAssigned,SetRaidTargetIconTexture
 local event,raidBtn,soloBtn=S.EventFrame,D.raidBtn,D.soloBtn
 local function GetRaidBtn(arg1)
@@ -17,8 +17,10 @@ end
 local function GetPetBtn(arg1)
     if not petBtn[arg1] then return end
     local b=petBtn[arg1]
-    if arg1==b.unit and b:IsVisible() then
-        return b
+    if b and UnitExists(b.unit) then
+        if b:IsVisible() then
+            return b
+        end
     end
 end
 local frame=CreateFrame("Frame")
@@ -51,7 +53,7 @@ function F:SavePosition(index)
         end
     end
 end
-function F:SaveBtnPosition(b)
+function F:SaveRaidBtnPosition(b)
     if not b or not b.Indicators or not b.healthBar then return end
     for i,v in ipairs(D.iIconTable) do
         local c=D.DB[20][i]
@@ -65,6 +67,25 @@ function F:SaveBtnPosition(b)
         end
         if not b.Indicators[v]:IsShown() then
             b.Indicators[v]:Hide()
+        end
+    end
+end
+function F:SavePetBtnPosition(b)
+    if not b or not b.Indicators or not b.healthBar then return end
+    for i,v in ipairs(D.iIconTable) do
+        if i==2 or i==6 then
+            local c=D.DB[20][i]
+            if not b.Indicators[v] then
+                b.Indicators[v]=frame:CreateTexture(nil,"OVERLAY",nil,7)
+                b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
+                b.Indicators[v]:SetSize(c[4],c[4])
+            else
+                b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
+                b.Indicators[v]:SetSize(c[4],c[4])
+            end
+            if not b.Indicators[v]:IsShown() then
+                b.Indicators[v]:Hide()
+            end
         end
     end
 end
@@ -247,13 +268,15 @@ local function flagsChanged(self)
     end
 end
 local function unitResurrection(self)
-    IndictorsTexture(self,"Resurrection")
-    local Resurrect=UnitHasIncomingResurrection(self.unit)
-    if (Resurrect) then
-        self.Indicators.Resurrection:SetTexture(D.iIconPath[2])
-        self.Indicators.Resurrection:Show()
-    else
-        self.Indicators.Resurrection:Hide()
+    if UnitExists(self.unit) then
+        IndictorsTexture(self,"Resurrection")
+        local Resurrect=UnitHasIncomingResurrection(self.unit)
+        if (Resurrect) then
+            self.Indicators.Resurrection:SetTexture(D.iIconPath[2])
+            self.Indicators.Resurrection:Show()
+        else
+            self.Indicators.Resurrection:Hide()
+        end
     end
 end
 function F:UpdateIndicatorsUnit(self)
@@ -362,9 +385,14 @@ function event:PLAYER_FLAGS_CHANGED(unit)
     flagsChanged(b)
 end
 function event:INCOMING_RESURRECT_CHANGED(unit)
-    local b=GetPetBtn(unit) or GetRaidBtn(unit)
-    if not b then return end
-    unitResurrection(b)
+    local p=GetPetBtn(unit)
+    if p then
+        unitResurrection(p)
+    end
+    local b=GetRaidBtn(unit)
+    if b then
+        unitResurrection(b)
+    end
 end
 function event:UNIT_CONNECTION(unit)
     local b=GetRaidBtn(unit)

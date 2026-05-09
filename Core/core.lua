@@ -108,8 +108,6 @@ function S.EventFrame:PLAYER_LOGIN()
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()
-    F:SetupHeaderBackground(D.A.raid,10)
-    F:SetupHeaderBackground(D.A.pet,11)
     for index=1,6 do
         F:CreateUnitButtons(index)
         if D.DB[6][index]==0 then
@@ -125,8 +123,8 @@ function S.EventFrame:PLAYER_LOGIN()
         S.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     end
     F:RosterEnable()
-    F:CreateGroupHeader()
-    F:CreatePetHeader()
+    F:CreateGroupHeader("GROUP")
+    F:CreateGroupHeader("PET")
     for index=1,2 do
         D.castBar[index]=F:SetupCastBar()
         D.castBar[index].index=index+11
@@ -202,7 +200,22 @@ local function SetPerfectUIScale()
 end
 function S.EventFrame:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-    C_Timer.After(1.5,function()
+    C_Timer.After(0.1,function()
+        if D.H and D.H.pet then
+            for _,v in ipairs(D.H.pet) do
+                v.unit=v:GetAttribute("unit")
+                local guid=v.unit and UnitGUID(v.unit)
+                if guid and guid~=v.guid then
+                    v.guid=guid
+                    D.petBtn[v.unit]=v
+                    F:UpdateName(v,3)
+                    F:FullHealthUpdate(v)
+                    F:UpdateIndicatorsPetUnit(v)
+                end
+            end
+        end
+    end)
+    C_Timer.After(1,function()
         SetPerfectUIScale()
     end)
 end
