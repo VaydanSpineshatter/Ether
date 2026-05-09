@@ -1,4 +1,4 @@
-local D,F=unpack(select(2,...))
+local D,F,_,C=unpack(select(2,...))
 local C_Ticker,pairs,GetTime=C_Timer.NewTicker,pairs,GetTime
 local UnitInRange,UnitIsConnected,IsInGroup=UnitInRange,UnitIsConnected,IsInGroup
 local UnitCanAssist,UnitCanAttack,IsSpellInRange,UnitIsVisible,UnitPhaseReason=UnitCanAssist,UnitCanAttack,C_Spell.IsSpellInRange,UnitIsVisible,UnitPhaseReason
@@ -50,6 +50,8 @@ local function clear()
     if update then
         update:Cancel()
         update=nil
+    else
+        C:EtherInfo("Range-Updater could not be cancelled")
     end
 end
 local function ScanUnits(b,unit)
@@ -60,12 +62,12 @@ local function ScanUnits(b,unit)
     end
     if not UnitIsConnected(unit) then
         b:SetAlpha(1)
-        is,none=5,4
+        is,none=8,7
         return true
     end
     if UnitPhaseReason(unit) then
         b:SetAlpha(.45)
-        is,none=6,5
+        is,none=7,6
         return true
     end
     if not UnitIsVisible(unit) then
@@ -73,8 +75,8 @@ local function ScanUnits(b,unit)
         is,none=5,4
         return true
     end
-    if is~=5 then
-        is,none=5,4
+    if is~=4 then
+        is,none=4,3
     end
     return false
 end

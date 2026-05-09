@@ -2,7 +2,7 @@ local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,mfloor,sformat=pairs,ipairs,math.floor,string.format
 local GetBuffDataByIndex,GetDebuffDataByIndex=C_UnitAuras.GetBuffDataByIndex,C_UnitAuras.GetDebuffDataByIndex
 local UnitExists,GetTime,twipe,GetAuraDataByAuraInstanceID=UnitExists,GetTime,table.wipe,C_UnitAuras.GetAuraDataByAuraInstanceID
-local event,raidBtn,petBtn,soloBtn,Active,bX,bY,dX,dY=S.EventFrame,D.raidBtn,D.petBtn,D.soloBtn,{},{},{},{},{}
+local event,raidBtn,soloBtn,Active,bX,bY,dX,dY=S.EventFrame,D.raidBtn,D.soloBtn,{},{},{},{},{}
 local ICON_SIZE,SPACING,PER_ROW,BUFF_Y,DEBUFF_Y=15,1,8,3,35
 local function AuraPosition(i,offsetY)
     local row=mfloor((i-1)/PER_ROW)
@@ -364,14 +364,25 @@ local validUnit={
     pet=true,
     target=true
 }
-function event:UNIT_AURA(arg1,...)
-    if not arg1 or not UnitExists(arg1) then return end
-    local info=...
-    if validUnit[arg1] then
-        UnitAuraUpdate(arg1,info)
+local function ValidRaidBtn(arg1)
+    local b=raidBtn[arg1]
+    if not b or not b.RaidAuras then
+        return false
     end
-    if raidBtn[arg1] then
-        F:AuraUpdate(arg1,info)
+    local unit=b.unit
+    if unit and unit==arg1 then
+        return true
+    end
+end
+function event:UNIT_AURA(arg1,...)
+    local info=...
+    if arg1 and UnitExists(arg1) then
+        if validUnit[arg1] then
+            UnitAuraUpdate(arg1,info)
+        end
+        if ValidRaidBtn(arg1) then
+            F:AuraUpdate(raidBtn[arg1],info)
+        end
     end
 end
 function F:AuraEnable()

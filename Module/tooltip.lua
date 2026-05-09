@@ -172,7 +172,7 @@ local function UpdateTooltip(unit,DB,status)
     table.wipe(parts)
 end
 function F:ToolTipInitialize()
-    if not frame then return end
+    if not frame or not D.DB[3] then return end
     GameTooltip:HookScript("OnTooltipSetUnit",function(self)
         local _,unit=self:GetUnit()
         if not unit then return end

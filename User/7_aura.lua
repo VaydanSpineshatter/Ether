@@ -1,20 +1,37 @@
 local D,F,_,C=unpack(select(2,...))
 local ipairs,pairs,sformat,twipe=ipairs,pairs,string.format,table.wipe
-local function SelectAura(editor,spellId)
+local function UpdateEditor(self)
+    if not D.DB["CUSTOM"][C.Spell] then
+        F:UpdateButtons(self)
+        return
+    end
+    local data=D.DB["CUSTOM"][C.Spell]
+    self.color:Enable()
+    self.name:Enable()
+    self.spell:Enable()
+    self.x:Enable()
+    self.y:Enable()
+    self.s:Enable()
+    self.name:SetText(data[1] or "")
+    self.spell:SetText(tostring(C.Spell))
+    self.color.bg:SetColorTexture(data[2],data[3],data[4],data[5])
+    self.s:SetValue(data[9])
+    self.s.v:SetText(sformat("%.1f px",data[9]))
+    F:UpdateCube(self.cube,data,6)
+    self.x:SetValue(data[7])
+    self.x.v:SetText(sformat("%.0f px",data[7]))
+    self.y:SetValue(data[8])
+    self.y.v:SetText(sformat("%.0f px",data[8]))
+    F:UpdatePreview(D.DB["CUSTOM"],self,C.Spell)
+end
+F.UpdateEditor=UpdateEditor
+local function SelectAura(self,spellId)
     if not spellId then return end
     C.Spell=spellId
     F:UpdateAuraList()
-    F:UpdateEditor(editor)
+    UpdateEditor(self)
 end
-local function AddAura(editor)
-    local newId=1
-    while D.DB["CUSTOM"][newId] do
-        newId=newId+1
-    end
-    D.DB["CUSTOM"][newId]=F:AuraTemplate(newId)
-    SelectAura(editor,newId)
-end
-local function AddTemplateAuras(templateName)
+local function AddPredefinedAura(templateName)
     if not D.PredefinedAuras or not D.PredefinedAuras[templateName] then return end
     local a,s=0,0
     local DB=D.DB["CUSTOM"]
@@ -36,10 +53,18 @@ local function AddTemplateAuras(templateName)
     end
     C:EtherInfo(msg)
     C.Spell=nil
-    F:UpdateEditor(C.ChildFrames[7])
+    UpdateEditor(C.ChildFrames[7])
+end
+local function AddAura(editor)
+    local newId=1
+    while D.DB["CUSTOM"][newId] do
+        newId=newId+1
+    end
+    D.DB["CUSTOM"][newId]={"New Aura "..newId,1,1,0,1,"TOP",0,0,8,false}
+    SelectAura(editor,newId)
 end
 local function OnAuraSelect(self,_,data)
-    AddTemplateAuras(data)
+    AddPredefinedAura(data)
     self.text:SetText(data)
 end
 local function UpdateAuraStatus(self,spellId)
@@ -109,19 +134,17 @@ local function Aura(self,status)
     end)
     local clear=F:EtherPanelButton(self,50,25,"Wipe","TOPRIGHT",self,"TOPRIGHT",0,-5,1,0,0)
     clear:SetScript("OnClick",function()
-        F:PopupBoxSetup()
-        F:UpdateAuraList()
-        F:UpdateEditor(self)
         if D:TableSize(D.DB["CUSTOM"])==0 then
-            F:EtherInfo("No auras available to delete")
+            C:EtherInfo("No auras available to delete")
             return
         end
+        F:PopupBoxSetup()
         C.PopupBox.font:SetText("Clear all auras?")
         C.PopupCallback:SetScript("OnClick",function()
             twipe(D.DB["CUSTOM"])
             C.Spell=nil
             F:UpdateAuraList()
-            F:UpdateEditor(self)
+            UpdateEditor(self)
             C:EtherInfo("|cff00ccffAuras|r: Custom auras cleared")
             dropdown.menu:Hide()
             C.PopupBox:SetShown(false)
@@ -134,8 +157,9 @@ local function Aura(self,status)
     name:SetPoint("TOP",40,-70)
     name:SetScript("OnEnterPressed",function()
         if type(C.Spell)~=nil then
-            D.DB["CUSTOM"][C.Spell].name=name:GetText()
+            D.DB["CUSTOM"][C.Spell][1]=name:GetText()
             F:UpdateAuraList()
+            UpdateEditor(self)
         end
         name:ClearFocus()
     end)
@@ -149,13 +173,13 @@ local function Aura(self,status)
     spell:SetNumeric(true)
     spell:SetScript("OnEnterPressed",function()
         local newId=tonumber(spell:GetText())
-        if F.SpellId and newId and newId>0 and newId~=C.Spell then
+        if C.Spell and newId and newId>0 and newId~=C.Spell then
             local data=D.DB["CUSTOM"][C.Spell]
             D.DB["CUSTOM"][C.Spell]=nil
             D.DB["CUSTOM"][newId]=data
             C.Spell=newId
             F:UpdateAuraList()
-            F:UpdateEditor(self)
+            UpdateEditor(self)
         end
         spell:ClearFocus()
     end)
@@ -203,7 +227,7 @@ local function Aura(self,status)
         btn:SetScript("OnClick",function()
             if C.Spell then
                 D.DB["CUSTOM"][C.Spell][6]=btn.position
-                F:UpdateEditor(self)
+                UpdateEditor(self)
                 for _,otherBtn in pairs(cube) do
                     otherBtn:GetScript("OnLeave")(otherBtn)
                 end
@@ -242,7 +266,7 @@ local function Aura(self,status)
         end
     end)
     F:UpdateAuraList()
-    F:UpdateEditor(self)
+    UpdateEditor(self)
     UpdateStatus(isBlink,14)
     UpdateStatus(isClass,15)
     UpdateStatus(isBorder,16)
@@ -314,7 +338,7 @@ function F:UpdateAuraList()
                     C.Spell=nil
                 end
                 F:UpdateAuraList()
-                F:UpdateEditor(editor)
+                UpdateEditor(editor)
             end)
             self:GetParent():GetScript("OnLeave")(self:GetParent())
         end)
@@ -325,43 +349,5 @@ function F:UpdateAuraList()
     UpdateStatus(editor.isBlink,14)
     UpdateStatus(editor.isClass,15)
     UpdateStatus(editor.isBorder,16)
-end
-function F:UpdateEditor(editor)
-    if not editor then return end
-    if not D.DB["CUSTOM"][C.Spell] then
-        editor.name:SetText("")
-        editor.name:Disable()
-        editor.spell:SetText("")
-        editor.spell:Disable()
-        editor.color:Disable()
-        editor.s:Disable()
-        editor.x:Disable()
-        editor.y:Disable()
-        for _,btn in pairs(editor.cube) do
-            btn:Disable()
-        end
-        return
-    end
-    local data=D.DB["CUSTOM"][C.Spell]
-    editor.name:SetText(data[1] or "")
-    editor.name:Enable()
-    editor.spell:SetText(tostring(C.Spell))
-    editor.spell:Enable()
-    editor.color.bg:SetColorTexture(data[2],data[3],data[4],data[5])
-    editor.color:Enable()
-    editor.x:Enable()
-    editor.x:Show()
-    editor.y:Enable()
-    editor.y:Show()
-    editor.s:SetValue(data[9])
-    editor.s:Enable()
-    editor.s:Show()
-    editor.s.v:SetText(sformat("%.1f px",data[9]))
-    F:UpdateCube(editor.cube,data,6)
-    editor.x:SetValue(data[7])
-    editor.x.v:SetText(sformat("%.0f px",data[7]))
-    editor.y:SetValue(data[8])
-    editor.y.v:SetText(sformat("%.0f px",data[8]))
-    F:UpdatePreview(D.DB["CUSTOM"],editor,C.Spell)
 end
 F:RegisterCallbackByIndex(Aura,7+50)

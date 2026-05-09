@@ -85,7 +85,9 @@ local function MaxHealth(b)
 end
 function F:FullHealthUpdate(self)
     InitialHealth(self)
-    UpdateClassColor(self)
+    if not self.TypePet then
+        UpdateClassColor(self)
+    end
     Health(self)
     MaxHealth(self)
 end

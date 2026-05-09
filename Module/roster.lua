@@ -8,8 +8,7 @@ end
 local function refreshButtons()
     if refresh then return end
     refresh=true
-    C_After(2,function()
-        F.CleanupAuras()
+    C_After(1.6,function()
         for _,b in pairs(raidBtn) do
             if UnitExists(b.unit) then
                 F:UpdateRaidAuras(b)
@@ -34,16 +33,12 @@ function event:GROUP_ROSTER_UPDATE()
         end
         for _,b in pairs(D.raidBtn) do
             if UnitExists(b.unit) then
-                if b:IsVisible() then
-                    F:UpdateIndicatorsUnit(b)
-                end
+                F:UpdateIndicatorsUnit(b)
             end
         end
         for _,b in pairs(petBtn) do
             if UnitExists(b.unit) then
-                if b:IsVisible() then
-                    F:UpdateIndicatorsPetUnit(b)
-                end
+                F:UpdateIndicatorsPetUnit(b)
             end
         end
         C_After(1,function()
@@ -89,6 +84,9 @@ function event:PLAYER_TARGET_CHANGED()
         end
         if UnitExists("focus") then
             F:UpdateSoloIndicator(6)
+        end
+        if UnitExists("pet") then
+            F:UpdateSoloIndicator(4)
         end
     end
     if D.DB[6][2]==1 then

@@ -42,6 +42,20 @@ function F:UpdateThreatColor(numb,numb2,unit)
         end
     end
 end
+function F:UpdateButtons(self)
+    if not self.name or not self.cube then return end
+    self.name:SetText("")
+    self.spell:SetText("")
+    self.color:Disable()
+    self.name:Disable()
+    self.spell:Disable()
+    self.x:Disable()
+    self.y:Disable()
+    self.s:Disable()
+    for _,btn in pairs(self.cube) do
+        btn:Disable()
+    end
+end
 function F:UpdateCube(data,db,number)
     for i,v in pairs(data) do
         if i==db[number] then

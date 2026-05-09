@@ -99,6 +99,7 @@ function F:FullPowerUpdate(self)
     DisplayPower(self)
 end
 function event:UNIT_POWER_UPDATE(unit)
+    if not unit then return end
     local s=GetSoloBtn(unit)
     if s then
         Power(s)
@@ -116,6 +117,7 @@ function event:UNIT_POWER_UPDATE(unit)
     end
 end
 function event:UNIT_MAXPOWER(unit)
+    if not unit then return end
     local s=GetSoloBtn(unit)
     if s then
         MaxPower(s)
@@ -133,6 +135,7 @@ function event:UNIT_MAXPOWER(unit)
     end
 end
 function event:UNIT_DISPLAYPOWER(unit)
+    if not unit then return end
     local b=GetSoloBtn(unit)
     if b then
         DisplayPower(b)

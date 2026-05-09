@@ -1,8 +1,4 @@
 local D=unpack(select(2,...))
-function D:AuraTemplate(newId)
-    local obj={"New Aura "..newId,1,1,0,1,"TOP",0,0,8,false}
-    return obj
-end
 D.PredefinedAuras={
     ["Priest-GroupBuffs"]={[25392]={"Prayer Fortitude 3",0.93,0.91,0.67,1,"BOTTOMLEFT",0,0,8,false},[32999]={"Prayer Spirit 2",0,0.7,1,1,"BOTTOMLEFT",8,0,8,false},[39374]={"Prayer Shadow 2",0,0,0,1,"BOTTOMRIGHT",0,0,8,false}},
     ["Priest-Helpful"]={[25218]={"Shield 12",1,0,1,1,"TOPLEFT",0,0,8,false},[41635]={"POM1",0,0.5,0.9,1,"RIGHT",0,0,10,false},[25222]={"Renew 12",0.2,1,0.2,1,"TOPRIGHT",0,0,8,false},[6346]={"Fear Ward",1,0.2,0.5,1,"BOTTOM",0,8,8,false}},

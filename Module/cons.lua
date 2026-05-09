@@ -33,4 +33,3 @@ function F:AddonUsage()
     C:EtherInfo(tconcat(data,'\n'))
     twipe(data)
 end
---22825,32067,27666,22521

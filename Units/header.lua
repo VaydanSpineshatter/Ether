@@ -23,14 +23,12 @@ local function UpdateButton(self)
     local guid=UnitGUID(self.unit)
     if not guid or guid==self.guid then return end
     self.guid=guid
-    F:SetupClassDispel(self)
     F:FullHealthUpdate(self)
     F:SaveBtnPosition(self)
     if self.TypePet then
         F:UpdateIndicatorsPetUnit(self)
     else
         F:UpdateName(self,2)
-        F:SetupBlinkIcon(self)
         UpdatePCT(self)
         F:UpdateIndicatorsUnit(self)
         F:UpdateRaidAuras(self)
@@ -45,14 +43,25 @@ end
 local function OnLeave()
     GameTooltip:Hide()
 end
-local function OnEvent(self,event)
-    if event~="UNIT_PET" then return end
-    self.unit=self:GetAttribute("unit")
-    if not self.unit then return end
-    petBtn[self.unit]=self
-    F:UpdateName(self,2)
-    F:SoloAuraFullUpdate(D.soloBtn[4],"pet")
-    UpdateButton(self)
+local function OnEvent(self,event,unit,...)
+    if event=="UNIT_PET" then
+        self.unit=self:GetAttribute("unit")
+        if unit and unit==self.unit then
+            petBtn[self.unit]=self
+            local name=UnitName(self.unit) or "UNKNOWN"
+            self.name:SetText(name)
+            UpdateButton(self)
+        end
+    end
+    if event=="GROUP_ROSTER_UPDATE" then
+        self.unit=self:GetAttribute("unit")
+        if unit and unit==self.unit then
+            petBtn[self.unit]=self
+            local name=UnitName(self.unit) or "UNKNOWN"
+            self.name:SetText(name)
+            UpdateButton(self)
+        end
+    end
 end
 local function OnAttributeChanged(self,name,unit)
     if not unit or name~="unit" then return end
@@ -64,59 +73,76 @@ end
 local function OnShow(self)
     if self.TypePet then
         self:RegisterEvent("UNIT_PET")
+        self:RegisterEvent("GROUP_ROSTER_UPDATE")
     end
 end
 local function OnHide(self)
     if self.TypePet then
         self:UnregisterEvent("UNIT_PET")
+        self:UnregisterEvent("GROUP_ROSTER_UPDATE")
     end
 end
-local function CreateHealthStatusBar(self)
-    local name=self:GetName()
-    local healthBar=CreateFrame("StatusBar",name.."_HealthBar",self)
-    self.healthBar=healthBar
+local function CreateChildren(h,n)
+    local b=_G[n]
+    local name=b:GetName()
+    b.Indicators={}
+    local healthBar=CreateFrame("StatusBar",name.."_HealthBar",b)
+    b.healthBar=healthBar
     healthBar:SetOrientation("VERTICAL")
     healthBar:SetStatusBarTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
     healthBar:GetStatusBarTexture():SetDrawLayer("ARTWORK",-7)
     healthBar:SetMinMaxValues(0,100)
-    healthBar:SetFrameLevel(self:GetFrameLevel()+3)
-    healthBar:SetAllPoints(self)
-    local healthDrop=self:CreateTexture(name.."_HealthDrop","ARTWORK",nil,-7)
-    self.healthDrop=healthDrop
+    healthBar:SetFrameLevel(b:GetFrameLevel()+3)
+    healthBar:SetAllPoints(b)
+    local healthDrop=b:CreateTexture(name.."_HealthDrop","ARTWORK",nil,-7)
+    b.healthDrop=healthDrop
     healthDrop:SetAllPoints()
     healthDrop:SetTexture("Interface\\RaidFrame\\Raid-Bar-Hp-Fill")
-    self.healthBar:SetAllPoints(self)
-end
-local function CreateChildren(h,n)
-    local b=_G[n]
-    b.Indicators={}
-    local width=h:GetAttribute("ButtonWidth")
-    local height=h:GetAttribute("ButtonHeight")
+    b.healthBar:SetAllPoints(b)
     if h:GetAttribute("TypePet") then
         b.TypePet=true
-        b:SetSize(tonumber(width) or 45,tonumber(height) or 45)
-        CreateHealthStatusBar(b)
-        F:SetupButtonBackground(b)
-        F:SetupButtonBorder(b)
-        b:SetScript("OnEvent",OnEvent)
-        b:SetScript("OnShow",OnShow)
-        b:SetScript("OnHide",OnHide)
-        if not b:IsEventRegistered("UNIT_PET") then
-            b:RegisterEvent("UNIT_PET")
-        end
+        b:RegisterEvent("UNIT_PET")
+        b:RegisterEvent("GROUP_ROSTER_UPDATE")
+        local r,g,be=0.18,0.54,0.34
+        b.healthBar:SetStatusBarColor(r,g,be)
+        b.healthDrop:SetColorTexture(r*0.3,g*0.3,be*0.4,.3)
     else
-        b:SetSize(tonumber(width) or 55,tonumber(height) or 55)
-        CreateHealthStatusBar(b)
-        F:SetupButtonBackground(b)
-        F:SetupButtonBorder(b)
+        b.RaidAuras={}
         F:SetupPowerText(b)
         F:SetupHealthText(b)
-        b:HookScript("OnAttributeChanged",OnAttributeChanged)
     end
+    F:SetupButtonBackground(b)
+    F:SetupButtonBorder(b)
     F:SetupPrediction(b)
     F:SetupName(b,-5)
+    local frame=CreateFrame("Frame",nil,UIParent)
+    frame:SetFrameStrata("HIGH")
+    frame:SetFrameLevel(b:GetFrameLevel()+3)
+    local dispel=frame:CreateTexture(nil,"ARTWORK",nil,-7)
+    dispel:Hide()
+    dispel:SetSize(14,14)
+    dispel:SetPoint("TOPRIGHT",b,"TOPRIGHT",-2,-2)
+    local border=frame:CreateTexture(nil,"BORDER")
+    border:Hide()
+    border:SetColorTexture(1,0,0,1)
+    border:SetPoint("TOPLEFT",dispel,"TOPLEFT",-1,1)
+    border:SetPoint("BOTTOMRIGHT",dispel,"BOTTOMRIGHT",1,-1)
+    b.dispel=dispel
+    b.dispelBorder=border
+    local blink=frame:CreateTexture(nil,"ARTWORK",nil,-7)
+    blink:SetSize(10,10)
+    blink:SetPoint("CENTER",b,"CENTER",0,10)
+    blink:SetTexCoord(0.07,0.93,0.07,0.93)
+    b.blink=blink
     b:SetScript("OnEnter",OnEnter)
     b:SetScript("OnLeave",OnLeave)
+    if h:GetAttribute("TypePet") then
+        b:SetScript("OnShow",OnShow)
+        b:SetScript("OnHide",OnHide)
+        b:SetScript("OnEvent",OnEvent)
+    else
+        b:HookScript("OnAttributeChanged",OnAttributeChanged)
+    end
     if not InCombatLockdown() then
         b:RegisterForClicks("AnyUp")
     end
@@ -157,9 +183,8 @@ function F:CreateGroupHeader()
     header:SetAttribute("point",point or "TOP")
     header:SetAttribute("groupBy",by or "GROUP")
     header:SetAttribute("groupingOrder",order or "1,2,3,4,5,6,7,8")
-    header:SetAttribute("xOffset",2)
-    header:SetAttribute("yOffset",-2)
-    header:SetAttribute("columnSpacing",1)
+    header:SetAttribute("xOffset",1)
+    header:SetAttribute("yOffset",-1)
     header:SetAttribute("unitsPerColumn",5)
     header:SetAttribute("maxColumns",8)
     header:SetAttribute("showRaid",true)
@@ -179,15 +204,14 @@ function F:CreatePetHeader()
     header:SetAttribute("TypePet",true)
     header:SetAttribute("ButtonHeight",data[6] or 45)
     header:SetAttribute("ButtonWidth",data[7] or 45)
-    header:SetAttribute("xOffset",-2)
-    header:SetAttribute("yOffset",2)
+    header:SetAttribute("xOffset",1)
+    header:SetAttribute("yOffset",-1)
     header:SetAttribute("showRaid",true)
     header:SetAttribute("showParty",false)
     header:SetAttribute("showPlayer",true)
     header:SetAttribute("showSolo",true)
     header:SetAttribute("columnAnchorPoint","TOP")
     header:SetAttribute("point","LEFT")
-    header:SetAttribute("columnSpacing",1)
     header:SetAttribute("useOwnerUnit",false)
     header:SetAttribute("filterOnPet",true)
     header:SetAttribute("unitsPerColumn",6)
@@ -225,6 +249,62 @@ local function UpdateHeader()
 end
 F:RegisterCallbackByIndex(UpdateHeader,22)
 --[[
+local _,screenHeight=GetPhysicalScreenSize()
+local pixelScale=1/(768/screenHeight)
+local function CreateGroupHeader(call)
+    local data = "GROUP" and D.DB[21][10] or D.DB[21][11]
+    local by,order=OrderMethod(D.DB["CONFIG"][11])
+    local column,point=AnchorMethod(D.DB["CONFIG"][12])
+    local header =CreateFrame("Frame","GROUP" and "EtherRaidGroupHeader" or "EtherPetGroupHeader","GROUP" and raid or pet,"GROUP" and "SecureGroupHeaderTemplate" or "SecureGroupPetHeaderTemplate")
+    header:SetPoint("BOTTOMLEFT","GROUP" and raid or pet,"TOPLEFT")
+    header.index="GROUP" and 10 or 11
+    header:SetAttribute("template","EtherUnitTemplate")
+    if call=="GROUP" then
+        header:SetAttribute("initial-unitWatch",true)
+    end
+    header:SetAttribute("initialConfigFunction",initialConfig)
+    header.CreateChildren=CreateChildren
+    header:SetAttribute("ButtonWidth",data[6] or 55)
+    header:SetAttribute("ButtonHeight",data[7] or 55)
+    header:SetAttribute("xOffset",-2)
+    header:SetAttribute("yOffset",2)
+    if call=="GROUP" then
+        D.H.raid=header
+        header:SetAttribute("columnAnchorPoint",column or "LEFT")
+        header:SetAttribute("point",point or "TOP")
+        header:SetAttribute("groupBy",by or "GROUP")
+        header:SetAttribute("groupingOrder",order or "1,2,3,4,5,6,7,8")
+        header:SetAttribute("columnSpacing",1)
+        header:SetAttribute("showRaid",true)
+        header:SetAttribute("showParty",true)
+        header:SetAttribute("showPlayer",true)
+        header:SetAttribute("showSolo",true)
+        header:Show()
+    elseif call=="PET" then
+        D.H.pet = header
+        header:SetAttribute("TypePet",true)
+        header:SetAttribute("showRaid",true)
+        header:SetAttribute("showParty",false)
+        header:SetAttribute("showPlayer",true)
+        header:SetAttribute("showSolo",true)
+        header:SetAttribute("columnAnchorPoint","TOP")
+        header:SetAttribute("point","LEFT")
+        header:SetAttribute("columnSpacing",1)
+        header:SetAttribute("useOwnerUnit",false)
+        header:SetAttribute("filterOnPet",true)
+          header:Show()
+        RegisterAttributeDriver(header,"state-visibility","[@pet,exists] show;[@raid1,exists] show;[@party1,exists] show;[group:party] show;hide")
+    end
+    header:SetAttribute("unitsPerColumn","GROUP" and 5 or 6)
+    header:SetAttribute("maxColumns","GROUP" and 8 or 2)
+    F:SetupHeaderBackground(D.A.raid,10)
+    F:SetupHeaderBackground(D.A.pet,11)
+end
+    local handler = CreateFrame("Frame",nil,nil,"SecureHandlerShowHideTemplate")
+    handler:SetFrameRef("EtherHeader",header)
+    handler:Execute([-[
+	header = self:GetFrameRef("EtherHeader")
+]-])
 order = 'DRUID,PRIEST,HUNTER,MAGE,PALADIN,ROGUE,SHAMAN,WARLOCK,WARRIOR',
 by = 'CLASS'
 order = 'TANK,HEALER,DAMAGER,NONE',

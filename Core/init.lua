@@ -80,7 +80,8 @@ Ether[3].EventFrame.ADDON_LOADED=function(self)
             Ether[1]:CurrentProfile(Ether[1]:GetProfileName())
             _G["ETHER_DATABASE"]["VERSION"]=Ether[4].EtherVersion
         end
-        if type(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()]["CONFIG"][13])~="string" then
+        local migrate=_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()]["CONFIG"][13]
+        if type(migrate)~="string" or migrate=="NONE" then
             for _,v in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
                 v[3]=nil
                 v[4]=nil

@@ -199,7 +199,7 @@ local function ProfileRefresh()
         C.MainFrame:Hide()
     end
     F:UpdateAuraList()
-    F:UpdateEditor(C.ChildFrames[7])
+    F.UpdateEditor(C.ChildFrames[7])
     F:IndicatorsDisable()
     for index=1,11 do
         F:SavePosition(index)

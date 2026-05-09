@@ -225,6 +225,8 @@ local function unitFlags(self)
     if dead then
         self.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
         self.Indicators.UnitFlags:Show()
+        F.CheckDispelBorder(self)
+        F.CheckClassDispel(self)
     else
         self.Indicators.UnitFlags:Hide()
         F.InitialHealth(self)
@@ -323,7 +325,6 @@ function event:READY_CHECK_FINISHED()
         updater=C_Timer.After(5,HideReadyCheckIcons)
     end
 end
-
 function event:RAID_TARGET_UPDATE()
     if D.DB[4][6]~=1 then return end
     for _,b in pairs(raidBtn) do
@@ -336,13 +337,10 @@ function event:RAID_TARGET_UPDATE()
             raidTarget(b)
         end
     end
-    for index=1,3 do
+    for index=1,6 do
         if UnitExists(D:PosUnit(index)) then
             F:UpdateSoloIndicator(index)
         end
-    end
-    if UnitExists(D:PosUnit(6)) then
-        F:UpdateSoloIndicator(6)
     end
 end
 function event:UNIT_FACTION(unit)
@@ -425,7 +423,11 @@ function F:IndicatorsEnable()
         end
     end
     C_Timer.After(1,function()
-        F:UpdateSoloIndicator(1)
+        for index=1,6 do
+            if UnitExists(D:PosUnit(index)) then
+                F:UpdateSoloIndicator(index)
+            end
+        end
     end)
 end
 function F:IndicatorsDisable()

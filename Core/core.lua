@@ -64,6 +64,7 @@ function C:Main()
             C.ImportBox:ClearFocus()
             C.ImportBox:SetText("Paste import data here...")
         end
+        F:UpdateButtons(C.ChildFrames[7])
         if C.InputLine then
             C.InputLine:Hide()
         end

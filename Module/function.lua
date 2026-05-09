@@ -129,29 +129,28 @@ function F:SetupButtonBorder(button)
     local p=pixelScale
     local top=button:CreateTexture(nil,"BORDER")
     button.top=top
-    top:SetPoint("TOPLEFT",button,"TOPLEFT",-p,p)
-    top:SetPoint("TOPRIGHT",button,"TOPRIGHT",p,p)
+    top:SetPoint("TOPLEFT",button.healthBar,"TOPLEFT",-p,p)
+    top:SetPoint("TOPRIGHT",button.healthBar,"TOPRIGHT",p,p)
     top:SetHeight(p)
     top:SetColorTexture(r,g,b,a)
     local bottom=button:CreateTexture(nil,"BORDER")
     button.bottom=bottom
-    bottom:SetPoint("BOTTOMLEFT",button,"BOTTOMLEFT",-p,-p)
-    bottom:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",p,-p)
+    bottom:SetPoint("BOTTOMLEFT",button.powerBar or button.healthBar,"BOTTOMLEFT",-p,-p)
+    bottom:SetPoint("BOTTOMRIGHT",button.powerBar or button.healthBar,"BOTTOMRIGHT",p,-p)
     bottom:SetHeight(p)
     bottom:SetColorTexture(r,g,b,a)
     local left=button:CreateTexture(nil,"BORDER")
     button.left=left
-    left:SetPoint("TOPLEFT",button,"TOPLEFT",-p,p)
-    left:SetPoint("BOTTOMLEFT",button,"BOTTOMLEFT",-p,-p)
+    left:SetPoint("TOPLEFT",button.healthBar,"TOPLEFT",-p,p)
+    left:SetPoint("BOTTOMLEFT",button.powerBar or button.healthBar,"BOTTOMLEFT",-p,-p)
     left:SetWidth(p)
     left:SetColorTexture(r,g,b,a)
     local right=button:CreateTexture(nil,"BORDER")
     button.right=right
-    right:SetPoint("TOPRIGHT",button,"TOPRIGHT",p,p)
-    right:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT",p,-p)
+    right:SetPoint("TOPRIGHT",button.healthBar,"TOPRIGHT",p,p)
+    right:SetPoint("BOTTOMRIGHT",button.powerBar or button.healthBar,"BOTTOMRIGHT",p,-p)
     right:SetWidth(p)
     right:SetColorTexture(r,g,b,a)
-    button.topDispel=false
     return button
 end
 function F:SetupHealthBar(button,orient)
@@ -220,7 +219,7 @@ function F:SetupPrediction(button)
     player:SetMinMaxValues(0,1)
     player:SetValue(1)
     player:Hide()
-    player:SetFrameLevel(button:GetFrameLevel()+1)
+    player:SetFrameLevel(button:GetFrameLevel()+2)
     local from=CreateFrame("StatusBar",nil,button)
     button.prediction=from
     from:SetAllPoints(button.healthBar)
@@ -443,74 +442,6 @@ local function GetShortName(pos)
         return pos:sub(1,1)
     end
 end
-function F:SetupClassDispel(b)
-    if not b then return end
-    if not b.dispel then
-        local frame=CreateFrame("Frame",nil,UIParent)
-        frame:SetFrameStrata("HIGH")
-        frame:SetPoint("CENTER",b,"CENTER",0,10)
-        frame:SetSize(10,10)
-        local dispel=frame:CreateTexture(nil,"OVERLAY",nil,7)
-        dispel:Hide()
-        dispel:SetSize(14,14)
-        dispel:SetPoint("TOPRIGHT",b.healthBar,"TOPRIGHT",-2,-2)
-        local border=frame:CreateTexture(nil,"BORDER")
-        border:Hide()
-        border:SetColorTexture(1,0,0,1)
-        border:SetPoint("TOPLEFT",dispel,"TOPLEFT",-1,1)
-        border:SetPoint("BOTTOMRIGHT",dispel,"BOTTOMRIGHT",1,-1)
-        b.dispel=dispel
-        b.dispelBorder=border
-        b.classDispel=false
-        return b
-    end
-end
-function F:SetupBlinkIcon(b)
-    if not b then return end
-    if not b.blink then
-        local frame=CreateFrame("Frame",nil,UIParent)
-        frame:SetFrameStrata("HIGH")
-        frame:SetPoint("CENTER",b,"CENTER",0,10)
-        frame:SetSize(10,10)
-        local icon=frame:CreateTexture(nil,"OVERLAY",nil,7)
-        icon:SetAllPoints()
-        icon:SetTexCoord(0.07,0.93,0.07,0.93)
-        b.blink=frame
-        b.blinkIcon=icon
-        return b
-    end
-end
-function F:GetTexture(button,data)
-    local frame=CreateFrame("Frame",nil,button)
-    frame:SetFrameStrata("HIGH")
-    local tex=frame:CreateTexture(nil,"OVERLAY",nil,7)
-    tex:SetColorTexture(data[2],data[3],data[4],data[5])
-    tex:SetSize(data[9],data[9])
-    tex:SetPoint(data[6],button.healthBar,data[6],data[7],data[8])
-    local cooldown=CreateFrame("Cooldown",nil,frame,"CooldownFrameTemplate")
-    cooldown:SetBlingTexture("Interface\\Cooldown\\star4_edge",1,1,1,1)
-    cooldown:SetAllPoints(tex)
-    cooldown:SetReverse(true)
-    cooldown:SetHideCountdownNumbers(true)
-    local count=frame:CreateFontString(nil,"OVERLAY")
-    count:SetFontObject(C.EtherFont)
-    count:SetPoint("LEFT",tex)
-    count:Hide()
-    local stacks=frame:CreateFontString(nil,"OVERLAY")
-    stacks:SetFontObject(C.EtherFont)
-    stacks:SetPoint("LEFT",tex)
-    stacks:Hide()
-    local durationText=frame:CreateFontString(nil,"OVERLAY")
-    durationText:SetFontObject(C.EtherFont)
-    durationText:SetPoint("CENTER",frame)
-    durationText:Hide()
-    frame.icon=tex
-    frame.cooldown=cooldown
-    frame.count=count
-    frame.stacks=stacks
-    frame.durationText=durationText
-    return frame
-end
 function F:CreatePreview(parent,point)
     local preview=CreateFrame("StatusBar",nil,parent)
     preview:SetSize(55,55)
@@ -639,4 +570,96 @@ function F:LineInput(parent,width,height)
     if input.Middle then input.Middle:Hide() end
     if input.Right then input.Right:Hide() end
     return input
+end
+local GetTexture
+do
+    local frame=CreateFrame("Frame",nil,UIParent)
+    frame:SetFrameStrata("HIGH")
+    local function TextureMethod()
+        local method=frame:CreateTexture(nil,"ARTWORK",nil,7)
+        local count=frame:CreateFontString(nil,"ARTWORK")
+        count:SetFontObject(C.EtherFont)
+        count:SetPoint("CENTER",method)
+        count:Hide()
+        local cooldown=CreateFrame("Cooldown",nil,frame,"CooldownFrameTemplate")
+        cooldown:SetBlingTexture("Interface\\Cooldown\\star4_edge",1,1,1,1)
+        cooldown:SetReverse(true)
+        cooldown:SetHideCountdownNumbers(true)
+        function method:Setup(b,data)
+            self:SetColorTexture(data[2],data[3],data[4],data[5])
+            self:SetSize(data[9],data[9])
+            self:SetPoint(data[6],b.healthBar,data[6],data[7],data[8])
+            cooldown:SetAllPoints(method)
+            self.cooldown=cooldown
+            self.count=count
+            self:Show()
+        end
+        function method:Reset()
+            self:Hide()
+            self.count:Hide()
+            self.cooldown:Hide()
+            self.count:ClearAllPoints()
+            self.cooldown:ClearAllPoints()
+            self:ClearAllPoints()
+        end
+        return method
+    end
+    local temp,active,inactive,count={},{},{},0
+    function F:WipePoolData()
+        table.wipe(temp)
+        table.wipe(active)
+        table.wipe(inactive)
+        count=0
+    end
+    function F:Acquire(...)
+        if count>=220 then
+            return nil
+        end
+        local obj=table.remove(inactive)
+        if not obj then
+            obj=TextureMethod()
+        end
+        count=count+1
+        active[count]=obj
+        obj._index=count
+        if obj.Setup then
+            obj:Setup(...)
+        end
+        return obj
+    end
+    function F:Release(obj)
+        if not obj or not obj._index then
+            return
+        end
+        local index=obj._index
+        if index<=0 or index>count then
+            return
+        end
+        local last=active[count]
+        active[index]=last
+        active[count]=nil
+        if last and last~=obj then
+            last._index=index
+        end
+        obj._index=-1
+        count=count-1
+        if obj.Reset then
+            obj:Reset()
+        end
+        if #inactive<150 then
+            inactive[#inactive+1]=obj
+        end
+    end
+    function F:ReleaseAll()
+        for i=1,count do
+            temp[i]=active[i]
+        end
+        for i=1,#temp do
+            F:Release(temp[i])
+        end
+        for i=1,#temp do
+            temp[i]=nil
+        end
+    end
+    F.GetTexture=GetTexture
 end
