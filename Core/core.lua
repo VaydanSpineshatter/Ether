@@ -201,7 +201,7 @@ end
 function S.EventFrame:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     C_Timer.After(0.1,function()
-        if UnitInAnyGroup("player") and UnitExists("pet") then
+        if UnitExists("pet") then
             if _G["EtherPetGroupHeader"] then
                 for _,v in ipairs(_G["EtherPetGroupHeader"]) do
                     v.unit=v:GetAttribute("unit")
