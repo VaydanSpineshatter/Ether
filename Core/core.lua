@@ -73,7 +73,6 @@ function C:Main()
     end)
     D:ApplyFramePosition(C.MainFrame)
     F:SetupDrag(C.MainFrame)
-    C:EtherInfo("User settings created")
 end
 function C:ToggleUnlock(number)
     if not C.GridFrame then

@@ -7,9 +7,9 @@ local f,h=fTbl[select(3,UnitClass("player"))],hTbl[select(3,UnitClass("player"))
 local function IsInRange(unit)
     if not unit then return end
     local range
-    local assist=CheckInteractDistance(unit,4) and not InCombatLockdown()
-    local attack=CheckInteractDistance(unit,1) and not InCombatLockdown()
-    local interact=CheckInteractDistance(unit,3) and not InCombatLockdown()
+    local assist=not InCombatLockdown() and CheckInteractDistance(unit,4)
+    local attack=not InCombatLockdown() and CheckInteractDistance(unit,1)
+    local interact=not InCombatLockdown() and CheckInteractDistance(unit,3)
     if UnitCanAssist("player",unit) then
         range=assist or IsSpellInRange(f,unit)
     elseif UnitCanAttack("player",unit) then
