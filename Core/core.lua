@@ -201,15 +201,13 @@ end
 function S.EventFrame:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     C_Timer.After(0.1,function()
-        if D.H and D.H.pet then
-            for _,v in ipairs(D.H.pet) do
-                v.unit=v:GetAttribute("unit")
-                local guid=v.unit and UnitGUID(v.unit)
-                if guid and guid~=v.guid then
-                    v.guid=guid
+        if UnitInAnyGroup("player") and UnitExists("pet") then
+            if _G["EtherPetGroupHeader"] then
+                for _,v in ipairs(_G["EtherPetGroupHeader"]) do
+                    v.unit=v:GetAttribute("unit")
                     D.petBtn[v.unit]=v
-                    F:UpdateName(v,3)
                     F:FullHealthUpdate(v)
+                    F:UpdateName(v,3)
                     F:UpdateIndicatorsPetUnit(v)
                 end
             end

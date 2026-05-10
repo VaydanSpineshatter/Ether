@@ -51,23 +51,16 @@ local function OnLeave()
 end
 local function UpdatePetUnit(self)
     self.unit=self:GetAttribute("unit")
-    local guid=self.unit and UnitGUID(self.unit)
-    if guid and guid~=self.guid then
-        self.guid=guid
-        petBtn[self.unit]=self
-        F:UpdateName(self,3)
-        F:FullHealthUpdate(self)
-        F:UpdateIndicatorsPetUnit(self)
-    end
+    petBtn[self.unit]=self
+    F:FullHealthUpdate(self)
+    F:UpdateName(self,3)
+    F:UpdateIndicatorsPetUnit(self)
 end
-local function OnEvent(self,event,unit,...)
+local function OnEvent(self,event)
     if event=="UNIT_PET" then
         UpdatePetUnit(self)
     elseif event=="GROUP_ROSTER_UPDATE" then
-        for _,v in ipairs(pet) do
-            v.unit=v:GetAttribute("unit")
-            UpdatePetUnit(v)
-        end
+        UpdatePetUnit(self)
     end
 end
 local function OnShow(self)
@@ -102,6 +95,25 @@ local function CreateChildren(h,n)
         b.healthDrop:SetColorTexture(r*0.3,g*0.3,be*0.4,.3)
     else
         b.RaidAuras={}
+        local frame=CreateFrame("Frame",nil,UIParent)
+        frame:SetFrameStrata("HIGH")
+        frame:SetFrameLevel(b:GetFrameLevel()+3)
+        local dispel=frame:CreateTexture(nil,"ARTWORK",nil,-7)
+        dispel:Hide()
+        dispel:SetSize(14,14)
+        dispel:SetPoint("TOPRIGHT",b,"TOPRIGHT",-2,-2)
+        local border=frame:CreateTexture(nil,"BORDER")
+        border:Hide()
+        border:SetColorTexture(1,0,0,1)
+        border:SetPoint("TOPLEFT",dispel,"TOPLEFT",-1,1)
+        border:SetPoint("BOTTOMRIGHT",dispel,"BOTTOMRIGHT",1,-1)
+        b.dispel=dispel
+        b.dispelBorder=border
+        local blink=frame:CreateTexture(nil,"ARTWORK",nil,-7)
+        blink:SetSize(10,10)
+        blink:SetPoint("CENTER",b,"CENTER",0,10)
+        blink:SetTexCoord(0.07,0.93,0.07,0.93)
+        b.blink=blink
         F:SetupPowerText(b)
         F:SetupHealthText(b)
     end
@@ -109,25 +121,6 @@ local function CreateChildren(h,n)
     F:SetupButtonBorder(b)
     F:SetupPrediction(b)
     F:SetupName(b,-5)
-    local frame=CreateFrame("Frame",nil,UIParent)
-    frame:SetFrameStrata("HIGH")
-    frame:SetFrameLevel(b:GetFrameLevel()+3)
-    local dispel=frame:CreateTexture(nil,"ARTWORK",nil,-7)
-    dispel:Hide()
-    dispel:SetSize(14,14)
-    dispel:SetPoint("TOPRIGHT",b,"TOPRIGHT",-2,-2)
-    local border=frame:CreateTexture(nil,"BORDER")
-    border:Hide()
-    border:SetColorTexture(1,0,0,1)
-    border:SetPoint("TOPLEFT",dispel,"TOPLEFT",-1,1)
-    border:SetPoint("BOTTOMRIGHT",dispel,"BOTTOMRIGHT",1,-1)
-    b.dispel=dispel
-    b.dispelBorder=border
-    local blink=frame:CreateTexture(nil,"ARTWORK",nil,-7)
-    blink:SetSize(10,10)
-    blink:SetPoint("CENTER",b,"CENTER",0,10)
-    blink:SetTexCoord(0.07,0.93,0.07,0.93)
-    b.blink=blink
     b:SetScript("OnEnter",OnEnter)
     b:SetScript("OnLeave",OnLeave)
     if h:GetAttribute("TypePet") then
@@ -162,6 +155,8 @@ local function AnchorMethod(index)
         return "TOP","LEFT"
     end
 end
+local _,s=GetPhysicalScreenSize()
+local p=1/(768/s)
 function F:CreateGroupHeader(call)
     local by,order=OrderMethod(D.DB["CONFIG"][11])
     local column,point=AnchorMethod(D.DB["CONFIG"][12])
@@ -175,8 +170,9 @@ function F:CreateGroupHeader(call)
         raidGroup:SetAttribute("point",point or "TOP")
         raidGroup:SetAttribute("groupBy",by or "GROUP")
         raidGroup:SetAttribute("groupingOrder",order or "1,2,3,4,5,6,7,8")
-        raidGroup:SetAttribute("xOffset",2)
-        raidGroup:SetAttribute("yOffset",-2)
+        raidGroup:SetAttribute("xOffset",p)
+        raidGroup:SetAttribute("yOffset",-p)
+        raidGroup:SetAttribute("columnSpacing",p)
         raidGroup:SetAttribute("unitsPerColumn",5)
         raidGroup:SetAttribute("maxColumns",8)
         raidGroup:SetAttribute("showRaid",true)
@@ -192,8 +188,9 @@ function F:CreateGroupHeader(call)
         raidPet:SetAttribute("TypePet",true)
         raidPet:SetAttribute("ButtonHeight",D.DB[21][11][6] or 45)
         raidPet:SetAttribute("ButtonWidth",D.DB[21][11][7] or 45)
-        raidPet:SetAttribute("xOffset",1)
-        raidPet:SetAttribute("yOffset",-1)
+        raidPet:SetAttribute("xOffset",p)
+        raidPet:SetAttribute("yOffset",-p)
+        raidPet:SetAttribute("columnSpacing",p)
         raidPet:SetAttribute("showRaid",true)
         raidPet:SetAttribute("showParty",true)
         raidPet:SetAttribute("showPlayer",true)
