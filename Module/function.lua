@@ -80,21 +80,6 @@ function F:SetupHealthText(button)
     text:SetTextColor(1,1,1)
     return button
 end
-function C:ToggleUser()
-    if InCombatLockdown() then return end
-    if not C.created then
-        C:Main()
-    end
-    if not C.MainFrame then return end
-    D.DB["CONFIG"][3]=F:ToggleBinary(D.DB["CONFIG"][3])
-    if C.DropdownMenu then
-        C.DropdownMenu:Hide()
-    end
-    if C.DropdownText then
-        C.DropdownText:SetAlpha(1)
-    end
-    C.MainFrame:SetShown(F:BinaryCondition(D.DB["CONFIG"][3]))
-end
 function F:SetupName(button,number)
     if not button then return end
     local name=button.healthBar:CreateFontString(nil,"OVERLAY")

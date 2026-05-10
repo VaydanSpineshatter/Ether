@@ -65,7 +65,7 @@ local function AddAura(editor)
 end
 local function OnAuraSelect(self,_,data)
     AddPredefinedAura(data)
-    self.text:SetText(data)
+    self.v:SetText(data)
 end
 local function UpdateAuraStatus(self,spellId)
     if not spellId then return end
@@ -146,7 +146,7 @@ local function Aura(self,status)
             F:UpdateAuraList()
             UpdateEditor(self)
             C:EtherInfo("|cff00ccffAuras|r: Custom auras cleared")
-            dropdown.menu:Hide()
+            C.DropdownMenu:Hide()
             C.PopupBox:SetShown(false)
             C.MainFrame:SetShown(true)
         end)

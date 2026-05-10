@@ -32,7 +32,7 @@ local function OnBarSelect(self,index,data)
     indexKey=index
     local panel=C.ChildFrames[6]
     panel.default:Show()
-    self.text:SetText(data)
+    self.v:SetText(data)
     C.MainButtons[6][index].v:SetText(data)
     C.MainButtons[6][index]:Show()
     panel.wl:SetText(D.DB[21][index][6])
@@ -54,7 +54,7 @@ local function OnBarConsum(self,index,data)
     end
     local panel=C.ChildFrames[6]
     indexKey=index+6
-    self.text:SetText(data)
+    self.v:SetText(data)
     panel.consuma:SetText(D.DB["CONFIG"][indexKey])
     panel.consuma.v:SetText(data)
     panel.consuma:Show()
@@ -70,7 +70,7 @@ local function OnGroupJoined(self,_,data)
         if v then v:Hide() end
     end
     D.DB["CONFIG"][13]=data
-    self.text:SetText(data)
+    self.v:SetText(data)
     F:UpdateRole(data)
 end
 local function OnRemoved(self,index)

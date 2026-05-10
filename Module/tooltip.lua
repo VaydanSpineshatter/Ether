@@ -182,4 +182,7 @@ function F:ToolTipInitialize()
         if D.DB[1][9]~=1 then return end
         frame:SetShown(false)
     end)
+    F:MainBorder(C.ToolFrame,6,7,8,9)
+    D:ApplyFramePosition(C.ToolFrame)
+    F:SetupDrag(C.ToolFrame)
 end

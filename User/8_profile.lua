@@ -3,8 +3,11 @@ local eColor="|cffcc66ffEther|r "
 local function OnProfileChange(self,_,data)
     if data==D:GetProfileName() then return end
     D:SwitchProfile(data)
-    self.text:SetText(data)
+    self.v:SetText(data)
     D.menuStrings[10]:SetText(string.format("%s %s","Profile ",data))
+    for _,v in ipairs(C.ChildFrames) do
+        v:Hide()
+    end
 end
 local function CreateImportBox(backdrop)
     if C.ImportBox then return end
@@ -53,7 +56,7 @@ local function Profile(self,status)
     local dropdown=F:CreateEtherDropdown(self,130,"Select Profile",D:GetProfileList(),OnProfileChange)
     C.ProfileDropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)
-    dropdown.text:SetText(D:GetProfileName())
+    dropdown.v:SetText(D:GetProfileName())
     local transfer=CreateFrame("Frame",nil,self,"BackdropTemplate")
     transfer:SetPoint("TOPRIGHT")
     transfer:SetSize(220,self:GetHeight())
@@ -106,7 +109,7 @@ local function Profile(self,status)
                 if success then
                     C:EtherInfo(eColor..msg)
                     dropdown:SetOptions(D:GetProfileList())
-                    dropdown.text:SetText(D:GetProfileName())
+                    dropdown.v:SetText(D:GetProfileName())
                     input:Hide()
                     input:ClearFocus()
                     input:SetText("")
@@ -124,7 +127,7 @@ local function Profile(self,status)
             local success,msg=D:CopyProfile(name)
             if success then
                 dropdown:SetOptions(D:GetProfileList())
-                dropdown.text:SetText(name)
+                dropdown.v:SetText(name)
                 C:EtherInfo(eColor..msg)
             else
                 C:EtherInfo(eColor..msg)
@@ -143,7 +146,7 @@ local function Profile(self,status)
                 local success,msg=D:RenameProfile(D:GetProfileName(),newName)
                 if success then
                     dropdown:SetOptions(D:GetProfileList())
-                    dropdown.text:SetText(D:GetProfileName())
+                    dropdown.v:SetText(D:GetProfileName())
                     C:EtherInfo(eColor.."name changed to "..D:GetProfileName())
                     input:Hide()
                     input:ClearFocus()
@@ -209,7 +212,7 @@ local function Profile(self,status)
         local success,msg=D:ImportProfile(info)
         if success then
             dropdown:SetOptions(D:GetProfileList())
-            dropdown.text:SetText(D:GetProfileName())
+            dropdown.v:SetText(D:GetProfileName())
             C:EtherInfo(eColor..msg)
             C.ImportBox:SetText("Paste import data here...")
         else

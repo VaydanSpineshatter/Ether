@@ -1,4 +1,4 @@
-local D,_,S,C=unpack(select(2,...))
+local D,F,S,C=unpack(select(2,...))
 local type,next,tostring,unpack=type,next,tostring,unpack
 local tconcat,UIParent,pairs,ipairs=table.concat,UIParent,pairs,ipairs
 D.MenuKey,D.menuStrings={"Module","Blizzard","Tooltip","Indicators","Header","Layout","Aura","Profile"},{}
@@ -140,6 +140,11 @@ function D:InitializeAddon(status)
     D.DB=D:CopyTable(_G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()])
     C_ChatInfo.RegisterAddonMessagePrefix(C.EtherPrefix)
     _G["ETHER_DATABASE"]["VERSION"]=C.EtherVersion
+    if C.InfoFrame then
+        F:MainBorder(C.InfoFrame,12,13,14,15)
+        D:ApplyFramePosition(C.InfoFrame)
+        F:SetupDrag(C.InfoFrame)
+    end
     S.EventFrame:RegisterEvent("PLAYER_LOGIN")
     S.EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 end

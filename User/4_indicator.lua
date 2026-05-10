@@ -63,7 +63,7 @@ local function OnIndicatorSelect(self,index,data)
         btn:Enable()
     end
     C.Indi=index
-    self.text:SetText(data)
+    self.v:SetText(data)
     UpdateIndicatorsPos(C.Indi)
     C.MainButtons[4][index]:Show()
     callback(index)

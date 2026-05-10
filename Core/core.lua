@@ -45,37 +45,35 @@ function C:Main()
     C.MainFrame.bg:SetColorTexture(0.1,0.1,0.1)
     C.MainFrame:Hide()
     C.MainFrame:SetScript("OnHide",function()
-        C:ToggleUnlock(0)
-        if C.DropdownMenu then
-            C.DropdownMenu:Hide()
-        end
-        if C.DropdownText then
-            C.DropdownText:SetAlpha(1)
-        end
-        if C.InputText then
-            C.InputText:SetText("")
-        end
-        C:ToggleBorder(0.67,0.67,0.67)
-        for _,v in ipairs(C.ChildFrames) do
-            v:Hide()
-        end
-        F:MenuStringsAlpha(1)
-        if C.ImportBox then
-            C.ImportBox:ClearFocus()
-            C.ImportBox:SetText("Paste import data here...")
-        end
-        F:UpdateButtons(C.ChildFrames[7])
-        if C.InputLine then
-            C.InputLine:Hide()
-        end
+        if C.ProfileRefresh then return end
+        F:RefreshUserButtons(1)
         if C.IsMovable then return end
         D.DB["CONFIG"][3]=0
     end)
     Base()
     Child()
     Border()
+    local unlock=F:EtherPanelButton(C.BaseFrame,40,20,"Lock","BOTTOMLEFT",C.BaseFrame,"BOTTOMLEFT",10,5)
+    unlock:SetScript("OnClick",function()
+        if C.ProfileRefresh then return end
+        if not C.GridFrame then
+            F:SetupGridFrame()
+        end
+        if not C.GridFrame:IsShown() then
+            C:ToggleUnlock(1)
+        else
+            C:ToggleUnlock(0)
+        end
+    end)
+    local close=F:EtherPanelButton(C.BaseFrame,40,20,"Close","LEFT",unlock,"RIGHT",0,0)
+    close:SetScript("OnClick",function()
+        if C.ProfileRefresh then return end
+        C.MainFrame:Hide()
+        D.DB["CONFIG"][3]=0
+    end)
     D:ApplyFramePosition(C.MainFrame)
     F:SetupDrag(C.MainFrame)
+    C:EtherInfo("User settings created")
 end
 function C:ToggleUnlock(number)
     if not C.GridFrame then
@@ -149,39 +147,6 @@ function S.EventFrame:PLAYER_LOGIN()
     if D.DB[6][13]==1 then
         F:CastEnable(2)
     end
-    if C.InfoFrame then
-        F:MainBorder(C.InfoFrame,12,13,14,15)
-        D:ApplyFramePosition(C.InfoFrame)
-        F:SetupDrag(C.InfoFrame)
-    end
-    if F:BinaryCondition(D.DB["CONFIG"][3]) then
-        C:ToggleUser()
-        C_Timer.After(0.1,function()
-            C.MainFrame:SetShown(true)
-        end)
-    end
-    if C.ToolFrame then
-        F:MainBorder(C.ToolFrame,6,7,8,9)
-        D:ApplyFramePosition(C.ToolFrame)
-        F:SetupDrag(C.ToolFrame)
-    end
-    local unlock=F:EtherPanelButton(C.BaseFrame,40,20,"Lock","BOTTOMLEFT",C.BaseFrame,"BOTTOMLEFT",10,5)
-    unlock:SetScript("OnClick",function()
-        if not C.GridFrame then
-            F:SetupGridFrame()
-        end
-        if not C.GridFrame:IsShown() then
-            C:ToggleUnlock(1)
-        else
-            C:ToggleUnlock(0)
-        end
-    end)
-    local close=F:EtherPanelButton(C.BaseFrame,40,20,"Close","LEFT",unlock,"RIGHT",0,0)
-    close:SetScript("OnClick",function()
-        C.MainFrame:Hide()
-        D.DB["CONFIG"][3]=0
-    end)
-    D:MergeAnalyse()
 end
 function S.EventFrame:PLAYER_LOGOUT()
     self:UnregisterAllEvents()

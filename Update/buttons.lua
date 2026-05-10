@@ -78,32 +78,21 @@ function F:UpdatePreview(data,editor,id)
     icon:SetPoint(pos[6],editor.preview,pos[6],pos[7],pos[8])
     icon:Show()
 end
-function F:RefreshUserButtons()
-    for _,v in ipairs(C.ChildFrames) do
-        v:Hide()
-    end
-    if C.DropdownMenu then
-        C.DropdownMenu:Hide()
-    end
-    if C.InputText then
-        C.InputText:SetText("")
-    end
-    if C.DropdownText then
-        C.DropdownText:SetAlpha(1)
-    end
-    if C.ImportBox then
-        C.ImportBox:ClearFocus()
-        C.ImportBox:SetText("Paste import data here...")
-    end
-    if C.InputLine then
-        C.InputLine:Hide()
-    end
-end
 function F:MenuStringsAlpha(number)
     if D.menuStrings[1]:GetAlpha()==number then return end
     for index=1,10 do
         D.menuStrings[index]:SetAlpha(number)
     end
+end
+local function OnEnter(self)
+    if C.ProfileRefresh then return end
+    self.v:SetTextColor(self.r or 1,self.g or 0.84,self.b or 0)
+    C:ToggleBorder(self.r or 1,self.g or 0.84,self.b or 0)
+end
+local function OnLeave(self)
+    if C.ProfileRefresh then return end
+    self.v:SetTextColor(1,1,1)
+    C:ToggleBorder(0.67,0.67,0.67)
 end
 function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
     local dropdownBtn={}
@@ -113,22 +102,23 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
     frame.bg=bg
     bg:SetAllPoints()
     bg:SetColorTexture(1,1,1,0.1)
-    frame.text=frame:CreateFontString(nil,"OVERLAY")
-    frame.text:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
-    frame.text:SetPoint("CENTER")
-    frame.text:SetJustifyH("CENTER")
-    frame.text:SetJustifyV("MIDDLE")
-    frame.text:SetText(txt)
+    frame.v=frame:CreateFontString(nil,"OVERLAY")
+    frame.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
+    frame.v:SetPoint("CENTER")
+    frame.v:SetJustifyH("CENTER")
+    frame.v:SetJustifyV("MIDDLE")
+    frame.v:SetText(txt)
     frame:SetScript("OnEnter",function(self)
-        self.text:SetTextColor(0,0.8,1)
+        if C.ProfileRefresh then return end
+        self.v:SetTextColor(0,0.8,1)
         C:ToggleBorder(0,0.8,1)
     end)
     frame:SetScript("OnLeave",function(self)
-        self.text:SetTextColor(1,1,1)
+        if C.ProfileRefresh then return end
+        self.v:SetTextColor(1,1,1)
         C:ToggleBorder(0.67,0.67,0.67)
     end)
     local menu=CreateFrame("Button",nil,frame)
-    frame.menu=menu
     C.DropdownMenu=menu
     C.DropdownText=frame.text
     menu:SetPoint("TOPLEFT",frame,"BOTTOMLEFT",0,-2)
@@ -151,29 +141,26 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
             if not btn then
                 btn=CreateFrame("Button",nil,menu)
                 btn:SetSize(width-8,20)
-                btn.text=btn:CreateFontString(nil,"OVERLAY")
-                btn.text:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
-                btn.text:SetJustifyH("CENTER")
-                btn.text:SetJustifyV("MIDDLE")
-                btn.text:SetPoint("CENTER")
-                btn:SetScript("OnEnter",function(self)
-                    self.text:SetTextColor(1,0.84,0)
-                end)
-                btn:SetScript("OnLeave",function(self)
-                    self.text:SetTextColor(1,1,1)
-                end)
+                btn.v=btn:CreateFontString(nil,"OVERLAY")
+                btn.v:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",7,"OUTLINE")
+                btn.v:SetJustifyH("CENTER")
+                btn.v:SetJustifyV("MIDDLE")
+                btn.v:SetPoint("CENTER")
+                btn:SetScript("OnEnter",OnEnter)
+                btn:SetScript("OnLeave",OnLeave)
                 dropdownBtn[#dropdownBtn+1]=btn
             end
             btn:SetPoint("TOPLEFT",4,-totalHeight)
-            btn.text:SetText(data)
+            btn.v:SetText(data)
             btn:SetScript("OnClick",function()
+                if C.ProfileRefresh then return end
                 if callback then
                     callback(frame,index,data)
                 end
                 if not status then
-                    frame.text:SetText(data)
+                    frame.v:SetText(data)
                 end
-                frame.text:SetAlpha(1)
+                frame.v:SetAlpha(1)
                 menu:Hide()
             end)
             btn:Show()
@@ -184,22 +171,19 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
     frame:SetScript("OnClick",function()
         if C.ProfileRefresh then return end
         menu:SetShown(not menu:IsShown())
-        if frame.text:GetAlpha()==1 then
-            frame.text:SetAlpha(0)
-        else
-            frame.text:SetAlpha(1)
+        if frame.v:GetAlpha()==0 then
+            frame.v:SetAlpha(1)
         end
         C:ToggleBorder(0.67,0.67,0.67)
     end)
     if options then frame:SetOptions(options) end
-    function frame:HideDropdown()
-        frame.menu:Hide()
-        frame.text:SetAlpha(1)
-    end
     return frame
 end
 function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY,r,g,b)
     local btn=CreateFrame("Button",nil,parent)
+    if b then
+        btn.r,btn.g,btn.b=r,g,b
+    end
     btn:SetPoint(point,relTo,rel,offX,offY)
     btn.v=btn:CreateFontString(nil,"OVERLAY")
     btn.v:SetFontObject(C.EtherFont)
@@ -210,14 +194,8 @@ function F:EtherPanelButton(parent,width,height,text,point,relTo,rel,offX,offY,r
     btn.bg:SetPoint("TOPLEFT",-2,2)
     btn.bg:SetPoint("BOTTOMRIGHT",2,-2)
     btn.bg:SetColorTexture(0,0,0,0)
-    btn:SetScript("OnEnter",function(self)
-        self.v:SetTextColor(r or 1,g or 0.84,b or 0)
-        C:ToggleBorder(r or 1,g or 0.84,b or 0)
-    end)
-    btn:SetScript("OnLeave",function(self)
-        self.v:SetTextColor(1,1,1)
-        C:ToggleBorder(0.67,0.67,0.67)
-    end)
+    btn:SetScript("OnEnter",OnEnter)
+    btn:SetScript("OnLeave",OnLeave)
     btn:SetSize(btn.v:GetStringWidth() or width,btn.v:GetStringHeight() or height)
     return btn
 end
@@ -243,14 +221,48 @@ function F:InitializeSystemStatus()
         end
     end
 end
+function C:ToggleUser()
+    if InCombatLockdown() then return end
+    if not C.created then
+        C:Main()
+    end
+    C.MainFrame:SetShown(not C.MainFrame:IsShown() and true or false)
+end
+function F:RefreshUserButtons(number)
+    for _,v in ipairs(C.ChildFrames) do
+        v:Hide()
+    end
+    C:ToggleUnlock(0)
+    if C.DropdownMenu then
+        C.DropdownMenu:Hide()
+    end
+    if C.DropdownText then
+        C.DropdownText:SetAlpha(1)
+    end
+    if C.InputText then
+        C.InputText:SetText("")
+    end
+    C:ToggleBorder(0.67,0.67,0.67)
+    F:MenuStringsAlpha(number or 0)
+    if C.ImportBox then
+        C.ImportBox:ClearFocus()
+        if not C.ImportBox:GetText()=="Paste import data here..." then
+            C.ImportBox:SetText("Paste import data here...")
+        end
+    end
+    F:UpdateButtons(C.ChildFrames[7])
+    if C.InputLine then
+        C.InputLine:Hide()
+    end
+end
 function F:MenuButton(index,func)
     local btn=CreateFrame("Button",nil,C.BaseFrame)
     local frame=C.ChildFrames
     frame[index]=CreateFrame("Frame",nil,C.ContentFrame)
     frame[index]:SetAllPoints(C.ContentFrame)
     btn:SetScript("OnClick",function()
-        F:MenuStringsAlpha(0)
-        F:RefreshUserButtons()
+        if C.ProfileRefresh then return end
+        F:RefreshUserButtons(0)
         D.DB["CONFIG"][1]=index
         func(index)
         frame[index]:Show()
@@ -264,14 +276,8 @@ function F:MenuButton(index,func)
     btn.v:SetFontObject(C.EtherFont)
     btn.v:SetPoint("CENTER")
     btn.v:SetText(D.MenuKey[index])
-    btn:SetScript("OnEnter",function(self)
-        self.v:SetTextColor(1,0.84,0)
-        C:ToggleBorder(1,0.84,0)
-    end)
-    btn:SetScript("OnLeave",function(self)
-        self.v:SetTextColor(1,1,1)
-        C:ToggleBorder(0.67,0.67,0.67)
-    end)
+    btn:SetScript("OnEnter",OnEnter)
+    btn:SetScript("OnLeave",OnLeave)
     btn:SetSize(btn.v:GetStringWidth() or 90,btn.v:GetStringHeight() or 20)
     C.MenuButtons[index]=btn
 end
@@ -295,6 +301,7 @@ function F:CreateCheckButton(parent,index,tbl,callback,status,point,relTo,rel,x,
         btn.v:SetPoint("LEFT",btn,"RIGHT",8,1)
         btn:SetChecked(D.DB[index][i]==1)
         btn:SetScript("OnClick",function(self)
+            if C.ProfileRefresh then return end
             local checked=self:GetChecked()
             D.DB[index][i]=checked and 1 or 0
             if callback then

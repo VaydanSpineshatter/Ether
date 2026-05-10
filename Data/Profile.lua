@@ -198,18 +198,17 @@ local function ProfileRefresh()
     if C.MainFrame:IsShown() then
         C.MainFrame:Hide()
     end
+    F:Fire(22)
     F:UpdateAuraList()
     F.UpdateEditor(C.ChildFrames[7])
     F:IndicatorsDisable()
     for index=1,11 do
         F:SavePosition(index)
     end
-    F:MenuStringsAlpha(0)
     D:RefreshAllSettings()
     D:RefreshAllFrames()
-    F:Fire(22)
-    if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.text then
-        C.ChildFrames[6].roleDropdown.text:SetText(D.DB["CONFIG"][13] or "DAMAGER")
+    if C.ChildFrames[6] and C.ChildFrames[6].roleDropdown and C.ChildFrames[6].roleDropdown.v then
+        C.ChildFrames[6].roleDropdown.v:SetText(D.DB["CONFIG"][13] or "DAMAGER")
     end
     F:IndicatorsEnable()
     if C.ChildFrames[5] and C.ChildFrames[5].direction then
@@ -224,6 +223,9 @@ local function ProfileRefresh()
         end
     end
     F.UpdateIcon(C.Indi)
+    if C.RemoveDropdown then
+        C.RemoveDropdown:SetOptions(D.DB["USER"])
+    end
     if not C.MainFrame:IsShown() then
         C.MainFrame:Show()
     end
@@ -358,7 +360,7 @@ function D:DeleteProfile(name)
             data[#data+1]=n
         end
         C.ProfileDropdown:SetOptions(data)
-        C.ProfileDropdown.text:SetText(D:GetProfileName())
+        C.ProfileDropdown.vt:SetText(D:GetProfileName())
         return true,"Profile "..name.."  deleted"
     end
 end
