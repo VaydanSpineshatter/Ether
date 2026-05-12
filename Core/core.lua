@@ -101,8 +101,10 @@ function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_LOGOUT")
     if UnitAffectingCombat("player") then
+        C.CombatStatus=true
         S.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     else
+        C.CombatStatus=false
         S.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
     end
     D.Slash[17]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) and "|cff00ff00true|r" or "|cffff0000false|r"

@@ -32,7 +32,7 @@ local function UpdateAlpha(b)
     if not b or not b.unit then return end
     local unit=b.unit
     if b:IsVisible() then
-        if C.CombatStatus then
+        if not C.CombatStatus then
             b:SetAlpha(IsInRange(unit))
         else
             b:SetAlpha(IsInDistance(unit))
