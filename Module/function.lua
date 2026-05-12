@@ -110,7 +110,7 @@ function F:SetupHeaderBackground(frame,index)
     F:SetupDrag(frame)
 end
 function F:SetupButtonBorder(button)
-    local r,g,b,a=0,0,0,1
+    local r,g,b,a=0,0,0,.9
     local p=pixelScale
     local top=button:CreateTexture(nil,"BORDER")
     button.top=top

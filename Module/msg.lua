@@ -58,7 +58,17 @@ local function AutoRepair()
             data[#data+1]="Repair costs"
         end
         data[#data+1]=GetCoinTextureString(cost)
-        C:EtherInfo(table.concat(data," - "))
+        C:EtherInfo(table.concat(data,": "))
+    end
+end
+local function ScanCLEUGUID(destGUID)
+    for _,guid in ipairs(D.DB["USER"]) do
+        if guid==destGUID then
+            local c,name,enemy=GuidClassColor(guid)
+            F:StartFlash()
+            C:EtherInfo(sformat(P,c.r*255,c.g*255,c.b*255,name,enemy))
+            break
+        end
     end
 end
 function F:ScanTargetGUID()
@@ -87,9 +97,9 @@ function F:ScanGUID()
     else
         table.remove(D.DB["USER"],index)
         C:EtherInfo(sformat("|cffff0000Removed:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
-        if C.RemoveDropdown then
-            C.RemoveDropdown:SetOptions(D.DB["USER"])
-        end
+    end
+    if C.RemoveDropdown then
+        C.RemoveDropdown:SetOptions(D.DB["USER"])
     end
 end
 function F:RemoveByIndex(index)
@@ -106,28 +116,17 @@ function F:RemoveByIndex(index)
         end
     end
 end
-local data={}
 function F:PrintGUID()
     if D:TableSize(D.DB["USER"])==0 then
         C:EtherInfo("No guid available to print")
         return
     end
+    table.wipe(data)
     for index,guid in ipairs(D.DB["USER"]) do
         local c,name,enemy=GuidClassColor(guid)
         data[#data+1]=sformat("%s. |cff%02x%02x%02x%s|r %s %s",index,c.r*255,c.g*255,c.b*255,name,enemy,guid)
     end
     C:EtherInfo(tconcat(data,'\n'))
-    table.wipe(data)
-end
-local function ScanCLEUGUID(destGUID)
-    for _,guid in ipairs(D.DB["USER"]) do
-        if guid==destGUID then
-            local c,name,enemy=GuidClassColor(guid)
-            F:StartFlash()
-            C:EtherInfo(sformat(P,c.r*255,c.g*255,c.b*255,name,enemy))
-            break
-        end
-    end
 end
 function F:CreateSnapshot()
     local guid=UnitGUID("target")

@@ -425,13 +425,9 @@ end
 function F:IndicatorToggleEvent(number)
     if not number or type(number)~="number" then return end
     if D.DB[4][number]==1 then
-        if not event:IsEventRegistered(D.iEvent[number]) then
-            event:RegisterEvent(D.iEvent[number])
-        end
+        F:FuncEnable(D.iEvent[number])
     elseif D.DB[4][number]==0 then
-        if event:IsEventRegistered(D.iEvent[number]) then
-            event:UnregisterEvent(D.iEvent[number])
-        end
+        F:FuncDisable(D.iEvent[number])
     end
 end
 function F:IndicatorsToggleIcon(number)
@@ -446,9 +442,7 @@ function F:IndicatorsToggleIcon(number)
 end
 function F:IndicatorsEnable()
     for _,v in ipairs(D.iEvent) do
-        if not event:IsEventRegistered(v) then
-            event:RegisterEvent(v)
-        end
+        F:FuncEnable(v)
     end
     C_Timer.After(1,function()
         for index=1,6 do
@@ -460,9 +454,7 @@ function F:IndicatorsEnable()
 end
 function F:IndicatorsDisable()
     for _,v in ipairs(D.iEvent) do
-        if event:IsEventRegistered(v) then
-            event:UnregisterEvent(v)
-        end
+        F:FuncDisable(v)
     end
 end
 F:RegisterCallbackByIndex(F.IndicatorsEnable,6)

@@ -390,16 +390,12 @@ function event:UNIT_AURA(arg1,...)
     end
 end
 function F:AuraEnable()
-    if not event:IsEventRegistered("UNIT_AURA") then
-        event:RegisterEvent("UNIT_AURA")
-    end
+    F:FuncEnable("UNIT_AURA")
     F:EnableRaidAura()
     F:EnableSoloAura()
 end
 function F:AuraDisable()
-    if event:IsEventRegistered("UNIT_AURA") then
-        event:UnregisterEvent("UNIT_AURA")
-    end
+    F:FuncDisable("UNIT_AURA")
     twipe(Active)
     F:DisableRaidAura()
     F:DisableSoloAura()

@@ -276,7 +276,7 @@ function F:CastDisable(index)
     castBar[index]:SetAlpha(0)
     if not UpdateInfo() then
         for _,v in ipairs(D.castEvent) do
-            event:UnregisterEvent(v)
+            F:FuncDisable(v)
         end
     end
 end
