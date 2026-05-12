@@ -539,6 +539,7 @@ function F:LineInput(parent,width,height)
         line:SetHeight(1)
         bg:SetColorTexture(1,1,1,0.1)
         C:ToggleBorder(1,0.84,0)
+        input:HighlightText()
     end)
     input:SetScript("OnEditFocusLost",function()
         line:SetColorTexture(0.67,0.67,0.67)
@@ -595,8 +596,8 @@ do
         count=0
     end
     function F:Acquire(...)
-        if count>=220 then
-            return nil
+        if count>=260 then
+            F:ReleaseAll()
         end
         local obj=table.remove(inactive)
         if not obj then
@@ -629,7 +630,7 @@ do
         if obj.Reset then
             obj:Reset()
         end
-        if #inactive<150 then
+        if #inactive<120 then
             inactive[#inactive+1]=obj
         end
     end

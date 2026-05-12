@@ -50,17 +50,22 @@ local function OnLeave()
     GameTooltip:Hide()
 end
 local function UpdatePetUnit(self)
-    self.unit=self:GetAttribute("unit")
-    petBtn[self.unit]=self
-    F:FullHealthUpdate(self)
-    F:UpdateName(self,3)
-    F:UpdateIndicatorsPetUnit(self)
+    local unit=self:GetAttribute("unit")
+    if unit and UnitExists(unit) then
+        self.unit=unit
+        D.petBtn[self.unit]=self
+        F:FullHealthUpdate(self)
+        F:UpdateName(self,3)
+        F:UpdateIndicatorsPetUnit(self)
+    end
 end
 local function OnEvent(self,event)
     if event=="UNIT_PET" then
         UpdatePetUnit(self)
     elseif event=="GROUP_ROSTER_UPDATE" then
-        UpdatePetUnit(self)
+        for _,b in pairs(petBtn) do
+            UpdatePetUnit(b)
+        end
     end
 end
 local function OnShow(self)
@@ -102,13 +107,7 @@ local function CreateChildren(h,n)
         dispel:Hide()
         dispel:SetSize(14,14)
         dispel:SetPoint("TOPRIGHT",b,"TOPRIGHT",-2,-2)
-        local border=frame:CreateTexture(nil,"BORDER")
-        border:Hide()
-        border:SetColorTexture(1,0,0,1)
-        border:SetPoint("TOPLEFT",dispel,"TOPLEFT",-1,1)
-        border:SetPoint("BOTTOMRIGHT",dispel,"BOTTOMRIGHT",1,-1)
         b.dispel=dispel
-        b.dispelBorder=border
         local blink=frame:CreateTexture(nil,"ARTWORK",nil,-7)
         blink:SetSize(10,10)
         blink:SetPoint("CENTER",b,"CENTER",0,10)

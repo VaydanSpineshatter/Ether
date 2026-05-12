@@ -1,5 +1,5 @@
-local _,F,_,C=unpack(select(2,...))
-local data,type={},type
+local _,F,S,C=unpack(select(2,...))
+local event,data,type=S.EventFrame,{},type
 function F:RegisterCallback(func)
     if type(func)~="function" then return end
     table.insert(data,func)
@@ -45,4 +45,14 @@ function F:BinaryCondition(val)
 end
 function F:ToggleBinary(val)
     return 1-(val or 0)
+end
+function F:FuncEnable(input)
+    if not event:IsEventRegistered(input) then
+        event:RegisterEvent(input)
+    end
+end
+function F:FuncDisable(input)
+    if event:IsEventRegistered(input) then
+        event:UnregisterEvent(input)
+    end
 end

@@ -73,9 +73,8 @@ local function OnGroupJoined(self,_,data)
     self.v:SetText(data)
     F:UpdateRole(data)
 end
-local function OnRemoved(self,index)
+local function OnRemoved(_,index)
     F:RemoveByIndex(index)
-    self:SetOptions(D.DB["USER"])
 end
 local function ProcessWidthBtn(index)
     if type(index)~="number" then return end
@@ -322,7 +321,21 @@ local function Layout(self,status)
             C.MainFrame:SetShown(true)
         end)
     end)
+    local repair=F:EtherPanelButton(self,50,25,"Repair","LEFT",clear,"RIGHT",20,0)
+    self.repair=repair
+    repair:SetScript("OnClick",function()
+        D.DB["CONFIG"][17]=F:ToggleBinary(D.DB["CONFIG"][17])
+        F.UpdateStatus(repair,17)
+    end)
+    local guild=F:EtherPanelButton(self,50,25,"Guild","LEFT",repair,"RIGHT",5,0)
+    self.guild=guild
+    guild:SetScript("OnClick",function()
+        D.DB["CONFIG"][18]=F:ToggleBinary(D.DB["CONFIG"][18])
+        F.UpdateStatus(guild,18)
+    end)
     C.MainButtons[6][10]:Disable()
     C.MainButtons[6][11]:Disable()
+    F.UpdateStatus(repair,17)
+    F.UpdateStatus(guild,18)
 end
 F:RegisterCallbackByIndex(Layout,6+50)

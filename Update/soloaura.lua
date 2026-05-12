@@ -1,9 +1,9 @@
 local D,F,S,C=unpack(select(2,...))
-local pairs,ipairs,mfloor,sformat=pairs,ipairs,math.floor,string.format
+local pairs,ipairs,mfloor,sformat,UnitIsVisible=pairs,ipairs,math.floor,string.format,UnitIsVisible
 local GetBuffDataByIndex,GetDebuffDataByIndex=C_UnitAuras.GetBuffDataByIndex,C_UnitAuras.GetDebuffDataByIndex
 local UnitExists,GetTime,twipe,GetAuraDataByAuraInstanceID=UnitExists,GetTime,table.wipe,C_UnitAuras.GetAuraDataByAuraInstanceID
 local event,raidBtn,soloBtn,Active,bX,bY,dX,dY=S.EventFrame,D.raidBtn,D.soloBtn,{},{},{},{},{}
-local ICON_SIZE,SPACING,PER_ROW,BUFF_Y,DEBUFF_Y=15,1,8,3,35
+local ICON_SIZE,SPACING,PER_ROW,BUFF_Y,DEBUFF_Y=16,1,8,3,35
 local function AuraPosition(i,offsetY)
     local row=mfloor((i-1)/PER_ROW)
     local col=(i-1)%PER_ROW
@@ -18,7 +18,7 @@ for i=1,16 do
 end
 local function GetSoloButton(unit)
     local b=soloBtn[D:PosUnit(unit)]
-    if b:IsVisible() then
+    if b and b.aura and UnitIsVisible(unit) then
         return soloBtn[D:PosUnit(unit)]
     end
 end
@@ -117,6 +117,7 @@ local function AuraRefreshPos(tbl,map,unit,func)
     for _,v in ipairs(tbl) do
         v:Hide()
         v.instance=nil
+        Active[v]=nil
     end
     for i,v in ipairs(tbl) do
         local aura=func(unit,i)
@@ -127,11 +128,11 @@ local function AuraRefreshPos(tbl,map,unit,func)
         v:Show()
     end
 end
-local function AddBuff(button,aura)
-    if not button.aura.buffs then return end
-    for i,v in ipairs(button.aura.buffs) do
+local function AddBuff(b,aura)
+    if not b.aura.buffs then return end
+    for i,v in ipairs(b.aura.buffs) do
         if not v:IsShown() then
-            button.aura.bmap[aura.auraInstanceID]=i
+            b.aura.bmap[aura.auraInstanceID]=i
             v.instance=aura.auraInstanceID
             ApplyAura(v,aura)
             v:Show()
@@ -139,11 +140,11 @@ local function AddBuff(button,aura)
         end
     end
 end
-local function AddDebuff(button,aura)
-    if not button.aura.debuffs then return end
-    for i,v in ipairs(button.aura.debuffs) do
+local function AddDebuff(b,aura)
+    if not b.aura.debuffs then return end
+    for i,v in ipairs(b.aura.debuffs) do
         if not v:IsShown() then
-            button.aura.dmap[aura.auraInstanceID]=i
+            b.aura.dmap[aura.auraInstanceID]=i
             v.instance=aura.auraInstanceID
             ApplyAura(v,aura)
             v:Show()
@@ -151,22 +152,22 @@ local function AddDebuff(button,aura)
         end
     end
 end
-local function UpdateBuff(button,aura)
-    local slot=button.aura.bmap[aura.auraInstanceID]
+local function UpdateBuff(b,aura)
+    local slot=b.aura.bmap[aura.auraInstanceID]
     if slot then
-        ApplyAura(button.aura.buffs[slot],aura)
+        ApplyAura(b.aura.buffs[slot],aura)
     end
 end
-local function UpdateDebuff(button,aura)
-    local slot=button.aura.dmap[aura.auraInstanceID]
+local function UpdateDebuff(b,aura)
+    local slot=b.aura.dmap[aura.auraInstanceID]
     if slot then
-        ApplyAura(button.aura.debuffs[slot],aura)
+        ApplyAura(b.aura.debuffs[slot],aura)
     end
 end
-local function RemoveBuff(button,id)
-    local slot=button.aura.bmap[id]
+local function RemoveBuff(b,id)
+    local slot=b.aura.bmap[id]
     if slot then
-        local now=button.aura.buffs[slot]
+        local now=b.aura.buffs[slot]
         if now then
             now:Hide()
             now.instance=nil
@@ -174,10 +175,10 @@ local function RemoveBuff(button,id)
         end
     end
 end
-local function RemoveDebuff(button,id)
-    local slot=button.aura.dmap[id]
+local function RemoveDebuff(b,id)
+    local slot=b.aura.dmap[id]
     if slot then
-        local now=button.aura.debuffs[slot]
+        local now=b.aura.debuffs[slot]
         if now then
             now:Hide()
             now.instance=nil
@@ -194,7 +195,7 @@ local update=false
 local function UnitAuraUpdate(unit,updateInfo)
     if not update then return end
     local b=GetSoloButton(unit)
-    if not b or not b.aura then return end
+    if not b then return end
     if updateInfo.isFullUpdate then
         GetAuras(b,unit)
         return
@@ -258,7 +259,7 @@ end
 local function SetupAuraDuration(button,icon)
     local text=button:CreateFontString(nil,"OVERLAY")
     text:SetFontObject(C.EtherFont)
-    text:SetPoint("CENTER",icon)
+    text:SetPoint("TOPLEFT",icon)
     text:Hide()
     icon.durationText=text
     return text
@@ -266,14 +267,14 @@ end
 local function SetupAuraCount(button)
     local count=button:CreateFontString(nil,"OVERLAY")
     count:SetFontObject(C.EtherFont)
-    count:SetPoint("LEFT")
+    count:SetPoint("BOTTOMRIGHT",1,0)
     count:Hide()
     return count
 end
 local function SetupAuraStacks(button)
     local stacks=button:CreateFontString(nil,"OVERLAY")
     stacks:SetFontObject(C.EtherFont)
-    stacks:SetPoint("BOTTOMRIGHT",button,"BOTTOMRIGHT")
+    stacks:SetPoint("BOTTOMRIGHT")
     stacks:Hide()
     return stacks
 end
@@ -307,7 +308,7 @@ local function AuraSetup(button)
             local aura=CreateFrame("Frame",nil,button)
             aura.unit=unit
             aura.filter="HELPFUL"
-            aura:SetSize(15,15)
+            aura:SetSize(16,16)
             aura.icon=SetupAuraIcon(aura)
             aura.count=SetupAuraCount(aura)
             aura.durationText=SetupAuraDuration(aura,aura.icon)
@@ -324,7 +325,7 @@ local function AuraSetup(button)
             local aura=CreateFrame("Frame",nil,button)
             aura.unit=unit
             aura.filter="HARMFUL"
-            aura:SetSize(15,15)
+            aura:SetSize(16,16)
             aura.icon=SetupAuraIcon(aura)
             aura.count=SetupAuraCount(aura)
             aura.durationText=SetupAuraDuration(aura,aura.icon)

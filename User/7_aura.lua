@@ -87,7 +87,14 @@ local function UpdateStatus(self,index)
     if not c and index==16 then
         F:HideBorderDispel()
     end
+    if not c and index==17 then
+        F:FuncDisable("MERCHANT_SHOW")
+    end
+    if c and index==17 then
+        F:FuncEnable("MERCHANT_SHOW")
+    end
 end
+F.UpdateStatus=UpdateStatus
 local function Aura(self,status)
     if self.created or type(status)~="boolean" then return end
     self.created=status

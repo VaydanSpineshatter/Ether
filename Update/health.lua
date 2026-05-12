@@ -54,6 +54,12 @@ local function UpdateClassColor(b)
     b.healthDrop:SetColorTexture(r*0.3,g*0.3,be*0.4,.3)
 end
 F.UpdateClassColor=UpdateClassColor
+function F:UpdateDeadUnit(b)
+    if not b or not b.unit or not b.Indicators or not b.Indicators.UnitFlags then return end
+    if not UnitIsDeadOrGhost(b.unit) and b.Indicators.UnitFlags:IsShown() then
+        b.Indicators.UnitFlags:Hide()
+    end
+end
 local function Health(b)
     if not b or not b.unit or not b.healthBar then return end
     local unit=b.unit
@@ -64,12 +70,6 @@ local function Health(b)
     else
         b.healthBar:SetValue(h)
         F:UpdateDeadUnit(b)
-    end
-end
-function F:UpdateDeadUnit(b)
-    if not b or not b.unit or not b.Indicators or not b.Indicators.UnitFlags then return end
-    if not UnitIsDeadOrGhost(b.unit) and b.Indicators.UnitFlags:IsShown() then
-        b.Indicators.UnitFlags:Hide()
     end
 end
 local function MaxHealth(b)
@@ -96,15 +96,13 @@ function F:UpdateHealthPct(b)
     if not b or not b.unit or not b.health then return end
     local unit=b.unit
     local h,maxH=UnitHealth(unit),UnitHealthMax(unit)
-    if not h then return end
-    local pct=maxH>0 and h/maxH or 0
-    if not pct then return end
-    local rPct=mfloor(pct*100+0.5)
-    if lastHealth[unit]==rPct then
-        return
+    if h and maxH then
+        local pct=maxH>0 and h/maxH or 0
+        local rPct=mfloor(pct*100+0.5)
+        if lastHealth[unit]==rPct then return end
+        lastHealth[unit]=rPct
+        b.health:SetText(sformat(f2m,D.HealGradient[rPct],rPct))
     end
-    lastHealth[unit]=rPct
-    b.health:SetText(sformat(f2m,D.HealGradient[rPct],rPct))
 end
 local function ResetHealthPct(index)
     if index~=3 then return end

@@ -99,16 +99,16 @@ Ether[3].EventFrame.ADDON_LOADED=function(self)
 end
 Ether[3].EventFrame:SetScript("OnEvent",OnEvent)
 Ether[3].EventFrame:RegisterEvent("ADDON_LOADED")
---[[
-local update = CreateFrame("Frame")
+--[[ Uncomment to use
+local update=CreateFrame("Frame")
 local function OnUpdate(self)
-	if _G['LFGMinimapFrame'] then
-		local lfg = _G['LFGMinimapFrame']
-		lfg:ClearAllPoints()
-		lfg:SetPoint("TOPRIGHT", _G['Minimap'], "BOTTOMRIGHT",0,-10)
-		lfg:Show()
-	end
-	self:SetScript("OnUpdate", nil)
+    if _G['LFGMinimapFrame'] then
+        local lfg=_G['LFGMinimapFrame']
+        lfg:ClearAllPoints()
+        lfg:SetPoint("TOPRIGHT",_G['Minimap'],"BOTTOMRIGHT",0,-10)
+        lfg:Show()
+    end
+    self:SetScript("OnUpdate",nil)
 end
-update:SetScript('OnUpdate', OnUpdate)
+update:SetScript('OnUpdate',OnUpdate)
 ]]

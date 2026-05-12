@@ -3,7 +3,7 @@ local pairs,ipairs=pairs,ipairs
 local GetBuffDataByIndex,GetDebuffDataByIndex=C_UnitAuras.GetBuffDataByIndex,C_UnitAuras.GetDebuffDataByIndex
 local GetAuraDataByAuraInstanceID=C_UnitAuras.GetAuraDataByAuraInstanceID
 local UnitExists,raidBtn,twipe=UnitExists,D.raidBtn,table.wipe
-local helpfulAuras,harmfulAuras={},{}
+local helpfulAuras,harmfulAuras,dispelAuras={},{},{}
 local dispelClass={MAGE={Curse=true},PRIEST={Magic=true,Disease=true},PALADIN={Magic=true,Disease=true,Poison=true},DRUID={Curse=true,Poison=true},SHAMAN={Disease=true,Poison=true}}
 local canDispel=dispelClass[C.ClassName]
 local function CheckCount(b,applications)
@@ -30,34 +30,6 @@ local function UpdateBorder(self,r,g,b)
     self.right:SetColorTexture(r,g,b)
     self.left:SetColorTexture(r,g,b)
 end
-F.UpdateBorder=UpdateBorder
-local function CheckDispelBorder(button,dispelName)
-    if not button.top then return end
-    if dispelName then
-        local c=DebuffTypeColor[dispelName] or DebuffTypeColor["none"]
-        UpdateBorder(button,c.r,c.g,c.b)
-    else
-        UpdateBorder(button,0,0,0)
-    end
-end
-local function CheckClassDispel(b,icon,dispelName)
-    if not b.dispel then return end
-    if icon and dispelName then
-        b.dispel:SetTexture(icon)
-        b.dispel:Show()
-        local c=DebuffTypeColor[dispelName] or DebuffTypeColor["none"]
-        b.dispelBorder:SetColorTexture(c.r,c.g,c.b)
-        b.dispelBorder:Show()
-    else
-        b.dispel:Hide()
-        b.dispelBorder:Hide()
-    end
-end
-local function CheckBlink(b,icon,duration)
-    if not b.blink then return end
-    b.blink:SetTexture(icon)
-    F:StartBlink(b.blink,duration,0.3)
-end
 local function UpdateAuras(auras,aura)
     if aura.duration and aura.duration>0 then
         if auras[aura.spellId] then
@@ -70,26 +42,7 @@ local function UpdateAuras(auras,aura)
         end
     end
 end
-local function CheckAuras(b,aura)
-    local status=D.DB["CONFIG"]
-    if status[14]==1 then
-        if aura.icon and aura.duration<=70 then
-            CheckBlink(b,aura.icon,aura.duration)
-        end
-    end
-    if status[15]==1 then
-        if canDispel[aura.dispelName] then
-            CheckClassDispel(b,aura.icon,aura.dispelName)
-        end
-    end
-    if status[16]==1 then
-        if aura.dispelName then
-            CheckDispelBorder(b,aura.dispelName)
-        end
-    end
-end
-local function UpdateStatusIcons(b)
-    local status=D.DB["CONFIG"]
+local function UpdateStatusIcons(status,b)
     if status[14]==1 then
         if b.blink then
             F:StopBlink(b.blink)
@@ -97,13 +50,11 @@ local function UpdateStatusIcons(b)
     end
     if status[15]==1 then
         if b.dispel then
-            CheckClassDispel(b)
+            b.dispel:Hide()
         end
     end
     if status[16]==1 then
-        if b.top then
-            CheckDispelBorder(b)
-        end
+        UpdateBorder(b,0,0,0)
     end
 end
 F.UpdateStatusIcons=UpdateStatusIcons
@@ -112,16 +63,15 @@ function F:UpdateRaidAuras(b)
     for spellId in pairs(b.RaidAuras) do
         F:Release(b.RaidAuras[spellId])
     end
-    F:StopAllBlinks()
-    UpdateBorder(b,0,0,0)
-    twipe(b.RaidAuras)
     local unit=b.unit
     local c=D.DB["CUSTOM"]
+    local status=D.DB["CONFIG"]
+    UpdateStatusIcons(status,b)
     local i=1
     while true do
         local aura=GetBuffDataByIndex(unit,i)
         if not aura then break end
-        if c[aura.spellId] and not c[aura.spellId][10] then
+        if c[aura.spellId] then
             b.RaidAuras[aura.spellId]=F:Acquire(b,c[aura.spellId])
             UpdateAuras(b.RaidAuras,aura)
             helpfulAuras[aura.auraInstanceID]=aura
@@ -132,12 +82,34 @@ function F:UpdateRaidAuras(b)
     while true do
         local aura=GetDebuffDataByIndex(unit,i)
         if not aura then break end
-        if c[aura.spellId] and c[aura.spellId][10] then
+        if c[aura.spellId] then
             b.RaidAuras[aura.spellId]=F:Acquire(b,c[aura.spellId])
             UpdateAuras(b.RaidAuras,aura)
+            harmfulAuras[aura.auraInstanceID]=aura
         end
-        CheckAuras(b,aura)
-        harmfulAuras[aura.auraInstanceID]=aura
+        if aura.icon then
+            if status[14]==1 then
+                if aura.duration<=60 then
+                    b.blink:SetTexture(aura.icon)
+                    F:StartBlink(b.blink,aura.duration,0.3)
+                end
+            end
+            if aura.dispelName then
+                if status[16]==1 then
+                    local color=DebuffTypeColor[aura.dispelName]
+                    if color then
+                        UpdateBorder(b,color.r,color.g,color.b)
+                    end
+                end
+                if status[15]==1 then
+                    if canDispel[aura.dispelName] then
+                        b.dispel:SetTexture(aura.icon)
+                        b.dispel:Show()
+                    end
+                end
+            end
+            dispelAuras[aura.auraInstanceID]=aura
+        end
         i=i+1
     end
 end
@@ -147,6 +119,7 @@ function F:AuraUpdate(b,updateInfo)
     if not b then return end
     local unit=b.unit
     local c=D.DB["CUSTOM"]
+    local status=D.DB["CONFIG"]
     if updateInfo.isFullUpdate then
         F:UpdateRaidAuras(b)
         return
@@ -154,18 +127,43 @@ function F:AuraUpdate(b,updateInfo)
     if updateInfo.addedAuras then
         for _,aura in ipairs(updateInfo.addedAuras) do
             if aura.isHelpful then
-                if c[aura.spellId] and not c[aura.spellId][10] then
+                if c[aura.spellId] then
                     b.RaidAuras[aura.spellId]=F:Acquire(b,c[aura.spellId])
                     UpdateAuras(b.RaidAuras,aura)
                     helpfulAuras[aura.auraInstanceID]=aura
                 end
-            else
-                if c[aura.spellId] and c[aura.spellId][10] then
+            end
+            if aura.isHarmful then
+                if c[aura.spellId] then
                     b.RaidAuras[aura.spellId]=F:Acquire(b,c[aura.spellId])
                     UpdateAuras(b.RaidAuras,aura)
+                    harmfulAuras[aura.auraInstanceID]=aura
                 end
-                CheckAuras(b,aura)
-                harmfulAuras[aura.auraInstanceID]=aura
+                if aura.icon then
+                    if status[14]==1 then
+                        if aura.duration<=60 then
+                            if status[14]==1 then
+                                b.blink:SetTexture(aura.icon)
+                                F:StartBlink(b.blink,aura.duration,0.3)
+                            end
+                        end
+                    end
+                    if aura.dispelName then
+                        if status[16]==1 then
+                            local color=DebuffTypeColor[aura.dispelName]
+                            if color then
+                                UpdateBorder(b,color.r,color.g,color.b)
+                            end
+                        end
+                        if status[15]==1 then
+                            if canDispel[aura.dispelName] then
+                                b.dispel:SetTexture(aura.icon)
+                                b.dispel:Show()
+                            end
+                        end
+                    end
+                    dispelAuras[aura.auraInstanceID]=aura
+                end
             end
         end
     end
@@ -183,7 +181,7 @@ function F:AuraUpdate(b,updateInfo)
     end
     if updateInfo.removedAuraInstanceIDs then
         for _,auraInstanceID in ipairs(updateInfo.removedAuraInstanceIDs) do
-            if helpfulAuras[auraInstanceID] and helpfulAuras[auraInstanceID].spellId then
+            if helpfulAuras[auraInstanceID] then
                 for spellId in pairs(b.RaidAuras) do
                     if spellId==helpfulAuras[auraInstanceID].spellId then
                         F:Release(b.RaidAuras[spellId])
@@ -192,7 +190,6 @@ function F:AuraUpdate(b,updateInfo)
                 helpfulAuras[auraInstanceID]=nil
             end
             if harmfulAuras[auraInstanceID] then
-                UpdateStatusIcons(b)
                 if harmfulAuras[auraInstanceID].spellId then
                     for spellId in pairs(b.RaidAuras) do
                         if spellId==harmfulAuras[auraInstanceID].spellId then
@@ -202,28 +199,26 @@ function F:AuraUpdate(b,updateInfo)
                 end
                 harmfulAuras[auraInstanceID]=nil
             end
+            if dispelAuras[auraInstanceID] then
+                UpdateStatusIcons(status,b)
+                dispelAuras[auraInstanceID]=nil
+            end
         end
     end
 end
 function F:HideClassDispel()
     for _,b in pairs(raidBtn) do
         if b.dispel then
-            CheckClassDispel(b)
+            b.dispel:Hide()
         end
     end
 end
-F.CheckClassDispel=CheckClassDispel
 function F:HideBorderDispel()
     for _,b in pairs(raidBtn) do
-        if b.top then
-            CheckDispelBorder(b)
-        end
+        UpdateBorder(b,0,0,0)
     end
 end
-F.CheckDispelBorder=CheckDispelBorder
 function F:EnableRaidAura()
-    twipe(helpfulAuras)
-    twipe(harmfulAuras)
     update=true
     for _,b in pairs(raidBtn) do
         if UnitExists(b.unit) then
@@ -235,12 +230,8 @@ function F:DisableRaidAura()
     update=false
     F:StopAllBlinks()
     F:ReleaseAll()
-    for _,b in pairs(raidBtn) do
-        if b then
-            UpdateStatusIcons(b)
-        end
-    end
     twipe(helpfulAuras)
     twipe(harmfulAuras)
+    twipe(dispelAuras)
     F:WipePoolData()
 end

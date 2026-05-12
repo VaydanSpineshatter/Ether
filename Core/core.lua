@@ -146,6 +146,9 @@ function S.EventFrame:PLAYER_LOGIN()
     if D.DB[6][13]==1 then
         F:CastEnable(2)
     end
+    if D.DB[6][17]==1 then
+        F:FuncEnable("MERCHANT_SHOW")
+    end
 end
 function S.EventFrame:PLAYER_LOGOUT()
     self:UnregisterAllEvents()
@@ -164,19 +167,16 @@ local function SetPerfectUIScale()
 end
 function S.EventFrame:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-    C_Timer.After(0.1,function()
-        if UnitExists("pet") then
-            if _G["EtherPetGroupHeader"] then
-                for _,v in ipairs(_G["EtherPetGroupHeader"]) do
-                    v.unit=v:GetAttribute("unit")
-                    D.petBtn[v.unit]=v
-                    F:FullHealthUpdate(v)
-                    F:UpdateName(v,3)
-                    F:UpdateIndicatorsPetUnit(v)
-                end
-            end
+    for _,b in ipairs({D.H.pet:GetChildren()}) do
+        local unit=b:GetAttribute("unit")
+        if unit and UnitExists(unit) then
+            b.unit=unit
+            D.petBtn[b.unit]=b
+            F:FullHealthUpdate(b)
+            F:UpdateName(b,3)
+            F:UpdateIndicatorsPetUnit(b)
         end
-    end)
+    end
     C_Timer.After(1,function()
         SetPerfectUIScale()
     end)

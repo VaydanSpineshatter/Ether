@@ -196,7 +196,7 @@ local function raidGroupLeader(self)
         self.Indicators.GroupLeader:Hide()
     end
     local IsLeader=UnitIsGroupLeader(self.unit)
-    if (IsLeader) then
+    if IsLeader then
         self.Indicators.GroupLeader:SetTexture(D.iIconPath[8])
         self.Indicators.GroupLeader:Show()
     else
@@ -243,11 +243,11 @@ end
 local function unitFlags(self)
     IndictorsTexture(self,"UnitFlags")
     local dead=UnitIsDeadOrGhost(self.unit)
+    local status=D.DB["CONFIG"]
     if dead then
+        F.UpdateStatusIcons(status,self)
         self.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
         self.Indicators.UnitFlags:Show()
-        F.CheckDispelBorder(self)
-        F.CheckClassDispel(self)
     else
         self.Indicators.UnitFlags:Hide()
         F.InitialHealth(self)

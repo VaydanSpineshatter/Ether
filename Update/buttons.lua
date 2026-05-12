@@ -222,7 +222,7 @@ function F:InitializeSystemStatus()
     end
 end
 function C:ToggleUser()
-    if InCombatLockdown() then return end
+    if C.CombatStatus then return end
     if not C.created then
         C:Main()
     end

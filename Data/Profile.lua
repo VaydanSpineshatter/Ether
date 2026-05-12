@@ -195,9 +195,7 @@ local function TblToString(tbl)
 end
 local function ProfileRefresh()
     if C.ProfileRefresh then return end
-    if C.MainFrame:IsShown() then
-        C.MainFrame:Hide()
-    end
+    C.MainFrame:Hide()
     F:Fire(22)
     F:UpdateAuraList()
     F.UpdateEditor(C.ChildFrames[7])
@@ -222,13 +220,17 @@ local function ProfileRefresh()
             F:UpdateIndicatorsUnit(b)
         end
     end
+    if C.ChildFrames[6] and C.ChildFrames[6].repair then
+        F.UpdateStatus(C.ChildFrames[6].repair,17)
+    end
+    if C.ChildFrames[6] and C.ChildFrames[6].guild then
+        F.UpdateStatus(C.ChildFrames[6].guild,18)
+    end
     F.UpdateIcon(C.Indi)
     if C.RemoveDropdown then
         C.RemoveDropdown:SetOptions(D.DB["USER"])
     end
-    if not C.MainFrame:IsShown() then
-        C.MainFrame:Show()
-    end
+    C.MainFrame:Show()
 end
 function D:ExportProfileToClipboard()
     local encoded,err=D:ExportCurrentProfile()
@@ -360,7 +362,7 @@ function D:DeleteProfile(name)
             data[#data+1]=n
         end
         C.ProfileDropdown:SetOptions(data)
-        C.ProfileDropdown.vt:SetText(D:GetProfileName())
+        C.ProfileDropdown.v:SetText(D:GetProfileName())
         return true,"Profile "..name.."  deleted"
     end
 end

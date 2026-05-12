@@ -65,14 +65,13 @@ function F:UpdatePowerPct(b)
     if not b or not b.unit or not b.power then return end
     local unit=b.unit
     local pw,maxPw=UnitPower(unit),UnitPowerMax(unit)
-    if not pw then return end
-    local pct=maxPw>0 and pw/maxPw or 0
-    if not pct then return end
-    local rPct=mfloor(pct*100+0.5)
-    if not rPct then return end
-    if lastPower[unit]==rPct then return end
-    lastPower[unit]=rPct
-    b.power:SetText(sformat(f2m,D.PowerGradient[rPct],rPct))
+    if pw and maxPw then
+        local pct=maxPw>0 and pw/maxPw or 0
+        local rPct=mfloor(pct*100+0.5)
+        if lastPower[unit]==rPct then return end
+        lastPower[unit]=rPct
+        b.power:SetText(sformat(f2m,D.PowerGradient[rPct],rPct))
+    end
 end
 function F:ResetPowerPct(index)
     if index~=4 then return end

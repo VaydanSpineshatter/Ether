@@ -2,6 +2,9 @@ local D,F,_,C,L=unpack(select(2,...))
 local GameTooltip=GameTooltip
 local function Enter(self)
     C:ToggleBorder(1,0.84,0)
+    if not C.CombatStatus then
+        self.tex:SetColorTexture(0,1,0)
+    end
     if self.moving then return end
     GameTooltip:SetOwner(self,"ANCHOR_LEFT")
     GameTooltip:AddLine("Ether")
@@ -9,7 +12,10 @@ local function Enter(self)
     GameTooltip:AddLine(L.MINIMAP_TOOLTIP_LOCALE,1,1,1)
     GameTooltip:Show()
 end
-local function Leave()
+local function Leave(self)
+    if not C.CombatStatus then
+        self.tex:SetColorTexture(0,0.8,1)
+    end
     C:ToggleBorder(0.67,0.67,0.67)
     GameTooltip:Hide()
 end
@@ -26,10 +32,6 @@ C.EtherIcon.mask=C.EtherIcon:CreateMaskTexture("BACKGROUND")
 C.EtherIcon.mask:SetTexture("Interface\\AddOns\\Ether\\Media\\icon.blp","CLAMPTOBLACKADDITIVE","CLAMPTOBLACKADDITIVE")
 C.EtherIcon.mask:SetAllPoints(C.EtherIcon.tex)
 C.EtherIcon.tex:AddMaskTexture(C.EtherIcon.mask)
-C.EtherIcon.hl=C.EtherIcon:CreateTexture(nil,"HIGHLIGHT")
-C.EtherIcon.hl:SetColorTexture(1,0.84,0,.4)
-C.EtherIcon.hl:SetPoint("TOPLEFT",4,-4)
-C.EtherIcon.hl:SetPoint("BOTTOMRIGHT",-4,4)
 function F:IconEnable()
     if not C.EtherIcon then return end
     if not C.EtherIcon:IsShown() then

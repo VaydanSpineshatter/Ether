@@ -1,6 +1,6 @@
 local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,UnitExists,C_After=pairs,ipairs,UnitExists,C_Timer.After
-local event,petBtn,raidBtn,soloBtn,modelBtn=S.EventFrame,D.petBtn,D.raidBtn,D.soloBtn,D.modelBtn
+local event,raidBtn,soloBtn,modelBtn=S.EventFrame,D.raidBtn,D.soloBtn,D.modelBtn
 local refresh,channel=false,false
 local function GetModelBtn(unit)
     return modelBtn[D:PosUnit(unit)]
@@ -17,11 +17,6 @@ local function refreshButtons()
                 F:UpdateIndicatorsUnit(b)
             end
         end
-        for _,b in pairs(petBtn) do
-            if UnitExists(b.unit) then
-                F:UpdateIndicatorsPetUnit(b)
-            end
-        end
         refresh=false
     end)
 end
@@ -34,11 +29,6 @@ function event:GROUP_ROSTER_UPDATE()
         for _,b in pairs(D.raidBtn) do
             if UnitExists(b.unit) then
                 F:UpdateIndicatorsUnit(b)
-            end
-        end
-        for _,b in pairs(petBtn) do
-            if UnitExists(b.unit) then
-                F:UpdateIndicatorsPetUnit(b)
             end
         end
         C_After(1,function()
@@ -137,9 +127,7 @@ function F:RosterEnable()
         F:RangeEnable()
     end
     for _,v in ipairs(D.rosterEvent) do
-        if not event:IsEventRegistered(v) then
-            event:RegisterEvent(v)
-        end
+        F:FuncEnable(v)
     end
     for _,v in ipairs(D.threadEvent) do
         if not event:IsEventRegistered(v) then
