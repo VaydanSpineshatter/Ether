@@ -37,5 +37,10 @@ local function Header(self,status)
     direction:SetPoint("BOTTOMLEFT",sort,"TOPLEFT",0,10)
     C.MainButtons[5][1]:Disable()
     C.MainButtons[5][2]:Disable()
+    for index=11,12 do
+        if D.DB[1][index]==0 then
+            C.MainButtons[5][index-8]:Disable()
+        end
+    end
 end
 F:RegisterCallbackByIndex(Header,5+50)

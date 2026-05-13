@@ -4,25 +4,7 @@ local function Away(afk)
     if not afk then return end
     if C.IdleMode then return end
     C.IdleMode=true
-    for index=1,12 do
-        if D.DB[1][index]==1 then
-            if index>=10 and index<=12 then
-                F:Fire(index+30)
-            elseif index>=5 and index<=7 then
-                F:Fire(index+30)
-            elseif index<=3 then
-                F:Fire(index+30)
-            end
-        end
-    end
-    for index=1,2 do
-        F:CastDisable(index)
-    end
-    for index=1,6 do
-        if D.DB[6][index]==1 then
-            F:DeactivateUnitButton(index)
-        end
-    end
+    F:RosterDisable()
     if D.DB[1][6]==1 then
         S.EventFrame:RegisterEvent("PLAYER_FLAGS_CHANGED")
     end
@@ -31,29 +13,7 @@ local function NotAway(afk)
     if afk then return end
     if not C.IdleMode then return end
     C.IdleMode=false
-    for index=1,12 do
-        if D.DB[1][index]==1 then
-            if index>=10 and index<=12 then
-                F:Fire(index)
-            elseif index==7 then
-                C_Timer.After(0.5,function()
-                    F:Fire(index)
-                end)
-            elseif index>=5 and index<=6 then
-                F:Fire(index)
-            elseif index<=3 then
-                F:Fire(index)
-            end
-        end
-    end
-    for index=1,6 do
-        if D.DB[6][index]==1 then
-            F:ActivateUnitButton(index)
-        end
-    end
-    for index=1,2 do
-        F:CastEnable(index)
-    end
+    F:RosterEnable()
 end
 function F:UserIdle(unit)
     if D.DB[1][4]~=1 then return end
@@ -66,39 +26,3 @@ function F:UserIdle(unit)
         NotAway(UnitIsAFK(unit))
     end
 end
---[[
-       for _,v in ipairs(D.rosterEvent) do
-       if S.EventFrame:IsEventRegistered(v) then
-           S.EventFrame:UnregisterEvent(v)
-       end
-   end
-   for _,v in ipairs(D.threadEvent) do
-       if S.EventFrame:IsEventRegistered(v) then
-           S.EventFrame:UnregisterEvent(v)
-       end
-   end
-   for index=1,2 do
-       F:CastDisable(index)
-       D.modelBtn[index]:Hide()
-       if index==2 then
-           UnregisterUnitWatch(D.modelBtn[2])
-       end
-   end
-   for _,v in ipairs(D.rosterEvent) do
-       if not S.EventFrame:IsEventRegistered(v) then
-           S.EventFrame:RegisterEvent(v)
-       end
-   end
-   for _,v in ipairs(D.threadEvent) do
-       if not S.EventFrame:IsEventRegistered(v) then
-           S.EventFrame:RegisterUnitEvent(v,"player","target")
-       end
-   end
-   for index=1,2 do
-       F:CastEnable(index)
-       D.modelBtn[index]:Show()
-       if index==2 then
-           RegisterUnitWatch(D.modelBtn[index])
-       end
-   end
-   ]]

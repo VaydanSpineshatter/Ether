@@ -1,4 +1,4 @@
-local D,F,S=unpack(select(2,...))
+local D,F,S,C=unpack(select(2,...))
 local UnitPower,UnitPowerMax,UnitExists=UnitPower,UnitPowerMax,UnitExists
 local sformat,mfloor,pairs=string.format,math.floor,pairs
 local event,raidBtn,soloBtn,f2m=S.EventFrame,D.raidBtn,D.soloBtn,"%s%d|r"
@@ -147,15 +147,19 @@ function event:UNIT_DISPLAYPOWER(unit)
 end
 function F:PowerEnable()
     for _,v in ipairs({"UNIT_POWER_UPDATE","UNIT_MAXPOWER","UNIT_DISPLAYPOWER"}) do
-        if not event:IsEventRegistered(v) then
-            event:RegisterEvent(v)
-        end
+        F:FuncEnable(v)
+    end
+    if C.MainButtons[5] and C.MainButtons[5][4] then
+        C.MainButtons[5][4]:Enable()
     end
 end
 function F:PowerDisable()
     for _,v in ipairs({"UNIT_POWER_UPDATE","UNIT_MAXPOWER","UNIT_DISPLAYPOWER"}) do
-        event:UnregisterEvent(v)
+        F:FuncDisable(v)
+    end
+    if C.MainButtons[5] and C.MainButtons[5][4] then
+        C.MainButtons[5][4]:Disable()
     end
 end
-F:RegisterCallbackByIndex(F.PowerEnable,11)
-F:RegisterCallbackByIndex(F.PowerDisable,11+30)
+F:RegisterCallbackByIndex(F.PowerEnable,12)
+F:RegisterCallbackByIndex(F.PowerDisable,12+30)

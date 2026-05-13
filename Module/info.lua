@@ -17,10 +17,8 @@ local function callback(msg)
     end
 end
 function C:EtherInfo(msg)
-    if not C.InfoFrame then return end
-    if not msg then return end
     if D.DB[1][8]~=1 then return end
-    if type(msg)~="string" then return end
+    if type(msg)~="string" or C.IdleMode or not C.InfoFrame then return end
     twipe(parts)
     for i=1,select('#',msg) do
         local arg=select(i,msg)

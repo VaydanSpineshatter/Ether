@@ -71,6 +71,7 @@ local function GetUnitRoleString(unit)
 end
 local data,parts={},{}
 local function UpdateTooltip(unit,DB,status)
+    if D.DB[1][9]~=1 then return end
     frame:SetShown(status)
     local isPlayer=UnitIsPlayer(unit)
     local _,classFileName=UnitClass(unit)
@@ -172,14 +173,13 @@ local function UpdateTooltip(unit,DB,status)
     table.wipe(parts)
 end
 function F:ToolTipInitialize()
-    if not frame or not D.DB[3] then return end
+    if not frame then return end
     GameTooltip:HookScript("OnTooltipSetUnit",function(self)
         local _,unit=self:GetUnit()
         if not unit then return end
         UpdateTooltip(unit,D.DB[3],UnitExists(unit))
     end)
     GameTooltip:HookScript("OnTooltipCleared",function()
-        if D.DB[1][9]~=1 then return end
         frame:SetShown(false)
     end)
     F:MainBorder(C.ToolFrame,6,7,8,9)

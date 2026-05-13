@@ -92,52 +92,78 @@ function event:PLAYER_TARGET_CHANGED()
     F:ScanTargetGUID()
 end
 function F:RosterDisable()
-    F:AuraDisable()
-    F:IndicatorsDisable()
-    F:HealthDisable()
-    F:PowerDisable()
-    F:RangeDisable()
-    F:NameDisable()
-    F:MsgDisable()
-    if D.DB[1][1]==1 then
-        F:IconDisable()
+    for _,v in ipairs(D.rosterEvent) do
+        F:FuncDisable(v)
     end
-    if D.DB[1][2]==1 then
-        F:MsgDisable()
+    for index=1,12 do
+        if index==1 then
+            if index>=10 and index<=12 then
+                F:Fire(index+30)
+            elseif index>=5 and index<=7 then
+                F:Fire(index+30)
+            elseif index<=3 then
+                F:Fire(index+30)
+            end
+        end
     end
-    if D.DB[1][3]==1 then
-        F:MsgCLEUDisable()
+    for _,v in ipairs(D.threadEvent) do
+        F:FuncDisable(v)
+    end
+    for index=12,13 do
+        if D.DB[6][index]==1 then
+            F:CastDisable(index-11)
+        end
+    end
+    for index=1,6 do
+        if D.DB[6][index]==1 then
+            F:DeactivateUnitButton(index)
+        end
+    end
+    for index=1,2 do
+        F:DeactivateModelButton(index)
+    end
+    if D.DB[6][17]==1 then
+        F:FuncDisable("MERCHANT_SHOW")
     end
 end
 function F:RosterEnable()
-    if D.DB[1][7]==1 then
-        F:AuraEnable()
-    end
-    if D.DB[1][6]==1 then
-        F:IndicatorsEnable()
-    end
-    if D.DB[1][1]==1 then
-        F:IconEnable()
-    end
-    F:HealthEnable()
-    F:PowerEnable()
-    F:MsgEnable()
-    F:NameEnable()
-    if D.DB[1][5]==1 then
-        F:RangeEnable()
-    end
     for _,v in ipairs(D.rosterEvent) do
         F:FuncEnable(v)
+    end
+    for index=1,12 do
+        if D.DB[1][index]==1 then
+            if index>=10 and index<=12 then
+                F:Fire(index)
+            elseif index==7 then
+                C_Timer.After(0.5,function()
+                    F:Fire(index)
+                end)
+            elseif index>=5 and index<=6 then
+                F:Fire(index)
+            elseif index<=3 then
+                F:Fire(index)
+            end
+        end
     end
     for _,v in ipairs(D.threadEvent) do
         if not event:IsEventRegistered(v) then
             event:RegisterUnitEvent(v,"player","target")
         end
     end
-    if D.DB[1][2]==1 then
-        F:MsgEnable()
+    for index=12,13 do
+        if D.DB[6][index]==1 then
+            F:CastEnable(index-11)
+        end
     end
-    if D.DB[1][3]==1 then
-        F:MsgCLEUEnable()
+    for index=1,2 do
+        F:ActivateModelButton(index)
+    end
+    for index=1,6 do
+        if D.DB[6][index]==1 then
+            F:ActivateUnitButton(index)
+        end
+    end
+    if D.DB[6][17]==1 then
+        F:FuncEnable("MERCHANT_SHOW")
     end
 end

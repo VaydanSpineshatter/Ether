@@ -1,5 +1,5 @@
 local D,F=unpack(select(2,...))
-local UnitGUID,soloBtn=UnitGUID,D.soloBtn
+local UnitGUID,soloBtn,modelBtn=UnitGUID,D.soloBtn,D.modelBtn
 local function OnAttributeChanged(self)
     self.unit=self:GetAttribute("unit")
     local guid=self.unit and UnitGUID(self.unit)
@@ -64,21 +64,22 @@ function F:CreateUnitButtons(index)
     F:SetupName(b,0)
     F.UpdateClassColor(b)
     F.DisplayPower(b)
-    if not InCombatLockdown() then
-        b:SetAttribute("unit",b.unit)
-        b:SetAttribute("*type1","target")
-        b:SetAttribute("*type2","togglemenu")
-        b:RegisterForClicks("AnyUp")
-        b:RegisterForDrag("LeftButton")
-    end
-    if b.unit~="player" then
-        RegisterUnitWatch(b)
-    end
     b:HookScript("OnAttributeChanged",OnAttributeChanged)
     OnAttributeChanged(b)
     soloBtn[b.index]=b
     D:ApplyFramePosition(b)
-    F:SetupDrag(b)
+end
+function F:CreateModelButton(index)
+    local b=modelBtn[index]
+    b:SetUnit(D:PosUnit(index))
+    b:SetPortraitZoom(1)
+    b:SetCamDistanceScale(1.5)
+    F:SetupButtonBackground(b)
+    if index==1 then
+        F:MainBorder(b,31,32,33,34)
+    else
+        F:MainBorder(b,35,36,37,38)
+    end
 end
 function F:ActivateUnitButton(index)
     local b=soloBtn[index]
@@ -90,9 +91,6 @@ function F:ActivateUnitButton(index)
         b:SetAttribute("*type1","target")
         b:SetAttribute("*type2","togglemenu")
         b:RegisterForClicks("AnyUp")
-        b:RegisterForDrag("LeftButton")
-        b.unit=nil
-        b.unitGUID=nil
     end
     if unit~="player" then
         RegisterUnitWatch(b)
@@ -114,14 +112,28 @@ function F:DeactivateUnitButton(index)
             b:SetAttribute("*type1",nil)
             b:SetAttribute("*type2",nil)
             b:RegisterForClicks()
-            b:RegisterForDrag()
         end
-        b:EnableMouse(false)
-        b:SetMovable(false)
         if b.unit~="player" then
             UnregisterUnitWatch(b)
         end
-        b:SetScript("OnDragStart",nil)
-        b:SetScript("OnDragStop",nil)
+        F:RemoveDrag(b)
     end
+end
+function F:ActivateModelButton(index)
+    local b=modelBtn[index]
+    b:Show()
+    if index==2 then
+        b:SetAttribute("unit","target")
+        RegisterUnitWatch(b)
+    end
+    D:ApplyFramePosition(b)
+    F:SetupDrag(b)
+end
+function F:DeactivateModelButton(index)
+    local b=modelBtn[index]
+    if index==2 then
+        UnregisterUnitWatch(b)
+    end
+    b:Hide()
+    F:RemoveDrag(b)
 end

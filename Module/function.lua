@@ -50,7 +50,6 @@ function F:SetupDrag(frame)
     frame:SetScript("OnDragStart",DragStart)
     frame:SetScript("OnDragStop",DragStop)
 end
-
 function F:RemoveDrag(frame)
     frame:RegisterForDrag()
     frame:SetMovable(false)

@@ -1,5 +1,5 @@
 local D,F,S,C=unpack(select(2,...))
-local ipairs,modelBtn,j,created=ipairs,D.modelBtn,0,false
+local ipairs,j,created=ipairs,0,false
 C.BorderFrames,C.ChildFrames,C.MenuButtons,C.AuraList,C.MainButtons={},{},{},{},{}
 while true do
     j=j+1
@@ -81,8 +81,8 @@ function C:ToggleUnlock(number)
     local i=F:BinaryCondition(number)
     C.IsMovable=i
     C.GridFrame:SetShown(i)
-    C.ToolFrame:SetShown(i)
     C.InfoFrame:SetShown(i)
+    C.ToolFrame:SetShown(i)
     if D.A.raid.tex then
         D.A.raid.tex:SetShown(i)
     end
@@ -95,7 +95,6 @@ function C:ToggleUnlock(number)
     if D.DB[6][13]==1 then
         F:HideCastBar(2,i)
     end
-    C.StatusTooltip=i
 end
 function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
@@ -105,6 +104,8 @@ function S.EventFrame:PLAYER_LOGIN()
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()
+    F:CreateGroupHeader("GROUP")
+    F:CreateGroupHeader("PET")
     for index=1,6 do
         F:CreateUnitButtons(index)
         if D.DB[6][index]==0 then
@@ -114,41 +115,16 @@ function S.EventFrame:PLAYER_LOGIN()
     if D.DB[6][4]==1 then
         F:PetCondition()
     end
-    F:RosterEnable()
-    F:CreateGroupHeader("GROUP")
-    F:CreateGroupHeader("PET")
     for index=1,2 do
-        D.castBar[index]=F:SetupCastBar()
-        D.castBar[index].index=index+11
-        D.castBar[index].unit=D:PosUnit(index)
-        modelBtn[index]:SetUnit(D:PosUnit(index))
-        modelBtn[index]:SetPortraitZoom(1)
-        modelBtn[index]:SetCamDistanceScale(1.5)
-        F:SetupButtonBackground(modelBtn[index])
-        if index==1 then
-            F:MainBorder(modelBtn[index],31,32,33,34)
-        else
-            F:MainBorder(modelBtn[index],35,36,37,38)
-            modelBtn[index]:SetAttribute("unit","target")
-            RegisterUnitWatch(modelBtn[index])
-        end
-        D:ApplyFramePosition(modelBtn[index])
-        F:SetupDrag(modelBtn[index])
+        F:CreateCastBar(index)
+        F:CreateModelButton(index)
     end
     if InCombatLockdown() then
         S.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
     else
         S.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     end
-    if D.DB[6][12]==1 then
-        F:CastEnable(1)
-    end
-    if D.DB[6][13]==1 then
-        F:CastEnable(2)
-    end
-    if D.DB[6][17]==1 then
-        F:FuncEnable("MERCHANT_SHOW")
-    end
+    F:RosterEnable()
 end
 function S.EventFrame:PLAYER_LOGOUT()
     self:UnregisterAllEvents()

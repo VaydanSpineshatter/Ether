@@ -296,3 +296,8 @@ function F:CastBarReset(number)
         F:CastBarEnable(number)
     end)
 end
+function F:CreateCastBar(index)
+    castBar[index]=F:SetupCastBar()
+    castBar[index].index=index+11
+    castBar[index].unit=D:PosUnit(index)
+end

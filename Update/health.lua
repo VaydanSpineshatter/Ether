@@ -1,4 +1,4 @@
-local D,F,S=unpack(select(2,...))
+local D,F,S,C=unpack(select(2,...))
 local UnitHealth,UnitHealthMax,UnitGetIncomingHeals,UnitIsDeadOrGhost=UnitHealth,UnitHealthMax,UnitGetIncomingHeals,UnitIsDeadOrGhost
 local sformat,mfloor,pairs,UnitExists,mmax,mmin=string.format,math.floor,pairs,UnitExists,math.max,math.min
 local event,petBtn,raidBtn,soloBtn,f2m,UnitIsConnected=S.EventFrame,D.petBtn,D.raidBtn,D.soloBtn,"%s%d|r",UnitIsConnected
@@ -225,15 +225,19 @@ function event:UNIT_MAXHEALTH(unit)
 end
 function F:HealthEnable()
     for _,v in ipairs({"UNIT_MAXHEALTH","UNIT_HEALTH","UNIT_HEAL_PREDICTION"}) do
-        if not event:IsEventRegistered(v) then
-            event:RegisterEvent(v)
-        end
+        F:FuncEnable(v)
+    end
+    if C.MainButtons[5] and C.MainButtons[5][3] then
+        C.MainButtons[5][3]:Enable()
     end
 end
 function F:HealthDisable()
     for _,v in ipairs({"UNIT_MAXHEALTH","UNIT_HEALTH","UNIT_HEAL_PREDICTION"}) do
-        event:UnregisterEvent(v)
+        F:FuncDisable(v)
+    end
+    if C.MainButtons[5] and C.MainButtons[5][3] then
+        C.MainButtons[5][3]:Disable()
     end
 end
-F:RegisterCallbackByIndex(F.HealthEnable,10)
-F:RegisterCallbackByIndex(F.HealthDisable,10+30)
+F:RegisterCallbackByIndex(F.HealthEnable,11)
+F:RegisterCallbackByIndex(F.HealthDisable,11+30)

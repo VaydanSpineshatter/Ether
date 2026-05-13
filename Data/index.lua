@@ -195,9 +195,11 @@ function D:FrameChecked(index)
     end
 end
 function D:EtherFrameSetClick(number,number2)
-    local check=C.MainButtons[number][number2]
-    check:SetChecked(not check:GetChecked())
-    check:GetScript("OnClick")(check)
+    if C.MainButtons[number] and C.MainButtons[number][number2] then
+        local check=C.MainButtons[number][number2]
+        check:SetChecked(not check:GetChecked())
+        check:GetScript("OnClick")(check)
+    end
 end
 function D:RefreshAllSettings()
     for i=1,6 do

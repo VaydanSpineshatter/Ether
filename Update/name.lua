@@ -70,14 +70,10 @@ function event:UNIT_NAME_UPDATE(unit)
     end
 end
 function F:NameEnable()
-    if not event:IsEventRegistered("UNIT_NAME_UPDATE") then
-        event:RegisterEvent("UNIT_NAME_UPDATE")
-    end
+    F:FuncEnable("UNIT_NAME_UPDATE")
 end
 function F:NameDisable()
-    if event:IsEventRegistered("UNIT_NAME_UPDATE") then
-        event:UnregisterEvent("UNIT_NAME_UPDATE")
-    end
+    F:FuncDisable("UNIT_NAME_UPDATE")
 end
-F:RegisterCallbackByIndex(F.NameEnable,9)
-F:RegisterCallbackByIndex(F.NameDisable,9+30)
+F:RegisterCallbackByIndex(F.NameEnable,10)
+F:RegisterCallbackByIndex(F.NameDisable,10+30)
