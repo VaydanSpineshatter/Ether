@@ -100,13 +100,6 @@ end
 function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_LOGOUT")
-    if UnitAffectingCombat("player") then
-        C.CombatStatus=true
-        S.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
-    else
-        C.CombatStatus=false
-        S.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
-    end
     D.Slash[17]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) and "|cff00ff00true|r" or "|cffff0000false|r"
     D.Slash[20]=D:GetProfileName()
     F:HideBlizzard()
@@ -141,6 +134,11 @@ function S.EventFrame:PLAYER_LOGIN()
         end
         D:ApplyFramePosition(modelBtn[index])
         F:SetupDrag(modelBtn[index])
+    end
+    if InCombatLockdown() then
+        S.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+    else
+        S.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
     end
     if D.DB[6][12]==1 then
         F:CastEnable(1)

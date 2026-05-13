@@ -1,4 +1,5 @@
 local D,F,S,C=unpack(select(2,...))
+C.CombatStatus=false
 local event,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,snapshot,status,tconcat=S.EventFrame,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,nil,0,table.concat
 local UnitGUID,ipairs,sformat,UnitExists,GUIDIsPlayer,Received=UnitGUID,ipairs,string.format,UnitExists,C_PlayerInfo.GUIDIsPlayer,{}
 local eFaction={["Human"]=true,["Dwarf"]=true,["NightElf"]=true,["Gnome"]=true,["Draenei"]=true}
@@ -130,13 +131,15 @@ function F:PrintGUID()
 end
 function F:CreateSnapshot()
     local guid=UnitGUID("target")
-    if not guid or type(guid)=="nil" then return end
+    if type(guid)=="nil" then return end
     snapshot=guid
     F:CreateCustomUnit(snapshot,7)
 end
 function event:PLAYER_REGEN_DISABLED()
     self:UnregisterEvent("PLAYER_REGEN_DISABLED")
+    self:RegisterEvent("PLAYER_REGEN_ENABLED")
     C.CombatStatus=true
+    C.EtherIcon.tex:SetColorTexture(1,0,0)
     if C.MainFrame:IsShown() then
         if C.IsMovable then
             C:ToggleUnlock(0)
@@ -144,18 +147,16 @@ function event:PLAYER_REGEN_DISABLED()
         C.MainFrame:Hide()
         C.MainFrame.status=true
     end
-    C.EtherIcon.tex:SetColorTexture(1,0,0)
-    self:RegisterEvent("PLAYER_REGEN_ENABLED")
 end
 function event:PLAYER_REGEN_ENABLED()
     self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("PLAYER_REGEN_DISABLED")
     C.CombatStatus=false
+    C.EtherIcon.tex:SetColorTexture(0,0.8,1)
     if C.MainFrame.status then
         C.MainFrame.status=false
         C.MainFrame:Show()
     end
-    C.EtherIcon.tex:SetColorTexture(0,0.8,1)
-    self:RegisterEvent("PLAYER_REGEN_DISABLED")
 end
 function event:CHAT_MSG_ADDON(...)
     local prefix,message,_,sender=...

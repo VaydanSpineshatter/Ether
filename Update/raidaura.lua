@@ -49,7 +49,7 @@ local function UpdateStatusIcons(status,b)
         end
     end
     if status[15]==1 then
-        if b.dispel then
+        if b.dispel and b.dispel:IsShown() then
             b.dispel:Hide()
         end
     end

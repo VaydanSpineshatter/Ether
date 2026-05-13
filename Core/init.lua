@@ -38,7 +38,7 @@ for i=1,2 do
     Ether[1].modelBtn[#Ether[1].modelBtn+1]=CreateFrame("PlayerModel",nil,UIParent)
     Ether[1].modelBtn[i].index=i+13
 end
-Ether[4].EtherIcon.index,Ether[4].MainFrame.index,Ether[4].CombatStatus,Ether[4].ToolFrame.index=18,19,false,17
+Ether[4].EtherIcon.index,Ether[4].MainFrame.index,Ether[4].ToolFrame.index=18,19,17
 local left=Ether[3].EventFrame:CreateTexture(nil,"BACKGROUND")
 local right=Ether[3].EventFrame:CreateTexture(nil,"BACKGROUND")
 left:SetPoint("TOPLEFT",UIParent,"TOPLEFT")

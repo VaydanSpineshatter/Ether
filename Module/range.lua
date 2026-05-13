@@ -1,4 +1,4 @@
-local D,F,_,C=unpack(select(2,...))
+local D,F=unpack(select(2,...))
 local C_Ticker,pairs,CheckInteractDistance=C_Timer.NewTicker,pairs,CheckInteractDistance
 local UnitCanAssist,UnitCanAttack,IsSpellInRange=UnitCanAssist,UnitCanAttack,C_Spell.IsSpellInRange
 local petBtn,raidBtn,soloBtn,UnitIsInteractable=D.petBtn,D.raidBtn,D.soloBtn,UnitIsInteractable
@@ -31,10 +31,12 @@ end
 local function UpdateAlpha(b)
     if not b or not b.unit then return end
     local unit=b.unit
-    if b:IsVisible() then
-        if not C.CombatStatus then
+    if InCombatLockdown() then
+        if b:IsVisible() then
             b:SetAlpha(IsInRange(unit))
-        else
+        end
+    else
+        if b:IsVisible() then
             b:SetAlpha(IsInDistance(unit))
         end
     end
