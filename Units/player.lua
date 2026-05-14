@@ -53,9 +53,9 @@ function F:CreateUnitButtons(index)
         powerBar:SetHeight(pH)
     end)
     if b.unit=="player" or b.unit=="target" or b.unit=="targettarget" then
+        b.smooth=true
         Mixin(healthBar,SmoothStatusBarMixin)
         Mixin(powerBar,SmoothStatusBarMixin)
-        b.smooth=true
     end
     F:SetupTooltip(b,b.unit)
     F:SetupPrediction(b)
@@ -133,6 +133,7 @@ function F:DeactivateModelButton(index)
     local b=modelBtn[index]
     if index==2 then
         UnregisterUnitWatch(b)
+        b:SetAttribute("unit",nil)
     end
     b:Hide()
     F:RemoveDrag(b)

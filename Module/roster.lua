@@ -2,8 +2,8 @@ local D,F,S,C=unpack(select(2,...))
 local pairs,ipairs,UnitExists,C_After=pairs,ipairs,UnitExists,C_Timer.After
 local event,raidBtn,soloBtn,modelBtn=S.EventFrame,D.raidBtn,D.soloBtn,D.modelBtn
 local refresh,channel=false,false
-local function GetModelBtn(unit)
-    return modelBtn[D:PosUnit(unit)]
+local function UpdateModelBtn(unit)
+    return modelBtn[D:PosUnit(unit)]:SetUnit(unit)
 end
 local function refreshButtons()
     if refresh then return end
@@ -53,18 +53,10 @@ function event:UNIT_THREAT_SITUATION_UPDATE(unit)
     end
 end
 function event:UNIT_PORTRAIT_UPDATE(unit)
-    local b=GetModelBtn(unit)
-    if b then
-        b:SetUnit(unit)
-        b:SetPortraitZoom(1)
-    end
+    UpdateModelBtn(unit)
 end
 function event:UNIT_MODEL_CHANGED(unit)
-    local b=GetModelBtn(unit)
-    if b then
-        b:SetUnit(unit)
-        b:SetPortraitZoom(1)
-    end
+    UpdateModelBtn(unit)
 end
 function event:PLAYER_TARGET_CHANGED()
     if D.DB[1][6]==1 then
@@ -79,30 +71,33 @@ function event:PLAYER_TARGET_CHANGED()
             F:UpdateSoloIndicator(4)
         end
     end
-    if D.DB[6][2]==1 then
-        F:SoloAuraFullUpdate(soloBtn[2],"target")
+    if UnitExists("target") then
+        if D.DB[6][2]==1 then
+            F:SoloAuraFullUpdate(soloBtn[2],"target")
+        end
+        F:UpdateThreatColor(35,38,"target")
+        UpdateModelBtn("target")
+        F:UpdateTargetCastBar("target")
+        F:UpdateTargetAlpha()
+        F:HidePrediction(soloBtn[2])
+        F:HidePrediction(soloBtn[3])
+        F:ScanTargetGUID()
     end
-    F:UpdateThreatColor(35,38,"target")
-    modelBtn[2]:SetUnit("target")
-    modelBtn[2]:SetPortraitZoom(1)
-    F:UpdateTargetCastBar("target")
-    F:UpdateTargetAlpha()
-    F:HidePrediction(soloBtn[2])
-    F:HidePrediction(soloBtn[3])
-    F:ScanTargetGUID()
 end
 function F:RosterDisable()
     for _,v in ipairs(D.rosterEvent) do
         F:FuncDisable(v)
     end
     for index=1,12 do
-        if index==1 then
-            if index>=10 and index<=12 then
-                F:Fire(index+30)
-            elseif index>=5 and index<=7 then
-                F:Fire(index+30)
-            elseif index<=3 then
-                F:Fire(index+30)
+        if D.DB[1][index]==1 then
+            if index==1 then
+                if index>=10 and index<=12 then
+                    F:Fire(index+30)
+                elseif index>=5 and index<=7 then
+                    F:Fire(index+30)
+                elseif index<=3 then
+                    F:Fire(index+30)
+                end
             end
         end
     end
@@ -130,12 +125,20 @@ function F:RosterEnable()
     for _,v in ipairs(D.rosterEvent) do
         F:FuncEnable(v)
     end
+    for index=1,6 do
+        if D.DB[6][index]==1 then
+            F:ActivateUnitButton(index)
+        end
+    end
+    for index=1,2 do
+        F:ActivateModelButton(index)
+    end
     for index=1,12 do
         if D.DB[1][index]==1 then
             if index>=10 and index<=12 then
                 F:Fire(index)
             elseif index==7 then
-                C_Timer.After(0.5,function()
+                C_Timer.After(0.3,function()
                     F:Fire(index)
                 end)
             elseif index>=5 and index<=6 then
@@ -153,14 +156,6 @@ function F:RosterEnable()
     for index=12,13 do
         if D.DB[6][index]==1 then
             F:CastEnable(index-11)
-        end
-    end
-    for index=1,2 do
-        F:ActivateModelButton(index)
-    end
-    for index=1,6 do
-        if D.DB[6][index]==1 then
-            F:ActivateUnitButton(index)
         end
     end
     if D.DB[6][17]==1 then
