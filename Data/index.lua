@@ -3,7 +3,7 @@ local type,next,tostring,unpack=type,next,tostring,unpack
 local tconcat,UIParent,pairs,ipairs=table.concat,UIParent,pairs,ipairs
 D.MenuKey,D.menuStrings={"Module","Blizzard","Tooltip","Indicators","Header","Layout","Aura","Profile"},{}
 local P={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
-D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding","Addon Version ","Prefix ","Version Calls","Addon calls ","Profile ",C_AddOns.GetAddOnMetadata("Ether","Version") or "0.8.1","-",tostring(_G["ETHER_DATABASE"]["LAST"] or 0),tostring(0),"-"}
+D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding","Addon Version ","Prefix ","Version Calls","Addon calls ","Profile ","|cffff0000Initialisation failed|r","-",tostring(_G["ETHER_DATABASE"]["LAST"] or 0),tostring(0),"-"}
 local Units={"player","target","targettarget","pet","pettarget","focus"}
 D.iEvent={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS","UNIT_FACTION","RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
 D.msgEvent={"CHAT_MSG_ADDON","CHAT_MSG_WHISPER_INFORM","CHAT_MSG_WHISPER","CHAT_MSG_BN_WHISPER"}
@@ -146,7 +146,6 @@ function D:InitializeAddon(status)
         F:SetupDrag(C.InfoFrame)
     end
     S.EventFrame:RegisterEvent("PLAYER_LOGIN")
-    S.EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 end
 function D:SetToDefault(status,msg)
     if type(status)~="boolean" then return end

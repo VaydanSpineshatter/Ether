@@ -25,19 +25,20 @@ local function GuidClassColor(guid)
     local enemy=eFaction[race] and E or NE
     return c,name or "UNKNOWN",enemy
 end
-local count=0
+local ver,call=0,0
 local function OnVersion(message)
     local theirVersion=tonumber(message)
     local myVersion=tonumber(C.EtherVersion)
-    count=count+1
+    call=call+1
     if D.menuStrings[9] then
-        D.menuStrings[9]:SetText(string.format("%s %s","Addon calls ",tostring(count) or 0))
+        D.menuStrings[9]:SetText(string.format("%s %s","Addon calls ",tostring(call) or 0))
     end
     local lastCheck=_G["ETHER_DATABASE"]["LAST"] or 0
-    if (time()-lastCheck>=5000) and theirVersion and myVersion and myVersion<theirVersion then
+    if (time()-lastCheck>=4000) and theirVersion and myVersion and myVersion<theirVersion then
+        ver=ver+1
         _G["ETHER_DATABASE"]["LAST"]=time()
         if D.menuStrings[8] then
-            D.menuStrings[8]:SetText(string.format("%s %s","Version Calls",_G["ETHER_DATABASE"]["LAST"] or 0))
+            D.menuStrings[8]:SetText(string.format("%s %s","Version Calls",tostring(ver) or 0))
         end
         C:EtherInfo(sformat("New version found (%d). Get the latest version from %s",theirVersion,"|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r"))
     end
@@ -161,7 +162,7 @@ end
 function event:CHAT_MSG_ADDON(...)
     local prefix,message,_,sender=...
     if prefix~=C.EtherPrefix then return end
-    if sender==C.PlayerName then return end
+    --  if sender==C.PlayerName then return end
     if Received[message]==message then return end
     Received[message]=message
     OnVersion(D:ImportAddonMsg(message))
