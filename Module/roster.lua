@@ -70,6 +70,7 @@ function event:PLAYER_TARGET_CHANGED()
             F:UpdateSoloIndicator(4)
         end
     end
+    F:UpdateTargetCastBar("target")
     if UnitExists("target") then
         F:UpdateSoloIndicator(2)
         if D.DB[6][2]==1 then
@@ -77,7 +78,6 @@ function event:PLAYER_TARGET_CHANGED()
         end
         F:UpdateThreatColor(35,38,"target")
         UpdateModelBtn("target")
-        F:UpdateTargetCastBar("target")
         F:UpdateTargetAlpha()
         F:HidePrediction(soloBtn[2])
         F:ScanTargetGUID()
