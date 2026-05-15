@@ -3,7 +3,7 @@ local type,sformat,pairs,ipairs=type,string.format,pairs,ipairs
 local CompressString,DecompressString=C_EncodingUtil.CompressString,C_EncodingUtil.DecompressString
 local function ProfileRefresh()
     if C.ProfileRefresh then return end
-    C.MainFrame:Hide()
+    C.ConfigFrame:Hide()
     for _,v in ipairs(C.ChildFrames) do
         v:Hide()
     end
@@ -35,7 +35,7 @@ local function ProfileRefresh()
         C.RemoveDropdown:SetOptions(D.DB["USER"])
     end
     D.menuStrings[8]:SetText(sformat("%s %s","Profile ",D:GetProfileName()))
-    C.MainFrame:Show()
+    C.ConfigFrame:Show()
 end
 D.ProfileRefresh=ProfileRefresh
 function D:ExportAddonMsg()

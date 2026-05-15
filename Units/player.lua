@@ -69,17 +69,19 @@ function F:CreateUnitButtons(index)
     soloBtn[b.index]=b
     D:ApplyFramePosition(b)
 end
-function F:CreateModelButton(index)
-    local b=modelBtn[index]
-    b:SetUnit(D:PosUnit(index))
+function F:CreateModelButton(number)
+    local b=CreateFrame("PlayerModel",nil,UIParent)
+    b.index=number+13
+    b:SetUnit(D:PosUnit(number))
     b:SetPortraitZoom(1)
     b:SetCamDistanceScale(1.5)
     F:SetupButtonBackground(b)
-    if index==1 then
+    if number==1 then
         F:MainBorder(b,31,32,33,34)
     else
         F:MainBorder(b,35,36,37,38)
     end
+    modelBtn[number]=b
 end
 function F:ActivateUnitButton(index)
     local b=soloBtn[index]

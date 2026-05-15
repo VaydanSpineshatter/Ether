@@ -155,7 +155,7 @@ local function Aura(self,status)
             C:EtherInfo("|cff00ccffAuras|r: Custom auras cleared")
             C.DropdownMenu:Hide()
             C.PopupBox:SetShown(false)
-            C.MainFrame:SetShown(true)
+            C.ConfigFrame:SetShown(true)
         end)
     end)
     self.scrollChild=scrollChild
@@ -338,7 +338,7 @@ function F:UpdateAuraList()
             F:PopupBoxSetup()
             C.PopupBox.font:SetText("Delete Aura |cffcc66ff"..tostring(spellId).."|r ?")
             C.PopupCallback:SetScript("OnClick",function()
-                C.MainFrame:SetShown(true)
+                C.ConfigFrame:SetShown(true)
                 C.PopupBox:SetShown(false)
                 D.DB["CUSTOM"][spellId]=nil
                 if C.Spell==spellId then

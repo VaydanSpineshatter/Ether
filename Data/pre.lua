@@ -49,4 +49,15 @@ D.PredefinedIndicator={
 ["fireRed"]={0.7,0.13,0.13,"cffb22222"},
 ["EtherPink"]={0.8,0.4,1,"cffCC66FF"},
 ["EtherBlue"]={0,0.8,1,"cE600CCFF"}
+local update=CreateFrame("Frame")
+local function OnUpdate(self)
+    if _G['LFGMinimapFrame'] then
+        local lfg=_G['LFGMinimapFrame']
+        lfg:ClearAllPoints()
+        lfg:SetPoint("TOPRIGHT",_G['Minimap'],"BOTTOMRIGHT",0,-10)
+        lfg:Show()
+    end
+    self:SetScript("OnUpdate",nil)
+end
+update:SetScript('OnUpdate',OnUpdate)
 ]]

@@ -226,13 +226,15 @@ function C:ToggleUser()
     if not C.created then
         C:Main()
     end
-    C.MainFrame:SetShown(not C.MainFrame:IsShown() and true or false)
+    C.ConfigFrame:SetShown(not C.ConfigFrame:IsShown() and true or false)
 end
 function F:RefreshUserButtons(number)
     for _,v in ipairs(C.ChildFrames) do
         v:Hide()
     end
-    C:ToggleUnlock(0)
+    if C.IsMovable then
+        C:ToggleUnlock(0)
+    end
     if C.DropdownMenu then
         C.DropdownMenu:Hide()
     end

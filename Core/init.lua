@@ -11,49 +11,18 @@
 -- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
-local _,Ether=...
-Ether[1],Ether[2],Ether[3],Ether[4],Ether[5]={},{},{},{},{} --local D,F,S,C,L=unpack(select(2,...))
-Ether[1].A,Ether[1].H,Ether[1].DB,Ether[1].petBtn,Ether[1].raidBtn={},{},{},{},{}
-Ether[1].soloBtn={[1]={},[2]={},[3]={},[4]={},[5]={},[6]={}}
-Ether[1].customBtn,Ether[1].modelBtn,Ether[1].castBar={[1]={},[2]={},[3]={}},{},{}
-Ether[4].MainFrame=CreateFrame("Frame","EtherUnitFrames",UIParent)
-Ether[4].ContentFrame=CreateFrame("Frame",nil,Ether[4].MainFrame)
-table.insert(UISpecialFrames,"EtherUnitFrames")
-Ether[3].EventFrame,Ether[4].BaseFrame=CreateFrame("Frame"),CreateFrame("Frame",nil,Ether[4].MainFrame)
+local _,addon=...
+--[[local D,F,S,C,L=unpack(select(2,...))==Data,Func,Event,Config,Localisation]]
+addon[1],addon[2],addon[3],addon[4],addon[5]={},{},{},{},{}
+local D,S,C=addon[1],addon[3],addon[4]
+D.A,D.H,D.DB,D.petBtn,D.raidBtn,D.customBtn,D.modelBtn,D.castBar,D.soloBtn={},{},{},{},{},{[1]={},[2]={},[3]={}},{},{},{[1]={},[2]={},[3]={},[4]={},[5]={},[6]={}}
 local verStr=C_AddOns.GetAddOnMetadata("Ether","Version")
-Ether[4].EtherVersion=verStr:sub(3):gsub("%.","")
-Ether[4].PlayerName,Ether[4].PlayerGUID,Ether[4].ClassName,Ether[2].ClassId,Ether[4].EtherPrefix=UnitName("player"),UnitGUID("player"),select(2,UnitClass("player")),select(3,UnitClass("player")),"EtherAddonMsg"
-Ether[4].EtherFont=CreateFont("EtherFont")
-Ether[4].EtherFont:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",8,"OUTLINE")
-Ether[4].EtherIcon,Ether[4].ToolFrame=CreateFrame("Frame",nil,UIParent),CreateFrame("Frame",nil,UIParent)
-Ether[4].ToolFrame:SetFrameStrata("TOOLTIP")
-Ether[4].ToolFrame:Hide()
-local bg=Ether[4].ToolFrame:CreateTexture(nil,"BACKGROUND")
-bg:SetColorTexture(0,0,0,.5)
-bg:SetAllPoints()
-for i=1,6 do
-    Ether[1].soloBtn[i].index=i
-end
-for i=1,2 do
-    Ether[1].modelBtn[#Ether[1].modelBtn+1]=CreateFrame("PlayerModel",nil,UIParent)
-    Ether[1].modelBtn[i].index=i+13
-end
-Ether[4].EtherIcon.index,Ether[4].MainFrame.index,Ether[4].ToolFrame.index=18,19,17
-local left=Ether[3].EventFrame:CreateTexture(nil,"BACKGROUND")
-local right=Ether[3].EventFrame:CreateTexture(nil,"BACKGROUND")
-left:SetPoint("TOPLEFT",UIParent,"TOPLEFT")
-left:SetPoint("BOTTOMLEFT",UIParent,"BOTTOMLEFT")
-right:SetPoint("TOPRIGHT",UIParent,"TOPRIGHT")
-right:SetPoint("BOTTOMRIGHT",UIParent,"BOTTOMRIGHT")
-left:SetColorTexture(1,0,0,.4)
-right:SetColorTexture(1,0,0,.4)
-left:Hide()
-right:Hide()
-left:SetWidth(40)
-right:SetWidth(40)
-Ether[4].Spell,Ether[4].Indi,Ether[4].ProfileRefresh=nil,nil,false
-Ether[4].FlashLeft=left
-Ether[4].FlashRight=right
+C.EtherVersion=verStr:sub(3):gsub("%.","")
+C.PlayerName,C.PlayerGUID,C.EtherPrefix=UnitName("player"),UnitGUID("player"),"EtherAddonMsg"
+C.EtherFont=CreateFont("EtherFont")
+C.EtherFont:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",8,"OUTLINE")
+C.Spell,C.Indi,C.ProfileRefresh=nil,nil,false
+_,C.ClassName,C.ClassId=UnitClass
 if type(_G["ETHER_DATABASE"])~="table" then
     _G["ETHER_DATABASE"]={}
 end
@@ -72,43 +41,32 @@ end
 local function OnEvent(self,event,...)
     self[event](self,...)
 end
-Ether[3].EventFrame.ADDON_LOADED=function(self)
+local event=CreateFrame("Frame")
+S.EventFrame=event
+function event:ADDON_LOADED()
     self:UnregisterEvent("ADDON_LOADED")
     local success,msg=pcall(function()
         if not _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"] then
-            _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=Ether[1]:CopyTable(Ether[1].Default)
-            Ether[1]:CurrentProfile(Ether[1]:GetProfileName())
-            _G["ETHER_DATABASE"]["VERSION"]=Ether[4].EtherVersion
+            _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=D:CopyTable(D.Default)
+            D:CurrentProfile(D:GetProfileName())
+            _G["ETHER_DATABASE"]["VERSION"]=C.EtherVersion
         end
-        local migrate=_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()]["CONFIG"][13]
+        local migrate=_G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]["CONFIG"][13]
         if type(migrate)~="string" or migrate=="NONE" then
             for _,v in pairs(_G["ETHER_DATABASE"]["PROFILES"]) do
                 v[3]=nil
                 v[4]=nil
-                v["CONFIG"]=Ether[1]:DataMigrate(v["CONFIG"],16,0)
+                v["CONFIG"]=D:DataMigrate(v["CONFIG"],16,0)
                 v["CONFIG"][13]="DAMAGER"
             end
         end
-        Ether[1]:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][Ether[1]:GetProfileName()],Ether[1].Default)
+        D:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()],D.Default)
     end)
     if not success then
-        Ether[1]:SetToDefault(success,msg)
+        D:SetToDefault(success,msg)
         print(msg)
     end
-    Ether[1]:InitializeAddon(success)
+    D:InitializeAddon(success)
 end
-Ether[3].EventFrame:SetScript("OnEvent",OnEvent)
-Ether[3].EventFrame:RegisterEvent("ADDON_LOADED")
---[[ Uncomment to use
-local update=CreateFrame("Frame")
-local function OnUpdate(self)
-    if _G['LFGMinimapFrame'] then
-        local lfg=_G['LFGMinimapFrame']
-        lfg:ClearAllPoints()
-        lfg:SetPoint("TOPRIGHT",_G['Minimap'],"BOTTOMRIGHT",0,-10)
-        lfg:Show()
-    end
-    self:SetScript("OnUpdate",nil)
-end
-update:SetScript('OnUpdate',OnUpdate)
-]]
+event:SetScript("OnEvent",OnEvent)
+event:RegisterEvent("ADDON_LOADED")

@@ -1,8 +1,12 @@
+--[[
+player,target,targettarget,pet,pettarget,focus,custom1,custom2,custom3,raidBtn,raidpetBtn,playerCastBar,targetCastBar,playerModel,targetModel,Info,Tooltip,Icon,Config
+Module,Blizzard,Tooltip,Indicators,Header,Layout
+]]
 local D,F,S,C=unpack(select(2,...))
 local type,unpack,UIParent,ipairs=type,unpack,UIParent,ipairs
 D.MenuKey,D.menuStrings={"Module","Blizzard","Tooltip","Indicators","Header","Layout","Aura","Profile"},{}
 local P={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
-D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Version ","ether msg ","Profile ","Commands","Config","Reload UI","Helper","key binding",false,"-","-"}
+D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Version ","ether msg ","Profile ","Commands","Config","Reload UI","Helper","key binding",0,"-","-"}
 local Units={"player","target","targettarget","pet","pettarget","focus"}
 D.iEvent={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS","UNIT_FACTION","RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
 D.msgEvent={"CHAT_MSG_ADDON","CHAT_MSG_WHISPER_INFORM","CHAT_MSG_WHISPER","CHAT_MSG_BN_WHISPER"}
@@ -59,8 +63,6 @@ function D:GetRelativePoint(p)
         return P[5],0,0
     end
 end
---player,target,targettarget,pet,pettarget,focus,custom1,custom2,custom3,raidBtn,raidpetBtn,playerCastBar,targetCastBar,playerModel,targetModel,Info,Tooltip,Icon,Config
---Module,Blizzard,Tooltip,Indicators,Header,Layout
 D.Default={[1]={1,1,1,0,1,1,1,1,1,1,1,1},[2]={1,1,1,1,1,1,1,1,1,1,1},[3]={1,1,1,1,1,1,1,1,1,1,1,1,1},[4]={1,1,1,1,1,1,1,1,1,1,1},[5]={1,1,1,1},[6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
            [20]={[1]={P[1],0,0,18},[2]={P[8],0,0,8},[3]={P[3],0,0,9},[4]={P[2],0,0,8},[5]={P[5],0,5,8},[6]={P[3],0,-6,8},[7]={P[7],0,8,9},[8]={P[8],0,8,8},[9]={P[3],0,0,9},[10]={P[1],0,-8,8},[11]={P[2],0,0,14}},
            [21]={[1]={P[8],P[10],P[8],-254,244,110,40,1,1},[2]={P[8],P[10],P[8],254,244,110,40,1,1},[3]={P[8],P[10],P[8],388,244,110,40,1,1},[4]={P[5],P[10],P[5],-350,-100,110,40,1,1},
@@ -68,40 +70,6 @@ D.Default={[1]={1,1,1,0,1,1,1,1,1,1,1,1},[2]={1,1,1,1,1,1,1,1,1,1,1},[3]={1,1,1,
                  [9]={P[5],P[10],P[5],0,-90,110,40,1,1},[10]={P[8],P[10],P[8],0,400,55,55,1,1},[11]={P[7],P[10],P[7],520,40,45,45,1,1},[12]={P[8],P[10],P[8],-380,200,360,15,1,1},
                  [13]={P[8],P[10],P[8],380,200,360,15,1,1},[14]={P[8],P[10],P[8],-125,240,45,45,1,1},[15]={P[8],P[10],P[8],125,240,45,45,1,1},[16]={P[7],P[10],P[7],30,210,320,180,1,1},
                  [17]={P[4],P[10],P[4],60,-50,280,80,1,1},[18]={P[6],P[10],P[6],-380,-70,28,28,1,1},[19]={P[1],P[10],P[1],50,-100,540,280,1,1}},["CUSTOM"]={},["USER"]={},["CONFIG"]={1,1,0,1,4,1,22825,32067,27666,22521,3,4,"DAMAGER",0,0,0,0,0}}
-local frame=CreateFrame("Frame",nil,UIParent)
-C.InfoFrame=frame
-frame:Hide()
-frame.index=16
-local bg=frame:CreateTexture(nil,"BACKGROUND")
-bg:SetAllPoints()
-bg:SetColorTexture(0.1,0.1,0.1)
-local right=frame:CreateFontString(nil,"OVERLAY")
-right:SetFontObject(C.EtherFont)
-right:SetPoint("TOPRIGHT",-10,-10)
-C.InfoRight=right
-local scroll=CreateFrame("ScrollFrame",nil,frame,"ScrollFrameTemplate")
-scroll:SetPoint("TOPLEFT",10,-30)
-scroll:SetPoint("BOTTOMRIGHT",-30,10)
-local cF=CreateFrame("Frame",nil,scroll)
-cF:SetSize(390,111)
-scroll:SetScrollChild(cF)
-local txt=cF:CreateFontString(nil,"OVERLAY")
-C.InfoText=txt
-txt:SetFontObject(C.EtherFont)
-txt:SetPoint("TOPLEFT")
-txt:SetWidth(290)
-txt:SetJustifyH("LEFT")
-scroll:EnableMouseWheel(true)
-scroll:SetScript("OnMouseWheel",function(self,delta)
-    if delta>0 then
-        self:SetVerticalScroll(-50)
-    else
-        self:SetVerticalScroll(50)
-    end
-end)
-if scroll.ScrollBar then
-    scroll.ScrollBar:Hide()
-end
 function D:InitializeAddon(status)
     if type(status)~="boolean" then return end
     assert(status==true)
@@ -150,7 +118,7 @@ end
 function D:RefreshAllFrames()
     D:ApplyFramePosition(C.InfoFrame)
     D:ApplyFramePosition(C.ToolFrame)
-    D:ApplyFramePosition(C.MainFrame)
+    D:ApplyFramePosition(C.ConfigFrame)
     D:ApplyFramePosition(C.EtherIcon)
     for i=1,6 do
         D:ApplyFramePosition(D.soloBtn[i])

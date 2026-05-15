@@ -24,33 +24,34 @@ local function Click(_,btn)
         C:ToggleUser()
     end
 end
-C.EtherIcon:Hide()
-C.EtherIcon.tex=C.EtherIcon:CreateTexture(nil,"ARTWORK")
-C.EtherIcon.tex:SetAllPoints(C.EtherIcon)
-C.EtherIcon.tex:SetColorTexture(0,0.8,1)
-C.EtherIcon.mask=C.EtherIcon:CreateMaskTexture("BACKGROUND")
-C.EtherIcon.mask:SetTexture("Interface\\AddOns\\Ether\\Media\\icon.blp","CLAMPTOBLACKADDITIVE","CLAMPTOBLACKADDITIVE")
-C.EtherIcon.mask:SetAllPoints(C.EtherIcon.tex)
-C.EtherIcon.tex:AddMaskTexture(C.EtherIcon.mask)
+local frame=CreateFrame("Frame",nil,UIParent)
+C.EtherIcon=frame
+frame.index=18
+frame:Hide()
+frame.tex=frame:CreateTexture(nil,"ARTWORK")
+frame.tex:SetAllPoints(frame)
+frame.tex:SetColorTexture(0,0.8,1)
+frame.mask=frame:CreateMaskTexture("BACKGROUND")
+frame.mask:SetTexture("Interface\\AddOns\\Ether\\Media\\icon.blp","CLAMPTOBLACKADDITIVE","CLAMPTOBLACKADDITIVE")
+frame.mask:SetAllPoints(frame.tex)
+frame.tex:AddMaskTexture(frame.mask)
 function F:IconEnable()
-    if not C.EtherIcon then return end
-    if not C.EtherIcon:IsShown() then
-        C.EtherIcon:SetShown(true)
-        D:ApplyFramePosition(C.EtherIcon)
-        F:SetupDrag(C.EtherIcon)
-        C.EtherIcon:SetScript("OnEnter",Enter)
-        C.EtherIcon:SetScript("OnLeave",Leave)
-        C.EtherIcon:SetScript("OnMouseUp",Click)
+    if not frame:IsShown() then
+        frame:SetShown(true)
+        D:ApplyFramePosition(frame)
+        F:SetupDrag(frame)
+        frame:SetScript("OnEnter",Enter)
+        frame:SetScript("OnLeave",Leave)
+        frame:SetScript("OnMouseUp",Click)
     end
 end
 function F:IconDisable()
-    if not C.EtherIcon then return end
-    if C.EtherIcon:IsShown() then
-        C.EtherIcon:SetShown(false)
-        F:RemoveDrag(C.EtherIcon)
-        C.EtherIcon:SetScript("OnEnter",nil)
-        C.EtherIcon:SetScript("OnLeave",nil)
-        C.EtherIcon:SetScript("OnMouseUp",nil)
+    if frame:IsShown() then
+        frame:SetShown(false)
+        F:RemoveDrag(frame)
+        frame:SetScript("OnEnter",nil)
+        frame:SetScript("OnLeave",nil)
+        frame:SetScript("OnMouseUp",nil)
     end
 end
 F:RegisterCallbackByIndex(F.IconEnable,1)

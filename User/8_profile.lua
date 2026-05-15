@@ -131,13 +131,13 @@ local function Profile(self,status)
             if success then
                 C:EtherInfo(eColor..msg)
                 C.PopupBox:SetShown(false)
-                C.MainFrame:SetShown(true)
+                C.ConfigFrame:SetShown(true)
                 C.PopupBox.font:SetText()
                 D.ProfileRefresh()
             else
                 C:EtherInfo(eColor..msg)
                 C.PopupBox:SetShown(false)
-                C.MainFrame:SetShown(true)
+                C.ConfigFrame:SetShown(true)
             end
         end)
     end)
@@ -188,11 +188,11 @@ local function Profile(self,status)
             if success then
                 C:EtherInfo("|cffcc66ffEther|r "..msg)
                 C.PopupBox:SetShown(false)
-                C.MainFrame:SetShown(true)
+                C.ConfigFrame:SetShown(true)
             else
                 C:EtherInfo(eColor..msg)
                 C.PopupBox:SetShown(false)
-                C.MainFrame:SetShown(true)
+                C.ConfigFrame:SetShown(true)
             end
         end)
     end)

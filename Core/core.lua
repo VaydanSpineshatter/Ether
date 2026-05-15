@@ -1,13 +1,39 @@
 local D,F,S,C=unpack(select(2,...))
-local ipairs,j,created=ipairs,0,false
-C.BorderFrames,C.ChildFrames,C.MenuButtons,C.AuraList,C.MainButtons={},{},{},{},{}
-while true do
-    j=j+1
-    C.MainButtons[#C.MainButtons+1]={}
-    if j>=7 then break end
+local ipairs,created,event=ipairs,false,S.EventFrame
+local config,content,base
+do
+    config=CreateFrame("Frame","EtherConfigFrame",UIParent)
+    table.insert(UISpecialFrames,"EtherConfigFrame")
+    C.ConfigFrame=config
+    config.index=19
+    config:SetFrameStrata("TOOLTIP")
+    config.bg=C.ConfigFrame:CreateTexture(nil,"BACKGROUND")
+    config.bg:SetAllPoints()
+    config.bg:SetColorTexture(0.1,0.1,0.1)
+    config:Hide()
+    config:SetScript("OnHide",function()
+        if C.ProfileRefresh then return end
+        F:RefreshUserButtons(1)
+        if C.IsMovable then return end
+        D.DB["CONFIG"][3]=0
+    end)
+    content,base=CreateFrame("Frame",nil,config),CreateFrame("Frame",nil,config)
+    base:SetPoint("TOPLEFT")
+    base:SetPoint("BOTTOMLEFT")
+    base:SetWidth(100)
+    content:SetPoint("TOPLEFT",base,"TOPRIGHT")
+    content:SetPoint("BOTTOMRIGHT")
+    C.ContentFrame,C.BaseFrame,C.BorderFrames,C.ChildFrames,C.MenuButtons,C.AuraList,C.MainButtons=content,base,{},{},{},{},{}
+    local i=0
+    while true do
+        i=i+1
+        C.MainButtons[#C.MainButtons+1]={}
+        if i>=7 then break end
+    end
 end
-local function Child()
+local function Children()
     if created then return end
+    created=true
     for i=1,8 do
         if not C.MenuButtons[i] then
             F:MenuButton(i,function()
@@ -18,68 +44,40 @@ local function Child()
         end
     end
 end
-local function Base()
+function C:Main()
     if created then return end
-    C.BaseFrame:SetPoint("TOPLEFT")
-    C.BaseFrame:SetPoint("BOTTOMLEFT")
-    C.BaseFrame:SetWidth(100)
-    C.ContentFrame:SetPoint("TOPLEFT",C.BaseFrame,"TOPRIGHT")
-    C.ContentFrame:SetPoint("BOTTOMRIGHT")
     F:InitializeSystemStatus()
-end
-local function Border()
-    if created then return end
-    created=true
-    F:MainBorder(C.MainFrame,1,2,3,4)
-    C.BorderFrames[5]=C.ContentFrame:CreateTexture(nil,"BORDER")
+    F:MainBorder(config,1,2,3,4)
+    C.BorderFrames[5]=content:CreateTexture(nil,"BORDER")
     C.BorderFrames[5]:SetColorTexture(0.67,0.67,0.67)
     C.BorderFrames[5]:SetPoint("TOPLEFT",-1,1)
     C.BorderFrames[5]:SetPoint("BOTTOMLEFT",-1,-1)
     C.BorderFrames[5]:SetWidth(1)
-end
-function C:Main()
-    if created then return end
-    C.MainFrame:SetFrameStrata("TOOLTIP")
-    C.MainFrame.bg=C.MainFrame:CreateTexture(nil,"BACKGROUND")
-    C.MainFrame.bg:SetAllPoints()
-    C.MainFrame.bg:SetColorTexture(0.1,0.1,0.1)
-    C.MainFrame:Hide()
-    C.MainFrame:SetScript("OnHide",function()
-        if C.ProfileRefresh then return end
-        F:RefreshUserButtons(1)
-        if C.IsMovable then return end
-        D.DB["CONFIG"][3]=0
-    end)
-    Base()
-    Child()
-    Border()
-    local unlock=F:EtherPanelButton(C.BaseFrame,40,20,"Lock","BOTTOMLEFT",C.BaseFrame,"BOTTOMLEFT",10,5)
+    local unlock=F:EtherPanelButton(base,40,20,"Lock","BOTTOMLEFT",base,"BOTTOMLEFT",10,5)
     unlock:SetScript("OnClick",function()
-        if C.ProfileRefresh then return end
-        if not C.GridFrame then
-            F:SetupGridFrame()
-        end
-        if not C.GridFrame:IsShown() then
-            C:ToggleUnlock(1)
-        else
+        if C.IsMovable then
             C:ToggleUnlock(0)
+        else
+            C:ToggleUnlock(1)
         end
     end)
-    local close=F:EtherPanelButton(C.BaseFrame,40,20,"Close","LEFT",unlock,"RIGHT",0,0)
+    local close=F:EtherPanelButton(base,40,20,"Close","LEFT",unlock,"RIGHT",0,0)
     close:SetScript("OnClick",function()
         if C.ProfileRefresh then return end
-        C.MainFrame:Hide()
+        config:Hide()
         D.DB["CONFIG"][3]=0
     end)
-    D:ApplyFramePosition(C.MainFrame)
-    F:SetupDrag(C.MainFrame)
+    D:ApplyFramePosition(config)
+    F:SetupDrag(config)
+    Children()
 end
 function C:ToggleUnlock(number)
+    if C.ProfileRefresh then return end
     if not C.GridFrame then
         F:SetupGridFrame()
     end
-    local i=F:BinaryCondition(number)
-    C.IsMovable=i
+    C.IsMovable=F:BinaryCondition(number)
+    local i=C.IsMovable
     C.GridFrame:SetShown(i)
     C.InfoFrame:SetShown(i)
     C.ToolFrame:SetShown(i)
@@ -96,11 +94,11 @@ function C:ToggleUnlock(number)
         F:HideCastBar(2,i)
     end
 end
-function S.EventFrame:PLAYER_LOGIN()
+function event:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_LOGOUT")
     D.Slash[16]=D:GetProfileName()
-    D.Slash[14]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix)
+    D.Slash[14]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) and 1 or 0
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()
@@ -112,7 +110,6 @@ function S.EventFrame:PLAYER_LOGIN()
             F:DeactivateUnitButton(index)
         end
     end
-
     if D.DB[6][4]==1 then
         F:PetCondition()
     end
@@ -121,14 +118,14 @@ function S.EventFrame:PLAYER_LOGIN()
         F:CreateModelButton(index)
     end
     if InCombatLockdown() then
-        S.EventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+        self:RegisterEvent("PLAYER_REGEN_ENABLED")
     else
-        S.EventFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
+        self:RegisterEvent("PLAYER_REGEN_DISABLED")
     end
     F:RosterEnable()
-    S.EventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+    self:RegisterEvent("PLAYER_ENTERING_WORLD")
 end
-function S.EventFrame:PLAYER_LOGOUT()
+function event:PLAYER_LOGOUT()
     self:UnregisterAllEvents()
     _G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()]=D:CopyTable(D.DB)
 end
@@ -143,17 +140,17 @@ local function SetPerfectUIScale()
         end
     end
 end
-function S.EventFrame:PLAYER_ENTERING_WORLD()
+function event:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     for _,b in ipairs({D.H.pet:GetChildren()}) do
         C.UpdatePetUnit(b)
     end
     C_Timer.After(1.1,function()
         SetPerfectUIScale()
-        if D.Slash[14] then
-            --  if IsInGuild() then
-            --  C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),"GUILD")
-            --  end
+        if D.Slash[14]==1 then
+            if IsInGuild() then
+                C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),"GUILD")
+            end
             D.Slash[14]=C_AddOns.GetAddOnMetadata("Ether","Version")
         else
             D.Slash[14]="|cffff0000error|r"

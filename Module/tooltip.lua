@@ -9,8 +9,14 @@ local UnitIsAFK,UnitIsDND,GetRaidTargetIndex=UnitIsAFK,UnitIsDND,GetRaidTargetIn
 local UnitCreatureType,GetGuildInfo,GameTooltip=UnitCreatureType,GetGuildInfo,GameTooltip
 local tconcat,sformat,AFK,DND=table.concat,string.format,"|cffff00ffAFK|r","|cffCC66FFDND|r"
 local fStr,aStr,bStr=" %s  |cff%02x%02x%02x%s|r"," |cff%02x%02x%02x%s|r","|cff%02x%02x%02x%s|r "
-if not C.ToolFrame then return end
-local frame=C.ToolFrame
+local frame=CreateFrame("Frame",nil,UIParent)
+C.ToolFrame=frame
+frame.index=17
+frame:SetFrameStrata("TOOLTIP")
+frame:Hide()
+local bg=frame:CreateTexture(nil,"BACKGROUND")
+bg:SetColorTexture(0,0,0,.5)
+bg:SetAllPoints()
 local info=frame:CreateFontString(nil,"OVERLAY")
 info:SetFontObject(C.EtherFont)
 info:SetPoint("TOPLEFT",5,-5)

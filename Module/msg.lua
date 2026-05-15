@@ -169,12 +169,12 @@ function event:PLAYER_REGEN_DISABLED()
     self:RegisterEvent("PLAYER_REGEN_ENABLED")
     C.CombatStatus=true
     C.EtherIcon.tex:SetColorTexture(1,0,0)
-    if C.MainFrame:IsShown() then
+    if C.ConfigFrame:IsShown() then
         if C.IsMovable then
             C:ToggleUnlock(0)
         end
-        C.MainFrame:Hide()
-        C.MainFrame.status=true
+        C.ConfigFrame:Hide()
+        C.ConfigFrame.status=true
     end
 end
 function event:PLAYER_REGEN_ENABLED()
@@ -182,9 +182,9 @@ function event:PLAYER_REGEN_ENABLED()
     self:RegisterEvent("PLAYER_REGEN_DISABLED")
     C.CombatStatus=false
     C.EtherIcon.tex:SetColorTexture(0,0.8,1)
-    if C.MainFrame.status then
-        C.MainFrame.status=false
-        C.MainFrame:Show()
+    if C.ConfigFrame.status then
+        C.ConfigFrame.status=false
+        C.ConfigFrame:Show()
     end
 end
 function F:MsgCLEUEnable()

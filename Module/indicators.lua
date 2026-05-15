@@ -1,4 +1,4 @@
-local D,F,S,C=unpack(select(2,...))
+local D,F,S=unpack(select(2,...))
 local UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost=UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost
 local UnitHasIncomingResurrection,Enum,UnitExists=UnitHasIncomingResurrection,Enum,UnitExists
 local GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,updater=GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,nil
