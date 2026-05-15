@@ -62,11 +62,7 @@ function event:ADDON_LOADED()
         end
         D:MergeToLeft(_G["ETHER_DATABASE"]["PROFILES"][D:GetProfileName()],D.Default)
     end)
-    if not success then
-        D:SetToDefault(success,msg)
-        print(msg)
-    end
-    D:InitializeAddon(success)
+    D:InitializeAddon(success,msg)
 end
 event:SetScript("OnEvent",OnEvent)
 event:RegisterEvent("ADDON_LOADED")
