@@ -169,7 +169,7 @@ function F:CreateEtherDropdown(parent,width,txt,options,callback,status)
         menu:SetHeight(totalHeight+4)
     end
     frame:SetScript("OnClick",function()
-        if C.ProfileRefresh then return end
+        if C.ProfileRefresh or status and #D.DB["USER"]==0 then return end
         menu:SetShown(not menu:IsShown())
         if frame.v:GetAlpha()==0 then
             frame.v:SetAlpha(1)
