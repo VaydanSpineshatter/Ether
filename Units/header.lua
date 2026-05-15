@@ -12,32 +12,23 @@ local initialConfig=[[
     self:SetAttribute("isHeaderDriven", true)
     header:CallMethod("CreateChildren", self:GetName())
 ]]
-local function UpdatePCT(self)
-    if D.DB[5][3]==1 then
-        F:UpdateHealthPct(self)
-    end
-    if D.DB[5][4]==1 then
-        F:UpdatePowerPct(self)
-    end
-end
 local function CheckGUID(self)
     self.unit=self:GetAttribute("unit")
     local guid=self.unit and UnitGUID(self.unit)
     if guid and guid~=self.guid then
         self.guid=guid
-        F:FullHealthUpdate(self)
+        raidBtn[self.unit]=self
         F:UpdateName(self,2)
-        UpdatePCT(self)
-        F:UpdateIndicatorsUnit(self)
-        F:UpdateRaidAuras(self)
+        F:FullHealthUpdate(self)
     end
 end
 local function OnAttributeChanged(self,name,unit)
     if not unit or name~="unit" then return end
     if unit~=self.unit then
         self.unit=unit
-        raidBtn[self.unit]=self
     end
+    F:UpdateIndicatorsUnit(self)
+    F:UpdateRaidAuras(self)
     CheckGUID(self)
 end
 local function OnEnter(self)
@@ -53,19 +44,18 @@ local function UpdatePetUnit(self)
     local unit=self:GetAttribute("unit")
     if unit and UnitExists(unit) then
         self.unit=unit
-        D.petBtn[self.unit]=self
+        petBtn[self.unit]=self
         F:FullHealthUpdate(self)
         F:UpdateName(self,3)
         F:UpdateIndicatorsPetUnit(self)
     end
 end
+C.UpdatePetUnit=UpdatePetUnit
 local function OnEvent(self,event)
     if event=="UNIT_PET" then
         UpdatePetUnit(self)
     elseif event=="GROUP_ROSTER_UPDATE" then
-        for _,b in pairs(petBtn) do
-            UpdatePetUnit(b)
-        end
+        UpdatePetUnit(self)
     end
 end
 local function OnShow(self)
@@ -123,12 +113,10 @@ local function CreateChildren(h,n)
     b:SetScript("OnEnter",OnEnter)
     b:SetScript("OnLeave",OnLeave)
     if h:GetAttribute("TypePet") then
-        F:SavePetBtnPosition(b)
         b:SetScript("OnShow",OnShow)
         b:SetScript("OnHide",OnHide)
         b:SetScript("OnEvent",OnEvent)
     else
-        F:SaveRaidBtnPosition(b)
         b:HookScript("OnAttributeChanged",OnAttributeChanged)
     end
     if not InCombatLockdown() then

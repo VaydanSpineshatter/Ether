@@ -1,14 +1,12 @@
 local D,F,S,C=unpack(select(2,...))
-local type,next,tostring,unpack=type,next,tostring,unpack
-local tconcat,UIParent,pairs,ipairs=table.concat,UIParent,pairs,ipairs
+local type,unpack,UIParent,ipairs=type,unpack,UIParent,ipairs
 D.MenuKey,D.menuStrings={"Module","Blizzard","Tooltip","Indicators","Header","Layout","Aura","Profile"},{}
 local P={"TOPLEFT","TOP","TOPRIGHT","LEFT","CENTER","RIGHT","BOTTOMLEFT","BOTTOM","BOTTOMRIGHT","UIParent"}
-D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Commands","Config","Reload UI","Helper","key binding","Addon Version ","Prefix ","Version Calls","Addon calls ","Profile ","|cffff0000Initialisation failed|r","-",tostring(_G["ETHER_DATABASE"]["LAST"] or 0),tostring(0),"-"}
+D.Slash={"Slash","/ether user","/ether rl","/ether help","or use","Version ","ether msg ","Profile ","Commands","Config","Reload UI","Helper","key binding",false,"-","-"}
 local Units={"player","target","targettarget","pet","pettarget","focus"}
 D.iEvent={"UNIT_CONNECTION","INCOMING_RESURRECT_CHANGED","PLAYER_FLAGS_CHANGED","UNIT_FLAGS","UNIT_FACTION","RAID_TARGET_UPDATE","PARTY_LEADER_CHANGED","PARTY_LOOT_METHOD_CHANGED","PLAYER_ROLES_ASSIGNED","READY_CHECK","READY_CHECK_CONFIRM","READY_CHECK_FINISHED"}
 D.msgEvent={"CHAT_MSG_ADDON","CHAT_MSG_WHISPER_INFORM","CHAT_MSG_WHISPER","CHAT_MSG_BN_WHISPER"}
-D.castEvent={"UNIT_SPELLCAST_START","UNIT_SPELLCAST_STOP","UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","UNIT_SPELLCAST_DELAYED","UNIT_SPELLCAST_CHANNEL_START",
-             "UNIT_SPELLCAST_CHANNEL_UPDATE","UNIT_SPELLCAST_CHANNEL_STOP","UNIT_SPELLCAST_FAILED_QUIET","UNIT_SPELLCAST_NOT_INTERRUPTIBLE","UNIT_SPELLCAST_INTERRUPTIBLE"}
+D.castEvent={"UNIT_SPELLCAST_START","UNIT_SPELLCAST_STOP","UNIT_SPELLCAST_FAILED","UNIT_SPELLCAST_INTERRUPTED","UNIT_SPELLCAST_DELAYED","UNIT_SPELLCAST_CHANNEL_START","UNIT_SPELLCAST_CHANNEL_UPDATE","UNIT_SPELLCAST_CHANNEL_STOP","UNIT_SPELLCAST_FAILED_QUIET","UNIT_SPELLCAST_NOT_INTERRUPTIBLE","UNIT_SPELLCAST_INTERRUPTIBLE"}
 D.iIconPath={"Interface\\CharacterFrame\\Disconnect-Icon","Interface\\RaidFrame\\Raid-Icon-Rez","Interface\\FriendsFrame\\StatusIcon-Away","Interface\\FriendsFrame\\StatusIcon-DnD",
              "Interface\\Icons\\Spell_Holy_GuardianSpirit","Interface\\Icons\\Spell_Shadow_Charm","Interface\\TargetingFrame\\UI-RaidTargetingIcons","Interface\\GroupFrame\\UI-Group-LeaderIcon",
              "Interface\\GroupFrame\\UI-Group-MasterLooter","Interface\\GroupFrame\\UI-Group-MainTankIcon","Interface\\GroupFrame\\UI-Group-MainAssistIcon","Interface\\LFGFrame\\UI-LFG-ICON-PORTRAITROLES",
@@ -64,7 +62,7 @@ end
 --player,target,targettarget,pet,pettarget,focus,custom1,custom2,custom3,raidBtn,raidpetBtn,playerCastBar,targetCastBar,playerModel,targetModel,Info,Tooltip,Icon,Config
 --Module,Blizzard,Tooltip,Indicators,Header,Layout
 D.Default={[1]={1,1,1,0,1,1,1,1,1,1,1,1},[2]={1,1,1,1,1,1,1,1,1,1,1},[3]={1,1,1,1,1,1,1,1,1,1,1,1,1},[4]={1,1,1,1,1,1,1,1,1,1,1},[5]={1,1,1,1},[6]={1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
-           [20]={[1]={P[1],0,0,18},[2]={P[8],0,0,9},[3]={P[3],0,0,9},[4]={P[2],0,0,9},[5]={P[8],0,0,9},[6]={P[9],0,0,9},[7]={P[7],0,0,9},[8]={P[1],0,-9,9},[9]={P[3],0,0,9},[10]={P[6],0,0,9},[11]={P[2],0,0,9}},
+           [20]={[1]={P[1],0,0,18},[2]={P[8],0,0,8},[3]={P[3],0,0,9},[4]={P[2],0,0,8},[5]={P[5],0,5,8},[6]={P[3],0,-6,8},[7]={P[7],0,8,9},[8]={P[8],0,8,8},[9]={P[3],0,0,9},[10]={P[1],0,-8,8},[11]={P[2],0,0,14}},
            [21]={[1]={P[8],P[10],P[8],-254,244,110,40,1,1},[2]={P[8],P[10],P[8],254,244,110,40,1,1},[3]={P[8],P[10],P[8],388,244,110,40,1,1},[4]={P[5],P[10],P[5],-350,-100,110,40,1,1},
                  [5]={P[5],P[10],P[5],-270,-20,110,40,1,1},[6]={P[5],P[10],P[5],500,100,110,40,1,1},[7]={P[5],P[10],P[5],0,90,110,40,1,1},[8]={P[5],P[10],P[5],0,0,110,40,1,1},
                  [9]={P[5],P[10],P[5],0,-90,110,40,1,1},[10]={P[8],P[10],P[8],0,400,55,55,1,1},[11]={P[7],P[10],P[7],520,40,45,45,1,1},[12]={P[8],P[10],P[8],-380,200,360,15,1,1},
@@ -104,35 +102,6 @@ end)
 if scroll.ScrollBar then
     scroll.ScrollBar:Hide()
 end
-function D:DataEnableAll(t)
-    for i=1,#t do
-        t[i]=1
-    end
-end
-function D:DataDisableAll(t)
-    for i=1,#t do
-        t[i]=0
-    end
-end
-function D:DataSnapShot(t)
-    local copy={}
-    for i=1,#t do
-        copy[i]=t[i]
-    end
-    return copy
-end
-function D:DataRestore(t,snapshot)
-    for i=1,#snapshot do
-        t[i]=snapshot[i]
-    end
-end
-function D:DataMigrate(old,newSize,default)
-    local t={}
-    for i=1,newSize do
-        t[i]=old[i]~=nil and old[i] or default
-    end
-    return t
-end
 function D:InitializeAddon(status)
     if type(status)~="boolean" then return end
     assert(status==true)
@@ -154,33 +123,6 @@ function D:SetToDefault(status,msg)
     _G["ETHER_DATABASE"]["PROFILES"]["DEFAULT"]=D:CopyTable(D.Default)
     D:CurrentProfile("DEFAULT")
     _G["ETHER_DATABASE"]["VERSION"]=C.EtherVersion
-end
-function D:CopyTable(orig,seen)
-    if type(orig)~="table" then
-        return orig
-    end
-    seen=seen or {}
-    if seen[orig] then
-        return seen[orig]
-    end
-    local copy={}
-    seen[orig]=copy
-    for k,v in pairs(orig) do
-        copy[D:CopyTable(k,seen)]=D:CopyTable(v,seen)
-    end
-    local mt=getmetatable(orig)
-    if mt then
-        setmetatable(copy,D:CopyTable(mt,seen))
-    end
-    return copy
-end
-local count=0
-function D:TableSize(t)
-    count=0
-    for _ in pairs(t) do
-        count=count+1
-    end
-    return count
 end
 function D:FrameChecked(index)
     local b=C.MainButtons
@@ -234,37 +176,4 @@ function D:ApplyFramePosition(f)
     f:SetSize(w,h)
     f:SetScale(scale)
     f:SetAlpha(alpha)
-end
-local pC,mR={},{}
-function D:MergeToLeft(ORIG,NEW)
-    if type(D.GetProfileName)~="function" then return end
-    local mC={}
-    mC[ORIG]=NEW
-    pC[ORIG]=" path"
-    local LEFT=ORIG
-    while LEFT~=nil do
-        local RIGHT=mC[LEFT]
-        local CURRENT_PATH=pC[LEFT]
-        mR[#mR+1]=D:GetProfileName()..": "..CURRENT_PATH
-        for NEW_KEY,NEW_VAL in pairs(RIGHT) do
-            local OLD_VAL=LEFT[NEW_KEY]
-            if OLD_VAL==nil then
-                mR[#mR+1]="  Missing Key '"..tostring(NEW_KEY).."' in "..CURRENT_PATH
-                LEFT[NEW_KEY]=D:CopyTable(NEW_VAL)
-            elseif type(OLD_VAL)=="table" and type(NEW_VAL)=="table" then
-                mC[OLD_VAL]=NEW_VAL
-                pC[OLD_VAL]=CURRENT_PATH.."."..tostring(NEW_KEY)
-            end
-        end
-        mC[LEFT]=nil
-        pC[LEFT]=nil
-        LEFT=next(mC)
-    end
-end
-function D:MergeAnalyse()
-    if not C.InfoFrame then return end
-    if C.InfoTimer then return end
-    C:EtherInfo(tconcat(mR,'\n'))
-    table.wipe(mR)
-    table.wipe(pC)
 end

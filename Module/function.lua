@@ -187,7 +187,9 @@ function F:SetupSlash()
         elseif input=="help" then
             F:AddonUsage()
         else
-            C:ToggleUser()
+            for i=1,5 do
+                C:EtherInfo(string.format("%s %s",D.Slash[i],D.Slash[i+8]))
+            end
         end
     end
 end

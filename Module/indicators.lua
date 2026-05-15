@@ -1,4 +1,4 @@
-local D,F,S=unpack(select(2,...))
+local D,F,S,C=unpack(select(2,...))
 local UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost=UnitIsAFK,UnitIsDND,UnitIsConnected,UnitIsDeadOrGhost
 local UnitHasIncomingResurrection,Enum,UnitExists=UnitHasIncomingResurrection,Enum,UnitExists
 local GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,updater=GetReadyCheckStatus,GetPartyAssignment,GetRaidTargetIndex,nil
@@ -36,78 +36,30 @@ local function IndictorsTexture(b,data)
         return b
     end
 end
-function F:SavePosition(index)
-    local Config=D.DB[20][index]
-    local icon=D:PosIndicator(index)
-    for _,b in pairs(raidBtn) do
-        if b.Indicators and b.Indicators[icon] then
-            b.Indicators[icon].Shown=b.Indicators[icon]:IsShown()
-            b.Indicators[icon]:Hide()
-            b.Indicators[icon]:ClearAllPoints()
-            b.Indicators[icon]:SetPoint(Config[1],b.healthBar,Config[1],Config[2],Config[3])
-            b.Indicators[icon]:SetSize(Config[4],Config[4])
-            if b.Indicators[icon].Shown then
-                b.Indicators[icon]:Show()
-                b.Indicators[icon].Shown=nil
-            end
-        end
-    end
-end
-function F:SaveRaidBtnPosition(b)
-    if not b or not b.Indicators or not b.healthBar then return end
-    for i,v in ipairs(D.iIconTable) do
-        local c=D.DB[20][i]
-        if not b.Indicators[v] then
-            b.Indicators[v]=frame:CreateTexture(nil,"OVERLAY",nil,7)
-            b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
-            b.Indicators[v]:SetSize(c[4],c[4])
-        else
-            b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
-            b.Indicators[v]:SetSize(c[4],c[4])
-        end
-        if not b.Indicators[v]:IsShown() then
-            b.Indicators[v]:Hide()
-        end
-    end
-end
-function F:SavePetBtnPosition(b)
-    if not b or not b.Indicators or not b.healthBar then return end
-    for i,v in ipairs(D.iIconTable) do
-        if i==2 or i==6 then
-            local c=D.DB[20][i]
-            if not b.Indicators[v] then
-                b.Indicators[v]=frame:CreateTexture(nil,"OVERLAY",nil,7)
-                b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
-                b.Indicators[v]:SetSize(c[4],c[4])
-            else
-                b.Indicators[v]:SetPoint(c[1],b.healthBar,c[1],c[2],c[3])
-                b.Indicators[v]:SetSize(c[4],c[4])
-            end
-            if not b.Indicators[v]:IsShown() then
-                b.Indicators[v]:Hide()
-            end
-        end
-    end
-end
 local function groupAssignments(self)
-    local assignment=GetPartyAssignment("MAINTANK",self.unit) or GetPartyAssignment("MAINASSIST",self.unit)
     IndictorsTexture(self,"MainTank")
-    if assignment then
-        if GetPartyAssignment("MAINTANK",self.unit) then
-            self.Indicators.MainTank:SetTexture(D.iIconPath[10])
-            self.Indicators.MainTank:Show()
-        elseif GetPartyAssignment("MAINASSIST",self.unit) then
-            self.Indicators.MainTank:SetTexture(D.iIconPath[11])
-            self.Indicators.MainTank:Show()
-        else
-            self.Indicators.MainTank:Hide()
-        end
+    if not UnitInAnyGroup("player") and self.Indicators.MasterLoot then
+        self.Indicators.MasterLoot:Hide()
+        return
+    end
+    if GetPartyAssignment("MAINTANK",self.unit) then
+        self.Indicators.MainTank:SetTexture(D.iIconPath[10])
+        self.Indicators.MainTank:Show()
+    elseif GetPartyAssignment("MAINASSIST",self.unit) then
+        self.Indicators.MainTank:SetTexture(D.iIconPath[11])
+        self.Indicators.MainTank:Show()
+    else
+        self.Indicators.MainTank:Hide()
     end
 end
 local function groupRole(self)
+    IndictorsTexture(self,"GroupRole")
+    if not UnitInAnyGroup("player") then
+        self.Indicators.GroupRole:Hide()
+        return
+    end
     local role=UnitGroupRolesAssigned(self.unit)
     if role then
-        IndictorsTexture(self,"GroupRole")
         self.Indicators.GroupRole:SetTexture(D.iIconPath[12])
         if (role=="TANK") then
             self.Indicators.GroupRole:SetTexCoord(0,19/64,22/64,41/64)
@@ -120,56 +72,6 @@ local function groupRole(self)
             self.Indicators.GroupRole:Show()
         else
             self.Indicators.GroupRole:Hide()
-        end
-    end
-end
-function event:PLAYER_ROLES_ASSIGNED()
-    for _,b in pairs(raidBtn) do
-        if b and UnitExists(b.unit) then
-            groupRole(b)
-            groupAssignments(b)
-        end
-    end
-end
-function event:PARTY_LOOT_METHOD_CHANGED()
-    for _,b in pairs(raidBtn) do
-        if b and UnitExists(b.unit) then
-            local unit=b.unit
-            IndictorsTexture(b,"MasterLoot")
-            if not UnitInAnyGroup("player") and b.Indicators.MasterLoot then
-                b.Indicators.MasterLoot:Hide()
-                return
-            end
-            local lootType,partyID,raidID=GetLootMethod()
-            if lootType==Enum.LootMethod.Masterlooter then
-                local masterLooterUnit=raidID and ((raidID==0) and "player" or "raid"..raidID) or
-                        partyID and ((partyID==0) and "player" or "party"..partyID)
-                if masterLooterUnit and UnitIsUnit(unit,masterLooterUnit) then
-                    b.Indicators.MasterLoot:SetTexture(D.iIconPath[9])
-                    b.Indicators.MasterLoot:Show()
-                else
-                    b.Indicators.MasterLoot:Hide()
-                end
-            end
-        end
-    end
-end
-function event:PARTY_LEADER_CHANGED()
-    for _,b in pairs(raidBtn) do
-        if b and UnitExists(b.unit) then
-            local unit=b.unit
-            IndictorsTexture(b,"GroupLeader")
-            if not UnitInAnyGroup("player") and b.Indicators.GroupLeader then
-                b.Indicators.GroupLeader:Hide()
-                return
-            end
-            local IsLeader=UnitIsGroupLeader(unit)
-            if (IsLeader) then
-                b.Indicators.GroupLeader:SetTexture(D.iIconPath[8])
-                b.Indicators.GroupLeader:Show()
-            else
-                b.Indicators.GroupLeader:Hide()
-            end
         end
     end
 end
@@ -246,6 +148,7 @@ local function unitFlags(self)
     local status=D.DB["CONFIG"]
     if dead then
         F.UpdateStatusIcons(status,self)
+        F:HidePrediction(self)
         self.Indicators.UnitFlags:SetTexture(D.iIconPath[5])
         self.Indicators.UnitFlags:Show()
     else
@@ -279,21 +182,21 @@ local function unitResurrection(self)
         end
     end
 end
-function F:UpdateIndicatorsUnit(self)
-    unitConnection(self)
-    flagsChanged(self)
-    unitFlags(self)
-    unitFaction(self)
-    raidTarget(self)
-    raidGroupLeader(self)
-    raidMasterLoot(self)
-    groupRole(self)
-    groupAssignments(self)
-    unitResurrection(self)
+function event:PARTY_LOOT_METHOD_CHANGED()
+    for _,b in pairs(raidBtn) do
+        raidMasterLoot(b)
+    end
 end
-function F:UpdateIndicatorsPetUnit(self)
-    raidTarget(self)
-    unitResurrection(self)
+function event:PLAYER_ROLES_ASSIGNED()
+    for _,b in pairs(raidBtn) do
+        groupRole(b)
+        groupAssignments(b)
+    end
+end
+function event:PARTY_LEADER_CHANGED()
+    for _,b in pairs(raidBtn) do
+        raidGroupLeader(b)
+    end
 end
 function event:READY_CHECK()
     for _,b in pairs(raidBtn) do
@@ -436,6 +339,46 @@ function F:IndicatorsToggleIcon(number)
         if b and b.Indicators and b.Indicators[data] then
             if b.Indicators[data]:IsShown() then
                 b.Indicators[data]:Hide()
+            end
+        end
+    end
+end
+function F:UpdateIndicatorsUnit(self)
+    unitConnection(self)
+    flagsChanged(self)
+    unitFlags(self)
+    unitFaction(self)
+    raidTarget(self)
+    raidGroupLeader(self)
+    raidMasterLoot(self)
+    groupRole(self)
+    groupAssignments(self)
+    unitResurrection(self)
+end
+function F:UpdateIndicatorsPetUnit(self)
+    raidTarget(self)
+    unitResurrection(self)
+end
+function F:SaveIndicatorPosition(index)
+    local Config=D.DB[20][index]
+    local icon=D:PosIndicator(index)
+    for _,b in pairs(raidBtn) do
+        if b.Indicators and b.Indicators[icon] then
+            b.Indicators[icon]:Hide()
+            b.Indicators[icon]:ClearAllPoints()
+            b.Indicators[icon]:SetPoint(Config[1],b.healthBar,Config[1],Config[2],Config[3])
+            b.Indicators[icon]:SetSize(Config[4],Config[4])
+            F:UpdateIndicatorsUnit(b)
+        end
+    end
+    if index==2 or index==6 then
+        for _,b in pairs(petBtn) do
+            if b.Indicators and b.Indicators[icon] then
+                b.Indicators[icon]:Hide()
+                b.Indicators[icon]:ClearAllPoints()
+                b.Indicators[icon]:SetPoint(Config[1],b.healthBar,Config[1],Config[2],Config[3])
+                b.Indicators[icon]:SetSize(Config[4],Config[4])
+                F:UpdateIndicatorsPetUnit(b)
             end
         end
     end

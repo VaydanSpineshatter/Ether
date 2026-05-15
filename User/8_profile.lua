@@ -4,24 +4,37 @@ local function OnProfileChange(self,_,data)
     if data==D:GetProfileName() then return end
     D:SwitchProfile(data)
     self.v:SetText(data)
-    D.menuStrings[10]:SetText(string.format("%s %s","Profile ",data))
+    D.menuStrings[8]:SetText(string.format("%s %s","Profile ",data))
     for _,v in ipairs(C.ChildFrames) do
         v:Hide()
     end
 end
-local function CreateImportBox(backdrop)
-    if C.ImportBox then return end
-    local importBox=CreateFrame("EditBox",nil,backdrop)
-    C.ImportBox=importBox
-    importBox:SetPoint("TOPLEFT",backdrop,"TOPLEFT",8,-8)
-    importBox:SetPoint("BOTTOMRIGHT",backdrop,"BOTTOMRIGHT",-8,8)
-    importBox:SetMultiLine(true)
-    importBox:SetAutoFocus(false)
-    importBox:SetClipsChildren(true)
-    importBox:SetFontObject(C.EtherFont)
-    importBox:SetText("Paste import data here...")
-    importBox:SetTextColor(0.7,0.7,0.7)
-    importBox:SetScript("OnMouseWheel",function(self,delta)
+local function CreateImportBox(parent)
+    if C.TransferBox then return end
+    local frame=CreateFrame("Frame",nil,parent,"BackdropTemplate")
+    frame:SetPoint("TOPRIGHT")
+    frame:SetSize(220,parent:GetHeight())
+    frame:SetBackdrop({
+        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
+        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
+        tile=true,
+        tileSize=16,
+        edgeSize=16,
+        insets={left=4,right=4,top=4,bottom=4}
+    })
+    frame:SetBackdropColor(0.1,0.1,0.1,0.8)
+    frame:SetBackdropBorderColor(0.4,0.4,0.4)
+    local box=CreateFrame("EditBox",nil,frame)
+    C.TransferBox=box
+    box:SetPoint("TOPLEFT",frame,"TOPLEFT",8,-8)
+    box:SetPoint("BOTTOMRIGHT",frame,"BOTTOMRIGHT",-8,8)
+    box:SetMultiLine(true)
+    box:SetAutoFocus(false)
+    box:SetClipsChildren(true)
+    box:SetFontObject(C.EtherFont)
+    box:SetText("Paste import data here...")
+    box:SetTextColor(0.7,0.7,0.7)
+    box:SetScript("OnMouseWheel",function(self,delta)
         local current=self:GetText()
         if delta>0 then
             self:SetCursorPosition(0)
@@ -29,23 +42,23 @@ local function CreateImportBox(backdrop)
             self:SetCursorPosition(#current)
         end
     end)
-    importBox:SetScript("OnEditFocusGained",function(self)
+    box:SetScript("OnEditFocusGained",function(self)
         if self:GetText()=="Paste export data here..." then
             self:SetText("")
             self:SetTextColor(1,1,1)
         end
         self:HighlightText()
     end)
-    importBox:SetScript("OnEditFocusLost",function(self)
+    box:SetScript("OnEditFocusLost",function(self)
         if self:GetText()=="" then
             self:SetText("Paste import data here...")
             self:SetTextColor(0.7,0.7,0.7)
         end
     end)
-    importBox:SetScript("OnEscapePressed",function(self)
+    box:SetScript("OnEscapePressed",function(self)
         self:ClearFocus()
     end)
-    return importBox
+    return box
 end
 local function Profile(self,status)
     if self.created or type(status)~="boolean" then return end
@@ -57,19 +70,6 @@ local function Profile(self,status)
     C.ProfileDropdown=dropdown
     dropdown:SetPoint("TOPLEFT",5,-5)
     dropdown.v:SetText(D:GetProfileName())
-    local transfer=CreateFrame("Frame",nil,self,"BackdropTemplate")
-    transfer:SetPoint("TOPRIGHT")
-    transfer:SetSize(220,self:GetHeight())
-    transfer:SetBackdrop({
-        bgFile="Interface\\ChatFrame\\ChatFrameBackground",
-        edgeFile="Interface\\Tooltips\\UI-Tooltip-Border",
-        tile=true,
-        tileSize=16,
-        edgeSize=16,
-        insets={left=4,right=4,top=4,bottom=4}
-    })
-    transfer:SetBackdropColor(0.1,0.1,0.1,0.8)
-    transfer:SetBackdropBorderColor(0.4,0.4,0.4)
     local input=F:LineInput(self,180,20)
     C.InputLine=input
     input:SetPoint("BOTTOMLEFT",25,15)
@@ -89,13 +89,14 @@ local function Profile(self,status)
         end
         input:ClearFocus()
     end)
+    local transfer=CreateImportBox(self)
     local create=F:EtherPanelButton(self,60,25,"New","TOPLEFT",dropdown,"BOTTOMLEFT",5,-13,0,1,0)
     local copy=F:EtherPanelButton(self,60,25,"Copy","LEFT",create,"RIGHT")
     local reset=F:EtherPanelButton(self,60,25,"Reset","LEFT",copy,"RIGHT",0,0,1,0,0)
     local rename=F:EtherPanelButton(self,60,25,"Rename","TOPLEFT",create,"BOTTOMLEFT",0,-13)
     local delete=F:EtherPanelButton(self,60,25,"Delete","LEFT",rename,"RIGHT",0,0,1,0,0)
     local export=F:EtherPanelButton(self,60,25,"Export","TOPLEFT",rename,"BOTTOMLEFT",0,-13)
-    local import=F:EtherPanelButton(transfer,60,25,"Import","LEFT",export,"RIGHT")
+    local import=F:EtherPanelButton(self,60,25,"Import","LEFT",export,"RIGHT")
     create:SetScript("OnClick",function()
         input:Show()
         input:SetText("Enter name and press enter")
@@ -119,6 +120,25 @@ local function Profile(self,status)
                 end
             end
             input:ClearFocus()
+        end)
+    end)
+    delete:SetScript("OnClick",function()
+        local profileToDelete=D:GetProfileName()
+        F:PopupBoxSetup()
+        C.PopupBox.font:SetText("Delete profile |cffcc66ff"..profileToDelete.."|r ?")
+        C.PopupCallback:SetScript("OnClick",function()
+            local success,msg=D:DeleteProfile(profileToDelete)
+            if success then
+                C:EtherInfo(eColor..msg)
+                C.PopupBox:SetShown(false)
+                C.MainFrame:SetShown(true)
+                C.PopupBox.font:SetText()
+                D.ProfileRefresh()
+            else
+                C:EtherInfo(eColor..msg)
+                C.PopupBox:SetShown(false)
+                C.MainFrame:SetShown(true)
+            end
         end)
     end)
     copy:SetScript("OnClick",function()
@@ -159,28 +179,6 @@ local function Profile(self,status)
             input:ClearFocus()
         end)
     end)
-    delete:SetScript("OnClick",function()
-        local profileToDelete=D:GetProfileName()
-        if D:GetProfileName()=="DEFAULT" then
-            C:EtherInfo("|cffcc66ffEther|r Cannot delete Default profile")
-            return
-        end
-        F:PopupBoxSetup()
-        C.PopupBox.font:SetText("Delete profile |cffcc66ff"..profileToDelete.."|r ?")
-        C.PopupCallback:SetScript("OnClick",function()
-            local success,msg=D:DeleteProfile(profileToDelete)
-            if success then
-                C:EtherInfo(eColor..msg)
-                C.PopupBox:SetShown(false)
-                C.MainFrame:SetShown(true)
-                C.PopupBox.font:SetText()
-            else
-                C:EtherInfo(eColor..msg)
-                C.PopupBox:SetShown(false)
-                C.MainFrame:SetShown(true)
-            end
-        end)
-    end)
     reset:SetScript("OnClick",function()
         F:PopupBoxSetup()
         local profileToRest=D:GetProfileName()
@@ -198,23 +196,24 @@ local function Profile(self,status)
             end
         end)
     end)
-    local importBox=CreateImportBox(transfer)
     export:SetScript("OnClick",function()
-        local encoded=D:ExportProfileToClipboard()
+        local encoded,err=D:ExportProfile()
         if encoded then
-            importBox:SetText(encoded)
+            transfer:SetText(encoded)
+        else
+            C:EtherInfo("|cffff0000Export failed:|r "..err)
         end
     end)
     import:SetScript("OnClick",function()
-        if not importBox then return end
-        local info=importBox:GetText()
+        if not transfer then return end
+        local info=transfer:GetText()
         if not info or info=="" or info=="Paste import data here..." then return end
         local success,msg=D:ImportProfile(info)
         if success then
             dropdown:SetOptions(D:GetProfileList())
             dropdown.v:SetText(D:GetProfileName())
             C:EtherInfo(eColor..msg)
-            C.ImportBox:SetText("Paste import data here...")
+            transfer:SetText("Paste import data here...")
         else
             C:EtherInfo("|cffff0000No data to import|r")
         end

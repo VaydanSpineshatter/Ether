@@ -1,7 +1,7 @@
 local D,F,S,C=unpack(select(2,...))
 C.CombatStatus=false
-local event,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,snapshot,status,tconcat=S.EventFrame,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,nil,0,table.concat
-local UnitGUID,ipairs,sformat,UnitExists,GUIDIsPlayer,Received=UnitGUID,ipairs,string.format,UnitExists,C_PlayerInfo.GUIDIsPlayer,{}
+local event,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,status,tconcat,twipe,tremove=S.EventFrame,GetPlayerInfoByGUID,CombatLogGetCurrentEventInfo,0,table.concat,table.wipe,table.remove
+local UnitGUID,ipairs,sformat,UnitExists,GUIDIsPlayer,Received,data=UnitGUID,ipairs,string.format,UnitExists,C_PlayerInfo.GUIDIsPlayer,{},{}
 local eFaction={["Human"]=true,["Dwarf"]=true,["NightElf"]=true,["Gnome"]=true,["Draenei"]=true}
 local NE,E="|cff00ff00not Enemy|r","|cffff0000Enemy|r"
 if eFaction[UnitRace("player")] then
@@ -25,25 +25,27 @@ local function GuidClassColor(guid)
     local enemy=eFaction[race] and E or NE
     return c,name or "UNKNOWN",enemy
 end
-local ver,call=0,0
+local ver=0
 local function OnVersion(message)
     local theirVersion=tonumber(message)
     local myVersion=tonumber(C.EtherVersion)
-    call=call+1
-    if D.menuStrings[9] then
-        D.menuStrings[9]:SetText(string.format("%s %s","Addon calls ",tostring(call) or 0))
+    ver=ver+1
+    if D.menuStrings[7] then
+        D.menuStrings[7]:SetText(sformat("%s %s","ether msg ",tostring(ver)))
     end
     local lastCheck=_G["ETHER_DATABASE"]["LAST"] or 0
     if (time()-lastCheck>=4000) and theirVersion and myVersion and myVersion<theirVersion then
-        ver=ver+1
         _G["ETHER_DATABASE"]["LAST"]=time()
-        if D.menuStrings[8] then
-            D.menuStrings[8]:SetText(string.format("%s %s","Version Calls",tostring(ver) or 0))
-        end
         C:EtherInfo(sformat("New version found (%d). Get the latest version from %s",theirVersion,"|cFF00CCFFhttps://www.curseforge.com/wow/addons/ether|r"))
     end
 end
-local data={}
+function event:CHAT_MSG_ADDON(...)
+    local prefix,message,_,sender=...
+    if prefix~=C.EtherPrefix or sender==C.PlayerName then return end
+    if Received[message]==message then return end
+    Received[message]=message
+    OnVersion(D:ImportAddonMsg(message))
+end
 local function AutoRepair()
     if D.DB["CONFIG"][17]==0 then return end
     local cost=GetRepairAllCost()
@@ -51,7 +53,7 @@ local function AutoRepair()
     if not CanMerchantRepair() then return end
     local useGuild=D.DB["CONFIG"][18]==1 and IsInGuild() and CanGuildBankRepair()
     if GetMoney()>=cost then
-        table.wipe(data)
+        twipe(data)
         if useGuild then
             RepairAllItems(useGuild)
             data[#data+1]="Repair costs for Guild"
@@ -60,8 +62,11 @@ local function AutoRepair()
             data[#data+1]="Repair costs"
         end
         data[#data+1]=GetCoinTextureString(cost)
-        C:EtherInfo(table.concat(data,": "))
+        C:EtherInfo(tconcat(data,": "))
     end
+end
+function event:MERCHANT_SHOW()
+    AutoRepair()
 end
 local function ScanCLEUGUID(destGUID)
     for _,guid in ipairs(D.DB["USER"]) do
@@ -97,7 +102,7 @@ function F:ScanGUID()
         D.DB["USER"][#D.DB["USER"]+1]=guid
         C:EtherInfo(sformat("|cff00ff00Added:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
     else
-        table.remove(D.DB["USER"],index)
+        tremove(D.DB["USER"],index)
         C:EtherInfo(sformat("|cffff0000Removed:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
     end
     if C.RemoveDropdown then
@@ -109,7 +114,7 @@ function F:RemoveByIndex(index)
     for i,v in ipairs(D.DB["USER"]) do
         if i==index then
             local c,name,enemy=GuidClassColor(v)
-            table.remove(D.DB["USER"],index)
+            tremove(D.DB["USER"],index)
             C:EtherInfo(sformat("|cffff0000Removed:|r |cff%02x%02x%02x%s |r %s",c.r*255,c.g*255,c.b*255,name,enemy))
             if C.RemoveDropdown then
                 C.RemoveDropdown:SetOptions(D.DB["USER"])
@@ -123,49 +128,12 @@ function F:PrintGUID()
         C:EtherInfo("No guid available to print")
         return
     end
-    table.wipe(data)
+    twipe(data)
     for index,guid in ipairs(D.DB["USER"]) do
         local c,name,enemy=GuidClassColor(guid)
         data[#data+1]=sformat("%s. |cff%02x%02x%02x%s|r %s %s",index,c.r*255,c.g*255,c.b*255,name,enemy,guid)
     end
     C:EtherInfo(tconcat(data,'\n'))
-end
-function F:CreateSnapshot()
-    local guid=UnitGUID("target")
-    if type(guid)=="nil" then return end
-    snapshot=guid
-    F:CreateCustomUnit(snapshot,7)
-end
-function event:PLAYER_REGEN_DISABLED()
-    self:UnregisterEvent("PLAYER_REGEN_DISABLED")
-    self:RegisterEvent("PLAYER_REGEN_ENABLED")
-    C.CombatStatus=true
-    C.EtherIcon.tex:SetColorTexture(1,0,0)
-    if C.MainFrame:IsShown() then
-        if C.IsMovable then
-            C:ToggleUnlock(0)
-        end
-        C.MainFrame:Hide()
-        C.MainFrame.status=true
-    end
-end
-function event:PLAYER_REGEN_ENABLED()
-    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-    self:RegisterEvent("PLAYER_REGEN_DISABLED")
-    C.CombatStatus=false
-    C.EtherIcon.tex:SetColorTexture(0,0.8,1)
-    if C.MainFrame.status then
-        C.MainFrame.status=false
-        C.MainFrame:Show()
-    end
-end
-function event:CHAT_MSG_ADDON(...)
-    local prefix,message,_,sender=...
-    if prefix~=C.EtherPrefix then return end
-    --  if sender==C.PlayerName then return end
-    if Received[message]==message then return end
-    Received[message]=message
-    OnVersion(D:ImportAddonMsg(message))
 end
 function event:CHAT_MSG_BN_WHISPER(...)
     local text,_,_,_,playerName2,_,_,_,_,_,_,guid=...
@@ -196,8 +164,28 @@ function event:COMBAT_LOG_EVENT_UNFILTERED()
         ScanCLEUGUID(destGUID)
     end
 end
-function event:MERCHANT_SHOW()
-    AutoRepair()
+function event:PLAYER_REGEN_DISABLED()
+    self:UnregisterEvent("PLAYER_REGEN_DISABLED")
+    self:RegisterEvent("PLAYER_REGEN_ENABLED")
+    C.CombatStatus=true
+    C.EtherIcon.tex:SetColorTexture(1,0,0)
+    if C.MainFrame:IsShown() then
+        if C.IsMovable then
+            C:ToggleUnlock(0)
+        end
+        C.MainFrame:Hide()
+        C.MainFrame.status=true
+    end
+end
+function event:PLAYER_REGEN_ENABLED()
+    self:UnregisterEvent("PLAYER_REGEN_ENABLED")
+    self:RegisterEvent("PLAYER_REGEN_DISABLED")
+    C.CombatStatus=false
+    C.EtherIcon.tex:SetColorTexture(0,0.8,1)
+    if C.MainFrame.status then
+        C.MainFrame.status=false
+        C.MainFrame:Show()
+    end
 end
 function F:MsgCLEUEnable()
     F:FuncEnable("COMBAT_LOG_EVENT_UNFILTERED")

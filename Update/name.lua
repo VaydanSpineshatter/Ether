@@ -60,6 +60,7 @@ function F:UpdateNameByTarget(b)
     b.name:SetText(user)
 end
 function event:UNIT_NAME_UPDATE(unit)
+    if not UnitExists(unit) then return end
     local s=GetSoloBtn(unit)
     if s then
         F:UpdateName(s,6)

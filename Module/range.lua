@@ -3,7 +3,7 @@ local C_Ticker,pairs,CheckInteractDistance=C_Timer.NewTicker,pairs,CheckInteract
 local UnitCanAssist,UnitCanAttack,IsSpellInRange=UnitCanAssist,UnitCanAttack,C_Spell.IsSpellInRange
 local petBtn,raidBtn,soloBtn,UnitIsInteractable=D.petBtn,D.raidBtn,D.soloBtn,UnitIsInteractable
 local fTbl,hTbl={6673,19750,75,36554,2061,0,403,1459,2970,0,8936},{355,21084,75,6770,589,0,403,133,17793,0,8921}
-local f,h=fTbl[select(3,UnitClass("player"))],hTbl[select(3,UnitClass("player"))]
+local f,h=fTbl[F.ClassId],hTbl[F.ClassId]
 local function IsInRange(unit)
     if not unit then return end
     local range

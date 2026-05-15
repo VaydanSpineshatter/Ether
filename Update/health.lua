@@ -83,16 +83,8 @@ local function MaxHealth(b)
         b.healthBar:SetMinMaxValues(0,mh)
     end
 end
-function F:FullHealthUpdate(self)
-    InitialHealth(self)
-    if not self.TypePet then
-        UpdateClassColor(self)
-    end
-    Health(self)
-    MaxHealth(self)
-end
 local lastHealth={}
-function F:UpdateHealthPct(b)
+local function UpdateHealthPct(b)
     if not b or not b.unit or not b.health then return end
     local unit=b.unit
     local h,maxH=UnitHealth(unit),UnitHealthMax(unit)
@@ -102,6 +94,20 @@ function F:UpdateHealthPct(b)
         if lastHealth[unit]==rPct then return end
         lastHealth[unit]=rPct
         b.health:SetText(sformat(f2m,D.HealGradient[rPct],rPct))
+    end
+end
+function F:FullHealthUpdate(self)
+    InitialHealth(self)
+    Health(self)
+    MaxHealth(self)
+    if not self.TypePet then
+        UpdateClassColor(self)
+    end
+    if D.DB[5][3]==1 then
+        UpdateHealthPct(self)
+    end
+    if D.DB[5][4]==1 then
+        F:UpdatePowerPct(self)
     end
 end
 local function ResetHealthPct(index)
@@ -117,7 +123,7 @@ local function ResetHealthPct(index)
         for _,b in pairs(raidBtn) do
             if b and b.health then
                 b.health:Show()
-                F:UpdateHealthPct(b)
+                UpdateHealthPct(b)
             end
         end
     end
@@ -161,6 +167,7 @@ local function UpdatePrediction(button)
     end
 end
 function event:UNIT_HEAL_PREDICTION(unit)
+    if not UnitExists(unit) then return end
     local b=GetRaidBtn(unit)
     if b then
         UpdatePrediction(b)
@@ -180,11 +187,12 @@ function event:UNIT_HEAL_PREDICTION(unit)
     end
 end
 function event:UNIT_HEALTH(unit)
+    if not UnitExists(unit) then return end
     local b=GetRaidBtn(unit)
     if b then
         Health(b)
         if D.DB[5][3]==1 then
-            F:UpdateHealthPct(b)
+            UpdateHealthPct(b)
         end
     end
     local p=GetPetBtn(unit)
@@ -202,11 +210,12 @@ function event:UNIT_HEALTH(unit)
     end
 end
 function event:UNIT_MAXHEALTH(unit)
+    if not UnitExists(unit) then return end
     local b=GetRaidBtn(unit)
     if b then
         MaxHealth(b)
         if D.DB[5][3]==1 then
-            F:UpdateHealthPct(b)
+            UpdateHealthPct(b)
         end
     end
     local p=GetPetBtn(unit)

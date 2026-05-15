@@ -99,13 +99,8 @@ end
 function S.EventFrame:PLAYER_LOGIN()
     self:UnregisterEvent("PLAYER_LOGIN")
     self:RegisterEvent("PLAYER_LOGOUT")
-    D.Slash[20]=D:GetProfileName()
-    if not C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix) then
-        F:FuncDisable("CHAT_MSG_ADDON")
-        table.remove(D.msgEvent,1)
-    else
-        D.Slash[17]="|cff00ff00true|r"
-    end
+    D.Slash[16]=D:GetProfileName()
+    D.Slash[14]=C_ChatInfo.IsAddonMessagePrefixRegistered(C.EtherPrefix)
     F:HideBlizzard()
     F:SetupSlash()
     F:ToolTipInitialize()
@@ -151,22 +146,19 @@ end
 function S.EventFrame:PLAYER_ENTERING_WORLD()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     for _,b in ipairs({D.H.pet:GetChildren()}) do
-        local unit=b:GetAttribute("unit")
-        if unit and UnitExists(unit) then
-            b.unit=unit
-            D.petBtn[b.unit]=b
-            F:FullHealthUpdate(b)
-            F:UpdateName(b,3)
-            F:UpdateIndicatorsPetUnit(b)
-        end
+        C.UpdatePetUnit(b)
     end
     C_Timer.After(1.1,function()
         SetPerfectUIScale()
-        if D.Slash[17]=="|cff00ff00true|r" then
-           -- if IsInGuild() then
-               -- C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),"GUILD")
-         --   end
-            D.Slash[16]=C_AddOns.GetAddOnMetadata("Ether","Version") or "|cffff0000Initialisation failed|r"
+        if D.Slash[14] then
+            --  if IsInGuild() then
+            --  C_ChatInfo.SendAddonMessage(C.EtherPrefix,D:ExportAddonMsg(),"GUILD")
+            --  end
+            D.Slash[14]=C_AddOns.GetAddOnMetadata("Ether","Version")
+        else
+            D.Slash[14]="|cffff0000error|r"
+            F:FuncDisable("CHAT_MSG_ADDON")
+            table.remove(D.msgEvent,1)
         end
     end)
 end

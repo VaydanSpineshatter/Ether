@@ -147,7 +147,7 @@ local function Indicators(self,status)
     local confirm=F:EtherPanelButton(preview,60,25,"Confirm","TOP",self,"TOP",65,-5)
     confirm:SetScript("OnClick",function()
         if C.Indi then
-            F:SavePosition(C.Indi)
+            F:SaveIndicatorPosition(C.Indi)
         end
     end)
     local x=F:CreateSlider(self,"X-Off","%.0f px","-18","18",1,"TOP","TOP",6,-90,

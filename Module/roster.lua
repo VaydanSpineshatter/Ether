@@ -35,7 +35,7 @@ function event:GROUP_ROSTER_UPDATE()
             F:AuraEnable()
         end)
     end
-    if refresh or not UnitInAnyGroup("player") then return end
+    if not UnitInAnyGroup("player") then return end
     refreshButtons()
     if send then return end
     send=true

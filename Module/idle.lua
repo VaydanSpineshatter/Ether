@@ -1,8 +1,7 @@
 local D,F,S,C=unpack(select(2,...))
 C.IdleMode=UnitIsAFK("player")
 local function Away(afk)
-    if not afk then return end
-    if C.IdleMode then return end
+    if not afk or C.IdleMode then return end
     C.IdleMode=true
     F:RosterDisable()
     if D.DB[1][6]==1 then
@@ -10,8 +9,7 @@ local function Away(afk)
     end
 end
 local function NotAway(afk)
-    if afk then return end
-    if not C.IdleMode then return end
+    if afk or not C.IdleMode then return end
     C.IdleMode=false
     F:RosterEnable()
 end

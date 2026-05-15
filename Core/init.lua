@@ -22,7 +22,7 @@ table.insert(UISpecialFrames,"EtherUnitFrames")
 Ether[3].EventFrame,Ether[4].BaseFrame=CreateFrame("Frame"),CreateFrame("Frame",nil,Ether[4].MainFrame)
 local verStr=C_AddOns.GetAddOnMetadata("Ether","Version")
 Ether[4].EtherVersion=verStr:sub(3):gsub("%.","")
-Ether[4].PlayerName,Ether[4].PlayerGUID,Ether[4].ClassName,Ether[4].EtherPrefix=UnitName("player"),UnitGUID("player"),select(2,UnitClass("player")),"EtherAddonMsg"
+Ether[4].PlayerName,Ether[4].PlayerGUID,Ether[4].ClassName,Ether[2].ClassId,Ether[4].EtherPrefix=UnitName("player"),UnitGUID("player"),select(2,UnitClass("player")),select(3,UnitClass("player")),"EtherAddonMsg"
 Ether[4].EtherFont=CreateFont("EtherFont")
 Ether[4].EtherFont:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",8,"OUTLINE")
 Ether[4].EtherIcon,Ether[4].ToolFrame=CreateFrame("Frame",nil,UIParent),CreateFrame("Frame",nil,UIParent)

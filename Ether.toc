@@ -7,7 +7,7 @@
 ## Category-esES: Unit Frames
 ## Category-frFR: Unit Frames
 ## Category-ruRU: Unit Frames
-## Version: 0.9.4
+## Version: 0.9.5
 ## SavedVariables: ETHER_DATABASE
 ## IconTexture: Interface\AddOns\Ether\Media\icon
 ## X-Flavor: TBC
@@ -20,6 +20,7 @@ Module/callback.lua
 Core/core.lua
 EtherUnitTemplate.xml
 Data/pre.lua
+Data/table.lua
 Data/profile.lua
 Locale/locale.xml
 Module/function.lua
