@@ -22,7 +22,7 @@ C.PlayerName,C.PlayerGUID,C.EtherPrefix=UnitName("player"),UnitGUID("player"),"E
 C.EtherFont=CreateFont("EtherFont")
 C.EtherFont:SetFont("Interface\\AddOns\\Ether\\Media\\venite.ttf",8,"OUTLINE")
 C.Spell,C.Indi,C.ProfileRefresh=nil,nil,false
-_,C.ClassName,C.ClassId=UnitClass
+_,C.ClassName,C.ClassId=UnitClass("player")
 if type(_G["ETHER_DATABASE"])~="table" then
     _G["ETHER_DATABASE"]={}
 end
